@@ -35,18 +35,6 @@ export const loadDatabaseFromStorage = () => {
       return initialDb;
     }
     const parsed = JSON.parse(rawData);
-    if (parsed.members && Array.isArray(parsed.members)) {
-      parsed.members = parsed.members.map(m => {
-        if (m.deptName === 'Ban Truyền Thông' || m.department === 'Ban Truyền Thông') {
-          m.deptName = 'Ban Nội Dung - Phát Thanh';
-          m.department = 'Ban Nội Dung - Phát Thanh';
-        }
-        if (m.roleTitle === 'Phó Ban Truyền Thông') {
-          m.roleTitle = 'Phó Ban Nội Dung - Phát Thanh';
-        }
-        return m;
-      });
-    }
     if (!parsed.resources) {
       parsed.resources = MEMBER_RESOURCES;
     }
