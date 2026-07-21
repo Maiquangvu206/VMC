@@ -94,15 +94,25 @@ export const ClubProvider = ({ children }) => {
   const departmentDrives = db.departmentDrives || [];
   const attendanceRecords = db.attendanceRecords || [];
 
-  // Auth state persisted in localStorage
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const savedUser = localStorage.getItem('VMC_CURRENT_USER');
-      return savedUser ? JSON.parse(savedUser) : db.members[0];
+      return savedUser ? JSON.parse(savedUser) : null;
     } catch (e) {
-      return db.members[0];
+      return null;
     }
   });
+
+  // Auto-sync currentUser with latest db.members from MySQL
+  useEffect(() => {
+    if (db.members && db.members.length > 0) {
+      setCurrentUser(prev => {
+        if (!prev) return db.members[0];
+        const match = db.members.find(m => m.id === prev.id || m.memberCode === prev.memberCode || m.username === prev.username);
+        return match || db.members[0];
+      });
+    }
+  }, [db.members]);
 
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     try {
