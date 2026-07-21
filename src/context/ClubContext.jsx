@@ -12,8 +12,22 @@ import { fetchMembersFromDatabaseAPI, loginMemberAPI, createMemberAPI, updateMem
 const ClubContext = createContext();
 
 export const ClubProvider = ({ children }) => {
-  const [theme, setTheme] = useState('dark');
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTabState] = useState(() => {
+    try {
+      return localStorage.getItem('VMC_ACTIVE_TAB') || 'dashboard';
+    } catch {
+      return 'dashboard';
+    }
+  });
+
+  const setActiveTab = (tab) => {
+    setActiveTabState(tab);
+    try {
+      localStorage.setItem('VMC_ACTIVE_TAB', tab);
+    } catch (e) {
+      console.warn('Lỗi lưu active tab:', e);
+    }
+  };
 
   // Dynamic Database State Initialization
   const [db, setDb] = useState(() => {
@@ -47,14 +61,14 @@ export const ClubProvider = ({ children }) => {
   const equipment = db.equipment;
   const drafts = db.drafts;
 
-  // Automatic Real-Time Silent Sync with MySQL Database (No manual button click needed!)
+  // Automatic Real-Time Silent Sync with MySQL Database (Pure MySQL Data!)
   useEffect(() => {
     let isMounted = true;
 
     const silentAutoSync = async () => {
       try {
         const serverMembers = await fetchMembersFromDatabaseAPI();
-        if (isMounted && serverMembers && Array.isArray(serverMembers) && serverMembers.length > 0) {
+        if (isMounted && serverMembers && Array.isArray(serverMembers)) {
           setDb(prev => {
             const isDifferent = JSON.stringify(prev.members) !== JSON.stringify(serverMembers);
             if (isDifferent) {
@@ -66,7 +80,7 @@ export const ClubProvider = ({ children }) => {
           });
         }
       } catch (err) {
-        // Silent background fallback
+        console.warn('Lỗi kết nối CSDL MySQL:', err);
       }
     };
 

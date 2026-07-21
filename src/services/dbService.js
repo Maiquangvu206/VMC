@@ -11,10 +11,10 @@ import {
 
 const DB_STORAGE_KEY = 'VMC_PORTAL_DYNAMIC_DATABASE_V2';
 
-// Initial Database Seed Structure
+// Initial Database Seed Structure (No mock members - Pure MySQL Data)
 export const getInitialDatabase = () => ({
   clubInfo: CLUB_INFO,
-  members: MEMBER_ACCOUNTS,
+  members: [],
   tasks: TASKS_LIST,
   equipment: EQUIPMENT_LIST,
   drafts: FANPAGE_DRAFTS,
