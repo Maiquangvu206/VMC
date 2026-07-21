@@ -12,6 +12,8 @@ import { fetchMembersFromDatabaseAPI, loginMemberAPI, createMemberAPI, updateMem
 const ClubContext = createContext();
 
 export const ClubProvider = ({ children }) => {
+  const [theme, setTheme] = useState('dark');
+
   const [activeTab, setActiveTabState] = useState(() => {
     try {
       return localStorage.getItem('VMC_ACTIVE_TAB') || 'dashboard';
