@@ -21,7 +21,7 @@ export const fetchMembersFromDatabaseAPI = async () => {
   try {
     let response = await fetch('/api/members');
     const contentType = response.headers.get('content-type') || '';
-    
+
     // Nếu bị trả về HTML (do Nginx/Vite chưa proxy), tự động thử nối tới Backend Port 5000
     if (!response.ok || contentType.includes('text/html')) {
       try {
@@ -30,7 +30,7 @@ export const fetchMembersFromDatabaseAPI = async () => {
         if (altResp.ok) {
           response = altResp;
         }
-      } catch (altErr) {}
+      } catch (altErr) { }
     }
 
     if (!response.ok) {
@@ -102,6 +102,7 @@ export const updateMemberAPI = async (memberId, updatedFields) => {
       body: JSON.stringify({
         full_name: updatedFields.name,
         role: updatedFields.role || 'member',
+        role_title: updatedFields.roleTitle,
         member_code: updatedFields.memberCode,
         class_name: updatedFields.class,
         department: updatedFields.deptName,

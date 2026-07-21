@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useClub } from '../context/ClubContext';
-import { UserPlus, Sparkles, CheckCircle, ArrowRight, ArrowLeft, Camera, Video, Palette, Music } from 'lucide-react';
+import { UserPlus, Sparkles, CheckCircle, ArrowRight, ArrowLeft, Camera, Video, Palette, Music, Users } from 'lucide-react';
 
 export const JoinUsPage = () => {
   const { triggerConfetti } = useClub();
@@ -34,7 +34,7 @@ export const JoinUsPage = () => {
 
   return (
     <div className="container py-10 space-y-10 max-w-3xl mx-auto pb-20">
-      
+
       {/* Header */}
       <div className="text-center space-y-3">
         <span className="badge badge-purple">Tuyển Thành Viên VMC Gen 6</span>
@@ -48,7 +48,7 @@ export const JoinUsPage = () => {
 
       {!isSubmitted ? (
         <div className="glass-panel p-6 sm:p-10 rounded-3xl border border-purple-500/30 relative shadow-2xl">
-          
+
           {/* Step Indicator */}
           <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/10 text-xs font-semibold">
             {[
@@ -57,13 +57,12 @@ export const JoinUsPage = () => {
               { num: 3, label: 'Động lực & Gửi' }
             ].map(s => (
               <div key={s.num} className="flex items-center gap-2">
-                <span className={`w-7 h-7 rounded-full flex items-center justify-center font-bold ${
-                  step === s.num
+                <span className={`w-7 h-7 rounded-full flex items-center justify-center font-bold ${step === s.num
                     ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
                     : step > s.num
-                    ? 'bg-emerald-500 text-slate-950'
-                    : 'bg-slate-800 text-slate-400'
-                }`}>
+                      ? 'bg-emerald-500 text-slate-950'
+                      : 'bg-slate-800 text-slate-400'
+                  }`}>
                   {s.num}
                 </span>
                 <span className={step === s.num ? 'text-white' : 'text-slate-500'}>
@@ -74,7 +73,7 @@ export const JoinUsPage = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            
+
             {/* Step 1 */}
             {step === 1 && (
               <div className="space-y-4 animate-slide-up">
@@ -158,12 +157,13 @@ export const JoinUsPage = () => {
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-2">Ban bạn muốn ứng tuyển *</label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                     {[
                       { id: 'photo', label: 'Ban Nhiếp Ảnh', icon: Camera },
                       { id: 'media', label: 'Ban Phim & Media', icon: Video },
                       { id: 'design', label: 'Ban Thiết Kế', icon: Palette },
-                      { id: 'music', label: 'Ban Âm Nhạc', icon: Music }
+                      { id: 'music', label: 'Ban Âm Nhạc', icon: Music },
+                      { id: 'advisory', label: 'Ban Cố Vấn', icon: Users }
                     ].map(d => {
                       const Icon = d.icon;
                       const selected = formData.department === d.id;
@@ -171,11 +171,10 @@ export const JoinUsPage = () => {
                         <div
                           key={d.id}
                           onClick={() => setFormData(prev => ({ ...prev, department: d.id }))}
-                          className={`p-4 rounded-xl border text-center cursor-pointer space-y-2 transition-all ${
-                            selected
+                          className={`p-4 rounded-xl border text-center cursor-pointer space-y-2 transition-all ${selected
                               ? 'bg-purple-600/20 border-purple-500 text-purple-300'
                               : 'bg-slate-900 border-white/10 text-slate-400 hover:bg-slate-800'
-                          }`}
+                            }`}
                         >
                           <Icon className="w-6 h-6 mx-auto" />
                           <span className="text-xs font-semibold block">{d.label}</span>

@@ -1,9 +1,7 @@
 import React from 'react';
-import { useClub } from '../context/ClubContext';
-import { 
-  MapPin, 
-  Mail, 
-  Phone, 
+import {
+  MapPin,
+  Mail,
   ArrowUp,
   Camera,
   Share2,
@@ -13,19 +11,17 @@ import {
 } from 'lucide-react';
 
 export const Footer = () => {
-  const { setActiveTab } = useClub();
-
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
-    <footer className="relative bg-slate-950 border-t border-white/10 pt-16 pb-8 overflow-hidden text-slate-400">
+    <footer className="relative bg-slate-950 border-t border-white/10 pt-16 pb-10 overflow-hidden text-slate-400">
       {/* Ambient Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-48 bg-blue-600/10 blur-3xl rounded-full pointer-events-none" />
 
-      <div className="container relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
-        
+      <div className="container relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 mb-10">
+
         {/* Col 1: Brand & Logo */}
         <div className="space-y-4">
           <div className="flex items-center gap-3">
@@ -66,37 +62,15 @@ export const Footer = () => {
           </div>
         </div>
 
-        {/* Col 2: Quick Links */}
+        {/* Col 2: 5 Official Departments */}
         <div>
-          <h4 className="font-heading text-white font-semibold text-base mb-4">Phân Hệ Quản Trị</h4>
-          <ul className="space-y-2.5 text-xs">
-            {[
-              { id: 'dashboard', label: 'Tổng Quan Nội Bộ' },
-              { id: 'tasks', label: 'Bảng Phân Công Nhiệm Vụ 4 Ban' },
-              { id: 'equipment', label: 'Kho Máy Ảnh & Thiết Bị' },
-              { id: 'drafts', label: 'Kịch Bản Radio & Duyệt Bài' },
-              { id: 'resources', label: 'Kho Tài Nguyên File Gốc' },
-              { id: 'members', label: 'Danh Sách Thành Viên' }
-            ].map(tab => (
-              <li key={tab.id}>
-                <button
-                  onClick={() => { setActiveTab(tab.id); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                  className="hover:text-blue-400 transition-colors flex items-center gap-2"
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                  {tab.label}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Col 3: 4 Official Departments */}
-        <div>
-          <h4 className="font-heading text-white font-semibold text-base mb-4">4 Ban Trong CLB VMC</h4>
+          <h4 className="font-heading text-white font-semibold text-base mb-4">5 Ban Trong CLB VMC</h4>
           <ul className="space-y-2.5 text-xs">
             <li className="flex items-center gap-2 text-pink-400 font-semibold">
               <span>👑</span> Ban Chủ Nhiệm
+            </li>
+            <li className="flex items-center gap-2 text-emerald-400 font-semibold">
+              <span>🧭</span> Ban Cố Vấn
             </li>
             <li className="flex items-center gap-2 text-cyan-400 font-semibold">
               <span>🎙️</span> Ban Nội Dung - Phát Thanh
@@ -110,7 +84,7 @@ export const Footer = () => {
           </ul>
         </div>
 
-        {/* Col 4: Contact & Location */}
+        {/* Col 3: Contact & Location */}
         <div>
           <h4 className="font-heading text-white font-semibold text-base mb-4">Địa Chỉ Liên Hệ</h4>
           <ul className="space-y-3 text-xs">
@@ -130,9 +104,13 @@ export const Footer = () => {
         </div>
       </div>
 
+      <div className="container mt-2 mb-6">
+        <div className="border-t border-white/10" />
+      </div>
+
       {/* Bottom Bar */}
-      <div className="container border-t border-white/10 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-        <p>© 2026 CLB Truyền thông Trường THPT Vĩnh Bảo (VMC). All rights reserved.</p>
+      <div className="container pb-4 flex flex-col sm:flex-row items-center sm:items-start justify-between gap-5 text-xs">
+        <p className="leading-relaxed text-center sm:text-left">© 2026 Ban Đối Ngoại - Nhân Sự (VMC). All rights reserved.</p>
         <button
           onClick={scrollToTop}
           className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900 border border-white/10 hover:border-blue-500 text-slate-300 hover:text-white transition-all text-xs"

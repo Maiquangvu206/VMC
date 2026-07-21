@@ -419,10 +419,18 @@ export const ClubProvider = ({ children }) => {
   // Update Member Info by Tech Team & Ban Đối Ngoại - Nhân Sự
   const updateMemberByTech = async (memberId, updatedFields) => {
     const memberObj = db.members.find(m => m.id === memberId || m.memberCode === memberId) || {};
-    const fullPayload = { ...memberObj, ...updatedFields };
+    const nextFields = { ...updatedFields };
+
+    // Chỉ Admin mới được thay đổi quyền truy cập tài khoản.
+    if (!isAdmin) {
+      nextFields.role = memberObj.role;
+      nextFields.roleTitle = memberObj.roleTitle;
+    }
+
+    const fullPayload = { ...memberObj, ...nextFields };
 
     // 1. Sync to Server API Database
-    await updateMemberAPI(updatedFields.memberCode || memberObj.memberCode || memberId, fullPayload);
+    await updateMemberAPI(nextFields.memberCode || memberObj.memberCode || memberId, fullPayload);
 
     // 2. Fetch fresh data directly from MySQL
     const freshMembers = await fetchMembersFromDatabaseAPI();
@@ -435,7 +443,7 @@ export const ClubProvider = ({ children }) => {
     }
 
     if (currentUser.id === memberId) {
-      setCurrentUser(prev => ({ ...prev, ...updatedFields }));
+      setCurrentUser(prev => ({ ...prev, ...nextFields }));
     }
 
     triggerConfetti();

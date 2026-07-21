@@ -24,7 +24,6 @@ import {
   Search,
   Filter,
   Sparkles,
-  History,
   Trash2
 } from 'lucide-react';
 
@@ -36,6 +35,14 @@ const formatGen = (termStr) => {
   if (termStr.includes('2022')) return 'Gen 3';
   return termStr;
 };
+
+const normalizeText = (value) =>
+  String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
 
 export const InternalMembers = () => {
   const {
@@ -83,6 +90,149 @@ export const InternalMembers = () => {
     facebook: 'https://facebook.com/'
   });
 
+  const permissionOptions = [
+    {
+      value: 'chairperson',
+      label: 'Chủ Nhiệm CLB',
+      role: 'admin',
+      roleTitle: 'Chủ Nhiệm CLB',
+      deptName: 'Ban Chủ Nhiệm'
+    },
+    {
+      value: 'vice-chairperson',
+      label: 'Phó Chủ Nhiệm CLB',
+      role: 'member',
+      roleTitle: 'Phó Chủ Nhiệm CLB',
+      deptName: 'Ban Chủ Nhiệm'
+    },
+    {
+      value: 'advisor',
+      label: 'Cố Vấn CLB',
+      role: 'member',
+      roleTitle: 'Cố Vấn CLB',
+      deptName: 'Ban Cố Vấn'
+    },
+    {
+      value: 'head-hr',
+      label: 'Trưởng Ban Đối Ngoại - Nhân Sự',
+      role: 'member',
+      roleTitle: 'Trưởng Ban Đối Ngoại - Nhân Sự',
+      deptName: 'Ban Đối Ngoại - Nhân Sự'
+    },
+    {
+      value: 'technical-hr',
+      label: 'Kỹ Thuật Ban Đối Ngoại - Nhân Sự',
+      role: 'member',
+      roleTitle: 'Kỹ Thuật Ban Đối Ngoại - Nhân Sự',
+      deptName: 'Ban Đối Ngoại - Nhân Sự'
+    },
+    {
+      value: 'vice-hr',
+      label: 'Phó Ban Đối Ngoại - Nhân Sự',
+      role: 'member',
+      roleTitle: 'Phó Ban Đối Ngoại - Nhân Sự',
+      deptName: 'Ban Đối Ngoại - Nhân Sự'
+    },
+    {
+      value: 'member-hr',
+      label: 'Thành Viên Ban Đối Ngoại - Nhân Sự',
+      role: 'member',
+      roleTitle: 'Thành Viên Ban Đối Ngoại - Nhân Sự',
+      deptName: 'Ban Đối Ngoại - Nhân Sự'
+    },
+    {
+      value: 'head-production',
+      label: 'Trưởng Ban Sản Xuất',
+      role: 'member',
+      roleTitle: 'Trưởng Ban Sản Xuất',
+      deptName: 'Ban Sản Xuất'
+    },
+    {
+      value: 'vice-production',
+      label: 'Phó Ban Sản Xuất',
+      role: 'member',
+      roleTitle: 'Phó Ban Sản Xuất',
+      deptName: 'Ban Sản Xuất'
+    },
+    {
+      value: 'member-production',
+      label: 'Thành Viên Ban Sản Xuất',
+      role: 'member',
+      roleTitle: 'Thành Viên Ban Sản Xuất',
+      deptName: 'Ban Sản Xuất'
+    },
+    {
+      value: 'head-content',
+      label: 'Trưởng Ban Nội Dung - Phát Thanh',
+      role: 'member',
+      roleTitle: 'Trưởng Ban Nội Dung - Phát Thanh',
+      deptName: 'Ban Nội Dung - Phát Thanh'
+    },
+    {
+      value: 'vice-content',
+      label: 'Phó Ban Nội Dung - Phát Thanh',
+      role: 'member',
+      roleTitle: 'Phó Ban Nội Dung - Phát Thanh',
+      deptName: 'Ban Nội Dung - Phát Thanh'
+    },
+    {
+      value: 'member-content',
+      label: 'Thành Viên Ban Nội Dung - Phát Thanh',
+      role: 'member',
+      roleTitle: 'Thành Viên Ban Nội Dung - Phát Thanh',
+      deptName: 'Ban Nội Dung - Phát Thanh'
+    }
+  ];
+
+  const resolvePermissionValue = (member) => {
+    if (!member) return 'member-production';
+    const matched = permissionOptions.find(opt =>
+      opt.role === (member.role || 'member') &&
+      opt.roleTitle === member.roleTitle &&
+      opt.deptName === member.deptName
+    );
+    return matched ? matched.value : 'custom';
+  };
+
+  const getPermissionOptionsByDept = (deptName) => {
+    if (!deptName) return [];
+    return permissionOptions.filter(opt => opt.deptName === deptName);
+  };
+
+  const handleEditDepartmentChange = (deptName) => {
+    if (!editingMember) return;
+
+    if (!isAdmin) {
+      setEditingMember({ ...editingMember, deptName });
+      return;
+    }
+
+    const deptPermissionOptions = getPermissionOptionsByDept(deptName);
+    const currentPermission = permissionOptions.find(opt =>
+      opt.role === (editingMember.role || 'member') &&
+      opt.roleTitle === editingMember.roleTitle &&
+      opt.deptName === editingMember.deptName
+    );
+
+    if (currentPermission && currentPermission.deptName === deptName) {
+      setEditingMember({ ...editingMember, deptName });
+      return;
+    }
+
+    const fallbackPermission = deptPermissionOptions[0];
+    if (!fallbackPermission) {
+      setEditingMember({ ...editingMember, deptName });
+      return;
+    }
+
+    setEditingMember({
+      ...editingMember,
+      deptName,
+      role: fallbackPermission.role,
+      roleTitle: fallbackPermission.roleTitle
+    });
+  };
+
   const handleSubmitNewAccount = (e) => {
     e.preventDefault();
     if (!formData.username || !formData.name || !formData.phone) {
@@ -102,21 +252,28 @@ export const InternalMembers = () => {
 
   // Filter Members Logic by Search Query & Period/Term & Department
   const filteredMembers = members.filter(m => {
+    const memberGen = formatGen(m.termName || m.term || '');
+    const memberDept = normalizeText(m.deptName || m.department || '');
+
     // 1. Period / Term match
-    const matchesTerm = selectedTerm === 'ALL' || m.term === selectedTerm || (m.termName && m.termName.includes(selectedTerm));
+    const matchesTerm = selectedTerm === 'ALL' || memberGen === selectedTerm;
 
     // 2. Department match
-    const matchesDept = selectedDept === 'ALL' || m.department === selectedDept || (m.deptName && m.deptName.includes(selectedDept));
+    const selectedDeptNormalized = normalizeText(selectedDept);
+    const matchesDept =
+      selectedDept === 'ALL' ||
+      memberDept === selectedDeptNormalized ||
+      memberDept.includes(selectedDeptNormalized);
 
     // 3. Search text query match
-    const q = searchQuery.toLowerCase().trim();
+    const q = normalizeText(searchQuery);
     const matchesQuery = !q ||
-      m.name?.toLowerCase().includes(q) ||
-      m.memberCode?.toLowerCase().includes(q) ||
-      m.class?.toLowerCase().includes(q) ||
-      m.deptName?.toLowerCase().includes(q) ||
-      m.roleTitle?.toLowerCase().includes(q) ||
-      m.phone?.includes(q);
+      normalizeText(m.name).includes(q) ||
+      normalizeText(m.memberCode).includes(q) ||
+      normalizeText(m.class).includes(q) ||
+      normalizeText(m.deptName || m.department).includes(q) ||
+      normalizeText(m.roleTitle).includes(q) ||
+      normalizeText(m.phone).includes(q);
 
     return matchesTerm && matchesDept && matchesQuery;
   });
@@ -127,11 +284,8 @@ export const InternalMembers = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="badge badge-purple flex items-center gap-1.5 w-fit mb-1.5">
-            <History className="w-3.5 h-3.5" /> Tra Cứu Thành Viên CLB VMC Qua Các Thời Kỳ
-          </span>
           <h1 className="font-heading text-3xl font-extrabold text-white mt-1">
-            Danh Sách Thành Viên & <span className="gradient-text">Tra Cứu Theo Nhiệm Kỳ</span>
+            Danh Sách Thành Viên
           </h1>
           <p className="text-xs text-slate-400 mt-1">
             Tất cả thành viên có quyền tìm kiếm thông tin thành viên qua từng thời kỳ từ khóa sáng lập đến đương nhiệm.
@@ -160,7 +314,9 @@ export const InternalMembers = () => {
 
         {/* Search Input Box */}
         <div className="relative w-full md:w-80 shrink-0">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <div className="absolute left-3.5 inset-y-0 flex items-center pointer-events-none">
+            <Search className="w-4 h-4 text-slate-400" />
+          </div>
           <input
             type="text"
             value={searchQuery}
@@ -169,9 +325,11 @@ export const InternalMembers = () => {
             className="w-full bg-slate-950/70 border border-slate-700/60 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white">
-              <X className="w-3.5 h-3.5" />
-            </button>
+            <div className="absolute right-3 inset-y-0 flex items-center">
+              <button onClick={() => setSearchQuery('')} className="text-slate-400 hover:text-white">
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
           )}
         </div>
 
@@ -211,7 +369,7 @@ export const InternalMembers = () => {
               <option value="ALL">Tất Cả Các Ban</option>
               <option value="Ban Chủ Nhiệm">Ban Chủ Nhiệm</option>
               <option value="Ban Cố Vấn">Ban Cố Vấn</option>
-              <option value="Ban Đối Ngoại - Nhân Sự">Ban Đối Ngoại - Nhân Sự (Kỹ Thuật)</option>
+              <option value="Ban Đối Ngoại - Nhân Sự">Ban Đối Ngoại - Nhân Sự</option>
               <option value="Ban Sản Xuất">Ban Sản Xuất</option>
               <option value="Ban Nội Dung - Phát Thanh">Ban Nội Dung - Phát Thanh</option>
             </select>
@@ -300,13 +458,13 @@ export const InternalMembers = () => {
                     setEditingMember({ ...m });
                   }}
                   className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${isHRMember
-                      ? 'bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950'
-                      : 'bg-slate-800/40 text-slate-500 cursor-not-allowed opacity-60'
+                    ? 'bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950'
+                    : 'bg-slate-800/40 text-slate-500 cursor-not-allowed opacity-60'
                     }`}
                   title={isHRMember ? 'Chỉnh sửa ngày sinh & thông tin (Ban Đối Ngoại - Nhân Sự / Admin)' : 'Chỉ Ban Đối Ngoại - Nhân Sự mới được sửa'}
                 >
                   <Edit className="w-3.5 h-3.5" />
-                  <span>Sửa (Đối Ngoại - Nhân Sự)</span>
+                  <span>Sửa</span>
                 </button>
               </div>
 
@@ -320,8 +478,8 @@ export const InternalMembers = () => {
                     resetAccountPassword(m.username);
                   }}
                   className={`p-2 rounded-lg text-xs transition-all ${isAdmin
-                      ? 'bg-slate-950 hover:bg-slate-800 text-blue-400 border border-blue-500/30'
-                      : 'bg-slate-950 text-slate-600 border border-slate-800 cursor-not-allowed opacity-50'
+                    ? 'bg-slate-950 hover:bg-slate-800 text-blue-400 border border-blue-500/30'
+                    : 'bg-slate-950 text-slate-600 border border-slate-800 cursor-not-allowed opacity-50'
                     }`}
                   title={isAdmin ? 'Reset mật khẩu mặc định VMC2026@VinhBao (Chủ Nhiệm/Admin)' : 'Chỉ Chủ Nhiệm CLB (Admin) mới có quyền cấp / reset mật khẩu'}
                 >
@@ -331,8 +489,8 @@ export const InternalMembers = () => {
                 <button
                   onClick={() => toggleAccountStatus(m.id)}
                   className={`p-2 rounded-lg text-xs font-semibold transition-all ${m.status === 'Active'
-                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                      : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                    : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                     }`}
                   title={m.status === 'Active' ? 'Tạm khóa tài khoản' : 'Mở khóa'}
                 >
@@ -343,8 +501,8 @@ export const InternalMembers = () => {
                 <button
                   onClick={() => deleteMemberAccount(m.id)}
                   className={`p-2 rounded-lg text-xs font-semibold transition-all ${isAdmin
-                      ? 'bg-rose-500/20 text-rose-400 hover:bg-rose-600 hover:text-white border border-rose-500/30'
-                      : 'bg-slate-800/40 text-slate-500 border border-slate-800 cursor-not-allowed opacity-60'
+                    ? 'bg-rose-500/20 text-rose-400 hover:bg-rose-600 hover:text-white border border-rose-500/30'
+                    : 'bg-slate-800/40 text-slate-500 border border-slate-800 cursor-not-allowed opacity-60'
                     }`}
                   title={isAdmin ? 'Xóa vĩnh viễn tài khoản thành viên (Chủ Nhiệm/Admin)' : 'Chỉ Chủ Nhiệm CLB (Super Admin) mới có quyền xóa tài khoản'}
                 >
@@ -439,7 +597,7 @@ export const InternalMembers = () => {
                 </div>
                 <div>
                   <h3 className="font-heading font-bold text-base text-white">Chỉnh Sửa Thông Tin Thành Viên</h3>
-                  <span className="text-xs text-amber-400 font-mono">Quyền Kỹ Thuật • Mã TV: {editingMember.memberCode}</span>
+                  <span className="text-xs text-amber-400 font-mono">Mã TV: {editingMember.memberCode}</span>
                 </div>
               </div>
               <button onClick={() => setEditingMember(null)} className="text-slate-400 hover:text-white">
@@ -450,7 +608,7 @@ export const InternalMembers = () => {
             <form onSubmit={handleTechUpdateMember} className="space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-400 mb-1">1. Mã Thành Viên (Kỹ thuật sếp cấp)</label>
+                  <label className="block text-slate-400 mb-1">1. Mã Thành Viên</label>
                   <input
                     type="text"
                     required
@@ -486,11 +644,12 @@ export const InternalMembers = () => {
                   <label className="block text-slate-400 mb-1">4. Ban Chuyên Môn</label>
                   <select
                     value={editingMember.deptName}
-                    onChange={(e) => setEditingMember({ ...editingMember, deptName: e.target.value })}
+                    onChange={(e) => handleEditDepartmentChange(e.target.value)}
                     className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white"
                   >
                     <option value="Ban Chủ Nhiệm">Ban Chủ Nhiệm</option>
-                    <option value="Ban Đối Ngoại - Nhân Sự (Kỹ Thuật)">Ban Đối Ngoại - Nhân Sự (Kỹ Thuật)</option>
+                    <option value="Ban Cố Vấn">Ban Cố Vấn</option>
+                    <option value="Ban Đối Ngoại - Nhân Sự">Ban Đối Ngoại - Nhân Sự</option>
                     <option value="Ban Sản Xuất">Ban Sản Xuất</option>
                     <option value="Ban Nội Dung - Phát Thanh">Ban Nội Dung - Phát Thanh</option>
                   </select>
@@ -508,6 +667,31 @@ export const InternalMembers = () => {
                       }`}
                   />
                 </div>
+
+                {isAdmin && (
+                  <div>
+                    <label className="block text-slate-400 mb-1">Quyền Tài Khoản</label>
+                    <select
+                      value={resolvePermissionValue(editingMember)}
+                      onChange={(e) => {
+                        const selectedPreset = permissionOptions.find(opt => opt.value === e.target.value);
+                        if (!selectedPreset) return;
+                        setEditingMember({
+                          ...editingMember,
+                          role: selectedPreset.role,
+                          roleTitle: selectedPreset.roleTitle,
+                          deptName: selectedPreset.deptName
+                        });
+                      }}
+                      className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-medium"
+                    >
+                      <option value="custom">Tùy chỉnh thủ công</option>
+                      {getPermissionOptionsByDept(editingMember?.deptName).map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-slate-400 mb-1">Thế Hệ (Gen)</label>
@@ -564,7 +748,6 @@ export const InternalMembers = () => {
                 <label className="block text-slate-400 mb-1">9. Địa Chỉ Thường Trú</label>
                 <input
                   type="text"
-                  required
                   value={editingMember.address}
                   onChange={(e) => setEditingMember({ ...editingMember, address: e.target.value })}
                   className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white"
@@ -595,7 +778,7 @@ export const InternalMembers = () => {
                   className="btn-primary text-xs px-6 py-2 shadow-amber-600/30 flex items-center gap-2"
                 >
                   <Save className="w-4 h-4" />
-                  <span>Lưu Thay Đổi (Kỹ Thuật)</span>
+                  <span>Lưu Thay Đổi</span>
                 </button>
               </div>
             </form>
@@ -672,7 +855,7 @@ export const InternalMembers = () => {
                   >
                     <option value="Ban Chủ Nhiệm">Ban Chủ Nhiệm</option>
                     <option value="Ban Cố Vấn">Ban Cố Vấn</option>
-                    <option value="Ban Đối Ngoại - Nhân Sự">Ban Đối Ngoại - Nhân Sự (Kỹ Thuật)</option>
+                    <option value="Ban Đối Ngoại - Nhân Sự">Ban Đối Ngoại - Nhân Sự</option>
                     <option value="Ban Sản Xuất">Ban Sản Xuất Media</option>
                     <option value="Ban Nội Dung - Phát Thanh">Ban Nội Dung - Phát Thanh</option>
                   </select>

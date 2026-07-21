@@ -74,7 +74,7 @@ app.get('/api/members', async (req, res) => {
       ORDER BY id ASC
     `;
     const members = await queryDatabase(sql);
-    
+
     res.json({
       success: true,
       total: members.length,
@@ -108,7 +108,7 @@ app.get('/api/members', async (req, res) => {
 // API Endpoint 3: PUT /api/members/:id - Cập nhật thông tin thành viên
 app.put('/api/members/:id', async (req, res) => {
   const { id } = req.params;
-  const { full_name, role, member_code, class_name, department, phone, dob, email } = req.body;
+  const { full_name, role, role_title, member_code, class_name, department, phone, dob, email } = req.body;
 
   try {
     const sql = `
@@ -116,6 +116,7 @@ app.put('/api/members/:id', async (req, res) => {
       SET 
         full_name = COALESCE(?, full_name), 
         role = COALESCE(?, role), 
+        role_title = COALESCE(?, role_title),
         member_code = COALESCE(?, member_code), 
         class_name = COALESCE(?, class_name), 
         department = COALESCE(?, department), 
@@ -124,8 +125,8 @@ app.put('/api/members/:id', async (req, res) => {
         email = COALESCE(?, email) 
       WHERE (id = ? OR UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?))
     `;
-    const result = await queryDatabase(sql, [full_name, role, member_code, class_name, department, phone, dob, email, id, id, id]);
-    
+    const result = await queryDatabase(sql, [full_name, role, role_title, member_code, class_name, department, phone, dob, email, id, id, id]);
+
     console.log(`✅ Đã cập nhật CSDL MySQL thành công cho ID/Code: [${id}]`);
     res.json({
       success: true,
@@ -151,18 +152,18 @@ app.post('/api/members/create', async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, 'Active')
     `;
     await queryDatabase(sql, [
-      member_code, 
-      username || member_code.toLowerCase(), 
-      password || 'VMC2026@VinhBao', 
-      full_name, 
-      role || 'member', 
-      role_title || 'Thành Viên VMC', 
-      class_name, 
-      department, 
-      term || '2025-2026', 
-      avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=400', 
-      phone, 
-      email, 
+      member_code,
+      username || member_code.toLowerCase(),
+      password || 'VMC2026@VinhBao',
+      full_name,
+      role || 'member',
+      role_title || 'Thành Viên VMC',
+      class_name,
+      department,
+      term || '2025-2026',
+      avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=400',
+      phone,
+      email,
       dob
     ]);
 
