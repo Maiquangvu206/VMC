@@ -330,7 +330,7 @@ export const ClubProvider = ({ children }) => {
   };
 
   // Update Self Profile
-  const updateSelfProfile = (selfData) => {
+  const updateSelfProfile = async (selfData) => {
     const updatedUser = {
       ...currentUser,
       phone: selfData.phone !== undefined ? selfData.phone : currentUser.phone,
@@ -341,6 +341,9 @@ export const ClubProvider = ({ children }) => {
       avatar: selfData.avatar || currentUser.avatar
     };
 
+    // 1. Sync to Server API Database
+    await updateMemberAPI(currentUser.memberCode || currentUser.id, updatedUser);
+
     setCurrentUser(updatedUser);
 
     updateDb(prev => ({
@@ -349,13 +352,16 @@ export const ClubProvider = ({ children }) => {
     }));
 
     triggerConfetti();
-    alert('🎉 Đã cập nhật thành công thông tin hồ sơ và ảnh đại diện!');
+    alert('🎉 Đã cập nhật thành công thông tin hồ sơ vào CSDL!');
   };
 
   // Update Member Info by Tech Team & Ban Đối Ngoại - Nhân Sự
   const updateMemberByTech = async (memberId, updatedFields) => {
+    const memberObj = db.members.find(m => m.id === memberId || m.memberCode === memberId) || {};
+    const fullPayload = { ...memberObj, ...updatedFields };
+
     // 1. Sync to Server API Database
-    await updateMemberAPI(memberId, updatedFields);
+    await updateMemberAPI(updatedFields.memberCode || memberObj.memberCode || memberId, fullPayload);
 
     // 2. Update local state & storage
     updateDb(prev => ({

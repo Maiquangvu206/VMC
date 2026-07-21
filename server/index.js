@@ -114,18 +114,19 @@ app.put('/api/members/:id', async (req, res) => {
     const sql = `
       UPDATE Members 
       SET 
-        full_name = ?, 
-        role = ?, 
-        member_code = ?, 
-        class_name = ?, 
-        department = ?, 
-        phone = ?, 
-        dob = ?, 
-        email = ? 
-      WHERE id = ?
+        full_name = COALESCE(?, full_name), 
+        role = COALESCE(?, role), 
+        member_code = COALESCE(?, member_code), 
+        class_name = COALESCE(?, class_name), 
+        department = COALESCE(?, department), 
+        phone = COALESCE(?, phone), 
+        dob = COALESCE(?, dob), 
+        email = COALESCE(?, email) 
+      WHERE (id = ? OR UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?))
     `;
-    await queryDatabase(sql, [full_name, role, member_code, class_name, department, phone, dob, email, id]);
+    const result = await queryDatabase(sql, [full_name, role, member_code, class_name, department, phone, dob, email, id, id, id]);
     
+    console.log(`✅ Đã cập nhật CSDL MySQL thành công cho ID/Code: [${id}]`);
     res.json({
       success: true,
       message: 'Đã cập nhật thông tin thành viên vào CSDL SQL!'
