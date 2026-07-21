@@ -28,6 +28,15 @@ import {
   Trash2
 } from 'lucide-react';
 
+const formatGen = (termStr) => {
+  if (!termStr) return 'Gen 6';
+  if (termStr.includes('2025') || termStr.includes('2026')) return 'Gen 6';
+  if (termStr.includes('2024')) return 'Gen 5';
+  if (termStr.includes('2023')) return 'Gen 4';
+  if (termStr.includes('2022')) return 'Gen 3';
+  return termStr;
+};
+
 export const InternalMembers = () => {
   const {
     members,
@@ -251,7 +260,7 @@ export const InternalMembers = () => {
                 <div className="flex justify-between items-center gap-2">
                   <span className="text-slate-400 shrink-0">Thế hệ:</span>
                   <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/15 text-purple-300 border border-purple-500/30 truncate">
-                    {m.term || m.termName || 'Gen 6'}
+                    {formatGen(m.term)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center gap-2">
@@ -357,7 +366,7 @@ export const InternalMembers = () => {
                 <img src={selectedMember.avatar} alt={selectedMember.name} className="w-10 h-10 rounded-full object-cover" />
                 <div>
                   <h3 className="font-heading font-bold text-base text-white">{selectedMember.name}</h3>
-                  <span className="text-xs text-purple-400 font-mono">{selectedMember.termName || 'Nhiệm Kỳ 2025 - 2026'}</span>
+                  <span className="text-xs text-purple-400 font-mono">{formatGen(selectedMember.term)}</span>
                 </div>
               </div>
               <button onClick={() => setSelectedMember(null)} className="text-slate-400 hover:text-white">
