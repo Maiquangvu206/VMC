@@ -1,0 +1,40 @@
+name: Deploy React Vite App to Server
+
+on:
+  push:
+    branches:
+      - main # Hoặc đổi thành 'master' nếu branch chính của bạn tên là master
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Lấy code từ GitHub về runner
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Cài đặt Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      # 3. Cài đặt thư viện và Build dự án
+      - name: Install dependencies & Build
+        run: |
+          npm ci
+          npm run build
+
+      # 4. Push thư mục dist sang máy chủ Ubuntu qua SSH
+      - name: Copy files to Server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "dist/*"
+          target: "/var/www/html"
+          strip_components: 1
+          rm: true # Xóa code cũ trong /var/www/html trước khi chép code mới
