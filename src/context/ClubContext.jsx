@@ -18,6 +18,14 @@ export const ClubProvider = ({ children }) => {
   // Dynamic Database State Initialization
   const [db, setDb] = useState(() => {
     const loaded = loadDatabaseFromStorage();
+    if (loaded && Array.isArray(loaded.members)) {
+      loaded.members = loaded.members.map(m => {
+        if (m.memberCode === 'ADMIN' && m.name === 'Vũ Mai Quang') {
+          return { ...m, name: 'Vũ Hoàng Long' };
+        }
+        return m;
+      });
+    }
     if (!loaded.attendanceRecords) {
       loaded.attendanceRecords = [
         {
@@ -39,27 +47,38 @@ export const ClubProvider = ({ children }) => {
   const equipment = db.equipment;
   const drafts = db.drafts;
 
-  // Sync Members Database from Server API on Initial Load
+  // Automatic Real-Time Silent Sync with MySQL Database (No manual button click needed!)
   useEffect(() => {
-    const syncServerMembers = async () => {
-      const serverMembers = await fetchMembersFromDatabaseAPI();
-      if (serverMembers && Array.isArray(serverMembers) && serverMembers.length > 0) {
-        setDb(prev => {
-          const updated = { ...prev, members: serverMembers };
-          saveDatabaseToStorage(updated);
-          return updated;
-        });
+    let isMounted = true;
 
-        // Also update currentUser if currently logged in
-        if (currentUser) {
-          const matchedUser = serverMembers.find(m => m.id === currentUser.id || m.memberCode === currentUser.memberCode || m.username === currentUser.username);
-          if (matchedUser) {
-            setCurrentUser(prev => ({ ...prev, ...matchedUser }));
-          }
+    const silentAutoSync = async () => {
+      try {
+        const serverMembers = await fetchMembersFromDatabaseAPI();
+        if (isMounted && serverMembers && Array.isArray(serverMembers) && serverMembers.length > 0) {
+          setDb(prev => {
+            const isDifferent = JSON.stringify(prev.members) !== JSON.stringify(serverMembers);
+            if (isDifferent) {
+              const updated = { ...prev, members: serverMembers };
+              saveDatabaseToStorage(updated);
+              return updated;
+            }
+            return prev;
+          });
         }
+      } catch (err) {
+        // Silent background fallback
       }
     };
-    syncServerMembers();
+
+    // Immediate initial sync on page mount
+    silentAutoSync();
+
+    // Auto-sync polling every 3 seconds
+    const syncInterval = setInterval(silentAutoSync, 3000);
+    return () => {
+      isMounted = false;
+      clearInterval(syncInterval);
+    };
   }, []);
   const announcements = db.announcements;
   const resources = db.resources || [];

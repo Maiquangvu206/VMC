@@ -3,8 +3,8 @@ import mysql from 'mysql2/promise';
 // Cấu hình Connection Pool kết nối CSDL SQL
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '123456',
+  user: process.env.DB_USER || 'vmc_admin',
+  password: process.env.DB_PASSWORD || 'VMC2026@VinhBao',
   database: process.env.DB_NAME || 'vmc_portal',
   port: Number(process.env.DB_PORT) || 3306,
   waitForConnections: true,
