@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { 
-  loadDatabaseFromStorage, 
-  saveDatabaseToStorage, 
-  resetDatabaseToDefault, 
-  exportDatabaseJSON, 
-  importDatabaseJSON 
+import {
+  loadDatabaseFromStorage,
+  saveDatabaseToStorage,
+  resetDatabaseToDefault,
+  exportDatabaseJSON,
+  importDatabaseJSON
 } from '../services/dbService';
 import { fetchMembersFromDatabaseAPI, loginMemberAPI, createMemberAPI, updateMemberAPI } from '../services/api';
 
@@ -14,7 +14,7 @@ const ClubContext = createContext();
 export const ClubProvider = ({ children }) => {
   const [theme, setTheme] = useState('dark');
   const [activeTab, setActiveTab] = useState('dashboard');
-  
+
   // Dynamic Database State Initialization
   const [db, setDb] = useState(() => {
     const loaded = loadDatabaseFromStorage();
@@ -150,7 +150,7 @@ export const ClubProvider = ({ children }) => {
     currentUser?.memberCode === 'ADMIN' ||
     currentUser?.roleTitle?.includes('Super Admin') ||
     currentUser?.roleTitle?.includes('Chủ Nhiệm') ||
-    currentUser?.deptName?.includes('Đối Ngoại') || 
+    currentUser?.deptName?.includes('Đối Ngoại') ||
     currentUser?.deptName?.includes('Nhân Sự')
   );
 
@@ -235,7 +235,7 @@ export const ClubProvider = ({ children }) => {
     }
 
     // 2. Fallback matching for demo environment
-    const user = db.members.find(m => 
+    const user = db.members.find(m =>
       (m.memberCode?.toUpperCase() === memberCode.toUpperCase() || m.username?.toLowerCase() === memberCode.toLowerCase())
     );
 
@@ -328,7 +328,7 @@ export const ClubProvider = ({ children }) => {
   const updateDepartmentDrive = (deptId, newDriveUrl) => {
     updateDb(prev => ({
       ...prev,
-      departmentDrives: (prev.departmentDrives || []).map(d => 
+      departmentDrives: (prev.departmentDrives || []).map(d =>
         d.id === deptId ? { ...d, driveUrl: newDriveUrl } : d
       )
     }));
@@ -740,4 +740,5 @@ export const ClubProvider = ({ children }) => {
   );
 };
 
+export const useClub = () => useContext(ClubContext);
 export const useClub = () => useContext(ClubContext);

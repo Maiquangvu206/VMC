@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useClub } from '../context/ClubContext';
-import { 
-  Users, 
-  Award, 
-  ShieldCheck, 
-  Phone, 
-  UserPlus, 
-  Lock, 
-  RefreshCw, 
+import {
+  Users,
+  Award,
+  ShieldCheck,
+  Phone,
+  UserPlus,
+  Lock,
+  RefreshCw,
   X,
   Laptop,
   Mail,
@@ -29,13 +29,13 @@ import {
 } from 'lucide-react';
 
 export const InternalMembers = () => {
-  const { 
-    members, 
-    currentUser, 
+  const {
+    members,
+    currentUser,
     isHRMember,
-    createMemberAccount, 
+    createMemberAccount,
     deleteMemberAccount,
-    resetAccountPassword, 
+    resetAccountPassword,
     toggleAccountStatus,
     updateMemberByTech,
     isNewAccountModalOpen,
@@ -101,7 +101,7 @@ export const InternalMembers = () => {
 
     // 3. Search text query match
     const q = searchQuery.toLowerCase().trim();
-    const matchesQuery = !q || 
+    const matchesQuery = !q ||
       m.name?.toLowerCase().includes(q) ||
       m.memberCode?.toLowerCase().includes(q) ||
       m.class?.toLowerCase().includes(q) ||
@@ -114,7 +114,7 @@ export const InternalMembers = () => {
 
   return (
     <div className="container py-8 space-y-8 pb-20">
-      
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -137,9 +137,8 @@ export const InternalMembers = () => {
             }
             setIsNewAccountModalOpen(true);
           }}
-          className={`btn-primary text-xs px-5 py-2.5 shadow-blue-600/40 shrink-0 ${
-            !isAdmin ? 'opacity-60 cursor-not-allowed' : ''
-          }`}
+          className={`btn-primary text-xs px-5 py-2.5 shadow-blue-600/40 shrink-0 ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''
+            }`}
           title={isAdmin ? 'Cấp tài khoản mới (Admin)' : 'Chỉ Chủ Nhiệm CLB (Admin) mới có quyền cấp tài khoản mới'}
         >
           <UserPlus className="w-4 h-4" />
@@ -149,7 +148,7 @@ export const InternalMembers = () => {
 
       {/* Toolbar: Search Input + Period Select + Department Select */}
       <div className="glass-card p-4 rounded-2xl border border-white/10 bg-slate-900/80 backdrop-blur-md flex flex-col md:flex-row items-center gap-4 justify-between shadow-xl">
-        
+
         {/* Search Input Box */}
         <div className="relative w-full md:w-80 shrink-0">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -169,7 +168,7 @@ export const InternalMembers = () => {
 
         {/* Filter Dropdowns */}
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          
+
           {/* Period / Term Selector */}
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-slate-400 whitespace-nowrap flex items-center gap-1">
@@ -215,7 +214,7 @@ export const InternalMembers = () => {
       <div className="flex items-center justify-between text-xs text-slate-400 px-1">
         <span>Hiển thị <strong className="text-white font-bold">{filteredMembers.length}</strong> / {members.length} thành viên</span>
         {(searchQuery || selectedTerm !== 'ALL' || selectedDept !== 'ALL') && (
-          <button 
+          <button
             onClick={() => { setSearchQuery(''); setSelectedTerm('ALL'); setSelectedDept('ALL'); }}
             className="text-blue-400 hover:underline flex items-center gap-1 text-xs"
           >
@@ -233,7 +232,7 @@ export const InternalMembers = () => {
           >
             {/* Upper Content Box (flex-1 to fill space evenly) */}
             <div className="flex-1 flex flex-col justify-between space-y-4 mb-4">
-              
+
               {/* Header: Avatar + Identity Info */}
               <div className="flex items-center gap-4 min-w-0">
                 <img src={m.avatar} alt={m.name} className="w-14 h-14 rounded-full object-cover border-2 border-blue-500/50 shrink-0" />
@@ -290,11 +289,10 @@ export const InternalMembers = () => {
                     }
                     setEditingMember({ ...m });
                   }}
-                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                    isHRMember
+                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${isHRMember
                       ? 'bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950'
                       : 'bg-slate-800/40 text-slate-500 cursor-not-allowed opacity-60'
-                  }`}
+                    }`}
                   title={isHRMember ? 'Chỉnh sửa ngày sinh & thông tin (Ban Đối Ngoại - Nhân Sự / Admin)' : 'Chỉ Ban Đối Ngoại - Nhân Sự mới được sửa'}
                 >
                   <Edit className="w-3.5 h-3.5" />
@@ -311,11 +309,10 @@ export const InternalMembers = () => {
                     }
                     resetAccountPassword(m.username);
                   }}
-                  className={`p-2 rounded-lg text-xs transition-all ${
-                    isAdmin 
-                      ? 'bg-slate-950 hover:bg-slate-800 text-blue-400 border border-blue-500/30' 
+                  className={`p-2 rounded-lg text-xs transition-all ${isAdmin
+                      ? 'bg-slate-950 hover:bg-slate-800 text-blue-400 border border-blue-500/30'
                       : 'bg-slate-950 text-slate-600 border border-slate-800 cursor-not-allowed opacity-50'
-                  }`}
+                    }`}
                   title={isAdmin ? 'Reset mật khẩu mặc định VMC2026@VinhBao (Chủ Nhiệm/Admin)' : 'Chỉ Chủ Nhiệm CLB (Admin) mới có quyền cấp / reset mật khẩu'}
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
@@ -323,11 +320,10 @@ export const InternalMembers = () => {
 
                 <button
                   onClick={() => toggleAccountStatus(m.id)}
-                  className={`p-2 rounded-lg text-xs font-semibold transition-all ${
-                    m.status === 'Active'
+                  className={`p-2 rounded-lg text-xs font-semibold transition-all ${m.status === 'Active'
                       ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                       : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                  }`}
+                    }`}
                   title={m.status === 'Active' ? 'Tạm khóa tài khoản' : 'Mở khóa'}
                 >
                   <Lock className="w-3.5 h-3.5" />
@@ -336,11 +332,10 @@ export const InternalMembers = () => {
                 {/* Nút Xóa Tài Khoản (Chỉ Admin / Chủ Nhiệm mới được phép) */}
                 <button
                   onClick={() => deleteMemberAccount(m.id)}
-                  className={`p-2 rounded-lg text-xs font-semibold transition-all ${
-                    isAdmin 
-                      ? 'bg-rose-500/20 text-rose-400 hover:bg-rose-600 hover:text-white border border-rose-500/30' 
+                  className={`p-2 rounded-lg text-xs font-semibold transition-all ${isAdmin
+                      ? 'bg-rose-500/20 text-rose-400 hover:bg-rose-600 hover:text-white border border-rose-500/30'
                       : 'bg-slate-800/40 text-slate-500 border border-slate-800 cursor-not-allowed opacity-60'
-                  }`}
+                    }`}
                   title={isAdmin ? 'Xóa vĩnh viễn tài khoản thành viên (Chủ Nhiệm/Admin)' : 'Chỉ Chủ Nhiệm CLB (Super Admin) mới có quyền xóa tài khoản'}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -499,9 +494,8 @@ export const InternalMembers = () => {
                     disabled={!isAdmin}
                     value={editingMember.roleTitle}
                     onChange={(e) => setEditingMember({ ...editingMember, roleTitle: e.target.value })}
-                    className={`w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-semibold ${
-                      !isAdmin ? 'opacity-60 cursor-not-allowed' : ''
-                    }`}
+                    className={`w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-semibold ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''
+                      }`}
                   />
                 </div>
 
