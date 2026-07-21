@@ -87,7 +87,9 @@ const apiPlugin = () => ({
       }
     });
 
-    server.middlewares.use(app);
+    server.middlewares.use((req, res, next) => {
+      app(req, res, next);
+    });
   }
 });
 
@@ -100,6 +102,13 @@ export default defineConfig({
   ],
   server: {
     host: true,
-    allowedHosts: true
+    allowedHosts: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false
+      }
+    }
   }
 });
