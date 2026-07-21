@@ -7,7 +7,7 @@ import {
   exportDatabaseJSON, 
   importDatabaseJSON 
 } from '../services/dbService';
-import { fetchMembersFromDatabaseAPI, loginMemberAPI, createMemberAPI } from '../services/api';
+import { fetchMembersFromDatabaseAPI, loginMemberAPI, createMemberAPI, updateMemberAPI } from '../services/api';
 
 const ClubContext = createContext();
 
@@ -352,8 +352,12 @@ export const ClubProvider = ({ children }) => {
     alert('🎉 Đã cập nhật thành công thông tin hồ sơ và ảnh đại diện!');
   };
 
-  // Update Member Info by Tech Team
-  const updateMemberByTech = (memberId, updatedFields) => {
+  // Update Member Info by Tech Team & Ban Đối Ngoại - Nhân Sự
+  const updateMemberByTech = async (memberId, updatedFields) => {
+    // 1. Sync to Server API Database
+    await updateMemberAPI(memberId, updatedFields);
+
+    // 2. Update local state & storage
     updateDb(prev => ({
       ...prev,
       members: prev.members.map(m => m.id === memberId ? { ...m, ...updatedFields } : m)
@@ -364,7 +368,7 @@ export const ClubProvider = ({ children }) => {
     }
 
     triggerConfetti();
-    alert('Bộ Phận Kỹ Thuật đã cập nhật thành công hồ sơ thành viên!');
+    alert('🎉 Đã cập nhật thành công thông tin thành viên vào CSDL SQL Server!');
   };
 
   // Add Role Milestone to a Member (Ban ĐN-NS & Admin)

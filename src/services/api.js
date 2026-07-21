@@ -74,3 +74,29 @@ export const createMemberAPI = async (newAcc) => {
     return { success: false, message: error.message };
   }
 };
+
+// Secure Update Member API
+export const updateMemberAPI = async (memberId, updatedFields) => {
+  try {
+    const response = await fetch(`/api/members/${memberId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        full_name: updatedFields.name,
+        role: updatedFields.role || 'member',
+        member_code: updatedFields.memberCode,
+        class_name: updatedFields.class,
+        department: updatedFields.deptName,
+        phone: updatedFields.phone,
+        dob: updatedFields.dob,
+        email: updatedFields.email
+      })
+    });
+    return await response.json();
+  } catch (error) {
+    console.warn('⚠️ Server Update API offline:', error.message);
+    return { success: false, message: error.message };
+  }
+};
