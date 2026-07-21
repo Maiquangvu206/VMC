@@ -38,4 +38,4 @@ jobs:
           echo "🎉 Build thành công! Dự án đã sẵn sàng."
           echo "=========================================="
           # Nếu Vũ dùng PM2 để quản lý backend thì bỏ dấu # ở dòng dưới:
-          # pm2 restart all || pm2 start server/index.js --name "vmc-server"
+          pm2 restart all || pm2 start server/index.js --name "vmc-server"
