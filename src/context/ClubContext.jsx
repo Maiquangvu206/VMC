@@ -34,14 +34,6 @@ export const ClubProvider = ({ children }) => {
   // Dynamic Database State Initialization
   const [db, setDb] = useState(() => {
     const loaded = loadDatabaseFromStorage();
-    if (loaded && Array.isArray(loaded.members)) {
-      loaded.members = loaded.members.map(m => {
-        if (m.memberCode === 'ADMIN' && m.name === 'Vũ Mai Quang') {
-          return { ...m, name: 'Vũ Hoàng Long' };
-        }
-        return m;
-      });
-    }
     if (!loaded.attendanceRecords) {
       loaded.attendanceRecords = [
         {

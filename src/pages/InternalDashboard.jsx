@@ -13,7 +13,8 @@ import {
   Mic,
   Film,
   Handshake,
-  Users
+  Users,
+  Award
 } from 'lucide-react';
 
 export const InternalDashboard = () => {
@@ -47,7 +48,8 @@ export const InternalDashboard = () => {
     bcn: Crown,
     content_radio: Mic,
     production: Film,
-    hr_external: Handshake
+    hr_external: Handshake,
+    advisory: Award
   };
 
   return (

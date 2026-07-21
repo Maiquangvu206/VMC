@@ -37,6 +37,14 @@ export const CLUB_INFO = {
       count: 0, 
       lead: "Trưởng Ban Đối Ngoại - Nhân Sự",
       desc: "Quản lý nhân sự, điểm danh sinh hoạt, quản trị hệ thống kỹ thuật portal VMC và xin tài trợ sự kiện."
+    },
+    { 
+      id: "advisory", 
+      name: "Ban Cố Vấn", 
+      icon: "Award",
+      count: 0, 
+      lead: "Cố Vấn CLB",
+      desc: "Cố vấn định hướng chiến lược, hỗ trợ chuyên môn, tư vấn phát triển và giám sát hoạt động cho CLB VMC."
     }
   ]
 };

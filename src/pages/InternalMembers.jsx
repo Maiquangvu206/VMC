@@ -201,9 +201,10 @@ export const InternalMembers = () => {
             >
               <option value="ALL">Tất Cả Các Ban</option>
               <option value="Ban Chủ Nhiệm">Ban Chủ Nhiệm</option>
+              <option value="Ban Cố Vấn">Ban Cố Vấn</option>
               <option value="Ban Đối Ngoại - Nhân Sự">Ban Đối Ngoại - Nhân Sự (Kỹ Thuật)</option>
               <option value="Ban Sản Xuất">Ban Sản Xuất</option>
-              <option value="Ban Nội Dung">Ban Nội Dung - Phát Thanh</option>
+              <option value="Ban Nội Dung - Phát Thanh">Ban Nội Dung - Phát Thanh</option>
             </select>
           </div>
 
@@ -661,9 +662,10 @@ export const InternalMembers = () => {
                     className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white"
                   >
                     <option value="Ban Chủ Nhiệm">Ban Chủ Nhiệm</option>
+                    <option value="Ban Cố Vấn">Ban Cố Vấn</option>
                     <option value="Ban Đối Ngoại - Nhân Sự">Ban Đối Ngoại - Nhân Sự (Kỹ Thuật)</option>
-                    <option value="Ban Sản Xuất">Ban Sản Xuất</option>
-                    <option value="Ban Nội Dung">Ban Nội Dung - Phát Thanh</option>
+                    <option value="Ban Sản Xuất">Ban Sản Xuất Media</option>
+                    <option value="Ban Nội Dung - Phát Thanh">Ban Nội Dung - Phát Thanh</option>
                   </select>
                 </div>
 
