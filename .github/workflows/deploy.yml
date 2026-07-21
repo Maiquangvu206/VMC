@@ -1,40 +1,41 @@
-name: Deploy React Vite App to Server
+name: Deploy VMC Application
 
 on:
   push:
-    branches:
-      - main # Hoặc đổi thành 'master' nếu branch chính của bạn tên là master
+    branches: [ "main" ] # Đổi thành "master" nếu branch chính của Vũ tên là master
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: self-hosted
 
     steps:
-      # 1. Lấy code từ GitHub về runner
+      # 1. Kéo code mới nhất từ GitHub về máy ASUS
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Cài đặt Node.js
+      # 2. Cài đặt Node.js môi trường
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: '20'
 
-      # 3. Cài đặt thư viện và Build dự án
-      - name: Install dependencies & Build
+      # 3. Build phần Frontend (React + Vite)
+      - name: Install & Build Frontend
         run: |
           npm ci
           npm run build
 
-      # 4. Push thư mục dist sang máy chủ Ubuntu qua SSH
-      - name: Copy files to Server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "dist/*"
-          target: "/var/www/html"
-          strip_components: 1
-          rm: true # Xóa code cũ trong /var/www/html trước khi chép code mới
+      # 4. Cài đặt dependencies cho phần Backend (Server)
+      - name: Install Server Dependencies
+        run: |
+          cd server
+          npm install
+
+      # 5. Khởi động lại Server/App (Dùng PM2 hoặc chạy trực tiếp)
+      - name: Restart Server
+        run: |
+          echo "=========================================="
+          echo "🎉 Build thành công! Dự án đã sẵn sàng."
+          echo "=========================================="
+          # Nếu Vũ dùng PM2 để quản lý backend thì bỏ dấu # ở dòng dưới:
+          # pm2 restart all || pm2 start server/index.js --name "vmc-server"
