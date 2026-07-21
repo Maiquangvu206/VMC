@@ -28,10 +28,20 @@ export const InternalDashboard = () => {
     setIsNewDraftModalOpen
   } = useClub();
 
-  const doingTasks = tasks.filter(t => t.status === 'doing');
-  const doneTasks = tasks.filter(t => t.status === 'done');
-  const pendingDrafts = drafts.filter(d => d.status === 'pending');
-  const borrowedEquipment = equipment.filter(e => e.status === 'borrowed');
+  const safeUser = currentUser || {
+    name: 'Thành Viên VMC',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
+    roleTitle: 'Thành Viên VMC',
+    memberCode: 'VMC-MEMBER',
+    class: '12A1',
+    deptName: 'Ban Chủ Nhiệm',
+    points: 100
+  };
+
+  const doingTasks = (tasks || []).filter(t => t?.status === 'doing');
+  const doneTasks = (tasks || []).filter(t => t?.status === 'done');
+  const pendingDrafts = (drafts || []).filter(d => d?.status === 'pending');
+  const borrowedEquipment = (equipment || []).filter(e => e?.status === 'borrowed');
 
   const deptIcons = {
     bcn: Crown,
@@ -51,20 +61,20 @@ export const InternalDashboard = () => {
           
           <div className="flex items-center gap-4">
             <div className="relative w-16 h-16 rounded-2xl overflow-hidden p-0.5 bg-gradient-to-tr from-blue-600 via-sky-500 to-cyan-400 shrink-0 shadow-md">
-              <img src={currentUser.avatar} alt={currentUser.name} className="w-full h-full object-cover rounded-[14px]" />
+              <img src={safeUser.avatar} alt={safeUser.name} className="w-full h-full object-cover rounded-[14px]" />
             </div>
 
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="font-heading text-xl sm:text-2xl font-extrabold text-white">
-                  Xin chào, {currentUser.name}!
+                  Xin chào, {safeUser.name}!
                 </h1>
                 <span className="badge badge-purple flex items-center gap-1 text-[11px]">
-                  <ShieldCheck className="w-3.5 h-3.5 text-blue-400" /> {currentUser.roleTitle}
+                  <ShieldCheck className="w-3.5 h-3.5 text-blue-400" /> {safeUser.roleTitle}
                 </span>
               </div>
               <p className="text-xs text-slate-300">
-                Thuộc: <strong className="text-blue-400">{currentUser.deptName}</strong> • Lớp <strong className="text-white">{currentUser.class}</strong> • Điểm thi đua: <strong className="text-amber-400 font-mono">{currentUser.points} PTS</strong>
+                Thuộc: <strong className="text-blue-400">{safeUser.deptName}</strong> • Lớp <strong className="text-white">{safeUser.class}</strong> • Điểm thi đua: <strong className="text-amber-400 font-mono">{safeUser.points} PTS</strong>
               </p>
             </div>
           </div>
