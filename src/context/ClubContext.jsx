@@ -62,10 +62,11 @@ export const ClubProvider = ({ children }) => {
     const silentAutoSync = async () => {
       try {
         const serverMembers = await fetchMembersFromDatabaseAPI();
-        if (isMounted && serverMembers && Array.isArray(serverMembers)) {
+        if (isMounted && Array.isArray(serverMembers) && serverMembers.length > 0) {
           setDb(prev => {
-            const isDifferent = JSON.stringify(prev.members) !== JSON.stringify(serverMembers);
-            if (isDifferent) {
+            const prevStr = JSON.stringify((prev.members || []).map(m => [m.id, m.name, m.roleTitle, m.deptName, m.class, m.phone, m.status]));
+            const newStr = JSON.stringify(serverMembers.map(m => [m.id, m.name, m.roleTitle, m.deptName, m.class, m.phone, m.status]));
+            if (prevStr !== newStr) {
               const updated = { ...prev, members: serverMembers };
               saveDatabaseToStorage(updated);
               return updated;
@@ -413,18 +414,22 @@ export const ClubProvider = ({ children }) => {
     // 1. Sync to Server API Database
     await updateMemberAPI(updatedFields.memberCode || memberObj.memberCode || memberId, fullPayload);
 
-    // 2. Update local state & storage
-    updateDb(prev => ({
-      ...prev,
-      members: prev.members.map(m => m.id === memberId ? { ...m, ...updatedFields } : m)
-    }));
+    // 2. Fetch fresh data directly from MySQL
+    const freshMembers = await fetchMembersFromDatabaseAPI();
+    if (freshMembers && Array.isArray(freshMembers) && freshMembers.length > 0) {
+      setDb(prev => {
+        const updated = { ...prev, members: freshMembers };
+        saveDatabaseToStorage(updated);
+        return updated;
+      });
+    }
 
     if (currentUser.id === memberId) {
       setCurrentUser(prev => ({ ...prev, ...updatedFields }));
     }
 
     triggerConfetti();
-    alert('🎉 Đã cập nhật thành công thông tin thành viên vào CSDL SQL Server!');
+    alert('🎉 Đã cập nhật thành công thông tin thành viên vào CSDL MySQL!');
   };
 
   // Add Role Milestone to a Member (Ban ĐN-NS & Admin)
