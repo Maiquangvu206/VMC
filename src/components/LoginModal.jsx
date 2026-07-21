@@ -10,7 +10,7 @@ export const LoginModal = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [showForgotNotice, setShowForgotNotice] = useState(false);
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
     
@@ -19,17 +19,17 @@ export const LoginModal = () => {
       return;
     }
 
-    const success = login(memberCodeInput.trim(), passwordInput.trim());
+    const success = await login(memberCodeInput.trim(), passwordInput.trim());
     if (!success) {
       setErrorMessage('Mã Thành Viên hoặc Mật khẩu không chính xác!');
     }
   };
 
-  const handleAdminQuickLogin = () => {
+  const handleAdminQuickLogin = async () => {
     setMemberCodeInput('ADMIN');
     setPasswordInput('admin123');
     setErrorMessage('');
-    login('ADMIN', 'admin123');
+    await login('ADMIN', 'admin123');
   };
 
   return (
@@ -44,9 +44,8 @@ export const LoginModal = () => {
         {/* 1. Header Branding & Logo */}
         <div className="text-center space-y-3">
           {/* VMC Brand Badge */}
-          <div className="w-16 h-16 mx-auto rounded-full bg-slate-950 border-2 border-blue-500/60 shadow-lg flex flex-col items-center justify-center p-1">
-            <span className="font-heading font-black text-sm text-white tracking-widest border-b border-dashed border-slate-400 pb-0.5">VMC</span>
-            <span className="text-[7px] text-cyan-400 font-bold tracking-tight">VINH BAO</span>
+          <div className="w-20 h-20 mx-auto rounded-full bg-[#0a1128] border-2 border-cyan-400/80 shadow-xl shadow-cyan-500/20 overflow-hidden p-1">
+            <img src="/vmc-logo.jpg" alt="VMC Logo" className="w-full h-full object-cover rounded-full" />
           </div>
 
           <div>
@@ -57,40 +56,6 @@ export const LoginModal = () => {
               CLB Truyền Thông Trường THPT Vĩnh Bảo (VMC Portal)
             </p>
           </div>
-
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-medium">
-            <Laptop className="w-3.5 h-3.5 text-amber-400" />
-            <span>Mã Thành Viên & Mật khẩu do Tổ Kỹ Thuật cấp</span>
-          </div>
-        </div>
-
-        {/* 2. Banner Tài Khoản Admin Tối Cao */}
-        <div
-          onClick={handleAdminQuickLogin}
-          className="w-full p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 hover:border-amber-400 cursor-pointer transition-all group flex items-center justify-between gap-3"
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
-              <Crown className="w-5 h-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="text-xs font-bold text-amber-300 flex items-center gap-2">
-                <span>TÀI KHOẢN ADMIN TỐI CAO</span>
-                <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-mono">VMC-ADMIN</span>
-              </div>
-              <div className="text-[11px] text-slate-400 truncate mt-0.5">
-                Mã: <strong className="font-mono text-slate-200">ADMIN</strong> • Pass: <strong className="font-mono text-slate-200">admin123</strong>
-              </div>
-            </div>
-          </div>
-          
-          <button
-            type="button"
-            className="text-xs font-bold text-amber-400 group-hover:translate-x-1 transition-transform shrink-0 flex items-center gap-1"
-          >
-            <span>Vào ngay</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
         </div>
 
         {/* Error Alert */}
@@ -145,7 +110,7 @@ export const LoginModal = () => {
             <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs space-y-1 animate-slide-up">
               <div className="font-bold">🆘 Cấp lại mật khẩu:</div>
               <p className="text-slate-300 leading-relaxed">
-                Vui lòng liên hệ trực tiếp <strong>Tổ Trưởng Kỹ Thuật (Ban Đối Ngoại - Nhân Sự)</strong> hoặc sử dụng nút <strong>Vào ngay</strong> của tài khoản ADMIN ở trên.
+                Vui lòng liên hệ <strong>Ban Đối Ngoại - Nhân Sự</strong> để được cấp lại mật khẩu mới.
               </p>
             </div>
           )}

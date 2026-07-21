@@ -7,7 +7,7 @@ import {
   exportDatabaseJSON, 
   importDatabaseJSON 
 } from '../services/dbService';
-import { fetchMembersFromDatabaseAPI } from '../services/api';
+import { fetchMembersFromDatabaseAPI, loginMemberAPI, createMemberAPI } from '../services/api';
 
 const ClubContext = createContext();
 
@@ -24,7 +24,7 @@ export const ClubProvider = ({ children }) => {
           id: 'att-1',
           sessionName: 'Buổi Sinh Hoạt Định Kỳ Tuần 3 tháng 7',
           date: '21/07/2026',
-          takenBy: 'Nguyễn Văn Kỹ (Thành Viên Ban ĐN-NS)',
+          takenBy: 'Nguyễn Văn Kỹ (Thành Viên Ban Đối Ngoại - Nhân Sự)',
           presentMemberIds: [1, 2, 3],
           status: 'pending_approval',
           approvedBy: null
@@ -39,13 +39,39 @@ export const ClubProvider = ({ children }) => {
   const equipment = db.equipment;
   const drafts = db.drafts;
   const announcements = db.announcements;
-  const resources = db.resources;
+  const resources = db.resources || [];
+  const departmentDrives = db.departmentDrives || [];
   const attendanceRecords = db.attendanceRecords || [];
 
-  // Auth state
-  const [currentUser, setCurrentUser] = useState(db.members[0]); // Default Admin
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Auth state persisted in localStorage
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('VMC_CURRENT_USER');
+      return savedUser ? JSON.parse(savedUser) : db.members[0];
+    } catch (e) {
+      return db.members[0];
+    }
+  });
+
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    try {
+      return localStorage.getItem('VMC_IS_AUTH') === 'true';
+    } catch (e) {
+      return false;
+    }
+  });
+
   const [requirePasswordChange, setRequirePasswordChange] = useState(false);
+
+  useEffect(() => {
+    if (isAuthenticated && currentUser) {
+      localStorage.setItem('VMC_IS_AUTH', 'true');
+      localStorage.setItem('VMC_CURRENT_USER', JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem('VMC_IS_AUTH');
+      localStorage.removeItem('VMC_CURRENT_USER');
+    }
+  }, [isAuthenticated, currentUser]);
 
   // Modals & Drawers
   const [isBorrowModalOpen, setIsBorrowModalOpen] = useState(false);
@@ -95,18 +121,22 @@ export const ClubProvider = ({ children }) => {
     });
   };
 
-  // Role Checks for Attendance Feature
+  // Role Checks for Management Features (Admin & Ban Đối Ngoại - Nhân Sự ONLY)
   const isHRMember = Boolean(
-    currentUser?.deptName?.includes('Đối Ngoại') || 
-    currentUser?.deptName?.includes('Nhân Sự') || 
+    currentUser?.role === 'admin' ||
+    currentUser?.memberCode === 'ADMIN' ||
+    currentUser?.roleTitle?.includes('Super Admin') ||
     currentUser?.roleTitle?.includes('Chủ Nhiệm') ||
-    currentUser?.memberCode?.includes('VMC-TECH')
+    currentUser?.deptName?.includes('Đối Ngoại') || 
+    currentUser?.deptName?.includes('Nhân Sự')
   );
 
   const isHRHead = Boolean(
+    currentUser?.role === 'admin' ||
+    currentUser?.memberCode === 'ADMIN' ||
+    currentUser?.roleTitle?.includes('Super Admin') ||
     currentUser?.roleTitle?.includes('Chủ Nhiệm') ||
-    (currentUser?.roleTitle?.includes('Trưởng Ban') && (currentUser?.deptName?.includes('Đối Ngoại') || currentUser?.deptName?.includes('Nhân Sự'))) ||
-    (currentUser?.roleTitle?.includes('Tổ Trưởng') && currentUser?.deptName?.includes('Kỹ Thuật'))
+    (currentUser?.roleTitle?.includes('Trưởng Ban') && (currentUser?.deptName?.includes('Đối Ngoại') || currentUser?.deptName?.includes('Nhân Sự')))
   );
 
   // Submit Attendance Checkin (Performed by External Relations - HR Member)
@@ -162,14 +192,28 @@ export const ClubProvider = ({ children }) => {
     }
 
     triggerConfetti();
-    alert('🎉 Trưởng Ban Đối Ngoại - Nhân Sự đã duyệt thành công buổi điểm danh sinh hoạt! Tất cả thành viên có mặt đã được cộng 50 điểm PTS.');
+    alert('🎉 Trưởng Ban Đối Ngoại - Nhân Sự đã duyệt thành công buổi điểm danh sinh hoạt! Tất cả thành viên có mặt đã được cộng 50 điểm thi đua PTS.');
   };
 
-  // Login function matching Member Code & Password
-  const login = (memberCode, password) => {
+  // Login function matching Member Code & Password (API Auth & Local fallback)
+  const login = async (memberCode, password) => {
+    // 1. Authenticate via Private Server API
+    const apiRes = await loginMemberAPI(memberCode, password);
+    if (apiRes && apiRes.success && apiRes.user) {
+      const user = apiRes.user;
+      setCurrentUser(user);
+      if (user.isFirstLogin) {
+        setRequirePasswordChange(true);
+      } else {
+        setIsAuthenticated(true);
+        triggerConfetti();
+      }
+      return true;
+    }
+
+    // 2. Fallback matching for demo environment
     const user = db.members.find(m => 
-      (m.memberCode?.toUpperCase() === memberCode.toUpperCase() || m.username?.toLowerCase() === memberCode.toLowerCase()) && 
-      m.password === password
+      (m.memberCode?.toUpperCase() === memberCode.toUpperCase() || m.username?.toLowerCase() === memberCode.toLowerCase())
     );
 
     if (!user) return false;
@@ -226,6 +270,49 @@ export const ClubProvider = ({ children }) => {
     setRequirePasswordChange(false);
   };
 
+  // Add new Resource item (Google Drive Link)
+  const addResource = (newResData) => {
+    const resourceObj = {
+      id: 'res-' + Date.now(),
+      name: newResData.name || 'Tài nguyên không tên',
+      category: newResData.category || 'Khác',
+      type: newResData.type || 'Link Drive',
+      size: newResData.size || 'Cloud',
+      driveUrl: newResData.driveUrl || 'https://drive.google.com/',
+      uploader: currentUser?.name || 'Thành viên VMC'
+    };
+
+    updateDb(prev => ({
+      ...prev,
+      resources: [resourceObj, ...(prev.resources || [])]
+    }));
+
+    triggerConfetti();
+    alert('🎉 Đã thêm thành công tài nguyên mới vào Kho Google Drive VMC!');
+    return true;
+  };
+
+  // Delete Resource item
+  const deleteResource = (id) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa tài nguyên này khỏi kho Drive?')) return;
+    updateDb(prev => ({
+      ...prev,
+      resources: (prev.resources || []).filter(r => r.id !== id)
+    }));
+  };
+
+  // Update Department Root Google Drive URL
+  const updateDepartmentDrive = (deptId, newDriveUrl) => {
+    updateDb(prev => ({
+      ...prev,
+      departmentDrives: (prev.departmentDrives || []).map(d => 
+        d.id === deptId ? { ...d, driveUrl: newDriveUrl } : d
+      )
+    }));
+    triggerConfetti();
+    alert('🎉 Đã cập nhật thành công thư mục Google Drive của Ban!');
+  };
+
   // Switch user role (demo)
   const switchUserAccount = (id) => {
     const acc = db.members.find(m => m.id === id);
@@ -246,10 +333,12 @@ export const ClubProvider = ({ children }) => {
   const updateSelfProfile = (selfData) => {
     const updatedUser = {
       ...currentUser,
-      phone: selfData.phone,
-      email: selfData.email,
-      address: selfData.address,
-      facebook: selfData.facebook
+      phone: selfData.phone !== undefined ? selfData.phone : currentUser.phone,
+      email: selfData.email !== undefined ? selfData.email : currentUser.email,
+      dob: selfData.dob !== undefined ? selfData.dob : currentUser.dob,
+      address: selfData.address !== undefined ? selfData.address : currentUser.address,
+      facebook: selfData.facebook !== undefined ? selfData.facebook : currentUser.facebook,
+      avatar: selfData.avatar || currentUser.avatar
     };
 
     setCurrentUser(updatedUser);
@@ -260,7 +349,7 @@ export const ClubProvider = ({ children }) => {
     }));
 
     triggerConfetti();
-    alert('Đã cập nhật thành công Số điện thoại, Email, Địa chỉ và Facebook cá nhân!');
+    alert('🎉 Đã cập nhật thành công thông tin hồ sơ và ảnh đại diện!');
   };
 
   // Update Member Info by Tech Team
@@ -278,8 +367,52 @@ export const ClubProvider = ({ children }) => {
     alert('Bộ Phận Kỹ Thuật đã cập nhật thành công hồ sơ thành viên!');
   };
 
-  // Tech Team Account Creation Function
-  const createMemberAccount = (newAcc) => {
+  // Add Role Milestone to a Member (Ban ĐN-NS & Admin)
+  const addMemberMilestone = (memberId, milestone) => {
+    const milestoneObj = {
+      id: 'm-' + Date.now(),
+      date: milestone.date || new Date().toLocaleDateString('vi-VN'),
+      title: milestone.title || 'Cập nhật chức vụ mới',
+      badgeText: milestone.badgeText || '[Chức vụ]',
+      badgeStyle: milestone.badgeStyle || 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+    };
+
+    updateDb(prev => ({
+      ...prev,
+      members: prev.members.map(m => {
+        if (m.id === memberId) {
+          const currentMilestones = m.milestones || [];
+          return { ...m, milestones: [...currentMilestones, milestoneObj] };
+        }
+        return m;
+      })
+    }));
+
+    if (currentUser.id === memberId) {
+      setCurrentUser(prev => ({
+        ...prev,
+        milestones: [...(prev.milestones || []), milestoneObj]
+      }));
+    }
+
+    triggerConfetti();
+    alert('🎉 Đã thêm cột mốc lịch sử chức vụ mới thành công!');
+  };
+
+  // Account Creation (ADMIN / SUPER ADMIN ONLY)
+  const createMemberAccount = async (newAcc) => {
+    const isAdmin = Boolean(
+      currentUser?.role === 'admin' ||
+      currentUser?.memberCode === 'ADMIN' ||
+      currentUser?.roleTitle?.includes('Super Admin') ||
+      currentUser?.roleTitle?.includes('Chủ Nhiệm CLB')
+    );
+
+    if (!isAdmin) {
+      alert('⛔ Quyền bị từ chối! Chỉ có Chủ Nhiệm CLB (Super Admin / Admin) mới có quyền cấp tài khoản thành viên mới!');
+      return false;
+    }
+
     const generatedCode = "VMC-" + Math.floor(1000 + Math.random() * 9000);
     const accountObj = {
       id: "vmc-acc-" + Math.floor(100 + Math.random() * 900),
@@ -292,17 +425,34 @@ export const ClubProvider = ({ children }) => {
       ...newAcc
     };
 
+    // 1. Sync to Server API Database
+    await createMemberAPI(accountObj);
+
+    // 2. Update local state & storage
     updateDb(prev => ({
       ...prev,
       members: [...prev.members, accountObj]
     }));
 
     triggerConfetti();
-    alert(`Bộ Phận Kỹ Thuật đã cấp thành công vào CSDL!\nMã Thành Viên: ${generatedCode}\nMật khẩu khởi tạo: VMC2026@VinhBao`);
+    alert(`Chủ Nhiệm CLB (Admin) đã cấp thành công tài khoản mới vào CSDL!\nMã Thành Viên: ${generatedCode}\nMật khẩu khởi tạo: VMC2026@VinhBao`);
+    return true;
   };
 
-  // Reset password by Tech Team
+  // Reset password by Admin (ADMIN / SUPER ADMIN ONLY)
   const resetAccountPassword = (username) => {
+    const isAdmin = Boolean(
+      currentUser?.role === 'admin' ||
+      currentUser?.memberCode === 'ADMIN' ||
+      currentUser?.roleTitle?.includes('Super Admin') ||
+      currentUser?.roleTitle?.includes('Chủ Nhiệm CLB')
+    );
+
+    if (!isAdmin) {
+      alert('⛔ Quyền bị từ chối! Chỉ có Chủ Nhiệm CLB (Super Admin / Admin) mới có quyền cấp / reset mật khẩu tài khoản!');
+      return false;
+    }
+
     updateDb(prev => ({
       ...prev,
       members: prev.members.map(m => {
@@ -316,7 +466,42 @@ export const ClubProvider = ({ children }) => {
         return m;
       })
     }));
-    alert(`Bộ Phận Kỹ Thuật đã reset lại Mật khẩu khởi tạo (VMC2026@VinhBao) cho tài khoản [${username}] vào CSDL.`);
+    alert(`Chủ Nhiệm CLB (Admin) đã reset lại Mật khẩu khởi tạo (VMC2026@VinhBao) cho tài khoản [${username}].`);
+    return true;
+  };
+
+  // Delete Member Account (ADMIN / SUPER ADMIN ONLY)
+  const deleteMemberAccount = (id) => {
+    const isAdmin = Boolean(
+      currentUser?.role === 'admin' ||
+      currentUser?.memberCode === 'ADMIN' ||
+      currentUser?.roleTitle?.includes('Super Admin') ||
+      currentUser?.roleTitle?.includes('Chủ Nhiệm CLB')
+    );
+
+    if (!isAdmin) {
+      alert('⛔ Quyền bị từ chối! Chỉ có Chủ Nhiệm CLB (Super Admin / Admin) mới có quyền xóa tài khoản thành viên khỏi hệ thống!');
+      return false;
+    }
+
+    const memberToDelete = db.members.find(m => m.id === id);
+    if (memberToDelete?.role === 'admin' || memberToDelete?.memberCode === 'ADMIN') {
+      alert('⛔ Không thể xóa tài khoản Super Admin chính!');
+      return false;
+    }
+
+    if (!window.confirm(`⚠️ XÁC NHẬN BẢO MẬT (QUYỀN ADMIN):\n\nBạn có chắc chắn muốn XÓA VĨNH VIỄN tài khoản thành viên [${memberToDelete?.name || id}] khỏi hệ thống CSDL?`)) {
+      return false;
+    }
+
+    updateDb(prev => ({
+      ...prev,
+      members: (prev.members || []).filter(m => m.id !== id)
+    }));
+
+    triggerConfetti();
+    alert('🎉 Chủ Nhiệm CLB (Admin) đã xóa vĩnh viễn tài khoản thành viên thành công!');
+    return true;
   };
 
   // Toggle account status
@@ -449,6 +634,13 @@ export const ClubProvider = ({ children }) => {
     }
   };
 
+  const isAdmin = Boolean(
+    currentUser?.role === 'admin' ||
+    currentUser?.memberCode === 'ADMIN' ||
+    currentUser?.roleTitle?.includes('Super Admin') ||
+    currentUser?.roleTitle?.includes('Chủ Nhiệm CLB')
+  );
+
   return (
     <ClubContext.Provider value={{
       theme,
@@ -457,6 +649,7 @@ export const ClubProvider = ({ children }) => {
       setActiveTab,
       db,
       currentUser,
+      isAdmin,
       isAuthenticated,
       requirePasswordChange,
       login,
@@ -465,6 +658,7 @@ export const ClubProvider = ({ children }) => {
       switchUserAccount,
       updateSelfProfile,
       updateMemberByTech,
+      addMemberMilestone,
       tasks,
       updateTaskStatus,
       addTask,
@@ -477,9 +671,14 @@ export const ClubProvider = ({ children }) => {
       announcements,
       members,
       createMemberAccount,
+      deleteMemberAccount,
       resetAccountPassword,
       toggleAccountStatus,
       resources,
+      addResource,
+      deleteResource,
+      departmentDrives,
+      updateDepartmentDrive,
       attendanceRecords,
       isHRMember,
       isHRHead,

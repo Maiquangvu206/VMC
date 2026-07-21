@@ -29,9 +29,8 @@ export const Footer = () => {
         {/* Col 1: Brand & Logo */}
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-full bg-[#14213d] border border-blue-500/50 flex flex-col items-center justify-center text-white shrink-0 p-0.5">
-              <span className="font-heading font-black text-xs tracking-wider border-b border-dashed border-slate-400 px-0.5">VMC</span>
-              <span className="text-[5px] text-slate-300 tracking-tight">VINH BAO</span>
+            <div className="w-12 h-12 rounded-full bg-[#0a1128] border-2 border-cyan-400/80 shadow-lg shadow-cyan-500/20 overflow-hidden p-0.5 shrink-0">
+              <img src="/vmc-logo.jpg" alt="VMC Logo" className="w-full h-full object-cover rounded-full" />
             </div>
             <div>
               <span className="font-heading font-extrabold text-xl tracking-tight text-white block">

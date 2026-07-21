@@ -76,7 +76,7 @@ export const MembersPage = () => {
             </p>
 
             <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
-              <span>Đóng góp: <strong className="text-white font-mono">{m.points} pts</strong></span>
+              <span>Điểm thi đua: <strong className="text-white font-mono">{m.points} PTS</strong></span>
               <button
                 onClick={() => alert(`Xem Portfolio cá nhân của ${m.name}`)}
                 className="hover:text-purple-400 flex items-center gap-1 font-semibold"

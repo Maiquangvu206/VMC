@@ -61,8 +61,8 @@ export const Navbar = () => {
           onClick={() => handleNavClick('dashboard')}
           className="flex items-center gap-2.5 cursor-pointer group shrink-0"
         >
-          <div className="w-9 h-9 rounded-full bg-[#14213d] border border-blue-500/50 shadow-md group-hover:scale-105 transition-all flex items-center justify-center shrink-0">
-            <span className="font-heading font-black text-xs text-white tracking-widest">VMC</span>
+          <div className="w-10 h-10 rounded-full bg-[#0a1128] border-2 border-cyan-400/80 shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition-all overflow-hidden p-0.5 shrink-0">
+            <img src="/vmc-logo.jpg" alt="VMC Logo" className="w-full h-full object-cover rounded-full" />
           </div>
 
           <div className="hidden sm:block">

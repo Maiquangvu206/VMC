@@ -64,7 +64,7 @@ export const InternalDashboard = () => {
                 </span>
               </div>
               <p className="text-xs text-slate-300">
-                Thuộc: <strong className="text-blue-400">{currentUser.deptName}</strong> • Lớp <strong className="text-white">{currentUser.class}</strong> • Điểm cống hiến: <strong className="text-amber-400 font-mono">{currentUser.points} PTS</strong>
+                Thuộc: <strong className="text-blue-400">{currentUser.deptName}</strong> • Lớp <strong className="text-white">{currentUser.class}</strong> • Điểm thi đua: <strong className="text-amber-400 font-mono">{currentUser.points} PTS</strong>
               </p>
             </div>
           </div>

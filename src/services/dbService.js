@@ -4,7 +4,9 @@ import {
   EQUIPMENT_LIST, 
   FANPAGE_DRAFTS, 
   INTERNAL_ANNOUNCEMENTS, 
-  MEMBER_ACCOUNTS
+  MEMBER_ACCOUNTS,
+  MEMBER_RESOURCES,
+  DEFAULT_DEPARTMENT_DRIVES
 } from '../data/mockData';
 
 const DB_STORAGE_KEY = 'VMC_PORTAL_DYNAMIC_DATABASE_V2';
@@ -17,6 +19,8 @@ export const getInitialDatabase = () => ({
   equipment: EQUIPMENT_LIST,
   drafts: FANPAGE_DRAFTS,
   announcements: INTERNAL_ANNOUNCEMENTS,
+  resources: MEMBER_RESOURCES,
+  departmentDrives: DEFAULT_DEPARTMENT_DRIVES,
   lastUpdated: new Date().toISOString()
 });
 
@@ -29,7 +33,14 @@ export const loadDatabaseFromStorage = () => {
       localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(initialDb));
       return initialDb;
     }
-    return JSON.parse(rawData);
+    const parsed = JSON.parse(rawData);
+    if (!parsed.resources) {
+      parsed.resources = MEMBER_RESOURCES;
+    }
+    if (!parsed.departmentDrives) {
+      parsed.departmentDrives = DEFAULT_DEPARTMENT_DRIVES;
+    }
+    return parsed;
   } catch (error) {
     console.error('Lỗi khi đọc Cơ sở dữ liệu động:', error);
     return getInitialDatabase();

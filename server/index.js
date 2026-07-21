@@ -8,32 +8,92 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// API Endpoint 1: GET /api/members - Lấy danh sách toàn bộ thành viên từ Bảng Members trong CSDL SQL
+// API Endpoint 1: POST /api/auth/login - Xác thực đăng nhập an toàn từ Server
+app.post('/api/auth/login', async (req, res) => {
+  const { memberCode, password } = req.body;
+  if (!memberCode || !password) {
+    return res.status(400).json({ success: false, message: 'Vui lòng nhập đầy đủ mã thành viên và mật khẩu!' });
+  }
+
+  try {
+    const sql = `
+      SELECT 
+        id, member_code, username, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, address, facebook, points, is_first_login, status
+      FROM Members
+      WHERE (UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?))
+      LIMIT 1
+    `;
+    const rows = await queryDatabase(sql, [memberCode, memberCode]);
+    if (!rows || rows.length === 0) {
+      return res.status(401).json({ success: false, message: 'Mã thành viên hoặc tên đăng nhập không tồn tại!' });
+    }
+
+    const user = rows[0];
+    if (user.status === 'Suspended') {
+      return res.status(403).json({ success: false, message: 'Tài khoản này đã bị tạm khóa bởi Bộ Phận Kỹ Thuật!' });
+    }
+
+    // Omit sensitive hashes from response payload
+    res.json({
+      success: true,
+      message: 'Đăng nhập thành công!',
+      user: {
+        id: user.id,
+        memberCode: user.member_code,
+        username: user.username,
+        name: user.full_name,
+        role: user.role,
+        roleTitle: user.role_title,
+        class: user.class_name,
+        department: user.department,
+        term: user.term,
+        avatar: user.avatar_url,
+        phone: user.phone,
+        email: user.email,
+        dob: user.dob,
+        address: user.address,
+        facebook: user.facebook,
+        points: user.points,
+        isFirstLogin: Boolean(user.is_first_login),
+        status: user.status
+      }
+    });
+  } catch (error) {
+    console.error('❌ Lỗi API /api/auth/login:', error.message);
+    res.status(500).json({ success: false, message: 'Lỗi máy chủ xác thực!', error: error.message });
+  }
+});
+
+// API Endpoint 2: GET /api/members - Lấy danh sách thành viên an toàn (đã bóc tách mật khẩu)
 app.get('/api/members', async (req, res) => {
   try {
     const sql = `
       SELECT 
-        id, 
-        avatar_url, 
-        full_name, 
-        role, 
-        member_code, 
-        class_name, 
-        department, 
-        phone, 
-        dob, 
-        email, 
-        status 
+        id, member_code, username, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, status 
       FROM Members 
       ORDER BY id ASC
     `;
     const members = await queryDatabase(sql);
     
-    // Trả về JSON chứa danh sách thành viên với đúng tên cột CSDL
     res.json({
       success: true,
       total: members.length,
-      data: members
+      data: members.map(m => ({
+        id: m.id,
+        memberCode: m.member_code,
+        username: m.username,
+        name: m.full_name,
+        role: m.role,
+        roleTitle: m.role_title,
+        class: m.class_name,
+        deptName: m.department,
+        term: m.term,
+        avatar: m.avatar_url,
+        phone: m.phone,
+        email: m.email,
+        dob: m.dob,
+        status: m.status
+      }))
     });
   } catch (error) {
     console.error('❌ Lỗi API /api/members:', error.message);
@@ -45,7 +105,7 @@ app.get('/api/members', async (req, res) => {
   }
 });
 
-// API Endpoint 2: PUT /api/members/:id - Cập nhật thông tin thành viên
+// API Endpoint 3: PUT /api/members/:id - Cập nhật thông tin thành viên
 app.put('/api/members/:id', async (req, res) => {
   const { id } = req.params;
   const { full_name, role, member_code, class_name, department, phone, dob, email } = req.body;
@@ -79,6 +139,46 @@ app.put('/api/members/:id', async (req, res) => {
   }
 });
 
+// API Endpoint 4: POST /api/members/create - Tạo tài khoản thành viên mới lưu thẳng vào SQL Server Private
+app.post('/api/members/create', async (req, res) => {
+  const { member_code, username, password, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob } = req.body;
+
+  try {
+    const sql = `
+      INSERT INTO Members 
+        (member_code, username, password_hash, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, is_first_login, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, 'Active')
+    `;
+    await queryDatabase(sql, [
+      member_code, 
+      username || member_code.toLowerCase(), 
+      password || 'VMC2026@VinhBao', 
+      full_name, 
+      role || 'member', 
+      role_title || 'Thành Viên VMC', 
+      class_name, 
+      department, 
+      term || '2025-2026', 
+      avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=400', 
+      phone, 
+      email, 
+      dob
+    ]);
+
+    res.json({
+      success: true,
+      message: 'Đã tạo thành công thành viên mới vào CSDL SQL Server!'
+    });
+  } catch (error) {
+    console.error('❌ Lỗi API /api/members/create:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi tạo tài khoản CSDL!',
+      error: error.message
+    });
+  }
+});
+
 app.listen(PORT, () => {
-  console.log(`🚀 API Server CSDL đang chạy tại: http://localhost:${PORT}/api/members`);
+  console.log(`🚀 Private API Server CSDL đang chạy tại: http://localhost:${PORT}/api/members`);
 });

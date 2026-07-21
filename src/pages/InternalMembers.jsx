@@ -24,20 +24,30 @@ import {
   Search,
   Filter,
   Sparkles,
-  History
+  History,
+  Trash2
 } from 'lucide-react';
 
 export const InternalMembers = () => {
   const { 
     members, 
     currentUser, 
+    isHRMember,
     createMemberAccount, 
+    deleteMemberAccount,
     resetAccountPassword, 
     toggleAccountStatus,
     updateMemberByTech,
     isNewAccountModalOpen,
     setIsNewAccountModalOpen
   } = useClub();
+
+  const isAdmin = Boolean(
+    currentUser?.role === 'admin' ||
+    currentUser?.memberCode === 'ADMIN' ||
+    currentUser?.roleTitle?.includes('Super Admin') ||
+    currentUser?.roleTitle?.includes('Chủ Nhiệm CLB')
+  );
 
   const [selectedMember, setSelectedMember] = useState(null);
   const [editingMember, setEditingMember] = useState(null);
@@ -55,8 +65,8 @@ export const InternalMembers = () => {
     roleTitle: 'Thành Viên VMC',
     department: 'production',
     deptName: 'Ban Sản Xuất',
-    term: '2025-2026',
-    termName: 'Nhiệm Kỳ 2025 - 2026',
+    term: 'Gen 6',
+    termName: 'Gen 6',
     phone: '',
     email: '',
     dob: '01/01/2009',
@@ -120,8 +130,17 @@ export const InternalMembers = () => {
         </div>
 
         <button
-          onClick={() => setIsNewAccountModalOpen(true)}
-          className="btn-primary text-xs px-5 py-2.5 shadow-blue-600/40 shrink-0"
+          onClick={() => {
+            if (!isAdmin) {
+              alert('⛔ Quyền bị từ chối! Chỉ có Chủ Nhiệm CLB (Super Admin / Admin) mới có quyền cấp tài khoản thành viên mới!');
+              return;
+            }
+            setIsNewAccountModalOpen(true);
+          }}
+          className={`btn-primary text-xs px-5 py-2.5 shadow-blue-600/40 shrink-0 ${
+            !isAdmin ? 'opacity-60 cursor-not-allowed' : ''
+          }`}
+          title={isAdmin ? 'Cấp tài khoản mới (Admin)' : 'Chỉ Chủ Nhiệm CLB (Admin) mới có quyền cấp tài khoản mới'}
         >
           <UserPlus className="w-4 h-4" />
           <span>Cấp Tài Khoản Mới</span>
@@ -154,18 +173,20 @@ export const InternalMembers = () => {
           {/* Period / Term Selector */}
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-slate-400 whitespace-nowrap flex items-center gap-1">
-              <Calendar className="w-3.5 h-3.5 text-purple-400" /> Nhiệm Kỳ:
+              <Calendar className="w-3.5 h-3.5 text-purple-400" /> Thế Hệ:
             </span>
             <select
               value={selectedTerm}
               onChange={(e) => setSelectedTerm(e.target.value)}
               className="bg-slate-950/80 border border-slate-700/60 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-purple-500 font-medium cursor-pointer"
             >
-              <option value="ALL">🌐 Tất Cả Thời Kỳ (Toàn Bộ Khóa)</option>
-              <option value="2025-2026">✨ Nhiệm Kỳ 2025 - 2026 (Khóa 25 - Đương Nhiệm)</option>
-              <option value="2024-2025">🎓 Nhiệm Kỳ 2024 - 2025 (Khóa 24)</option>
-              <option value="2023-2024">🏆 Nhiệm Kỳ 2023 - 2024 (Khóa 23)</option>
-              <option value="2022-2023">👑 Nhiệm Kỳ 2022 - 2023 (Khóa Sáng Lập)</option>
+              <option value="ALL">🌐 Tất Cả Thế Hệ (All Gen)</option>
+              <option value="Gen 6">✨ Gen 6</option>
+              <option value="Gen 5">🎓 Gen 5</option>
+              <option value="Gen 4">🏆 Gen 4</option>
+              <option value="Gen 3">👑 Gen 3</option>
+              <option value="Gen 2">🚀 Gen 2</option>
+              <option value="Gen 1">🌟 Gen 1</option>
             </select>
           </div>
 
@@ -181,10 +202,9 @@ export const InternalMembers = () => {
             >
               <option value="ALL">Tất Cả Các Ban</option>
               <option value="Ban Chủ Nhiệm">Ban Chủ Nhiệm</option>
-              <option value="Ban Đối Ngoại - Nhân Sự">Ban Đối Ngoại - Nhân Sự</option>
+              <option value="Ban Đối Ngoại - Nhân Sự">Ban Đối Ngoại - Nhân Sự (Kỹ Thuật)</option>
               <option value="Ban Sản Xuất">Ban Sản Xuất</option>
               <option value="Ban Nội Dung">Ban Nội Dung - Phát Thanh</option>
-              <option value="Ban Truyền Thông">Ban Truyền Thông</option>
             </select>
           </div>
 
@@ -229,9 +249,9 @@ export const InternalMembers = () => {
               {/* Quick Info Preview Card */}
               <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/60 space-y-2 text-xs text-slate-300">
                 <div className="flex justify-between items-center gap-2">
-                  <span className="text-slate-400 shrink-0">Thời kỳ / Nhiệm kỳ:</span>
+                  <span className="text-slate-400 shrink-0">Thế hệ:</span>
                   <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/15 text-purple-300 border border-purple-500/30 truncate">
-                    {m.termName || 'Nhiệm Kỳ 2025 - 2026'}
+                    {m.term || m.termName || 'Gen 6'}
                   </span>
                 </div>
                 <div className="flex justify-between items-center gap-2">
@@ -263,34 +283,67 @@ export const InternalMembers = () => {
                 </button>
 
                 <button
-                  onClick={() => setEditingMember({ ...m })}
-                  className="flex items-center gap-1 px-2.5 py-1.5 bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 rounded-lg text-xs font-semibold transition-all"
-                  title="Kỹ Thuật chỉnh sửa thông tin thành viên"
+                  onClick={() => {
+                    if (!isHRMember) {
+                      alert('⛔ Quyền bị từ chối! Chỉ có thành viên Ban Đối Ngoại - Nhân Sự hoặc Admin mới có quyền chỉnh sửa thông tin thành viên!');
+                      return;
+                    }
+                    setEditingMember({ ...m });
+                  }}
+                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    isHRMember
+                      ? 'bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950'
+                      : 'bg-slate-800/40 text-slate-500 cursor-not-allowed opacity-60'
+                  }`}
+                  title={isHRMember ? 'Chỉnh sửa ngày sinh & thông tin (Ban Đối Ngoại - Nhân Sự / Admin)' : 'Chỉ Ban Đối Ngoại - Nhân Sự mới được sửa'}
                 >
                   <Edit className="w-3.5 h-3.5" />
-                  <span>Sửa (Kỹ Thuật)</span>
+                  <span>Sửa (Đối Ngoại - Nhân Sự)</span>
                 </button>
               </div>
 
               <div className="flex items-center gap-1.5">
                 <button
-                  onClick={() => resetAccountPassword(m.username)}
-                  className="p-2 bg-slate-950 hover:bg-slate-800 text-slate-300 border border-slate-800 rounded-lg text-xs transition-all"
-                  title="Reset mật khẩu mặc định VMC2026@VinhBao"
+                  onClick={() => {
+                    if (!isAdmin) {
+                      alert('⛔ Quyền bị từ chối! Chỉ có Chủ Nhiệm CLB (Super Admin / Admin) mới có quyền cấp / reset mật khẩu tài khoản!');
+                      return;
+                    }
+                    resetAccountPassword(m.username);
+                  }}
+                  className={`p-2 rounded-lg text-xs transition-all ${
+                    isAdmin 
+                      ? 'bg-slate-950 hover:bg-slate-800 text-blue-400 border border-blue-500/30' 
+                      : 'bg-slate-950 text-slate-600 border border-slate-800 cursor-not-allowed opacity-50'
+                  }`}
+                  title={isAdmin ? 'Reset mật khẩu mặc định VMC2026@VinhBao (Chủ Nhiệm/Admin)' : 'Chỉ Chủ Nhiệm CLB (Admin) mới có quyền cấp / reset mật khẩu'}
                 >
-                  <RefreshCw className="w-3.5 h-3.5 text-blue-400" />
+                  <RefreshCw className="w-3.5 h-3.5" />
                 </button>
 
                 <button
                   onClick={() => toggleAccountStatus(m.id)}
                   className={`p-2 rounded-lg text-xs font-semibold transition-all ${
                     m.status === 'Active'
-                      ? 'bg-red-500/20 text-red-400 border border-red-500/30'
+                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
                       : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                   }`}
-                  title={m.status === 'Active' ? 'Khóa tài khoản' : 'Mở khóa'}
+                  title={m.status === 'Active' ? 'Tạm khóa tài khoản' : 'Mở khóa'}
                 >
                   <Lock className="w-3.5 h-3.5" />
+                </button>
+
+                {/* Nút Xóa Tài Khoản (Chỉ Admin / Chủ Nhiệm mới được phép) */}
+                <button
+                  onClick={() => deleteMemberAccount(m.id)}
+                  className={`p-2 rounded-lg text-xs font-semibold transition-all ${
+                    isAdmin 
+                      ? 'bg-rose-500/20 text-rose-400 hover:bg-rose-600 hover:text-white border border-rose-500/30' 
+                      : 'bg-slate-800/40 text-slate-500 border border-slate-800 cursor-not-allowed opacity-60'
+                  }`}
+                  title={isAdmin ? 'Xóa vĩnh viễn tài khoản thành viên (Chủ Nhiệm/Admin)' : 'Chỉ Chủ Nhiệm CLB (Super Admin) mới có quyền xóa tài khoản'}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
@@ -434,33 +487,37 @@ export const InternalMembers = () => {
                     <option value="Ban Chủ Nhiệm">Ban Chủ Nhiệm</option>
                     <option value="Ban Đối Ngoại - Nhân Sự (Kỹ Thuật)">Ban Đối Ngoại - Nhân Sự (Kỹ Thuật)</option>
                     <option value="Ban Sản Xuất">Ban Sản Xuất</option>
-                    <option value="Ban Truyền Thông">Ban Truyền Thông</option>
                     <option value="Ban Nội Dung - Phát Thanh">Ban Nội Dung - Phát Thanh</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">5. Chức Vụ Trong CLB</label>
+                  <label className="block text-slate-400 mb-1">5. Chức Vụ Trong CLB {!isAdmin && '(Chỉ Admin được sửa)'}</label>
                   <input
                     type="text"
                     required
+                    disabled={!isAdmin}
                     value={editingMember.roleTitle}
                     onChange={(e) => setEditingMember({ ...editingMember, roleTitle: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-semibold"
+                    className={`w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-semibold ${
+                      !isAdmin ? 'opacity-60 cursor-not-allowed' : ''
+                    }`}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">Thời Kỳ / Nhiệm Kỳ</label>
+                  <label className="block text-slate-400 mb-1">Thế Hệ (Gen)</label>
                   <select
-                    value={editingMember.term || '2025-2026'}
-                    onChange={(e) => setEditingMember({ ...editingMember, term: e.target.value, termName: e.target.options[e.target.selectedIndex].text })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white"
+                    value={editingMember.term || 'Gen 6'}
+                    onChange={(e) => setEditingMember({ ...editingMember, term: e.target.value, termName: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-medium"
                   >
-                    <option value="2025-2026">Nhiệm Kỳ 2025 - 2026</option>
-                    <option value="2024-2025">Nhiệm Kỳ 2024 - 2025</option>
-                    <option value="2023-2024">Nhiệm Kỳ 2023 - 2024</option>
-                    <option value="2022-2023">Nhiệm Kỳ 2022 - 2023</option>
+                    <option value="Gen 6">Gen 6</option>
+                    <option value="Gen 5">Gen 5</option>
+                    <option value="Gen 4">Gen 4</option>
+                    <option value="Gen 3">Gen 3</option>
+                    <option value="Gen 2">Gen 2</option>
+                    <option value="Gen 1">Gen 1</option>
                   </select>
                 </div>
 
@@ -483,6 +540,18 @@ export const InternalMembers = () => {
                     value={editingMember.email}
                     onChange={(e) => setEditingMember({ ...editingMember, email: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">8. Ngày Sinh (Ngày/Tháng/Năm)</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingMember.dob || ''}
+                    onChange={(e) => setEditingMember({ ...editingMember, dob: e.target.value })}
+                    placeholder="15/08/2008"
+                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-mono"
                   />
                 </div>
               </div>
@@ -600,7 +669,6 @@ export const InternalMembers = () => {
                     <option value="Ban Chủ Nhiệm">Ban Chủ Nhiệm</option>
                     <option value="Ban Đối Ngoại - Nhân Sự">Ban Đối Ngoại - Nhân Sự (Kỹ Thuật)</option>
                     <option value="Ban Sản Xuất">Ban Sản Xuất</option>
-                    <option value="Ban Truyền Thông">Ban Truyền Thông</option>
                     <option value="Ban Nội Dung">Ban Nội Dung - Phát Thanh</option>
                   </select>
                 </div>

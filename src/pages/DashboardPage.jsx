@@ -14,11 +14,17 @@ import {
 } from 'lucide-react';
 
 export const DashboardPage = () => {
-  const { user, checkinAttendance } = useClub();
+  const { user, checkinAttendance, resources = [] } = useClub();
 
   const handleDownloadResource = (resource) => {
-    alert(`Đã bắt đầu tải xuống tài nguyên thành viên: ${resource.name} (${resource.size})`);
+    if (resource.driveUrl) {
+      window.open(resource.driveUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      alert(`Đã bắt đầu tải xuống tài nguyên thành viên: ${resource.name} (${resource.size})`);
+    }
   };
+
+  const displayResources = resources.length > 0 ? resources : (MEMBER_RESOURCES || []);
 
   return (
     <div className="container py-10 space-y-10 pb-20">
@@ -125,7 +131,7 @@ export const DashboardPage = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {MEMBER_RESOURCES.map(res => (
+          {displayResources.map(res => (
             <div
               key={res.id}
               className="glass-card p-5 rounded-2xl border border-white/10 flex flex-col justify-between space-y-4"

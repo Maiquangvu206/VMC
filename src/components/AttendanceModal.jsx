@@ -62,7 +62,7 @@ export const AttendanceModal = () => {
             <div>
               <h3 className="font-heading font-extrabold text-lg text-white">Điểm Danh Sinh Hoạt CLB VMC</h3>
               <p className="text-xs text-slate-400">
-                Thành viên Ban Đối ngoại - Nhân sự lập danh sách • Trưởng Ban ĐN-NS duyệt (+50 PTS)
+                Thành viên Ban Đối Ngoại - Nhân Sự lập danh sách • Trưởng Ban Đối Ngoại - Nhân Sự duyệt (+50 PTS)
               </p>
             </div>
           </div>
@@ -178,7 +178,7 @@ export const AttendanceModal = () => {
                 className="btn-primary text-xs px-6 py-2.5 shadow-emerald-600/30 flex items-center gap-2 font-bold"
               >
                 <Send className="w-4 h-4" />
-                <span>Gửi Điểm Danh Sáng Trưởng Ban ĐN-NS Duyệt</span>
+                <span>Gửi Điểm Danh Sang Trưởng Ban Đối Ngoại - Nhân Sự Duyệt</span>
               </button>
             </div>
           </form>
@@ -190,7 +190,7 @@ export const AttendanceModal = () => {
             </div>
             <h4 className="font-bold text-white text-sm">Quy Trình Điểm Danh Sinh Hoạt CLB</h4>
             <p className="text-xs text-slate-300 max-w-md mx-auto">
-              Việc điểm danh sinh hoạt do <strong className="text-blue-400">Thành viên Ban Đối Ngoại - Nhân Sự</strong> thực hiện và phải được <strong className="text-amber-400">Trưởng Ban Đối Ngoại - Nhân Sự</strong> kiểm tra & duyệt để cộng 50 điểm rèn luyện PTS.
+              Việc điểm danh sinh hoạt do <strong className="text-blue-400">Thành viên Ban Đối Ngoại - Nhân Sự</strong> thực hiện và phải được <strong className="text-amber-400">Trưởng Ban Đối Ngoại - Nhân Sự</strong> kiểm tra & duyệt để cộng 50 điểm thi đua PTS.
             </p>
           </div>
         )}
