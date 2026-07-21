@@ -27,12 +27,15 @@ export const fetchMembersFromDatabaseAPI = async () => {
     if (result.success && Array.isArray(result.data)) {
       return result.data.map(item => ({
         id: item.id,
-        avatar: item.avatar_url || item.avatar,
+        avatar: item.avatar_url || item.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
         name: item.full_name || item.name,
-        roleTitle: item.role_title || item.role,
+        username: item.username,
+        role: item.role || 'member',
+        roleTitle: item.role_title || item.roleTitle || 'Thành Viên VMC',
         memberCode: item.member_code || item.memberCode,
         class: item.class_name || item.class,
         deptName: item.department || item.deptName,
+        term: item.term || 'Gen 6',
         phone: item.phone,
         dob: item.dob,
         email: item.email,

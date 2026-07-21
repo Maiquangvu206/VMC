@@ -38,6 +38,29 @@ export const ClubProvider = ({ children }) => {
   const tasks = db.tasks;
   const equipment = db.equipment;
   const drafts = db.drafts;
+
+  // Sync Members Database from Server API on Initial Load
+  useEffect(() => {
+    const syncServerMembers = async () => {
+      const serverMembers = await fetchMembersFromDatabaseAPI();
+      if (serverMembers && Array.isArray(serverMembers) && serverMembers.length > 0) {
+        setDb(prev => {
+          const updated = { ...prev, members: serverMembers };
+          saveDatabaseToStorage(updated);
+          return updated;
+        });
+
+        // Also update currentUser if currently logged in
+        if (currentUser) {
+          const matchedUser = serverMembers.find(m => m.id === currentUser.id || m.memberCode === currentUser.memberCode || m.username === currentUser.username);
+          if (matchedUser) {
+            setCurrentUser(prev => ({ ...prev, ...matchedUser }));
+          }
+        }
+      }
+    };
+    syncServerMembers();
+  }, []);
   const announcements = db.announcements;
   const resources = db.resources || [];
   const departmentDrives = db.departmentDrives || [];
