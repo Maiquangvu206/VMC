@@ -741,4 +741,3 @@ export const ClubProvider = ({ children }) => {
 };
 
 export const useClub = () => useContext(ClubContext);
-export const useClub = () => useContext(ClubContext);
