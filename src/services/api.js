@@ -19,7 +19,20 @@ export const loginMemberAPI = async (memberCode, password) => {
 // Service frontend kết nối API CSDL SQL
 export const fetchMembersFromDatabaseAPI = async () => {
   try {
-    const response = await fetch('/api/members');
+    let response = await fetch('/api/members');
+    const contentType = response.headers.get('content-type') || '';
+    
+    // Nếu bị trả về HTML (do Nginx/Vite chưa proxy), tự động thử nối tới Backend Port 5000
+    if (!response.ok || contentType.includes('text/html')) {
+      try {
+        const altUrl = `${window.location.protocol}//${window.location.hostname}:5000/api/members`;
+        const altResp = await fetch(altUrl);
+        if (altResp.ok) {
+          response = altResp;
+        }
+      } catch (altErr) {}
+    }
+
     if (!response.ok) {
       throw new Error(`HTTP Error Status: ${response.status}`);
     }

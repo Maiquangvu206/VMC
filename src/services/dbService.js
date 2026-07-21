@@ -9,7 +9,12 @@ import {
   DEFAULT_DEPARTMENT_DRIVES
 } from '../data/mockData';
 
-const DB_STORAGE_KEY = 'VMC_PORTAL_DYNAMIC_DATABASE_V2';
+const DB_STORAGE_KEY = 'VMC_PORTAL_DYNAMIC_DATABASE_V3';
+
+try {
+  localStorage.removeItem('VMC_PORTAL_DYNAMIC_DATABASE_V2');
+  localStorage.removeItem('VMC_PORTAL_DYNAMIC_DATABASE_V1');
+} catch (e) {}
 
 // Initial Database Seed Structure (No mock data - Pure MySQL Data 100%)
 export const getInitialDatabase = () => ({
