@@ -1,6 +1,12 @@
-import 'dotenv/config';
-import path from 'path';
 import { fileURLToPath } from 'url';
+import path from 'path';
+import { config } from 'dotenv';
+
+// Load .env từ thư mục server/ — đúng dù PM2 chạy từ thư mục gốc dự án
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+config({ path: path.join(__dirname, '.env') });
+
 import express from 'express';
 import cors from 'cors';
 import { queryDatabase } from './db.js';
@@ -9,18 +15,20 @@ import apiRouter from './api.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const DIST_DIR = path.join(__dirname, '..', 'dist');
+
+console.log(`🔧 DB Config: host=${process.env.DB_HOST}, db=${process.env.DB_NAME}, user=${process.env.DB_USER}`);
 
 app.use(cors());
 app.use(express.json());
+
+// ── Sub-router cho tasks, drafts, equipment, announcements ──
 app.use('/api', apiRouter);
 
-// Serve frontend build (production)
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const DIST_DIR = path.join(__dirname, '..', 'dist');
+// ── Serve frontend build (production) ──
 app.use(express.static(DIST_DIR));
 
-// Cấu hình Nodemailer Transporter
+// ── Cấu hình Nodemailer Transporter ──
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
@@ -47,7 +55,7 @@ app.post('/api/send-email', async (req, res) => {
       to,
       subject,
       text,
-      html: html || text // Ưu tiên HTML nếu có
+      html: html || text
     });
     res.json({ success: true, message: 'Đã gửi email thành công!', messageId: info.messageId });
   } catch (error) {
@@ -56,7 +64,7 @@ app.post('/api/send-email', async (req, res) => {
   }
 });
 
-// API Endpoint 1: POST /api/auth/login - Xác thực đăng nhập an toàn từ Server
+// API Endpoint 1: POST /api/auth/login
 app.post('/api/auth/login', async (req, res) => {
   const { memberCode, password } = req.body;
   if (!memberCode || !password) {
@@ -81,7 +89,6 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(403).json({ success: false, message: 'Tài khoản này đã bị tạm khóa bởi Bộ Phận Kỹ Thuật!' });
     }
 
-    // Omit sensitive hashes from response payload
     res.json({
       success: true,
       message: 'Đăng nhập thành công!',
@@ -93,7 +100,7 @@ app.post('/api/auth/login', async (req, res) => {
         role: user.role,
         roleTitle: user.role_title,
         class: user.class_name,
-        department: user.department,
+        deptName: user.department,
         term: user.term,
         avatar: user.avatar_url,
         phone: user.phone,
@@ -112,7 +119,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// API Endpoint 2: GET /api/members - Lấy danh sách thành viên an toàn (đã bóc tách mật khẩu)
+// API Endpoint 2: GET /api/members
 app.get('/api/members', async (req, res) => {
   try {
     const sql = `
@@ -154,7 +161,7 @@ app.get('/api/members', async (req, res) => {
   }
 });
 
-// API Endpoint 3: PUT /api/members/:id - Cập nhật thông tin thành viên
+// API Endpoint 3: PUT /api/members/:id
 app.put('/api/members/:id', async (req, res) => {
   const { id } = req.params;
   const { full_name, role, role_title, member_code, class_name, department, phone, dob, email, points } = req.body;
@@ -184,6 +191,7 @@ app.put('/api/members/:id', async (req, res) => {
       message: 'Đã cập nhật thông tin thành viên vào CSDL SQL!'
     });
   } catch (error) {
+    console.error('❌ Lỗi API /api/members/:id PUT:', error.message);
     res.status(500).json({
       success: false,
       message: 'Lỗi cập nhật CSDL!',
@@ -192,7 +200,7 @@ app.put('/api/members/:id', async (req, res) => {
   }
 });
 
-// API Endpoint 4: POST /api/members/create - Tạo tài khoản thành viên mới lưu thẳng vào SQL Server Private
+// API Endpoint 4: POST /api/members/create
 app.post('/api/members/create', async (req, res) => {
   const { member_code, username, password, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob } = req.body;
 
