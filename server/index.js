@@ -77,7 +77,7 @@ app.post('/api/auth/login', async (req, res) => {
         id, member_code, username, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, address, facebook, points, is_first_login, status
       FROM Members
       WHERE (UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?))
-        AND password_hash = ?
+        AND password = ?
       LIMIT 1
     `;
     const rows = await queryDatabase(sql, [memberCode, memberCode, password]);
@@ -208,7 +208,7 @@ app.post('/api/members/create', async (req, res) => {
   try {
     const sql = `
       INSERT INTO Members 
-        (member_code, username, password_hash, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, is_first_login, status)
+        (member_code, username, password, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, is_first_login, status)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, 'Active')
     `;
     await queryDatabase(sql, [
