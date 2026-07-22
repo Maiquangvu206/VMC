@@ -74,7 +74,7 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const sql = `
       SELECT 
-        id, member_code, username, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, address, facebook, points, is_first_login, status
+        id, member_code, username, password, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, address, facebook, points, is_first_login, status
       FROM Members
       WHERE (UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?))
         AND password = ?
@@ -97,6 +97,7 @@ app.post('/api/auth/login', async (req, res) => {
         id: user.id,
         memberCode: user.member_code,
         username: user.username,
+        password: user.password,
         name: user.full_name,
         role: user.role,
         roleTitle: user.role_title,

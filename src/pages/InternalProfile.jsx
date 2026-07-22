@@ -75,7 +75,7 @@ export const InternalProfile = () => {
     facebook: currentUser.facebook || ''
   });
 
-  // Keep selfData in sync if currentUser updates from API / background sync
+  // Keep selfData in sync ONLY when active logged-in user changes (e.g. account switch)
   React.useEffect(() => {
     setSelfData({
       phone: currentUser.phone || '',
@@ -84,7 +84,7 @@ export const InternalProfile = () => {
       address: currentUser.address || '',
       facebook: currentUser.facebook || ''
     });
-  }, [currentUser]);
+  }, [currentUser?.id, currentUser?.memberCode]);
 
   const [savedSuccess, setSavedSuccess] = useState(false);
 

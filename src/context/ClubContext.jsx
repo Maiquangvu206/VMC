@@ -123,8 +123,10 @@ export const ClubProvider = ({ children }) => {
     if (db.members && db.members.length > 0) {
       setCurrentUser(prev => {
         if (!prev) return db.members[0];
-        const match = db.members.find(m => m.id === prev.id || m.memberCode === prev.memberCode || m.username === prev.username);
-        return match || db.members[0];
+        const match = db.members.find(m => String(m.id) === String(prev.id) || m.memberCode === prev.memberCode || m.username === prev.username);
+        if (!match) return db.members[0];
+        const hasChanged = Object.keys(match).some(key => match[key] !== prev[key]);
+        return hasChanged ? { ...prev, ...match } : prev;
       });
     }
   }, [db.members]);
@@ -356,7 +358,7 @@ export const ClubProvider = ({ children }) => {
 
   // Mandatory first time password change
   const changePassword = async (oldPassword, newPassword) => {
-    if (currentUser.password !== oldPassword) return false;
+    if (currentUser?.password && currentUser.password !== oldPassword) return false;
 
     await updateMemberAPI(currentUser.memberCode || currentUser.id, {
       password: newPassword,

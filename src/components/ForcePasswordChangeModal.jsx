@@ -10,7 +10,7 @@ export const ForcePasswordChangeModal = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  const handleFormSubmit = (e) => {
+  const handleFormSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
 
@@ -29,15 +29,15 @@ export const ForcePasswordChangeModal = () => {
       return;
     }
 
-    const success = changePassword(oldPassword, newPassword);
+    const success = await changePassword(oldPassword, newPassword);
     if (!success) {
       setErrorMessage('Mật khẩu hiện tại không chính xác!');
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl">
-      <div className="relative w-full max-w-md bg-gradient-to-b from-[#131d33] to-[#0b1120] border border-amber-500/50 rounded-3xl p-6 sm:p-8 shadow-2xl text-white space-y-6 animate-slide-up">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl overflow-y-auto">
+      <div className="relative w-full max-w-md bg-gradient-to-b from-[#131d33] to-[#0b1120] border border-amber-500/50 rounded-3xl p-6 sm:p-8 shadow-2xl text-white space-y-6 animate-slide-up my-auto">
         
         {/* Warning Badge */}
         <div className="text-center space-y-2">
@@ -48,7 +48,7 @@ export const ForcePasswordChangeModal = () => {
             ĐỔI MẬT KHẨU LẦN ĐẦU ĐĂNG NHẬP
           </h2>
           <p className="text-xs text-slate-300">
-            Xin chào <strong className="text-blue-400">{currentUser.name}</strong> ({currentUser.memberCode}). Đây là lần đầu tiên bạn đăng nhập bằng mật khẩu do Bộ Phận Kỹ Thuật cấp.
+            Xin chào <strong className="text-blue-400">{currentUser?.name}</strong> ({currentUser?.memberCode}). Đây là lần đầu tiên bạn đăng nhập bằng mật khẩu do Bộ Phận Kỹ Thuật cấp.
           </p>
         </div>
 
@@ -60,7 +60,7 @@ export const ForcePasswordChangeModal = () => {
 
         {/* Error Alert */}
         {errorMessage && (
-          <div className="p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 text-xs">
+          <div className="p-3 rounded-xl bg-red-500/15 border border-red-500/30 text-red-400 text-xs font-semibold">
             {errorMessage}
           </div>
         )}
@@ -105,9 +105,9 @@ export const ForcePasswordChangeModal = () => {
 
           <button
             type="submit"
-            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-heading font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-amber-500/30 hover:opacity-95 transition-all text-sm mt-2"
+            className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 text-slate-950 font-heading font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-amber-500/40 hover:brightness-110 active:scale-[0.98] transition-all text-sm mt-4 cursor-pointer z-10"
           >
-            <ShieldCheck className="w-4 h-4" />
+            <ShieldCheck className="w-5 h-5 text-slate-950 shrink-0" />
             <span>Xác Nhận Đổi Mật Khẩu & Truy Cập</span>
           </button>
         </form>
