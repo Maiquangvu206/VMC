@@ -77,11 +77,12 @@ app.post('/api/auth/login', async (req, res) => {
         id, member_code, username, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, address, facebook, points, is_first_login, status
       FROM Members
       WHERE (UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?))
+        AND password_hash = ?
       LIMIT 1
     `;
-    const rows = await queryDatabase(sql, [memberCode, memberCode]);
+    const rows = await queryDatabase(sql, [memberCode, memberCode, password]);
     if (!rows || rows.length === 0) {
-      return res.status(401).json({ success: false, message: 'Mã thành viên hoặc tên đăng nhập không tồn tại!' });
+      return res.status(401).json({ success: false, message: 'Mã Thành Viên hoặc Mật khẩu không chính xác!' });
     }
 
     const user = rows[0];
