@@ -294,6 +294,11 @@ export const InternalHRDashboard = () => {
                 <div className="text-slate-400 text-sm">Không tìm thấy sinh nhật nào sắp tới.</div>
               )}
             </div>
+
+            {/* Phân Công Nhiệm Vụ Sinh Nhật */}
+            <div className="mt-8 pt-8 border-t border-slate-800">
+              <BirthdayManagement />
+            </div>
           </div>
         )}
 
