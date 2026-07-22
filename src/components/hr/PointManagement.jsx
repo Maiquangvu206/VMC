@@ -56,7 +56,7 @@ export const PointManagement = () => {
             <label className="text-xs text-slate-400 mb-1 block">Chọn Thành Viên</label>
             <select required className="input-field w-full" value={form.memberId} onChange={e => setForm({...form, memberId: e.target.value})}>
               <option value="">-- Chọn thành viên --</option>
-              {members.map(m => (
+              {members.filter(m => !m.roleTitle?.includes('Super Admin')).map(m => (
                 <option key={m.id} value={m.id}>{m.name} ({m.deptName}) - Hiện có: {m.points || 0}đ</option>
               ))}
             </select>

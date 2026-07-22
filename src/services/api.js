@@ -4,7 +4,8 @@ export const loginMemberAPI = async (memberCode, password) => {
     const response = await fetch('/api/auth/login', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true'
       },
       body: JSON.stringify({ memberCode, password })
     });
@@ -19,19 +20,9 @@ export const loginMemberAPI = async (memberCode, password) => {
 // Service frontend kết nối API CSDL SQL
 export const fetchMembersFromDatabaseAPI = async () => {
   try {
-    let response = await fetch('/api/members');
-    const contentType = response.headers.get('content-type') || '';
-
-    // Nếu bị trả về HTML (do Nginx/Vite chưa proxy), tự động thử nối tới Backend Port 5000
-    if (!response.ok || contentType.includes('text/html')) {
-      try {
-        const altUrl = `${window.location.protocol}//${window.location.hostname}:5000/api/members`;
-        const altResp = await fetch(altUrl);
-        if (altResp.ok) {
-          response = altResp;
-        }
-      } catch (altErr) { }
-    }
+    const response = await fetch('/api/members', {
+      headers: { 'ngrok-skip-browser-warning': 'true' }
+    });
 
     if (!response.ok) {
       throw new Error(`HTTP Error Status: ${response.status}`);
@@ -52,7 +43,8 @@ export const fetchMembersFromDatabaseAPI = async () => {
         phone: item.phone,
         dob: item.dob,
         email: item.email,
-        status: item.status || 'Active'
+        status: item.status || 'Active',
+        points: item.points || 0
       }));
     }
     return null;
@@ -68,7 +60,8 @@ export const createMemberAPI = async (newAcc) => {
     const response = await fetch('/api/members/create', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true'
       },
       body: JSON.stringify({
         member_code: newAcc.memberCode,
@@ -97,7 +90,8 @@ export const updateMemberAPI = async (memberId, updatedFields) => {
     const response = await fetch(`/api/members/${memberId}`, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true'
       },
       body: JSON.stringify({
         full_name: updatedFields.name,

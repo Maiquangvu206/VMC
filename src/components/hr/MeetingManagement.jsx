@@ -216,7 +216,7 @@ export const MeetingManagement = () => {
                 <p>Thành viên bị đánh dấu "Đi muộn" hoặc "Vắng không phép" sẽ bị trừ điểm tự động ngay khi bạn chốt điểm danh.</p>
               </div>
 
-              {members.map(m => (
+              {members.filter(m => !m.roleTitle?.includes('Super Admin')).map(m => (
                 <div key={m.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-slate-950 rounded-xl border border-white/5">
                   <div className="flex-1">
                     <div className="font-bold text-sm text-white">{m.name}</div>

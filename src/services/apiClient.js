@@ -1,22 +1,15 @@
-// Helper for dynamically connecting to Port 5000 if proxy fails
-const getValidFetchUrl = async (endpoint, method = 'GET') => {
-  const primaryUrl = endpoint;
-  try {
-    const resp = await fetch(primaryUrl, { method });
-    const contentType = resp.headers.get('content-type') || '';
-    if (resp.ok && !contentType.includes('text/html')) {
-      return primaryUrl; // Proxy works!
-    }
-  } catch(e) {}
-  
-  // Fallback to Port 5000 directly
-  return `${window.location.protocol}//${window.location.hostname}:5000${endpoint}`;
+const HEADERS = {
+  'Content-Type': 'application/json',
+  'ngrok-skip-browser-warning': 'true'
 };
+
+const getUrl = (endpoint) => `/api/${endpoint}`;
 
 export const fetchEntityAPI = async (endpoint) => {
   try {
-    const url = await getValidFetchUrl(`/api/${endpoint}`, 'GET');
-    const response = await fetch(url);
+    const response = await fetch(getUrl(endpoint), {
+      headers: { 'ngrok-skip-browser-warning': 'true' }
+    });
     const result = await response.json();
     if (result.success) return result.data;
     return [];
@@ -28,10 +21,9 @@ export const fetchEntityAPI = async (endpoint) => {
 
 export const createEntityAPI = async (endpoint, data) => {
   try {
-    const url = await getValidFetchUrl(`/api/${endpoint}`, 'POST');
-    const response = await fetch(url, {
+    const response = await fetch(getUrl(endpoint), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: HEADERS,
       body: JSON.stringify(data)
     });
     return await response.json();
@@ -43,10 +35,9 @@ export const createEntityAPI = async (endpoint, data) => {
 
 export const updateEntityAPI = async (endpoint, id, data) => {
   try {
-    const url = await getValidFetchUrl(`/api/${endpoint}/${id}`, 'PUT');
-    const response = await fetch(url, {
+    const response = await fetch(getUrl(`${endpoint}/${id}`), {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: HEADERS,
       body: JSON.stringify(data)
     });
     return await response.json();
@@ -58,9 +49,9 @@ export const updateEntityAPI = async (endpoint, id, data) => {
 
 export const deleteEntityAPI = async (endpoint, id) => {
   try {
-    const url = await getValidFetchUrl(`/api/${endpoint}/${id}`, 'DELETE');
-    const response = await fetch(url, {
-      method: 'DELETE'
+    const response = await fetch(getUrl(`${endpoint}/${id}`), {
+      method: 'DELETE',
+      headers: { 'ngrok-skip-browser-warning': 'true' }
     });
     return await response.json();
   } catch (error) {

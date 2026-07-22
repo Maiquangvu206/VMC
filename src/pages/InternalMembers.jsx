@@ -79,6 +79,8 @@ export const InternalMembers = () => {
   const [selectedTerm, setSelectedTerm] = useState('ALL');
   const [selectedDept, setSelectedDept] = useState('ALL');
 
+  const hasSuperAdmin = members.some(m => m.roleTitle?.includes('Super Admin'));
+
   const [formData, setFormData] = useState({
     username: '',
     name: '',
@@ -258,6 +260,9 @@ export const InternalMembers = () => {
 
   // Filter Members Logic by Search Query & Period/Term & Department
   const filteredMembers = members.filter(m => {
+    // Ẩn tài khoản Super Admin khỏi danh sách hiển thị
+    if (m.roleTitle?.includes('Super Admin')) return false;
+
     const memberGen = formatGen(m.termName || m.term || '');
     const memberDept = normalizeText(m.deptName || m.department || '');
 
@@ -688,15 +693,22 @@ export const InternalMembers = () => {
 
                 <div>
                   <label className="block text-slate-400 mb-1">5. Chức Vụ Trong CLB {!isAdmin && '(Chỉ Admin được sửa)'}</label>
-                  <input
-                    type="text"
+                  <select
                     required
                     disabled={!isAdmin}
                     value={editingMember.roleTitle}
                     onChange={(e) => setEditingMember({ ...editingMember, roleTitle: e.target.value })}
                     className={`w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-semibold ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''
                       }`}
-                  />
+                  >
+                    <option value="Thành Viên">Thành Viên</option>
+                    <option value="Phó Ban">Phó Ban</option>
+                    <option value="Trưởng Ban">Trưởng Ban</option>
+                    <option value="Chủ Nhiệm CLB">Chủ Nhiệm CLB</option>
+                    {(!hasSuperAdmin || editingMember.roleTitle === 'Super Admin') && (
+                      <option value="Super Admin">Super Admin (Quyền Toàn Năng)</option>
+                    )}
+                  </select>
                 </div>
 
                 {isAdmin && (
@@ -990,14 +1002,21 @@ export const InternalMembers = () => {
 
                 <div>
                   <label className="block text-slate-300 font-semibold mb-1">5. Chức Vụ Trong CLB *</label>
-                  <input
-                    type="text"
+                  <select
                     required
                     value={formData.roleTitle}
                     onChange={(e) => setFormData({ ...formData, roleTitle: e.target.value })}
-                    placeholder="vd: Thành Viên VMC / Phó Ban"
                     className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white"
-                  />
+                  >
+                    <option value="">-- Chọn chức vụ --</option>
+                    <option value="Thành Viên">Thành Viên</option>
+                    <option value="Phó Ban">Phó Ban</option>
+                    <option value="Trưởng Ban">Trưởng Ban</option>
+                    <option value="Chủ Nhiệm CLB">Chủ Nhiệm CLB</option>
+                    {(!hasSuperAdmin || formData.roleTitle === 'Super Admin') && (
+                      <option value="Super Admin">Super Admin (Quyền Toàn Năng)</option>
+                    )}
+                  </select>
                 </div>
 
                 <div>

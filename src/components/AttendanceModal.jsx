@@ -136,7 +136,7 @@ export const AttendanceModal = () => {
               </label>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto p-1">
-                {members.map(m => {
+                {members.filter(m => !m.roleTitle?.includes('Super Admin')).map(m => {
                   const isChecked = selectedPresentIds.includes(m.id);
                   return (
                     <div

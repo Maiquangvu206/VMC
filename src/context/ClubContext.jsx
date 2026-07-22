@@ -259,7 +259,6 @@ export const ClubProvider = ({ children }) => {
     currentUser?.role === 'admin' ||
     currentUser?.memberCode === 'ADMIN' ||
     currentUser?.roleTitle?.includes('Super Admin') ||
-    currentUser?.roleTitle?.includes('Chủ Nhiệm') ||
     currentUser?.deptName?.includes('Đối Ngoại') ||
     currentUser?.deptName?.includes('Nhân Sự')
   );
@@ -268,7 +267,6 @@ export const ClubProvider = ({ children }) => {
     currentUser?.role === 'admin' ||
     currentUser?.memberCode === 'ADMIN' ||
     currentUser?.roleTitle?.includes('Super Admin') ||
-    currentUser?.roleTitle?.includes('Chủ Nhiệm') ||
     (currentUser?.roleTitle?.includes('Trưởng Ban') && (currentUser?.deptName?.includes('Đối Ngoại') || currentUser?.deptName?.includes('Nhân Sự')))
   );
 
@@ -885,8 +883,7 @@ export const ClubProvider = ({ children }) => {
   const isAdmin = Boolean(
     currentUser?.role === 'admin' ||
     currentUser?.memberCode === 'ADMIN' ||
-    currentUser?.roleTitle?.includes('Super Admin') ||
-    currentUser?.roleTitle?.includes('Chủ Nhiệm CLB')
+    currentUser?.roleTitle?.includes('Super Admin')
   );
 
   const addFinanceRecord = (record) => {
@@ -1011,7 +1008,7 @@ export const ClubProvider = ({ children }) => {
 
   const updateMemberPoints = async (memberId, pointsDelta, reason) => {
     let finalDelta = parseInt(pointsDelta, 10);
-    const member = db.members?.find(m => m.id === memberId);
+    const member = db.members?.find(m => String(m.id) === String(memberId));
     if (!member) return;
     
     const isHR = member.deptName?.toLowerCase().includes('đối ngoại') || member.deptName?.toLowerCase().includes('nhân sự') || member.deptName?.toLowerCase().includes('đn-ns');
@@ -1025,7 +1022,7 @@ export const ClubProvider = ({ children }) => {
 
     updateDb(prev => ({
       ...prev,
-      members: prev.members.map(m => m.id === memberId ? { ...m, points: newPoints } : m)
+      members: prev.members.map(m => String(m.id) === String(memberId) ? { ...m, points: newPoints } : m)
     }));
 
     try {
