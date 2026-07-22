@@ -171,7 +171,7 @@ app.get('/api/members', async (req, res) => {
 app.put('/api/members/:id', async (req, res) => {
   const { id } = req.params;
   const { 
-    full_name, role, role_title, member_code, class_name, department, 
+    full_name, role, role_title, member_code, class_name, department, term,
     phone, dob, email, points, address, facebook, avatar_url, avatar, 
     status, password, is_first_login, isFirstLogin 
   } = req.body;
@@ -186,6 +186,7 @@ app.put('/api/members/:id', async (req, res) => {
         member_code = COALESCE(?, member_code), 
         class_name = COALESCE(?, class_name), 
         department = COALESCE(?, department), 
+        term = COALESCE(?, term),
         phone = COALESCE(?, phone), 
         dob = COALESCE(?, dob), 
         email = COALESCE(?, email),
@@ -206,6 +207,7 @@ app.put('/api/members/:id', async (req, res) => {
       member_code !== undefined ? member_code : null,
       class_name !== undefined ? class_name : null,
       department !== undefined ? department : null,
+      term !== undefined ? term : null,
       phone !== undefined ? phone : null,
       dob !== undefined ? dob : null,
       email !== undefined ? email : null,

@@ -289,6 +289,9 @@ export const InternalTasks = () => {
                 >
                   <option value="" disabled hidden>-- Chọn người phụ trách --</option>
                   {members.filter(m => {
+                    const isSystemAdmin = m.roleTitle?.includes('Super Admin') || m.role === 'admin' || m.memberCode === 'ADMIN' || m.name?.includes('Quản Trị Viên') || m.name?.includes('Super Admin');
+                    if (isSystemAdmin) return false;
+
                     const deptMapping = {
                       'bcn': 'Ban Chủ Nhiệm',
                       'content_radio': 'Ban Nội Dung - Phát Thanh',

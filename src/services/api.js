@@ -107,6 +107,7 @@ export const updateMemberAPI = async (memberId, updatedFields) => {
         member_code: updatedFields.memberCode !== undefined ? updatedFields.memberCode : updatedFields.member_code,
         class_name: updatedFields.class !== undefined ? updatedFields.class : updatedFields.class_name,
         department: updatedFields.deptName !== undefined ? updatedFields.deptName : updatedFields.department,
+        term: updatedFields.term !== undefined ? updatedFields.term : updatedFields.termName,
         phone: updatedFields.phone,
         dob: updatedFields.dob,
         email: updatedFields.email,

@@ -490,8 +490,24 @@ export const ClubProvider = ({ children }) => {
     const memberObj = db.members.find(m => m.id === memberId || m.memberCode === memberId) || {};
     const nextFields = { ...updatedFields };
 
-    // Chỉ Admin mới được thay đổi quyền truy cập tài khoản.
-    if (!isAdmin) {
+    const isSuperAdmin = Boolean(
+      currentUser?.memberCode === 'ADMIN' ||
+      currentUser?.roleTitle?.includes('Super Admin')
+    );
+
+    const canEditRole = Boolean(
+      isAdmin ||
+      isHRHead ||
+      canManageAccounts
+    );
+
+    // Chỉ Super Admin mới được thay đổi Mã Thành Viên (cố định)
+    if (!isSuperAdmin) {
+      nextFields.memberCode = memberObj.memberCode;
+    }
+
+    // Chỉ Admin và Trưởng Ban Đối Ngoại - Nhân Sự mới được thay đổi chức vụ / quyền
+    if (!canEditRole) {
       nextFields.role = memberObj.role;
       nextFields.roleTitle = memberObj.roleTitle;
     }
@@ -499,7 +515,7 @@ export const ClubProvider = ({ children }) => {
     const fullPayload = { ...memberObj, ...nextFields };
 
     // 1. Sync to Server API Database
-    await updateMemberAPI(nextFields.memberCode || memberObj.memberCode || memberId, fullPayload);
+    await updateMemberAPI(memberObj.id || nextFields.memberCode || memberId, fullPayload);
 
     // 2. Fetch fresh data directly from MySQL
     const freshMembers = await fetchMembersFromDatabaseAPI();
@@ -555,17 +571,23 @@ export const ClubProvider = ({ children }) => {
     alert('🎉 Đã thêm cột mốc lịch sử chức vụ mới thành công!');
   };
 
-  // Account Creation (ADMIN / SUPER ADMIN ONLY)
-  const createMemberAccount = async (newAcc) => {
-    const isAdmin = Boolean(
-      currentUser?.role === 'admin' ||
-      currentUser?.memberCode === 'ADMIN' ||
-      currentUser?.roleTitle?.includes('Super Admin') ||
-      currentUser?.roleTitle?.includes('Chủ Nhiệm CLB')
-    );
+  // Helper permission check for Account Management (Super Admin & Trưởng Ban Đối Ngoại - Nhân Sự)
+  const canManageAccounts = Boolean(
+    currentUser?.role === 'admin' ||
+    currentUser?.memberCode === 'ADMIN' ||
+    currentUser?.roleTitle?.includes('Super Admin') ||
+    currentUser?.roleTitle?.includes('Chủ Nhiệm CLB') ||
+    (currentUser?.roleTitle?.includes('Trưởng Ban') && (
+      currentUser?.deptName?.includes('Đối Ngoại') || 
+      currentUser?.deptName?.includes('Nhân Sự') ||
+      currentUser?.deptName?.includes('ĐN-NS')
+    ))
+  );
 
-    if (!isAdmin) {
-      alert('⛔ Quyền bị từ chối! Chỉ có Chủ Nhiệm CLB (Super Admin / Admin) mới có quyền cấp tài khoản thành viên mới!');
+  // Account Creation (SUPER ADMIN & TRƯỞNG BAN ĐỐI NGOẠI - NHÂN SỰ ONLY)
+  const createMemberAccount = async (newAcc) => {
+    if (!canManageAccounts) {
+      alert('⛔ Quyền bị từ chối! Chỉ có Super Admin (Chủ Nhiệm CLB) và Trưởng Ban Đối Ngoại - Nhân Sự mới có quyền cấp tài khoản thành viên mới!');
       return false;
     }
 
@@ -591,21 +613,14 @@ export const ClubProvider = ({ children }) => {
     }));
 
     triggerConfetti();
-    alert(`Chủ Nhiệm CLB (Admin) đã cấp thành công tài khoản mới vào CSDL!\nMã Thành Viên: ${generatedCode}\nMật khẩu khởi tạo: VMC2026@VinhBao`);
+    alert(`Đã cấp thành công tài khoản mới vào CSDL!\nMã Thành Viên: ${generatedCode}\nMật khẩu khởi tạo: VMC2026@VinhBao`);
     return true;
   };
 
-  // Reset password by Admin (ADMIN / SUPER ADMIN ONLY)
+  // Reset password by Admin (SUPER ADMIN & TRƯỞNG BAN ĐỐI NGOẠI - NHÂN SỰ ONLY)
   const resetAccountPassword = async (username) => {
-    const isAdmin = Boolean(
-      currentUser?.role === 'admin' ||
-      currentUser?.memberCode === 'ADMIN' ||
-      currentUser?.roleTitle?.includes('Super Admin') ||
-      currentUser?.roleTitle?.includes('Chủ Nhiệm CLB')
-    );
-
-    if (!isAdmin) {
-      alert('⛔ Quyền bị từ chối! Chỉ có Chủ Nhiệm CLB (Super Admin / Admin) mới có quyền cấp / reset mật khẩu tài khoản!');
+    if (!canManageAccounts) {
+      alert('⛔ Quyền bị từ chối! Chỉ có Super Admin (Chủ Nhiệm CLB) và Trưởng Ban Đối Ngoại - Nhân Sự mới có quyền cấp / reset mật khẩu tài khoản!');
       return false;
     }
 
@@ -632,21 +647,14 @@ export const ClubProvider = ({ children }) => {
         return m;
       })
     }));
-    alert(`Chủ Nhiệm CLB (Admin) đã reset lại Mật khẩu khởi tạo (VMC2026@VinhBao) cho tài khoản [${username}].`);
+    alert(`Đã reset lại Mật khẩu khởi tạo (VMC2026@VinhBao) cho tài khoản [${username}].`);
     return true;
   };
 
-  // Delete Member Account (ADMIN / SUPER ADMIN ONLY)
+  // Delete Member Account (SUPER ADMIN & TRƯỞNG BAN ĐỐI NGOẠI - NHÂN SỰ ONLY)
   const deleteMemberAccount = async (id) => {
-    const isAdmin = Boolean(
-      currentUser?.role === 'admin' ||
-      currentUser?.memberCode === 'ADMIN' ||
-      currentUser?.roleTitle?.includes('Super Admin') ||
-      currentUser?.roleTitle?.includes('Chủ Nhiệm CLB')
-    );
-
-    if (!isAdmin) {
-      alert('⛔ Quyền bị từ chối! Chỉ có Chủ Nhiệm CLB (Super Admin / Admin) mới có quyền xóa tài khoản thành viên khỏi hệ thống!');
+    if (!canManageAccounts) {
+      alert('⛔ Quyền bị từ chối! Chỉ có Super Admin (Chủ Nhiệm CLB) và Trưởng Ban Đối Ngoại - Nhân Sự mới có quyền xóa tài khoản thành viên khỏi hệ thống!');
       return false;
     }
 

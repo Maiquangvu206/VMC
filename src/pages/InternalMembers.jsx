@@ -63,7 +63,8 @@ export const InternalMembers = () => {
     currentUser?.role === 'admin' ||
     currentUser?.memberCode === 'ADMIN' ||
     currentUser?.roleTitle?.includes('Super Admin') ||
-    currentUser?.roleTitle?.includes('Chủ Nhiệm CLB')
+    currentUser?.roleTitle?.includes('Chủ Nhiệm CLB') ||
+    isHRHead
   );
 
   const isSuperAdmin = Boolean(
@@ -251,10 +252,10 @@ export const InternalMembers = () => {
     setIsNewAccountModalOpen(false);
   };
 
-  const handleTechUpdateMember = (e) => {
+  const handleTechUpdateMember = async (e) => {
     e.preventDefault();
     if (!editingMember) return;
-    updateMemberByTech(editingMember.id, editingMember);
+    await updateMemberByTech(editingMember.id, editingMember);
     setEditingMember(null);
   };
 
@@ -644,13 +645,14 @@ export const InternalMembers = () => {
             <form onSubmit={handleTechUpdateMember} className="space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-400 mb-1">1. Mã Thành Viên</label>
+                  <label className="block text-slate-400 mb-1">1. Mã Thành Viên {!isSuperAdmin && '(Cố định - Chỉ Super Admin được sửa)'}</label>
                   <input
                     type="text"
                     required
+                    disabled={!isSuperAdmin}
                     value={editingMember.memberCode}
                     onChange={(e) => setEditingMember({ ...editingMember, memberCode: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-mono"
+                    className={`w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-mono ${!isSuperAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
                   />
                 </div>
 
@@ -692,7 +694,7 @@ export const InternalMembers = () => {
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">5. Chức Vụ Trong CLB {!isAdmin && '(Chỉ Admin được sửa)'}</label>
+                  <label className="block text-slate-400 mb-1">5. Chức Vụ Trong CLB {!isAdmin && '(Chỉ Admin & Trưởng Ban ĐN-NS được sửa)'}</label>
                   <select
                     required
                     disabled={!isAdmin}

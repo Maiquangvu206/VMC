@@ -96,13 +96,13 @@ export const InternalDashboard = () => {
 
             <button
               onClick={() => {
-                setActiveTab('drafts');
-                setIsNewDraftModalOpen(true);
+                alert('🔒 Chức năng Soạn Kịch Bản / Bài Đăng đang trong quá trình phát triển!');
               }}
-              className="btn-secondary text-xs px-4 py-2.5 font-semibold"
+              className="btn-secondary text-xs px-4 py-2.5 font-semibold opacity-80 hover:opacity-100"
+              title="Chức năng đang trong quá trình phát triển"
             >
-              <FileText className="w-4 h-4 text-blue-400" />
-              <span>Soạn Kịch Bản / Bài Đăng</span>
+              <FileText className="w-4 h-4 text-amber-400" />
+              <span>Soạn Kịch Bản / Bài Đăng (Đang phát triển)</span>
             </button>
           </div>
 

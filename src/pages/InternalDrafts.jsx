@@ -14,6 +14,20 @@ export const InternalDrafts = () => {
     currentUser 
   } = useClub();
 
+  const canApproveDraft = Boolean(
+    currentUser?.role === 'admin' ||
+    currentUser?.role === 'lead' ||
+    currentUser?.memberCode === 'ADMIN' ||
+    currentUser?.roleTitle?.includes('Super Admin') ||
+    currentUser?.roleTitle?.includes('Chủ Nhiệm') ||
+    currentUser?.roleTitle?.includes('Trưởng Ban') ||
+    currentUser?.roleTitle?.includes('Phó Ban') ||
+    currentUser?.deptName?.includes('Nội Dung') ||
+    currentUser?.deptName?.includes('Chủ Nhiệm') ||
+    currentUser?.deptName?.includes('Đối Ngoại') ||
+    currentUser?.deptName?.includes('Nhân Sự')
+  );
+
   const [draftToSchedule, setDraftToSchedule] = useState(null);
   const [scheduleForm, setScheduleForm] = useState({
     publishDate: '',
@@ -39,10 +53,23 @@ export const InternalDrafts = () => {
   return (
     <div className="container py-8 space-y-8 pb-20">
       
+      {/* Locked Notice Banner */}
+      <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-between gap-4 text-xs text-amber-200 shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0 text-amber-400 text-lg font-bold">
+            🔒
+          </div>
+          <div>
+            <strong className="block text-amber-300 font-bold text-sm">Chức năng đang trong quá trình phát triển!</strong>
+            <span className="text-amber-200/80">Tính năng Soạn Kịch Bản, Phê Duyệt & Lên Lịch Đăng Bài hiện đang tạm khóa để nâng cấp trải nghiệm hệ thống.</span>
+          </div>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="badge badge-amber">Content Studio VMC</span>
+          <span className="badge badge-amber">Content Studio VMC (Đang Phát Triển)</span>
           <h1 className="font-heading text-3xl font-extrabold text-white mt-1">
             Kho Kịch Bản & <span className="gradient-text">Duyệt Bài Fanpage</span>
           </h1>
@@ -52,11 +79,11 @@ export const InternalDrafts = () => {
         </div>
 
         <button
-          onClick={() => setIsNewDraftModalOpen(true)}
-          className="btn-primary text-xs px-5 py-2.5 shadow-blue-600/40"
+          onClick={() => alert('🔒 Chức năng Soạn Kịch Bản & Duyệt Bài đang trong quá trình phát triển!')}
+          className="btn-primary text-xs px-5 py-2.5 shadow-amber-600/30 opacity-80 hover:opacity-100 bg-amber-600 border-amber-500"
         >
           <Plus className="w-4 h-4" />
-          <span>Soạn Bài Viết Mới</span>
+          <span>Soạn Bài Viết Mới (Đang Khóa)</span>
         </button>
       </div>
 
@@ -79,26 +106,26 @@ export const InternalDrafts = () => {
 
               <div className="flex items-center gap-3 shrink-0">
                 <span className={`badge ${draft.status === 'approved' ? 'badge-emerald' : 'badge-amber'}`}>
-                  {draft.status === 'approved' ? 'Đã Lên Lịch Đăng' : 'Chờ Ban Chủ Nhiệm Duyệt'}
+                  {draft.status === 'approved' ? 'Đã Lên Lịch Đăng' : 'Chờ Phê Duyệt & Lên Lịch'}
                 </span>
 
-                {draft.status === 'pending' && (currentUser.role === 'admin' || currentUser.role === 'lead') && (
+                {draft.status === 'pending' && (
                   <button
-                    onClick={() => setDraftToSchedule(draft.id)}
-                    className="btn-primary text-xs px-4 py-1.5 shadow-emerald-600/30"
+                    onClick={() => alert('🔒 Chức năng Lên Lịch & Giao Chấm Bài đang trong quá trình phát triển!')}
+                    className="btn-primary text-xs px-4 py-1.5 shadow-amber-600/30 bg-amber-600 border-amber-500 opacity-80 hover:opacity-100"
                   >
                     <CheckCircle className="w-4 h-4" />
-                    <span>Lên Lịch & Giao Chấm Bài</span>
+                    <span>Lên Lịch (Đang Khóa)</span>
                   </button>
                 )}
                 
-                {draft.status === 'approved' && draft.gradingStatus === 'pending' && draft.graderId === currentUser.id && (
+                {draft.status === 'approved' && draft.gradingStatus === 'pending' && (
                   <button
-                    onClick={() => completeGrading(draft.id)}
-                    className="btn-primary text-xs px-4 py-1.5 shadow-blue-600/30"
+                    onClick={() => alert('🔒 Chức năng Chấm Điểm Bài Đăng đang trong quá trình phát triển!')}
+                    className="btn-primary text-xs px-4 py-1.5 shadow-amber-600/30 bg-amber-600 border-amber-500 opacity-80 hover:opacity-100"
                   >
                     <CheckCircle className="w-4 h-4" />
-                    <span>Đã Hoàn Thành Chấm Điểm</span>
+                    <span>Hoàn Thành Chấm Điểm (Đang Khóa)</span>
                   </button>
                 )}
               </div>
@@ -209,7 +236,10 @@ export const InternalDrafts = () => {
                   className="input-field w-full"
                 >
                   <option value="">-- Chọn thành viên phụ trách --</option>
-                  {members.filter(m => m.status !== 'Suspended').map(m => (
+                  {members.filter(m => {
+                    const isSystemAdmin = m.roleTitle?.includes('Super Admin') || m.role === 'admin' || m.memberCode === 'ADMIN' || m.name?.includes('Quản Trị Viên') || m.name?.includes('Super Admin');
+                    return !isSystemAdmin && m.status !== 'Suspended';
+                  }).map(m => (
                     <option key={m.id} value={m.id}>{m.name} ({m.deptName})</option>
                   ))}
                 </select>

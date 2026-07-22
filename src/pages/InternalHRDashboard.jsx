@@ -40,25 +40,71 @@ export const InternalHRDashboard = () => {
   // Points ranking — không tính tài khoản hệ thống
   const rankedMembers = [...filteredMembers].sort((a, b) => (b.points || 0) - (a.points || 0));
 
-  // Birthdays parsing
+  // Helper to parse DOB in any format (YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY)
+  const parseDob = (dobStr) => {
+    if (!dobStr) return { day: 0, month: 0 };
+    const str = dobStr.toString().trim();
+    let day = 0, month = 0;
+
+    if (str.includes('-')) {
+      const parts = str.split('-');
+      if (parts.length === 3) {
+        if (parts[0].length === 4) {
+          // YYYY-MM-DD
+          month = parseInt(parts[1], 10);
+          day = parseInt(parts[2], 10);
+        } else {
+          // DD-MM-YYYY
+          day = parseInt(parts[0], 10);
+          month = parseInt(parts[1], 10);
+        }
+      }
+    } else if (str.includes('/')) {
+      const parts = str.split('/');
+      if (parts.length === 3) {
+        if (parts[0].length === 4) {
+          // YYYY/MM/DD
+          month = parseInt(parts[1], 10);
+          day = parseInt(parts[2], 10);
+        } else {
+          // DD/MM/YYYY
+          day = parseInt(parts[0], 10);
+          month = parseInt(parts[1], 10);
+        }
+      }
+    }
+
+    return { day: isNaN(day) ? 0 : day, month: isNaN(month) ? 0 : month };
+  };
+
+  // Birthdays parsing supporting MySQL YYYY-MM-DD date format
   const getUpcomingBirthdays = () => {
     const today = new Date();
-    const currentMonth = today.getMonth() + 1;
-    const currentDay = today.getDate();
+    today.setHours(0, 0, 0, 0);
 
-    return [...filteredMembers].filter(m => m.dob).map(m => {
-      const parts = m.dob.split('/');
-      if (parts.length === 3) {
-        const day = parseInt(parts[0], 10);
-        const month = parseInt(parts[1], 10);
-        return { ...m, bDay: day, bMonth: month };
+    const mapped = [...filteredMembers].map(m => {
+      const { day, month } = parseDob(m.dob);
+      if (!day || !month) return null;
+
+      const currentYear = today.getFullYear();
+      let nextBirthday = new Date(currentYear, month - 1, day);
+      if (nextBirthday < today) {
+        nextBirthday = new Date(currentYear + 1, month - 1, day);
       }
-      return { ...m, bDay: 0, bMonth: 0 };
-    }).filter(m => m.bMonth >= currentMonth || (m.bMonth === currentMonth && m.bDay >= currentDay))
-      .sort((a, b) => {
-        if (a.bMonth !== b.bMonth) return a.bMonth - b.bMonth;
-        return a.bDay - b.bDay;
-      });
+
+      const diffTime = nextBirthday.getTime() - today.getTime();
+      const daysUntil = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      return {
+        ...m,
+        bDay: day,
+        bMonth: month,
+        daysUntil,
+        formattedDob: `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}`
+      };
+    }).filter(Boolean);
+
+    return mapped.sort((a, b) => a.daysUntil - b.daysUntil);
   };
 
   const upcomingBirthdays = getUpcomingBirthdays();
@@ -211,8 +257,11 @@ export const InternalHRDashboard = () => {
                   <img src={m.avatar || '/placeholder-avatar.jpg'} alt={m.name} className="w-12 h-12 rounded-full object-cover border border-slate-700 z-10" />
                   <div className="flex-1 min-w-0 z-10">
                     <div className="text-sm font-bold text-white truncate">{m.name}</div>
-                    <div className="text-xs text-rose-300 font-mono mt-1 font-semibold">
-                      🎂 {m.dob}
+                    <div className="text-xs text-rose-300 font-mono mt-1 font-semibold flex items-center gap-2">
+                      <span>🎂 {m.formattedDob || m.dob}</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                        {m.daysUntil === 0 ? '🎉 Hôm nay!' : `Còn ${m.daysUntil} ngày`}
+                      </span>
                     </div>
                   </div>
                 </div>
