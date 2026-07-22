@@ -84,7 +84,10 @@ export const InternalDashboard = () => {
           {/* Quick Actions */}
           <div className="flex flex-wrap gap-2.5 shrink-0">
             <button
-              onClick={() => setIsNewTaskModalOpen(true)}
+              onClick={() => {
+                setActiveTab('tasks');
+                setIsNewTaskModalOpen(true);
+              }}
               className="btn-primary text-xs px-4 py-2.5 shadow-md shadow-blue-600/30 font-semibold"
             >
               <Plus className="w-4 h-4" />
@@ -92,7 +95,10 @@ export const InternalDashboard = () => {
             </button>
 
             <button
-              onClick={() => setIsNewDraftModalOpen(true)}
+              onClick={() => {
+                setActiveTab('drafts');
+                setIsNewDraftModalOpen(true);
+              }}
               className="btn-secondary text-xs px-4 py-2.5 font-semibold"
             >
               <FileText className="w-4 h-4 text-blue-400" />
@@ -139,7 +145,7 @@ export const InternalDashboard = () => {
       <div className="space-y-4">
         <h2 className="font-heading text-xl font-bold text-white flex items-center gap-2">
           <Users className="w-5 h-5 text-blue-400" />
-          <span>4 Ban Chuyên Môn Trong CLB VMC</span>
+          <span>5 Ban Chuyên Môn Trong CLB VMC</span>
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

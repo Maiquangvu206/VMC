@@ -49,6 +49,7 @@ export const InternalMembers = () => {
     members,
     currentUser,
     isHRMember,
+    isHRHead,
     createMemberAccount,
     deleteMemberAccount,
     resetAccountPassword,
@@ -63,6 +64,11 @@ export const InternalMembers = () => {
     currentUser?.memberCode === 'ADMIN' ||
     currentUser?.roleTitle?.includes('Super Admin') ||
     currentUser?.roleTitle?.includes('Chủ Nhiệm CLB')
+  );
+
+  const isSuperAdmin = Boolean(
+    currentUser?.memberCode === 'ADMIN' ||
+    currentUser?.roleTitle?.includes('Super Admin')
   );
 
   const [selectedMember, setSelectedMember] = useState(null);
@@ -469,45 +475,39 @@ export const InternalMembers = () => {
               </div>
 
               <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => {
-                    if (!isAdmin) {
-                      alert('⛔ Quyền bị từ chối! Chỉ có Chủ Nhiệm CLB (Super Admin / Admin) mới có quyền cấp / reset mật khẩu tài khoản!');
-                      return;
-                    }
-                    resetAccountPassword(m.username);
-                  }}
-                  className={`p-2 rounded-lg text-xs transition-all ${isAdmin
-                    ? 'bg-slate-950 hover:bg-slate-800 text-blue-400 border border-blue-500/30'
-                    : 'bg-slate-950 text-slate-600 border border-slate-800 cursor-not-allowed opacity-50'
-                    }`}
-                  title={isAdmin ? 'Reset mật khẩu mặc định VMC2026@VinhBao (Chủ Nhiệm/Admin)' : 'Chỉ Chủ Nhiệm CLB (Admin) mới có quyền cấp / reset mật khẩu'}
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                </button>
+                {isHRHead && (
+                  <>
+                    <button
+                      onClick={() => resetAccountPassword(m.username)}
+                      className="p-2 rounded-lg text-xs transition-all bg-slate-950 hover:bg-slate-800 text-blue-400 border border-blue-500/30"
+                      title="Reset mật khẩu mặc định (Trưởng Ban ĐN-NS)"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                    </button>
 
-                <button
-                  onClick={() => toggleAccountStatus(m.id)}
-                  className={`p-2 rounded-lg text-xs font-semibold transition-all ${m.status === 'Active'
-                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                    : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                    }`}
-                  title={m.status === 'Active' ? 'Tạm khóa tài khoản' : 'Mở khóa'}
-                >
-                  <Lock className="w-3.5 h-3.5" />
-                </button>
+                    <button
+                      onClick={() => toggleAccountStatus(m.id)}
+                      className={`p-2 rounded-lg text-xs font-semibold transition-all ${m.status === 'Active'
+                          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30'
+                          : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30'
+                        }`}
+                      title={m.status === 'Active' ? 'Tạm khóa tài khoản' : 'Mở khóa'}
+                    >
+                      <Lock className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+                )}
 
-                {/* Nút Xóa Tài Khoản (Chỉ Admin / Chủ Nhiệm mới được phép) */}
-                <button
-                  onClick={() => deleteMemberAccount(m.id)}
-                  className={`p-2 rounded-lg text-xs font-semibold transition-all ${isAdmin
-                    ? 'bg-rose-500/20 text-rose-400 hover:bg-rose-600 hover:text-white border border-rose-500/30'
-                    : 'bg-slate-800/40 text-slate-500 border border-slate-800 cursor-not-allowed opacity-60'
-                    }`}
-                  title={isAdmin ? 'Xóa vĩnh viễn tài khoản thành viên (Chủ Nhiệm/Admin)' : 'Chỉ Chủ Nhiệm CLB (Super Admin) mới có quyền xóa tài khoản'}
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                {/* Nút Xóa Tài Khoản (Chỉ Super Admin mới được phép) */}
+                {isSuperAdmin && (
+                  <button
+                    onClick={() => deleteMemberAccount(m.id)}
+                    className="p-2 rounded-lg text-xs font-semibold transition-all bg-rose-500/20 text-rose-400 hover:bg-rose-600 hover:text-white border border-rose-500/30"
+                    title="Xóa vĩnh viễn tài khoản thành viên (Super Admin)"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -574,6 +574,37 @@ export const InternalMembers = () => {
                 <a href={selectedMember.facebook} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline text-xs truncate block">
                   {selectedMember.facebook || 'Chưa có'}
                 </a>
+              </div>
+            </div>
+
+            {/* Lịch sử hoạt động */}
+            <div className="mt-4">
+              <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                <Award className="w-4 h-4 text-amber-400" />
+                Lịch sử hoạt động & Chức vụ
+              </h4>
+              <div className="space-y-3 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                {selectedMember.milestones && selectedMember.milestones.length > 0 ? (
+                  selectedMember.milestones.map((ms, idx) => (
+                    <div key={ms.id || idx} className="flex gap-3 relative">
+                      <div className="flex flex-col items-center">
+                        <div className="w-2.5 h-2.5 rounded-full bg-amber-400 ring-4 ring-amber-400/20 z-10" />
+                        {idx !== selectedMember.milestones.length - 1 && (
+                          <div className="w-0.5 h-full bg-slate-700/50 absolute top-2.5" />
+                        )}
+                      </div>
+                      <div className="pb-3">
+                        <p className="text-[10px] text-amber-400 font-mono mb-0.5">{ms.date}</p>
+                        <p className="text-xs font-semibold text-slate-200">{ms.title}</p>
+                        <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[9px] font-bold border ${ms.badgeStyle || 'bg-blue-500/10 text-blue-400 border-blue-500/30'}`}>
+                          {ms.badgeText}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-xs text-slate-400 italic text-center py-2">Chưa có lịch sử hoạt động nào được ghi nhận.</p>
+                )}
               </div>
             </div>
 
@@ -710,59 +741,155 @@ export const InternalMembers = () => {
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">6. Số Điện Thoại / Zalo</label>
+                  <label className="block text-slate-400 mb-1">Trạng Thái Hoạt Động</label>
+                  <select
+                    value={editingMember.status || 'Active'}
+                    onChange={(e) => setEditingMember({ ...editingMember, status: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-medium"
+                  >
+                    <option value="Active">Đang Hoạt Động</option>
+                    <option value="Suspended">Tạm Nghỉ / Khóa</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-400 mb-1">6. Số Điện Thoại / Zalo (Chỉ chủ tài khoản được sửa)</label>
                   <input
                     type="tel"
-                    required
+                    disabled
                     value={editingMember.phone}
-                    onChange={(e) => setEditingMember({ ...editingMember, phone: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-mono"
+                    className="w-full px-3 py-2 bg-slate-950/50 border border-white/10 rounded-xl text-slate-500 font-mono cursor-not-allowed"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">7. Email Học Sinh</label>
+                  <label className="block text-slate-400 mb-1">7. Email Học Sinh (Chỉ chủ tài khoản được sửa)</label>
                   <input
                     type="email"
-                    required
+                    disabled
                     value={editingMember.email}
-                    onChange={(e) => setEditingMember({ ...editingMember, email: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white"
+                    className="w-full px-3 py-2 bg-slate-950/50 border border-white/10 rounded-xl text-slate-500 cursor-not-allowed"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">8. Ngày Sinh (Ngày/Tháng/Năm)</label>
+                  <label className="block text-slate-300 font-semibold mb-1">8. Ngày Sinh (Chỉ chủ tài khoản được sửa)</label>
                   <input
                     type="text"
-                    required
+                    disabled
                     value={editingMember.dob || ''}
-                    onChange={(e) => setEditingMember({ ...editingMember, dob: e.target.value })}
-                    placeholder="15/08/2008"
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-mono"
+                    className="w-full px-3 py-2 bg-slate-950/50 border border-white/10 rounded-xl text-slate-500 font-mono cursor-not-allowed"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1">9. Địa Chỉ Thường Trú</label>
+                <label className="block text-slate-400 mb-1">9. Địa Chỉ Thường Trú (Chỉ chủ tài khoản được sửa)</label>
                 <input
                   type="text"
+                  disabled
                   value={editingMember.address}
-                  onChange={(e) => setEditingMember({ ...editingMember, address: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white"
+                  className="w-full px-3 py-2 bg-slate-950/50 border border-white/10 rounded-xl text-slate-500 cursor-not-allowed"
                 />
               </div>
 
               <div>
-                <label className="block text-slate-400 mb-1">10. Liên Hệ Facebook Cá Nhân</label>
+                <label className="block text-slate-400 mb-1">10. Liên Hệ Facebook Cá Nhân (Chỉ chủ tài khoản được sửa)</label>
                 <input
                   type="url"
-                  required
+                  disabled
                   value={editingMember.facebook}
-                  onChange={(e) => setEditingMember({ ...editingMember, facebook: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white"
+                  className="w-full px-3 py-2 bg-slate-950/50 border border-white/10 rounded-xl text-slate-500 cursor-not-allowed"
                 />
+              </div>
+
+              {/* Edit Milestones Section */}
+              <div className="border-t border-white/10 pt-4 mt-2">
+                <div className="flex justify-between items-center mb-3">
+                  <label className="block text-amber-400 font-bold mb-1">Lịch sử hoạt động & Chức vụ</label>
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      const newMilestone = {
+                        id: 'm-' + Date.now(),
+                        date: new Date().toLocaleDateString('vi-VN'),
+                        title: 'Hoạt động mới',
+                        badgeText: 'Sự kiện',
+                        badgeStyle: 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                      };
+                      setEditingMember({
+                        ...editingMember,
+                        milestones: [...(editingMember.milestones || []), newMilestone]
+                      });
+                    }}
+                    className="px-2 py-1 bg-amber-500/20 text-amber-400 rounded-lg text-[10px] font-bold hover:bg-amber-500 hover:text-slate-950 transition-all"
+                  >
+                    + Thêm Lịch Sử
+                  </button>
+                </div>
+                
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                  {(editingMember.milestones || []).map((ms, index) => (
+                    <div key={ms.id || index} className="p-3 bg-slate-950 border border-white/5 rounded-xl flex flex-col gap-2 relative">
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          const newMilestones = [...editingMember.milestones];
+                          newMilestones.splice(index, 1);
+                          setEditingMember({ ...editingMember, milestones: newMilestones });
+                        }}
+                        className="absolute top-2 right-2 text-rose-400 hover:text-rose-300"
+                        title="Xóa lịch sử này"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                      <div className="grid grid-cols-2 gap-2 pr-6">
+                        <div>
+                          <label className="block text-[9px] text-slate-500">Thời gian</label>
+                          <input 
+                            type="text" 
+                            value={ms.date}
+                            onChange={(e) => {
+                              const updated = [...editingMember.milestones];
+                              updated[index].date = e.target.value;
+                              setEditingMember({ ...editingMember, milestones: updated });
+                            }}
+                            className="w-full bg-slate-900 border border-white/10 rounded px-2 py-1 text-xs text-white"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[9px] text-slate-500">Loại (Badge)</label>
+                          <input 
+                            type="text" 
+                            value={ms.badgeText}
+                            onChange={(e) => {
+                              const updated = [...editingMember.milestones];
+                              updated[index].badgeText = e.target.value;
+                              setEditingMember({ ...editingMember, milestones: updated });
+                            }}
+                            className="w-full bg-slate-900 border border-white/10 rounded px-2 py-1 text-xs text-white"
+                          />
+                        </div>
+                        <div className="col-span-2">
+                          <label className="block text-[9px] text-slate-500">Tên hoạt động / Chức vụ</label>
+                          <input 
+                            type="text" 
+                            value={ms.title}
+                            onChange={(e) => {
+                              const updated = [...editingMember.milestones];
+                              updated[index].title = e.target.value;
+                              setEditingMember({ ...editingMember, milestones: updated });
+                            }}
+                            className="w-full bg-slate-900 border border-white/10 rounded px-2 py-1 text-xs text-white"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {(!editingMember.milestones || editingMember.milestones.length === 0) && (
+                    <p className="text-xs text-slate-500 italic text-center py-2">Chưa có lịch sử hoạt động.</p>
+                  )}
+                </div>
               </div>
 
               <div className="pt-2 flex justify-end gap-2">

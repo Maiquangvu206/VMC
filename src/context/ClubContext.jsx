@@ -47,6 +47,29 @@ export const ClubProvider = ({ children }) => {
         }
       ];
     }
+    if (!loaded.finances) {
+      loaded.finances = [
+        { id: 'f1', type: 'income', amount: 500000, description: 'Đóng quỹ CLB tháng 7', date: '2026-07-20', loggedBy: 'Ban Đối Ngoại - Nhân Sự' },
+        { id: 'f2', type: 'expense', amount: 120000, description: 'Mua nước sinh hoạt', date: '2026-07-21', loggedBy: 'Ban Đối Ngoại - Nhân Sự' }
+      ];
+    }
+    
+    // Seed test accounts
+    const testAccounts = [
+      { id: 'test-admin', memberCode: 'ADMIN', username: 'admin', name: 'Quản Trị Viên (Root)', roleTitle: 'Super Admin', role: 'admin', deptName: 'Ban Chủ Nhiệm', isFirstLogin: false, password: 'admin123', status: 'Active', dob: '01/01/2000' },
+      { id: 'test-1', memberCode: 'BCN_TEST', username: 'bcntest', name: 'Ban Chủ Nhiệm Test', roleTitle: 'Chủ Nhiệm CLB', role: 'admin', deptName: 'Ban Chủ Nhiệm', isFirstLogin: false, password: '123', status: 'Active', dob: '01/01/2008' },
+      { id: 'test-2', memberCode: 'ND_TEST', username: 'ndtest', name: 'Nội Dung Test', roleTitle: 'Thành viên Ban Nội Dung', role: 'member', deptName: 'Ban Nội Dung - Phát Thanh', isFirstLogin: false, password: '123', status: 'Active', dob: '02/02/2008' },
+      { id: 'test-3', memberCode: 'SX_TEST', username: 'sxtest', name: 'Sản Xuất Test', roleTitle: 'Thành viên Ban Sản Xuất', role: 'member', deptName: 'Ban Sản Xuất', isFirstLogin: false, password: '123', status: 'Active', dob: '03/03/2008' },
+      { id: 'test-4', memberCode: 'HR_TEST', username: 'hrtest', name: 'Đối Ngoại Nhân Sự Test', roleTitle: 'Trưởng Ban Đối Ngoại - Nhân Sự', role: 'admin', deptName: 'Ban Đối Ngoại - Nhân Sự', isFirstLogin: false, password: '123', status: 'Active', dob: '04/04/2008' },
+      { id: 'test-5', memberCode: 'CV_TEST', username: 'cvtest', name: 'Cố Vấn Test', roleTitle: 'Cố Vấn CLB', role: 'admin', deptName: 'Ban Cố Vấn', isFirstLogin: false, password: '123', status: 'Active', dob: '05/05/2008' },
+    ];
+    if (!loaded.members) loaded.members = [];
+    testAccounts.forEach(acc => {
+      if (!loaded.members.find(m => m.memberCode === acc.memberCode)) {
+        loaded.members.push(acc);
+      }
+    });
+
     return loaded;
   });
 
@@ -64,10 +87,18 @@ export const ClubProvider = ({ children }) => {
         const serverMembers = await fetchMembersFromDatabaseAPI();
         if (isMounted && Array.isArray(serverMembers) && serverMembers.length > 0) {
           setDb(prev => {
-            const prevStr = JSON.stringify((prev.members || []).map(m => [m.id, m.name, m.roleTitle, m.deptName, m.class, m.phone, m.status]));
-            const newStr = JSON.stringify(serverMembers.map(m => [m.id, m.name, m.roleTitle, m.deptName, m.class, m.phone, m.status]));
+            const mergedMembers = serverMembers.map(serverMem => {
+              const localMem = (prev.members || []).find(m => m.id === serverMem.id) || {};
+              return { ...localMem, ...serverMem };
+            });
+            // Keep local test accounts
+            const testAccs = (prev.members || []).filter(m => m.id && m.id.startsWith('test-'));
+            const finalMembers = [...mergedMembers, ...testAccs.filter(t => !mergedMembers.find(m => m.memberCode === t.memberCode))];
+            
+            const prevStr = JSON.stringify(prev.members || []);
+            const newStr = JSON.stringify(finalMembers);
             if (prevStr !== newStr) {
-              const updated = { ...prev, members: serverMembers };
+              const updated = { ...prev, members: finalMembers };
               saveDatabaseToStorage(updated);
               return updated;
             }
@@ -151,10 +182,13 @@ export const ClubProvider = ({ children }) => {
     const loadSqlMembers = async () => {
       const sqlMembers = await fetchMembersFromDatabaseAPI();
       if (sqlMembers && sqlMembers.length > 0) {
-        setDb(prev => ({
-          ...prev,
-          members: sqlMembers
-        }));
+        setDb(prev => {
+          const mergedMembers = sqlMembers.map(serverMem => {
+            const localMem = (prev.members || []).find(m => m.id === serverMem.id) || {};
+            return { ...localMem, ...serverMem };
+          });
+          return { ...prev, members: mergedMembers };
+        });
         console.log('✅ Đã load thành công dữ liệu thành viên từ API CSDL SQL!');
       }
     };
@@ -262,6 +296,12 @@ export const ClubProvider = ({ children }) => {
     const apiRes = await loginMemberAPI(memberCode, password);
     if (apiRes && apiRes.success && apiRes.user) {
       const user = apiRes.user;
+      
+      if (user.status === 'Suspended') {
+        alert('Tài khoản này đã bị tạm khóa bởi Ban Chủ Nhiệm!');
+        return false;
+      }
+
       setCurrentUser(user);
       if (user.isFirstLogin) {
         setRequirePasswordChange(true);
@@ -271,11 +311,45 @@ export const ClubProvider = ({ children }) => {
       }
       return true;
     }
+    
+    // If API returns a specific suspended message, alert it and stop
+    if (apiRes && !apiRes.success && apiRes.message?.includes('tạm khóa')) {
+      alert(apiRes.message);
+      return false;
+    }
 
     // 2. Fallback matching for demo environment
-    const user = db.members.find(m =>
-      (m.memberCode?.toUpperCase() === memberCode.toUpperCase() || m.username?.toLowerCase() === memberCode.toLowerCase())
+    let user = db.members.find(m =>
+      (m.memberCode?.toUpperCase() === memberCode.toUpperCase() || m.username?.toLowerCase() === memberCode.toLowerCase()) &&
+      m.password === password
     );
+
+    // 3. Foolproof Hardcoded Admin fallback
+    if (!user && (memberCode.toUpperCase() === 'ADMIN' && password === 'admin123')) {
+      user = { 
+        id: 'test-admin', 
+        memberCode: 'ADMIN', 
+        username: 'admin', 
+        name: 'Quản Trị Viên (Root)', 
+        roleTitle: 'Super Admin', 
+        role: 'admin', 
+        deptName: 'Ban Chủ Nhiệm', 
+        isFirstLogin: false, 
+        password: 'admin123', 
+        status: 'Active', 
+        dob: '01/01/2000' 
+      };
+      
+      // Ensure it's in the DB
+      setDb(prev => {
+        if (!prev.members.find(m => m.memberCode === 'ADMIN')) {
+          const updated = { ...prev, members: [...prev.members, user] };
+          saveDatabaseToStorage(updated);
+          return updated;
+        }
+        return prev;
+      });
+    }
 
     if (!user) return false;
     if (user.status === 'Suspended') {
@@ -436,7 +510,11 @@ export const ClubProvider = ({ children }) => {
     const freshMembers = await fetchMembersFromDatabaseAPI();
     if (freshMembers && Array.isArray(freshMembers) && freshMembers.length > 0) {
       setDb(prev => {
-        const updated = { ...prev, members: freshMembers };
+        const mergedMembers = freshMembers.map(serverMem => {
+          const localMem = (prev.members || []).find(m => m.id === serverMem.id) || {};
+          return { ...localMem, ...serverMem };
+        });
+        const updated = { ...prev, members: mergedMembers };
         saveDatabaseToStorage(updated);
         return updated;
       });
@@ -594,7 +672,18 @@ export const ClubProvider = ({ children }) => {
       members: prev.members.map(m => {
         if (m.id === id) {
           const newStatus = m.status === 'Active' ? 'Suspended' : 'Active';
-          return { ...m, status: newStatus };
+          const newMilestone = {
+            id: 'm-' + Date.now(),
+            date: new Date().toLocaleDateString('vi-VN'),
+            title: newStatus === 'Suspended' ? 'Đã dừng hoạt động (Bị khóa)' : 'Tiếp tục hoạt động (Đã mở khóa)',
+            badgeText: newStatus === 'Suspended' ? '[Dừng hoạt động]' : '[Đang hoạt động]',
+            badgeStyle: newStatus === 'Suspended' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+          };
+          return { 
+            ...m, 
+            status: newStatus,
+            milestones: [...(m.milestones || []), newMilestone] 
+          };
         }
         return m;
       })
@@ -724,6 +813,95 @@ export const ClubProvider = ({ children }) => {
     currentUser?.roleTitle?.includes('Chủ Nhiệm CLB')
   );
 
+  const addFinanceRecord = (record) => {
+    updateDb(prev => ({
+      ...prev,
+      finances: [
+        { ...record, id: 'fin-' + Date.now() },
+        ...(prev.finances || [])
+      ]
+    }));
+  };
+
+  // -------------------------------------------------------------
+  // NEW: MEETING & SEEDING (ATTENDANCE) FUNCTIONS
+  // -------------------------------------------------------------
+  const createMeeting = (meeting) => {
+    updateDb(prev => ({
+      ...prev,
+      meetings: [
+        { ...meeting, id: 'mtg-' + Date.now(), status: 'pending', attendanceData: [], minutesLink: null },
+        ...(prev.meetings || [])
+      ]
+    }));
+    triggerConfetti();
+  };
+
+  const submitMeetingAttendance = (meetingId, attendanceData) => {
+    // attendanceData is an array of objects: { memberId, status: 'present' | 'late' | 'absent' }
+    updateDb(prev => {
+      const lateMemberIds = attendanceData.filter(d => d.status === 'late').map(d => d.memberId);
+      
+      const newMembers = prev.members.map(m => {
+        if (lateMemberIds.includes(m.id)) {
+          return { ...m, points: (m.points || 0) - 5 };
+        }
+        return m;
+      });
+
+      const newMeetings = (prev.meetings || []).map(mtg => {
+        if (mtg.id === meetingId) {
+          return { ...mtg, attendanceData, status: mtg.minutesLink ? 'completed' : 'pending_minutes' };
+        }
+        return mtg;
+      });
+
+      return { ...prev, members: newMembers, meetings: newMeetings };
+    });
+    alert('✅ Đã chốt điểm danh. Thành viên đi muộn đã tự động bị trừ 5 điểm thi đua!');
+  };
+
+  const submitMeetingMinutes = (meetingId, link) => {
+    updateDb(prev => ({
+      ...prev,
+      meetings: (prev.meetings || []).map(mtg => 
+        mtg.id === meetingId ? { ...mtg, minutesLink: link, status: (mtg.attendanceData && mtg.attendanceData.length > 0) ? 'completed' : 'pending_attendance' } : mtg
+      )
+    }));
+    alert('✅ Đã nộp biên bản cuộc họp!');
+  };
+
+  const penalizeMember = (memberId, pointsToDeduct, reason) => {
+    updateDb(prev => ({
+      ...prev,
+      members: prev.members.map(m => m.id === memberId ? { ...m, points: (m.points || 0) - pointsToDeduct } : m)
+    }));
+    alert(`✅ Đã trừ ${pointsToDeduct} điểm của thành viên với lý do: ${reason}`);
+  };
+
+  // -------------------------------------------------------------
+  // NEW: BIRTHDAY MANAGEMENT FUNCTIONS
+  // -------------------------------------------------------------
+  const assignBirthdayDuty = (month, year, memberId) => {
+    updateDb(prev => {
+      const assignments = prev.birthdayAssignments || [];
+      const newAssignments = assignments.filter(a => !(a.month === month && a.year === year));
+      newAssignments.push({ id: 'bday-' + Date.now(), month, year, memberId, link: null, status: 'pending' });
+      return { ...prev, birthdayAssignments: newAssignments };
+    });
+    alert(`✅ Đã phân công nhiệm vụ trực sinh nhật tháng ${month}/${year}`);
+  };
+
+  const submitBirthdayImage = (assignmentId, link) => {
+    updateDb(prev => ({
+      ...prev,
+      birthdayAssignments: (prev.birthdayAssignments || []).map(a => 
+        a.id === assignmentId ? { ...a, link, status: 'completed' } : a
+      )
+    }));
+    alert('✅ Đã nộp link bài đăng sinh nhật thành công!');
+  };
+
   return (
     <ClubContext.Provider value={{
       theme,
@@ -731,6 +909,8 @@ export const ClubProvider = ({ children }) => {
       activeTab,
       setActiveTab,
       db,
+      finances: db.finances || [],
+      addFinanceRecord,
       currentUser,
       isAdmin,
       isAuthenticated,

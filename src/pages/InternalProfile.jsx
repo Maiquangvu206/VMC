@@ -75,6 +75,17 @@ export const InternalProfile = () => {
     facebook: currentUser.facebook || ''
   });
 
+  // Keep selfData in sync if currentUser updates from API / background sync
+  React.useEffect(() => {
+    setSelfData({
+      phone: currentUser.phone || '',
+      email: currentUser.email || '',
+      dob: currentUser.dob || '',
+      address: currentUser.address || '',
+      facebook: currentUser.facebook || ''
+    });
+  }, [currentUser]);
+
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   const handleSelfUpdate = (e) => {
@@ -397,12 +408,12 @@ export const InternalProfile = () => {
 
             {/* UI Vertical Timeline với Đường Gạch Nối Border */}
             <div className="relative border-l-2 border-slate-700/80 space-y-6 ml-3 pl-6 py-2">
-              {roleHistoryMilestones.map((m) => {
-                const Icon = m.icon;
+              {(currentUser.milestones && currentUser.milestones.length > 0 ? currentUser.milestones : []).map((m, index) => {
+                const Icon = m.icon || Award;
                 return (
-                  <div key={m.id} className="relative group">
+                  <div key={m.id || index} className="relative group">
                     {/* Node Bullet Icon trên đường gạch nối */}
-                    <div className={`absolute -left-[37px] top-0.5 p-1.5 rounded-full bg-slate-900 border-2 ${m.iconBorder} shadow-md transition-transform group-hover:scale-110`}>
+                    <div className={`absolute -left-[37px] top-0.5 p-1.5 rounded-full bg-slate-900 border-2 ${m.iconBorder || 'border-blue-500 text-blue-400'} shadow-md transition-transform group-hover:scale-110`}>
                       <Icon className="w-3.5 h-3.5" />
                     </div>
 
@@ -417,7 +428,7 @@ export const InternalProfile = () => {
                         </div>
 
                         {/* Tag Trạng Thái (Right Badge) */}
-                        <span className={`text-[10px] font-bold font-mono px-2.5 py-0.5 rounded-md border shrink-0 w-fit ${m.badgeStyle}`}>
+                        <span className={`text-[10px] font-bold font-mono px-2.5 py-0.5 rounded-md border shrink-0 w-fit ${m.badgeStyle || 'bg-blue-500/10 text-blue-400 border-blue-500/30'}`}>
                           {m.badgeText}
                         </span>
                       </div>
@@ -430,6 +441,9 @@ export const InternalProfile = () => {
                   </div>
                 );
               })}
+              {(!currentUser.milestones || currentUser.milestones.length === 0) && (
+                <div className="text-slate-400 italic text-sm">Chưa có lịch sử hoạt động nào được ghi nhận.</div>
+              )}
             </div>
 
           </div>

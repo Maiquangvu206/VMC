@@ -27,6 +27,8 @@ export const getInitialDatabase = () => ({
   resources: [],
   departmentDrives: [],
   attendanceRecords: [],
+  meetings: [],
+  birthdayAssignments: [],
   lastUpdated: new Date().toISOString()
 });
 

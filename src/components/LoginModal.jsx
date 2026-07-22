@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useClub } from '../context/ClubContext';
-import { Lock, User, AlertCircle, ArrowRight, Laptop, Crown } from 'lucide-react';
+import { Lock, User, AlertCircle, ArrowRight, Laptop, Crown, Eye, EyeOff } from 'lucide-react';
 
 export const LoginModal = () => {
   const { login } = useClub();
@@ -9,6 +9,7 @@ export const LoginModal = () => {
   const [passwordInput, setPasswordInput] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [showForgotNotice, setShowForgotNotice] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
@@ -70,14 +71,14 @@ export const LoginModal = () => {
         <form onSubmit={handleFormSubmit} className="space-y-4">
           <div>
             <label className="text-xs font-medium text-slate-400 mb-1.5 block flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5 text-cyan-400 shrink-0" /> Mã Thành Viên (VMC Code / Username) *
+              <User className="w-3.5 h-3.5 text-cyan-400 shrink-0" /> Mã Thành Viên *
             </label>
             <input
               type="text"
               required
               value={memberCodeInput}
               onChange={(e) => setMemberCodeInput(e.target.value)}
-              placeholder="Nhập ADMIN hoặc Mã Thành Viên..."
+              placeholder="Nhập Mã Thành Viên..."
               className="w-full bg-slate-950/60 border border-slate-700/60 rounded-xl px-4 py-3 text-slate-100 text-sm font-mono placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all uppercase"
             />
           </div>
@@ -95,14 +96,23 @@ export const LoginModal = () => {
                 Quên mật khẩu?
               </button>
             </div>
-            <input
-              type="password"
-              required
-              value={passwordInput}
-              onChange={(e) => setPasswordInput(e.target.value)}
-              placeholder="••••••••••••"
-              className="w-full bg-slate-950/60 border border-slate-700/60 rounded-xl px-4 py-3 text-slate-100 text-sm placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
-            />
+            <div className="relative flex items-center">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                placeholder="••••••••••••"
+                className="w-full bg-slate-950/60 border border-slate-700/60 rounded-xl pl-4 pr-12 py-3 text-slate-100 text-sm placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center justify-center text-slate-400 hover:text-slate-200 focus:outline-none"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
 
           {/* Forgot Password Notice */}

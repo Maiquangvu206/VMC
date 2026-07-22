@@ -14,6 +14,7 @@ import { InternalResources } from './pages/InternalResources';
 import { InternalMembers } from './pages/InternalMembers';
 import { InternalDatabase } from './pages/InternalDatabase';
 import { InternalProfile } from './pages/InternalProfile';
+import { InternalHRDashboard } from './pages/InternalHRDashboard';
 
 const IntranetPortalContent = () => {
   const { activeTab, isAuthenticated, requirePasswordChange } = useClub();
@@ -41,6 +42,7 @@ const IntranetPortalContent = () => {
           {activeTab === 'members' && <InternalMembers />}
           {activeTab === 'database' && <InternalDatabase />}
           {activeTab === 'profile' && <InternalProfile />}
+          {activeTab === 'hr_dashboard' && <InternalHRDashboard />}
         </main>
       </div>
       <AttendanceModal />

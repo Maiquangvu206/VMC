@@ -27,7 +27,8 @@ export const Navbar = () => {
     checkinAttendance,
     logout,
     tasks,
-    drafts
+    drafts,
+    isHRMember
   } = useClub();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -43,7 +44,8 @@ export const Navbar = () => {
     { id: 'drafts', label: 'Duyệt Bài', icon: FileText, badge: pendingDraftsCount },
     { id: 'resources', label: 'Tài Nguyên', icon: FolderGit2 },
     { id: 'members', label: 'Thành Viên', icon: Users },
-    { id: 'profile', label: 'Hồ Sơ', icon: User }
+    { id: 'profile', label: 'Hồ Sơ', icon: User, badge: 0 },
+    { id: 'hr_dashboard', label: 'Thi Đua & Sinh Nhật', icon: Users, badge: 0 }
   ];
 
   const handleNavClick = (id) => {
@@ -140,16 +142,18 @@ export const Navbar = () => {
                 </div>
 
                 {/* Attendance */}
-                <button
-                  onClick={checkinAttendance}
-                  className="w-full flex items-center justify-between p-2.5 rounded-xl bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500 hover:text-slate-950 font-bold text-xs transition-all"
-                >
-                  <div className="flex items-center gap-2">
-                    <UserCheck className="w-4 h-4" />
-                    <span>Điểm Danh Sinh Hoạt</span>
-                  </div>
-                  <span className="text-[10px] font-mono font-bold">+50 PTS</span>
-                </button>
+                {isHRMember && (
+                  <button
+                    onClick={checkinAttendance}
+                    className="w-full flex items-center justify-between p-2.5 rounded-xl bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500 hover:text-slate-950 font-bold text-xs transition-all"
+                  >
+                    <div className="flex items-center gap-2">
+                      <UserCheck className="w-4 h-4" />
+                      <span>Điểm Danh Sinh Hoạt</span>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold">+50 PTS</span>
+                  </button>
+                )}
 
                 <button
                   onClick={() => {

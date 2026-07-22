@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 export const DashboardPage = () => {
-  const { user, checkinAttendance, resources = [] } = useClub();
+  const { user, checkinAttendance, resources = [], isHRMember } = useClub();
 
   const handleDownloadResource = (resource) => {
     if (resource.driveUrl) {
@@ -55,13 +55,15 @@ export const DashboardPage = () => {
 
           {/* Quick Check-in Button */}
           <div className="flex flex-col items-center md:items-end gap-2 shrink-0">
-            <button
-              onClick={checkinAttendance}
-              className="btn-primary px-6 py-3 shadow-lg shadow-purple-600/40 text-sm"
-            >
-              <UserCheck className="w-5 h-5" />
-              <span>Điểm Danh Sinh Hoạt (+50 Pts)</span>
-            </button>
+            {isHRMember && (
+              <button
+                onClick={checkinAttendance}
+                className="btn-primary px-6 py-3 shadow-lg shadow-purple-600/40 text-sm"
+              >
+                <UserCheck className="w-5 h-5" />
+                <span>Điểm Danh Sinh Hoạt (+50 Pts)</span>
+              </button>
+            )}
             <span className="text-[11px] text-slate-400">
               Đã tham gia: <strong className="text-white font-mono">{user.checkins} buổi</strong>
             </span>

@@ -1,12 +1,49 @@
 import express from 'express';
 import cors from 'cors';
 import { queryDatabase } from './db.js';
+import nodemailer from 'nodemailer';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
+
+// Cấu hình Nodemailer Transporter
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.SMTP_EMAIL,
+    pass: process.env.SMTP_PASSWORD
+  }
+});
+
+// API Gửi Email Tự Động
+app.post('/api/send-email', async (req, res) => {
+  const { to, subject, text, html } = req.body;
+  
+  if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
+    return res.status(500).json({ success: false, message: 'Server chưa được cấu hình tài khoản Email (SMTP_EMAIL & SMTP_PASSWORD)' });
+  }
+
+  if (!to || !subject || (!text && !html)) {
+    return res.status(400).json({ success: false, message: 'Thiếu thông tin người nhận, tiêu đề hoặc nội dung!' });
+  }
+
+  try {
+    const info = await transporter.sendMail({
+      from: `"VMC Internal Portal" <${process.env.SMTP_EMAIL}>`,
+      to,
+      subject,
+      text,
+      html: html || text // Ưu tiên HTML nếu có
+    });
+    res.json({ success: true, message: 'Đã gửi email thành công!', messageId: info.messageId });
+  } catch (error) {
+    console.error('❌ Lỗi gửi email:', error.message);
+    res.status(500).json({ success: false, message: 'Không thể gửi email', error: error.message });
+  }
+});
 
 // API Endpoint 1: POST /api/auth/login - Xác thực đăng nhập an toàn từ Server
 app.post('/api/auth/login', async (req, res) => {

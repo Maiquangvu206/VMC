@@ -15,8 +15,10 @@ import {
 export const InternalTasks = () => {
   const { 
     tasks, 
-    updateTaskStatus, 
+    members,
     addTask, 
+    updateTaskStatus, 
+    deleteTask,
     isNewTaskModalOpen, 
     setIsNewTaskModalOpen 
   } = useClub();
@@ -279,14 +281,31 @@ export const InternalTasks = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">Người phụ trách chính *</label>
-                <input
-                  type="text"
+                <select
                   required
                   value={formData.assignee}
                   onChange={(e) => setFormData({ ...formData, assignee: e.target.value })}
-                  placeholder="Nguyễn Hoàng Mai (Trưởng Ban)..."
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-white/10 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
-                />
+                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
+                >
+                  <option value="" disabled hidden>-- Chọn người phụ trách --</option>
+                  {members.filter(m => {
+                    const deptMapping = {
+                      'bcn': 'Ban Chủ Nhiệm',
+                      'content_radio': 'Ban Nội Dung - Phát Thanh',
+                      'production': 'Ban Sản Xuất',
+                      'hr_external': 'Ban Đối Ngoại - Nhân Sự'
+                    };
+                    const selectedDeptName = deptMapping[formData.department];
+                    
+                    const isSelectedDept = m.department === formData.department || m.deptName === selectedDeptName;
+                    const isBCN = m.department === 'bcn' || m.deptName === 'Ban Chủ Nhiệm';
+                    
+                    return isSelectedDept || isBCN;
+                  }).map(m => (
+                    <option key={m.id} value={m.name}>{m.name} - {m.roleTitle} ({m.deptName || m.department})</option>
+                  ))}
+                  <option value="Cả Ban">Cả Ban (Tất cả thành viên)</option>
+                </select>
               </div>
 
               <div>
