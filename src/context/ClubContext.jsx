@@ -340,54 +340,17 @@ export const ClubProvider = ({ children }) => {
       return false;
     }
 
-    // 2. Fallback matching for demo environment
-    let user = db.members.find(m =>
-      (m.memberCode?.toUpperCase() === memberCode.toUpperCase() || m.username?.toLowerCase() === memberCode.toLowerCase()) &&
-      m.password === password
-    );
-
-    // 3. Foolproof Hardcoded Admin fallback
-    if (!user && (memberCode.toUpperCase() === 'ADMIN' && password === 'admin123')) {
-      user = { 
-        id: 'test-admin', 
-        memberCode: 'ADMIN', 
-        username: 'admin', 
-        name: 'Quản Trị Viên (Root)', 
-        roleTitle: 'Super Admin', 
-        role: 'admin', 
-        deptName: 'Ban Chủ Nhiệm', 
-        isFirstLogin: false, 
-        password: 'admin123', 
-        status: 'Active', 
-        dob: '01/01/2000' 
-      };
-      
-      // Ensure it's in the DB
-      setDb(prev => {
-        if (!prev.members.find(m => m.memberCode === 'ADMIN')) {
-          const updated = { ...prev, members: [...prev.members, user] };
-          saveDatabaseToStorage(updated);
-          return updated;
-        }
-        return prev;
-      });
-    }
-
-    if (!user) return false;
-    if (user.status === 'Suspended') {
-      alert('Tài khoản này đã bị tạm khóa bởi Bộ Phận Kỹ Thuật!');
+    // Nếu API thất bại (server offline / lỗi kết nối) → thông báo rõ ràng
+    if (!apiRes || !apiRes.success) {
+      const errMsg = apiRes?.message || 'Server API offline';
+      // Nếu là lỗi kết nối mạng, không phải sai mật khẩu
+      if (errMsg === 'Server API offline' || errMsg.includes('offline') || errMsg.includes('fetch')) {
+        alert('❌ Không thể kết nối đến máy chủ!\n\nVui lòng kiểm tra kết nối mạng hoặc liên hệ Bộ Phận Kỹ Thuật.');
+      }
       return false;
     }
 
-    setCurrentUser(user);
-
-    if (user.isFirstLogin) {
-      setRequirePasswordChange(true);
-    } else {
-      setIsAuthenticated(true);
-      triggerConfetti();
-    }
-    return true;
+    return false;
   };
 
   // Mandatory first time password change

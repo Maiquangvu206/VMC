@@ -241,8 +241,8 @@ app.post('/api/members/create', async (req, res) => {
   }
 });
 
-// Catch-all: trả về index.html cho React Router (SPA)
-app.get('*', (req, res) => {
+// Catch-all: trả về index.html cho React Router SPA (Express 5 compatible)
+app.use((req, res) => {
   res.sendFile(path.join(DIST_DIR, 'index.html'));
 });
 
