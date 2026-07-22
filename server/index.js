@@ -1,3 +1,6 @@
+import 'dotenv/config';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import express from 'express';
 import cors from 'cors';
 import { queryDatabase } from './db.js';
@@ -10,6 +13,12 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 app.use('/api', apiRouter);
+
+// Serve frontend build (production)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const DIST_DIR = path.join(__dirname, '..', 'dist');
+app.use(express.static(DIST_DIR));
 
 // Cấu hình Nodemailer Transporter
 const transporter = nodemailer.createTransport({
@@ -223,6 +232,12 @@ app.post('/api/members/create', async (req, res) => {
   }
 });
 
+// Catch-all: trả về index.html cho React Router (SPA)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(DIST_DIR, 'index.html'));
+});
+
 app.listen(PORT, () => {
-  console.log(`🚀 Private API Server CSDL đang chạy tại: http://localhost:${PORT}/api/members`);
+  console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
+  console.log(`📁 Serving frontend từ: ${DIST_DIR}`);
 });

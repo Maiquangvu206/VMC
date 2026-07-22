@@ -2,40 +2,40 @@ name: Deploy VMC Application
 
 on:
   push:
-    branches: [ "main" ] # Đổi thành "master" nếu branch chính của Vũ tên là master
+    branches: [ "main" ]
 
 jobs:
   deploy:
     runs-on: self-hosted
 
     steps:
-      # 1. Kéo code mới nhất từ GitHub về máy ASUS
+      # 1. Kéo code mới nhất từ GitHub về máy server
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Cài đặt Node.js môi trường
+      # 2. Cài đặt Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      # 3. Build phần Frontend (React + Vite)
+      # 3. Cài dependencies và Build Frontend (React + Vite → dist/)
       - name: Install & Build Frontend
         run: |
           npm ci
           npm run build
 
-      # 4. Cài đặt dependencies cho phần Backend (Server)
+      # 4. Cài dependencies cho Backend Server
       - name: Install Server Dependencies
         run: |
           cd server
           npm install
 
-      # 5. Khởi động lại Server/App (Dùng PM2 hoặc chạy trực tiếp)
-      - name: Restart Server
+      # 5. Khởi động lại Server với PM2 (serve cả API lẫn frontend từ dist/)
+      - name: Restart Server with PM2
         run: |
+          pm2 restart vmc-server || pm2 start server/index.js --name "vmc-server" --cwd .
+          pm2 save
           echo "=========================================="
-          echo "🎉 Build thành công! Dự án đã sẵn sàng."
+          echo "🎉 Deploy thành công! Server đang chạy."
           echo "=========================================="
-          # Nếu Vũ dùng PM2 để quản lý backend thì bỏ dấu # ở dòng dưới:
-          pm2 restart all || pm2 start server/index.js --name "vmc-server"
