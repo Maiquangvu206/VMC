@@ -29,7 +29,7 @@ import {
 } from 'lucide-react';
 
 export const InternalProfile = () => {
-  const { currentUser, isHRMember, logout, updateSelfProfile, addMemberMilestone } = useClub();
+  const { currentUser, isHRMember, logout, updateSelfProfile, addMemberMilestone, showToast } = useClub();
 
   // Avatar Modal State & Handlers
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
@@ -45,7 +45,7 @@ export const InternalProfile = () => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert('Vui lòng chọn file ảnh dung lượng dưới 5MB!');
+        showToast('Vui lòng chọn file ảnh dung lượng dưới 5MB!', 'warning');
         return;
       }
       const reader = new FileReader();
@@ -59,7 +59,7 @@ export const InternalProfile = () => {
   const handleSaveAvatar = async (e) => {
     e.preventDefault();
     if (!avatarPreview) {
-      alert('Vui lòng chọn file ảnh từ máy tính!');
+      showToast('Vui lòng chọn file ảnh từ máy tính!', 'warning');
       return;
     }
     await updateSelfProfile({ ...selfData, avatar: avatarPreview });
@@ -414,14 +414,14 @@ export const InternalProfile = () => {
                   className="bg-cyan-600/20 hover:bg-cyan-600 text-cyan-300 hover:text-white border border-cyan-500/40 px-3.5 py-1.5 rounded-xl text-xs font-semibold shrink-0 flex items-center gap-1.5 transition-all shadow-lg"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  <span>+ Thêm Cột Mốc Mới</span>
+                  <span>Thêm Cột Mốc Mới</span>
                 </button>
               )}
             </div>
 
             {/* UI Vertical Timeline với Đường Gạch Nối Border */}
             <div className="relative border-l-2 border-slate-700/80 space-y-6 ml-3 pl-6 py-2">
-              {(currentUser.milestones && currentUser.milestones.length > 0 ? currentUser.milestones : []).map((m, index) => {
+              {(currentUser.milestones && currentUser.milestones.length > 0 ? currentUser.milestones : roleHistoryMilestones).map((m, index) => {
                 const Icon = m.icon || Award;
                 return (
                   <div key={m.id || index} className="relative group">
@@ -560,7 +560,7 @@ export const InternalProfile = () => {
             <form onSubmit={(e) => {
               e.preventDefault();
               if (!newMilestone.title.trim()) {
-                alert('Vui lòng nhập nội dung cột mốc chức vụ!');
+                showToast('Vui lòng nhập nội dung cột mốc chức vụ!', 'warning');
                 return;
               }
               addMemberMilestone(currentUser.id, newMilestone);

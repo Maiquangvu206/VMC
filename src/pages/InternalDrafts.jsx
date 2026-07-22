@@ -3,15 +3,16 @@ import { useClub } from '../context/ClubContext';
 import { FileText, CheckCircle, Plus, Clock, User, X, Share2, Sparkles } from 'lucide-react';
 
 export const InternalDrafts = () => {
-  const { 
-    drafts, 
+  const {
+    drafts,
     members,
     approveDraft,
     completeGrading,
-    addDraft, 
-    isNewDraftModalOpen, 
+    addDraft,
+    isNewDraftModalOpen,
     setIsNewDraftModalOpen,
-    currentUser 
+    currentUser,
+    showToast
   } = useClub();
 
   const canApproveDraft = Boolean(
@@ -42,7 +43,7 @@ export const InternalDrafts = () => {
   const handleSubmitNewDraft = (e) => {
     e.preventDefault();
     if (!formData.title || !formData.content) {
-      alert('Vui lòng nhập đầy đủ tiêu đề và nội dung bài viết!');
+      showToast('Vui lòng nhập đầy đủ tiêu đề và nội dung bài viết!', 'warning');
       return;
     }
     addDraft(formData);
@@ -52,7 +53,7 @@ export const InternalDrafts = () => {
 
   return (
     <div className="container py-8 space-y-8 pb-20">
-      
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -105,7 +106,7 @@ export const InternalDrafts = () => {
                     <span>Lên Lịch & Giao Chấm Bài</span>
                   </button>
                 )}
-                
+
                 {draft.status === 'approved' && draft.gradingStatus === 'pending' && (draft.graderId === currentUser.id || canApproveDraft) && (
                   <button
                     onClick={() => completeGrading(draft.id)}
@@ -129,7 +130,7 @@ export const InternalDrafts = () => {
       {isNewDraftModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
           <div className="relative w-full max-w-xl bg-slate-900 border border-blue-500/40 rounded-3xl p-6 shadow-2xl text-white space-y-4">
-            
+
             <div className="flex justify-between items-center border-b border-white/10 pb-3">
               <h3 className="font-heading font-bold text-lg text-white">Soạn Bài Viết Nháp Mới</h3>
               <button onClick={() => setIsNewDraftModalOpen(false)} className="text-slate-400 hover:text-white">
@@ -174,7 +175,7 @@ export const InternalDrafts = () => {
                   type="submit"
                   className="btn-primary text-xs px-6 py-2"
                 >
-                  Gửi Bài Chờ BCN Duyệt
+                  Gửi Bài Chờ Duyệt
                 </button>
               </div>
             </form>
@@ -193,11 +194,11 @@ export const InternalDrafts = () => {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            
+
             <form onSubmit={(e) => {
               e.preventDefault();
               if (!scheduleForm.publishDate || !scheduleForm.graderId) {
-                alert('Vui lòng nhập ngày giờ đăng và chọn người chấm bài!');
+                showToast('Vui lòng nhập ngày giờ đăng và chọn người chấm bài!', 'warning');
                 return;
               }
               approveDraft(draftToSchedule, scheduleForm.publishDate, scheduleForm.graderId);
@@ -206,20 +207,20 @@ export const InternalDrafts = () => {
             }} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">Ngày Giờ Đăng Thực Tế</label>
-                <input 
-                  type="datetime-local" 
+                <input
+                  type="datetime-local"
                   required
                   value={scheduleForm.publishDate}
-                  onChange={e => setScheduleForm({...scheduleForm, publishDate: e.target.value})}
+                  onChange={e => setScheduleForm({ ...scheduleForm, publishDate: e.target.value })}
                   className="input-field w-full"
                 />
               </div>
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">Giao nhiệm vụ chấm tương tác</label>
-                <select 
+                <select
                   required
                   value={scheduleForm.graderId}
-                  onChange={e => setScheduleForm({...scheduleForm, graderId: e.target.value})}
+                  onChange={e => setScheduleForm({ ...scheduleForm, graderId: e.target.value })}
                   className="input-field w-full"
                 >
                   <option value="">-- Chọn thành viên phụ trách --</option>
@@ -234,7 +235,7 @@ export const InternalDrafts = () => {
                   * Hệ thống sẽ tự động đếm ngược 24 tiếng sau khi bài đăng lên. Nếu người phụ trách không hoàn thành chấm điểm sẽ bị tự động phạt -5 điểm.
                 </p>
               </div>
-              
+
               <div className="pt-2 flex justify-end gap-2">
                 <button type="button" onClick={() => setDraftToSchedule(null)} className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">
                   Hủy

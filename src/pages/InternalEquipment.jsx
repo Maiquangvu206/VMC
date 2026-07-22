@@ -8,7 +8,8 @@ export const InternalEquipment = () => {
     borrowEquipment, 
     returnEquipment, 
     currentUser,
-    addEquipment
+    addEquipment,
+    showToast
   } = useClub();
 
   const [selectedEq, setSelectedEq] = useState(null);
@@ -23,7 +24,7 @@ export const InternalEquipment = () => {
     if (!selectedEq) return;
     borrowEquipment(selectedEq.id, returnDate);
     setSelectedEq(null);
-    alert(`Đã đăng ký mượn ${selectedEq.name} thành công! Vui lòng bảo quản cẩn thận.`);
+    showToast(`🎉 Đã đăng ký mượn ${selectedEq.name} thành công! Vui lòng bảo quản cẩn thận.`, 'success');
   };
 
   const handleAddSubmit = (e) => {

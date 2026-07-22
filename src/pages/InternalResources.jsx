@@ -30,7 +30,8 @@ export const InternalResources = () => {
     deleteResource, 
     departmentDrives = [], 
     updateDepartmentDrive,
-    currentUser 
+    currentUser,
+    showToast
   } = useClub();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -106,11 +107,11 @@ export const InternalResources = () => {
   const handleFormSubmit = (e) => {
     e.preventDefault();
     if (!formData.name.trim()) {
-      alert('Vui lòng nhập tên tài nguyên!');
+      showToast('Vui lòng nhập tên tài nguyên!', 'warning');
       return;
     }
     if (!formData.driveUrl.trim()) {
-      alert('Vui lòng nhập đường dẫn Google Drive!');
+      showToast('Vui lòng nhập đường dẫn Google Drive!', 'warning');
       return;
     }
 

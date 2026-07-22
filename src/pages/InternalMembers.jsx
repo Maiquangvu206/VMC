@@ -55,8 +55,10 @@ export const InternalMembers = () => {
     resetAccountPassword,
     toggleAccountStatus,
     updateMemberByTech,
+    addMemberMilestone,
     isNewAccountModalOpen,
-    setIsNewAccountModalOpen
+    setIsNewAccountModalOpen,
+    showToast
   } = useClub();
 
   const isAdmin = Boolean(
@@ -74,6 +76,41 @@ export const InternalMembers = () => {
 
   const [selectedMember, setSelectedMember] = useState(null);
   const [editingMember, setEditingMember] = useState(null);
+
+  // Secure Add Milestone Modal State
+  const [isAddMsModalOpen, setIsAddMsModalOpen] = useState(false);
+  const [msTitle, setMsTitle] = useState('');
+  const [msDate, setMsDate] = useState('');
+  const [msBadge, setMsBadge] = useState('[Cột mốc]');
+
+  const handleCreateMilestone = () => {
+    if (!msTitle.trim() || !selectedMember) return;
+    const cleanTitle = msTitle.trim();
+    const cleanDate = msDate.trim() || new Date().toLocaleDateString('vi-VN');
+    const cleanBadge = msBadge.trim() || '[Cột mốc]';
+
+    addMemberMilestone(selectedMember.id, {
+      title: cleanTitle,
+      date: cleanDate,
+      badgeText: cleanBadge
+    });
+
+    setSelectedMember(prev => ({
+      ...prev,
+      milestones: [...(prev?.milestones || []), {
+        id: 'm-' + Date.now(),
+        date: cleanDate,
+        title: cleanTitle,
+        badgeText: cleanBadge,
+        badgeStyle: 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+      }]
+    }));
+
+    setMsTitle('');
+    setMsDate('');
+    setMsBadge('[Cột mốc]');
+    setIsAddMsModalOpen(false);
+  };
 
   // Search & Period Filter States
   const [searchQuery, setSearchQuery] = useState('');
@@ -245,7 +282,7 @@ export const InternalMembers = () => {
   const handleSubmitNewAccount = (e) => {
     e.preventDefault();
     if (!formData.username || !formData.name || !formData.phone) {
-      alert('Vui lòng nhập đầy đủ Tên đăng nhập, Họ tên và Số điện thoại!');
+      showToast('Vui lòng nhập đầy đủ Tên đăng nhập, Họ tên và Số điện thoại!', 'warning');
       return;
     }
     createMemberAccount(formData);
@@ -307,7 +344,7 @@ export const InternalMembers = () => {
         <button
           onClick={() => {
             if (!isAdmin) {
-              alert('⛔ Quyền bị từ chối! Chỉ có Chủ Nhiệm CLB (Super Admin / Admin) mới có quyền cấp tài khoản thành viên mới!');
+              showToast('⛔ Quyền bị từ chối! Chỉ có Chủ Nhiệm CLB (Super Admin / Admin) mới có quyền cấp tài khoản thành viên mới!', 'error');
               return;
             }
             setIsNewAccountModalOpen(true);
@@ -464,10 +501,26 @@ export const InternalMembers = () => {
                 <button
                   onClick={() => {
                     if (!isHRMember) {
-                      alert('⛔ Quyền bị từ chối! Chỉ có thành viên Ban Đối Ngoại - Nhân Sự hoặc Admin mới có quyền chỉnh sửa thông tin thành viên!');
+                      showToast('⛔ Quyền bị từ chối! Chỉ có thành viên Ban Đối Ngoại - Nhân Sự hoặc Admin mới có quyền chỉnh sửa thông tin thành viên!', 'error');
                       return;
                     }
-                    setEditingMember({ ...m });
+                    const msList = (Array.isArray(m.milestones) && m.milestones.length > 0) ? m.milestones : [
+                      {
+                        id: 'm-def-1-' + m.id,
+                        date: '20/09/2024',
+                        title: `Gia nhập VMC (${m.deptName || m.department || 'Ban Chuyên Môn'})`,
+                        badgeText: '[Gia nhập]',
+                        badgeStyle: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                      },
+                      {
+                        id: 'm-def-2-' + m.id,
+                        date: '01/06/2025',
+                        title: `Bổ nhiệm chức vụ: ${m.roleTitle || m.role_title || 'Thành Viên VMC'}`,
+                        badgeText: '[Chức vụ]',
+                        badgeStyle: 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                      }
+                    ];
+                    setEditingMember({ ...m, milestones: msList });
                   }}
                   className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${isHRMember
                     ? 'bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950'
@@ -585,10 +638,21 @@ export const InternalMembers = () => {
 
             {/* Lịch sử hoạt động */}
             <div className="mt-4">
-              <h4 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                <Award className="w-4 h-4 text-amber-400" />
-                Lịch sử hoạt động & Chức vụ
-              </h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Award className="w-4 h-4 text-amber-400" />
+                  Lịch sử hoạt động & Chức vụ
+                </h4>
+                {isHRMember && (
+                  <button
+                    onClick={() => setIsAddMsModalOpen(true)}
+                    className="text-[11px] font-bold text-amber-400 hover:text-amber-300 bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/30 px-2.5 py-1 rounded-lg flex items-center gap-1 transition-all"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    <span>Thêm Cột Mốc</span>
+                  </button>
+                )}
+              </div>
               <div className="space-y-3 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
                 {selectedMember.milestones && selectedMember.milestones.length > 0 ? (
                   selectedMember.milestones.map((ms, idx) => (
@@ -1051,6 +1115,59 @@ export const InternalMembers = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Thêm Cột Mốc Mới - Secure Input Modal */}
+      {isAddMsModalOpen && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
+          <div className="bg-slate-900 border border-slate-700/80 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex justify-between items-center pb-2 border-b border-slate-800">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <span>Thêm Cột Mốc Lịch Sử Mới</span>
+              </h3>
+              <button onClick={() => setIsAddMsModalOpen(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Tên Cột Mốc / Chức Vụ Mới *</label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: Khen thưởng Thành Viên Xuất Sắc"
+                  value={msTitle}
+                  onChange={(e) => setMsTitle(e.target.value)}
+                  className="input-field text-xs w-full"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Ngày Ghi Nhận (Để trống lấy ngày hôm nay)</label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: 22/07/2026"
+                  value={msDate}
+                  onChange={(e) => setMsDate(e.target.value)}
+                  className="input-field text-xs w-full"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">Nhãn Badge Tag</label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: [Khen thưởng] hoặc [Thăng chức]"
+                  value={msBadge}
+                  onChange={(e) => setMsBadge(e.target.value)}
+                  className="input-field text-xs w-full"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+              <button onClick={() => setIsAddMsModalOpen(false)} className="btn-secondary text-xs px-4 py-2">Hủy</button>
+              <button onClick={handleCreateMilestone} className="btn-primary text-xs px-4 py-2">Xác Nhận Thêm</button>
+            </div>
           </div>
         </div>
       )}

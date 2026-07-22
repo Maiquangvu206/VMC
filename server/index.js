@@ -19,6 +19,15 @@ const DIST_DIR = path.join(__dirname, '..', 'dist');
 
 console.log(`🔧 DB Config: host=${process.env.DB_HOST}, db=${process.env.DB_NAME}, user=${process.env.DB_USER}`);
 
+// ── Security Hardening Middleware ──
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  next();
+});
+
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -165,6 +174,7 @@ app.get('/api/members', async (req, res) => {
       ORDER BY id ASC
     `;
     const members = await queryDatabase(sql);
+    const tableMilestones = await queryDatabase('SELECT * FROM Member_Milestones ORDER BY created_at ASC').catch(() => []);
 
     res.json({
       success: true,
@@ -178,6 +188,23 @@ app.get('/api/members', async (req, res) => {
             parsed = [];
           }
         }
+        if (!Array.isArray(parsed)) parsed = [];
+
+        // Lấy danh sách từ bảng Member_Milestones theo ID hoặc MemberCode
+        const msFromTable = tableMilestones.filter(ms => 
+          String(ms.member_id) === String(m.id) || 
+          String(ms.member_id).toUpperCase() === String(m.member_code).toUpperCase()
+        ).map(ms => ({
+          id: ms.id,
+          date: ms.date,
+          title: ms.title,
+          badgeText: ms.badge_text,
+          badgeStyle: ms.badge_style
+        }));
+
+        const combined = [...msFromTable, ...parsed];
+        const unique = combined.filter((v, idx, self) => self.findIndex(t => t.id === v.id || (t.title === v.title && t.date === v.date)) === idx);
+
         return {
           id: m.id,
           memberCode: m.member_code,
@@ -198,7 +225,7 @@ app.get('/api/members', async (req, res) => {
           status: m.status,
           points: m.points,
           isFirstLogin: Boolean(m.is_first_login),
-          milestones: parsed
+          milestones: unique
         };
       })
     });
@@ -277,6 +304,28 @@ app.put('/api/members/:id', async (req, res) => {
       id, id, id
     ]);
 
+    // Đồng bộ vào bảng Member_Milestones
+    if (Array.isArray(milestones) && milestones.length > 0) {
+      for (const ms of milestones) {
+        if (ms.title) {
+          const msId = ms.id || ('m-' + Date.now() + Math.random().toString(36).substring(2, 5));
+          await queryDatabase(
+            `INSERT INTO Member_Milestones (id, member_id, date, title, badge_text, badge_style) 
+             VALUES (?, ?, ?, ?, ?, ?) 
+             ON DUPLICATE KEY UPDATE date = VALUES(date), title = VALUES(title), badge_text = VALUES(badge_text), badge_style = VALUES(badge_style)`,
+            [
+              msId,
+              String(id),
+              ms.date || new Date().toLocaleDateString('vi-VN'),
+              ms.title,
+              ms.badgeText || ms.badge_text || '[Cột mốc]',
+              ms.badgeStyle || ms.badge_style || 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+            ]
+          ).catch(e => {});
+        }
+      }
+    }
+
     console.log(`✅ Đã cập nhật CSDL MySQL thành công cho ID/Code: [${id}]`);
     res.json({
       success: true,
@@ -316,7 +365,7 @@ app.post('/api/members/create', async (req, res) => {
         (member_code, username, password, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, address, facebook, is_first_login, status)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, 'Active')
     `;
-    await queryDatabase(sql, [
+    const result = await queryDatabase(sql, [
       member_code,
       username || member_code.toLowerCase(),
       password || 'VMC2026@VinhBao',
@@ -334,9 +383,27 @@ app.post('/api/members/create', async (req, res) => {
       facebook || null
     ]);
 
+    // Tự động tạo bản ghi lịch sử đầu tiên: "Bắt đầu làm thành viên VMC" vào bảng Member_Milestones
+    const createdId = result.insertId ? String(result.insertId) : member_code;
+    const firstMilestoneId = 'm-' + Date.now();
+    const currentDateStr = new Date().toLocaleDateString('vi-VN');
+    const milestoneTitle = `Bắt đầu làm thành viên VMC (${department || 'Ban Chuyên Môn'})`;
+
+    await queryDatabase(
+      `INSERT INTO Member_Milestones (id, member_id, date, title, badge_text, badge_style) VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        firstMilestoneId,
+        createdId,
+        currentDateStr,
+        milestoneTitle,
+        '[Gia nhập]',
+        'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+      ]
+    ).catch(err => console.log('ℹ️ Status initial milestone create:', err.message));
+
     res.json({
       success: true,
-      message: 'Đã tạo thành công thành viên mới vào CSDL SQL Server!'
+      message: 'Đã tạo thành công thành viên mới vào CSDL SQL!'
     });
   } catch (error) {
     console.error('❌ Lỗi API /api/members/create:', error.message);

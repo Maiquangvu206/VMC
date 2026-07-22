@@ -20,7 +20,9 @@ export const InternalTasks = () => {
     updateTaskStatus, 
     deleteTask,
     isNewTaskModalOpen, 
-    setIsNewTaskModalOpen 
+    setIsNewTaskModalOpen,
+    currentUser,
+    showToast
   } = useClub();
 
   const [deptFilter, setDeptFilter] = useState('all');
@@ -30,7 +32,7 @@ export const InternalTasks = () => {
     assignee: '',
     deadline: '',
     priority: 'Medium',
-    desc: ''
+    points: 10
   });
 
   const filteredTasks = tasks.filter(t => deptFilter === 'all' || t.department === deptFilter);
@@ -42,7 +44,7 @@ export const InternalTasks = () => {
   const handleSubmitNewTask = (e) => {
     e.preventDefault();
     if (!formData.title || !formData.assignee || !formData.deadline) {
-      alert('Vui lòng điền đầy đủ thông tin nhiệm vụ!');
+      showToast('Vui lòng điền đầy đủ thông tin nhiệm vụ!', 'warning');
       return;
     }
     addTask(formData);

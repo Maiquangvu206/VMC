@@ -324,7 +324,7 @@ export const InternalDashboard = () => {
                   className="bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/30 px-3 py-1 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>+ Đăng Thông Báo</span>
+                  <span>Đăng Thông Báo</span>
                 </button>
               )}
             </div>

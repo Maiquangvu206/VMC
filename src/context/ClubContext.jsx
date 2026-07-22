@@ -78,12 +78,40 @@ export const ClubProvider = ({ children }) => {
         ]);
         
         if (isMounted) {
+          const buildDefaultMilestones = (m) => [
+            {
+              id: 'm-def-1-' + m.id,
+              memberId: m.id,
+              date: '20/09/2024',
+              title: `Gia nhập VMC (${m.deptName || m.department || 'Ban Chuyên Môn'})`,
+              badgeText: '[Gia nhập]',
+              badgeStyle: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+            },
+            {
+              id: 'm-def-2-' + m.id,
+              memberId: m.id,
+              date: '01/06/2025',
+              title: `Bổ nhiệm chức vụ: ${m.roleTitle || m.role_title || 'Thành Viên VMC'}`,
+              badgeText: '[Chức vụ]',
+              badgeStyle: 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+            },
+            {
+              id: 'm-def-3-' + m.id,
+              memberId: m.id,
+              date: 'Hiện tại',
+              title: `Trạng Thái Hoạt Động: ${m.status === 'Active' ? 'Đang Hoạt Động' : 'Tạm Nghỉ'}`,
+              badgeText: '[ĐANG HOẠT ĐỘNG]',
+              badgeStyle: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold'
+            }
+          ];
+
           const mergedMembers = (Array.isArray(serverMembers) ? serverMembers : []).map(m => {
             const tableMs = (Array.isArray(serverMilestones) ? serverMilestones : []).filter(ms => String(ms.memberId) === String(m.id) || String(ms.memberId) === String(m.memberCode));
             const existingMs = Array.isArray(m.milestones) ? m.milestones : [];
             const combinedMs = [...tableMs, ...existingMs];
             const uniqueMs = combinedMs.filter((v, idx, self) => self.findIndex(t => t.id === v.id) === idx);
-            return { ...m, milestones: uniqueMs };
+            const finalMs = uniqueMs.length > 0 ? uniqueMs : buildDefaultMilestones(m);
+            return { ...m, milestones: finalMs };
           });
 
           setDb({
@@ -282,7 +310,7 @@ export const ClubProvider = ({ children }) => {
     }));
 
     triggerConfetti();
-    alert('✅ Đã gửi danh sách điểm danh sinh hoạt! Vui lòng chờ Trưởng Ban Đối Ngoại - Nhân Sự duyệt.');
+    showToast('✅ Đã gửi danh sách điểm danh sinh hoạt! Vui lòng chờ Trưởng Ban Đối Ngoại - Nhân Sự duyệt.', 'info');
   };
 
   // Approve Attendance Checkin (Performed by Head of External Relations - HR)
@@ -317,7 +345,7 @@ export const ClubProvider = ({ children }) => {
     }
 
     triggerConfetti();
-    alert('🎉 Trưởng Ban Đối Ngoại - Nhân Sự đã duyệt thành công buổi điểm danh sinh hoạt! Tất cả thành viên có mặt đã được cộng 50 điểm thi đua PTS.');
+    showToast('🎉 Trưởng Ban Đối Ngoại - Nhân Sự đã duyệt thành công buổi điểm danh sinh hoạt! Tất cả thành viên có mặt đã được cộng 50 điểm thi đua PTS.', 'success');
   };
 
   // Login function matching Member Code & Password (API Auth & Local fallback)
@@ -328,7 +356,7 @@ export const ClubProvider = ({ children }) => {
       const user = apiRes.user;
       
       if (user.status === 'Suspended') {
-        alert('Tài khoản này đã bị tạm khóa bởi Ban Chủ Nhiệm!');
+        showToast('Tài khoản này đã bị tạm khóa bởi Ban Chủ Nhiệm!', 'error');
         return false;
       }
 
@@ -344,7 +372,7 @@ export const ClubProvider = ({ children }) => {
     
     // If API returns a specific suspended message, alert it and stop
     if (apiRes && !apiRes.success && apiRes.message?.includes('tạm khóa')) {
-      alert(apiRes.message);
+      showToast(apiRes.message, 'error');
       return false;
     }
 
@@ -353,7 +381,7 @@ export const ClubProvider = ({ children }) => {
       const errMsg = apiRes?.message || 'Server API offline';
       // Nếu là lỗi kết nối mạng, không phải sai mật khẩu
       if (errMsg === 'Server API offline' || errMsg.includes('offline') || errMsg.includes('fetch')) {
-        alert('❌ Không thể kết nối đến máy chủ!\n\nVui lòng kiểm tra kết nối mạng hoặc liên hệ Bộ Phận Kỹ Thuật.');
+        showToast('❌ Không thể kết nối đến máy chủ! Vui lòng kiểm tra kết nối mạng hoặc liên hệ Bộ Phận Kỹ Thuật.', 'error');
       }
       return false;
     }
@@ -396,7 +424,7 @@ export const ClubProvider = ({ children }) => {
     setRequirePasswordChange(false);
     setIsAuthenticated(true);
     triggerConfetti();
-    alert('🎉 Đổi mật khẩu cá nhân thành công! Mật khẩu mới và trạng thái đã được lưu vào CSDL MySQL.');
+    showToast('🎉 Đổi mật khẩu cá nhân thành công! Mật khẩu mới và trạng thái đã được lưu vào CSDL MySQL.', 'success');
     return true;
   };
 
@@ -424,7 +452,7 @@ export const ClubProvider = ({ children }) => {
     }));
 
     triggerConfetti();
-    alert('🎉 Đã thêm thành công tài nguyên mới vào Kho Google Drive VMC!');
+    showToast('🎉 Đã thêm thành công tài nguyên mới vào Kho Google Drive VMC!', 'success');
     return true;
   };
 
@@ -446,7 +474,7 @@ export const ClubProvider = ({ children }) => {
       )
     }));
     triggerConfetti();
-    alert('🎉 Đã cập nhật thành công thư mục Google Drive của Ban!');
+    showToast('🎉 Đã cập nhật thành công thư mục Google Drive của Ban!', 'success');
   };
 
   // Switch user role (demo)
@@ -497,7 +525,7 @@ export const ClubProvider = ({ children }) => {
     setCurrentUser(updatedUser);
 
     triggerConfetti();
-    alert('🎉 Đã cập nhật thành công thông tin hồ sơ và ảnh đại diện vào CSDL MySQL!');
+    showToast('🎉 Đã cập nhật thành công thông tin hồ sơ và ảnh đại diện vào CSDL MySQL!', 'success');
   };
 
   // Update Member Info by Tech Team & Ban Đối Ngoại - Nhân Sự
@@ -527,6 +555,21 @@ export const ClubProvider = ({ children }) => {
       nextFields.roleTitle = memberObj.roleTitle;
     }
 
+    let newMsList = Array.isArray(memberObj.milestones) ? [...memberObj.milestones] : [];
+    if (nextFields.roleTitle && nextFields.roleTitle !== memberObj.roleTitle) {
+      const autoMs = {
+        id: 'm-' + Date.now(),
+        memberId: memberId,
+        date: new Date().toLocaleDateString('vi-VN'),
+        title: `Cập nhật chức vụ mới: ${nextFields.roleTitle}`,
+        badgeText: '[Đổi chức vụ]',
+        badgeStyle: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30'
+      };
+      newMsList.push(autoMs);
+      await createEntityAPI('milestones', autoMs).catch(() => {});
+      nextFields.milestones = newMsList;
+    }
+
     const fullPayload = { ...memberObj, ...nextFields };
 
     // 1. Sync to Server API Database
@@ -537,21 +580,20 @@ export const ClubProvider = ({ children }) => {
     if (freshMembers && Array.isArray(freshMembers) && freshMembers.length > 0) {
       setDb(prev => {
         const mergedMembers = freshMembers.map(serverMem => {
-          const localMem = (prev.members || []).find(m => m.id === serverMem.id) || {};
-          return { ...localMem, ...serverMem };
+          const localMem = (prev.members || []).find(m => String(m.id) === String(serverMem.id)) || {};
+          const ms = (Array.isArray(serverMem.milestones) && serverMem.milestones.length > 0) ? serverMem.milestones : newMsList;
+          return { ...localMem, ...serverMem, milestones: ms };
         });
-        const updated = { ...prev, members: mergedMembers };
-        saveDatabaseToStorage(updated);
-        return updated;
+        return { ...prev, members: mergedMembers };
       });
     }
 
-    if (currentUser.id === memberId) {
-      setCurrentUser(prev => ({ ...prev, ...nextFields }));
+    if (String(currentUser?.id) === String(memberId) || currentUser?.memberCode === memberId) {
+      setCurrentUser(prev => ({ ...prev, ...nextFields, milestones: newMsList }));
     }
 
     triggerConfetti();
-    alert('🎉 Đã cập nhật thành công thông tin thành viên vào CSDL MySQL!');
+    showToast('🎉 Đã cập nhật thành công thông tin thành viên và lưu lịch sử vào CSDL!', 'success');
   };
 
   // Add Role Milestone to a Member (Ban ĐN-NS & Admin)
@@ -607,7 +649,7 @@ export const ClubProvider = ({ children }) => {
   // Account Creation (SUPER ADMIN & TRƯỞNG BAN ĐỐI NGOẠI - NHÂN SỰ ONLY)
   const createMemberAccount = async (newAcc) => {
     if (!canManageAccounts) {
-      alert('⛔ Quyền bị từ chối! Chỉ có Super Admin (Chủ Nhiệm CLB) và Trưởng Ban Đối Ngoại - Nhân Sự mới có quyền cấp tài khoản thành viên mới!');
+      showToast('⛔ Quyền bị từ chối! Chỉ có Super Admin (Chủ Nhiệm CLB) và Trưởng Ban Đối Ngoại - Nhân Sự mới có quyền cấp tài khoản thành viên mới!', 'error');
       return false;
     }
 
@@ -623,24 +665,37 @@ export const ClubProvider = ({ children }) => {
       ...newAcc
     };
 
+    const firstMilestone = {
+      id: 'm-' + Date.now(),
+      memberId: accountObj.id,
+      date: new Date().toLocaleDateString('vi-VN'),
+      title: `Bắt đầu làm thành viên VMC (${accountObj.deptName || accountObj.department || 'Ban Chuyên Môn'})`,
+      badgeText: '[Gia nhập]',
+      badgeStyle: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+    };
+    accountObj.milestones = [firstMilestone];
+
     // 1. Sync to Server API Database
     await createMemberAPI(accountObj);
 
-    // 2. Update local state & storage
-    updateDb(prev => ({
+    // 2. Sync first milestone into Member_Milestones table
+    await createEntityAPI('milestones', firstMilestone).catch(() => {});
+
+    // 3. Update local state
+    setDb(prev => ({
       ...prev,
-      members: [...prev.members, accountObj]
+      members: [...(prev.members || []), accountObj]
     }));
 
     triggerConfetti();
-    alert(`Đã cấp thành công tài khoản mới vào CSDL!\nMã Thành Viên: ${generatedCode}\nMật khẩu khởi tạo: VMC2026@VinhBao`);
+    showToast(`🎉 Đã cấp thành công tài khoản mới vào CSDL MySQL!\nMã Thành Viên: ${generatedCode}\nMật khẩu: VMC2026@VinhBao`, 'success');
     return true;
   };
 
   // Reset password by Admin (SUPER ADMIN & TRƯỞNG BAN ĐỐI NGOẠI - NHÂN SỰ ONLY)
   const resetAccountPassword = async (username) => {
     if (!canManageAccounts) {
-      alert('⛔ Quyền bị từ chối! Chỉ có Super Admin (Chủ Nhiệm CLB) và Trưởng Ban Đối Ngoại - Nhân Sự mới có quyền cấp / reset mật khẩu tài khoản!');
+      showToast('⛔ Quyền bị từ chối! Chỉ có Super Admin (Chủ Nhiệm CLB) và Trưởng Ban Đối Ngoại - Nhân Sự mới có quyền cấp / reset mật khẩu tài khoản!', 'error');
       return false;
     }
 
@@ -667,20 +722,20 @@ export const ClubProvider = ({ children }) => {
       });
     }
 
-    alert(`🎉 Đã reset lại Mật khẩu khởi tạo (VMC2026@VinhBao) cho tài khoản [${username}] trong CSDL MySQL!`);
+    showToast(`🎉 Đã reset lại Mật khẩu khởi tạo (VMC2026@VinhBao) cho tài khoản [${username}] trong CSDL MySQL!`, 'success');
     return true;
   };
 
   // Delete Member Account (SUPER ADMIN & TRƯỞNG BAN ĐỐI NGOẠI - NHÂN SỰ ONLY)
   const deleteMemberAccount = async (id) => {
     if (!canManageAccounts) {
-      alert('⛔ Quyền bị từ chối! Chỉ có Super Admin (Chủ Nhiệm CLB) và Trưởng Ban Đối Ngoại - Nhân Sự mới có quyền xóa tài khoản thành viên khỏi hệ thống!');
+      showToast('⛔ Quyền bị từ chối! Chỉ có Super Admin (Chủ Nhiệm CLB) và Trưởng Ban Đối Ngoại - Nhân Sự mới có quyền xóa tài khoản thành viên khỏi hệ thống!', 'error');
       return false;
     }
 
     const memberToDelete = db.members.find(m => m.id === id);
     if (memberToDelete?.role === 'admin' || memberToDelete?.memberCode === 'ADMIN') {
-      alert('⛔ Không thể xóa tài khoản Super Admin chính!');
+      showToast('⛔ Không thể xóa tài khoản Super Admin chính!', 'error');
       return false;
     }
 
@@ -696,7 +751,7 @@ export const ClubProvider = ({ children }) => {
     }));
 
     triggerConfetti();
-    alert('🎉 Chủ Nhiệm CLB (Admin) đã xóa vĩnh viễn tài khoản thành viên thành công!');
+    showToast('🎉 Chủ Nhiệm CLB (Admin) đã xóa vĩnh viễn tài khoản thành viên thành công!', 'success');
     return true;
   };
 
@@ -874,9 +929,9 @@ export const ClubProvider = ({ children }) => {
       const importedDb = await importDatabaseJSON(file);
       setDb(importedDb);
       triggerConfetti();
-      alert('Đã khôi phục thành công Cơ sở dữ liệu từ file JSON!');
+      showToast('Đã khôi phục thành công Cơ sở dữ liệu từ file JSON!', 'success');
     } catch (err) {
-      alert('Lỗi khi nhập file CSDL: ' + err.message);
+      showToast('Lỗi khi nhập file CSDL: ' + err.message, 'error');
     }
   };
 
@@ -884,7 +939,7 @@ export const ClubProvider = ({ children }) => {
     if (window.confirm('Bạn có chắc chắn muốn reset toàn bộ Cơ sở dữ liệu về mặc định ban đầu không?')) {
       const defaultDb = resetDatabaseToDefault();
       setDb(defaultDb);
-      alert('Đã khôi phục CSDL về mặc định!');
+      showToast('Đã khôi phục CSDL về mặc định!', 'info');
     }
   };
 
@@ -925,9 +980,9 @@ export const ClubProvider = ({ children }) => {
       finances: (prev.finances || []).map(f => f.id === recordId ? { ...f, status: newStatus } : f)
     }));
     if (newStatus === 'approved') {
-      alert('Đã duyệt dự trù kinh phí thành công!');
+      showToast('Đã duyệt dự trù kinh phí thành công!', 'success');
     } else {
-      alert('Đã từ chối dự trù kinh phí!');
+      showToast('Đã từ chối dự trù kinh phí!', 'info');
     }
   };
 
@@ -974,7 +1029,7 @@ export const ClubProvider = ({ children }) => {
         m.id === meetingId ? { ...m, date: newDate || m.date, time: newTime || m.time, status } : m
       )
     }));
-    alert(isPostponed ? 'Đã chuyển sang chế độ Hoãn cuộc họp!' : 'Đã cập nhật thời gian cuộc họp!');
+    showToast(isPostponed ? 'Đã chuyển sang chế độ Hoãn cuộc họp!' : 'Đã cập nhật thời gian cuộc họp!', 'info');
   };
 
   const submitMeetingAttendance = async (meetingId, attendanceData) => {
@@ -1031,7 +1086,7 @@ export const ClubProvider = ({ children }) => {
         mtg.id === meetingId ? { ...mtg, minutesLink: link, status: nextStatus } : mtg
       )
     }));
-    alert('✅ Đã nộp biên bản cuộc họp!');
+    showToast('✅ Đã nộp biên bản cuộc họp!', 'success');
   };
 
   const penalizeMember = async (memberId, pointsToDeduct, reason) => {
@@ -1048,7 +1103,7 @@ export const ClubProvider = ({ children }) => {
       await updateMemberAPI(member.memberCode || member.id, { points: newPoints });
     } catch(err) { console.error(err); }
 
-    alert(`✅ Đã trừ ${pointsToDeduct} điểm của thành viên với lý do: ${reason}`);
+    showToast(`✅ Đã trừ ${pointsToDeduct} điểm của thành viên với lý do: ${reason}`, 'warning');
   };
 
   const updateMemberPoints = async (memberId, pointsDelta, reason) => {
@@ -1075,7 +1130,7 @@ export const ClubProvider = ({ children }) => {
     } catch(err) { console.error(err); }
 
     const actionText = finalDelta > 0 ? 'CỘNG' : 'TRỪ';
-    alert(`✅ Đã ${actionText} ${Math.abs(finalDelta)} điểm của [${member.name}].\nLý do: ${reason}\n(Ban ĐN-NS sẽ bị x2 điểm phạt)`);
+    showToast(`✅ Đã ${actionText} ${Math.abs(finalDelta)} điểm của [${member.name}]. Lý do: ${reason}`, 'info');
   };
 
   // -------------------------------------------------------------
@@ -1084,7 +1139,7 @@ export const ClubProvider = ({ children }) => {
   const assignBirthdayDuty = async (month, year, memberId) => {
     const exists = (db.birthdayAssignments || []).find(a => String(a.month) === String(month) && String(a.year) === String(year));
     if (exists) {
-      alert(`⚠️ Nhiệm vụ sinh nhật tháng ${month}/${year} đã được giao! Hệ thống không cho phép giao lại lần 2.`);
+      showToast(`⚠️ Nhiệm vụ sinh nhật tháng ${month}/${year} đã được giao! Hệ thống không cho phép giao lại lần 2.`, 'warning');
       return false;
     }
 
@@ -1106,7 +1161,7 @@ export const ClubProvider = ({ children }) => {
       const assignments = prev.birthdayAssignments || [];
       return { ...prev, birthdayAssignments: [...assignments, bdayObj] };
     });
-    alert(`✅ Đã phân công nhiệm vụ trực sinh nhật tháng ${month}/${year}`);
+    showToast(`✅ Đã phân công nhiệm vụ trực sinh nhật tháng ${month}/${year}`, 'success');
     return true;
   };
 
