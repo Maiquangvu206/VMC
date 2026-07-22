@@ -7,7 +7,7 @@ import {
   exportDatabaseJSON,
   importDatabaseJSON
 } from '../services/dbService';
-import { fetchMembersFromDatabaseAPI, loginMemberAPI, createMemberAPI, updateMemberAPI } from '../services/api';
+import { fetchMembersFromDatabaseAPI, loginMemberAPI, createMemberAPI, updateMemberAPI, deleteMemberAPI } from '../services/api';
 import { fetchEntityAPI, createEntityAPI, updateEntityAPI, deleteEntityAPI } from '../services/apiClient';
 
 const ClubContext = createContext();
@@ -35,7 +35,6 @@ export const ClubProvider = ({ children }) => {
   // Dynamic Database State Initialization — tất cả dữ liệu từ MySQL, không hardcode
   const [db, setDb] = useState(() => {
     const loaded = loadDatabaseFromStorage();
-    // Khởi tạo mảng rỗng — dữ liệu thực sẽ được fetch từ MySQL
     if (!loaded.members) loaded.members = [];
     if (!loaded.tasks) loaded.tasks = [];
     if (!loaded.equipment) loaded.equipment = [];
@@ -59,32 +58,34 @@ export const ClubProvider = ({ children }) => {
 
     const silentAutoSync = async () => {
       try {
-        const [serverMembers, serverTasks, serverDrafts, serverEquipment, serverAnnouncements, serverFinances, serverAttendance] = await Promise.all([
+        const [serverMembers, serverTasks, serverDrafts, serverEquipment, serverAnnouncements, serverFinances, serverMeetings, serverBirthday] = await Promise.all([
           fetchMembersFromDatabaseAPI(),
           fetchEntityAPI('tasks'),
           fetchEntityAPI('drafts'),
           fetchEntityAPI('equipment'),
           fetchEntityAPI('announcements'),
           fetchEntityAPI('finances'),
-          fetchEntityAPI('attendance')
+          fetchEntityAPI('meetings'),
+          fetchEntityAPI('birthday-assignments')
         ]);
         
         if (isMounted) {
           setDb(prev => {
             const mergedMembers = Array.isArray(serverMembers) ? serverMembers.map(serverMem => {
-              const localMem = (prev.members || []).find(m => m.id === serverMem.id) || {};
+              const localMem = (prev.members || []).find(m => String(m.id) === String(serverMem.id) || m.memberCode === serverMem.memberCode) || {};
               return { ...localMem, ...serverMem };
             }) : prev.members;
             
             const nextDb = {
               ...prev,
               members: mergedMembers || [],
-              tasks: serverTasks || [],
-              drafts: serverDrafts || [],
-              equipment: serverEquipment || [],
-              announcements: serverAnnouncements || [],
-              finances: serverFinances || [],
-              attendanceRecords: serverAttendance || []
+              tasks: Array.isArray(serverTasks) && serverTasks.length > 0 ? serverTasks : prev.tasks,
+              drafts: Array.isArray(serverDrafts) && serverDrafts.length > 0 ? serverDrafts : prev.drafts,
+              equipment: Array.isArray(serverEquipment) && serverEquipment.length > 0 ? serverEquipment : prev.equipment,
+              announcements: Array.isArray(serverAnnouncements) && serverAnnouncements.length > 0 ? serverAnnouncements : prev.announcements,
+              finances: Array.isArray(serverFinances) && serverFinances.length > 0 ? serverFinances : prev.finances,
+              meetings: Array.isArray(serverMeetings) && serverMeetings.length > 0 ? serverMeetings : (prev.meetings || []),
+              birthdayAssignments: Array.isArray(serverBirthday) && serverBirthday.length > 0 ? serverBirthday : (prev.birthdayAssignments || [])
             };
             
             saveDatabaseToStorage(nextDb);
@@ -354,8 +355,15 @@ export const ClubProvider = ({ children }) => {
   };
 
   // Mandatory first time password change
-  const changePassword = (oldPassword, newPassword) => {
+  const changePassword = async (oldPassword, newPassword) => {
     if (currentUser.password !== oldPassword) return false;
+
+    await updateMemberAPI(currentUser.memberCode || currentUser.id, {
+      password: newPassword,
+      isFirstLogin: false,
+      is_first_login: false,
+      name: currentUser.name
+    });
 
     updateDb(prev => ({
       ...prev,
@@ -586,7 +594,7 @@ export const ClubProvider = ({ children }) => {
   };
 
   // Reset password by Admin (ADMIN / SUPER ADMIN ONLY)
-  const resetAccountPassword = (username) => {
+  const resetAccountPassword = async (username) => {
     const isAdmin = Boolean(
       currentUser?.role === 'admin' ||
       currentUser?.memberCode === 'ADMIN' ||
@@ -597,6 +605,16 @@ export const ClubProvider = ({ children }) => {
     if (!isAdmin) {
       alert('⛔ Quyền bị từ chối! Chỉ có Chủ Nhiệm CLB (Super Admin / Admin) mới có quyền cấp / reset mật khẩu tài khoản!');
       return false;
+    }
+
+    const targetMem = db.members.find(m => m.username === username || m.memberCode === username);
+    if (targetMem) {
+      await updateMemberAPI(targetMem.memberCode || targetMem.id, {
+        password: "VMC2026@VinhBao",
+        isFirstLogin: true,
+        is_first_login: true,
+        name: targetMem.name
+      });
     }
 
     updateDb(prev => ({
@@ -617,7 +635,7 @@ export const ClubProvider = ({ children }) => {
   };
 
   // Delete Member Account (ADMIN / SUPER ADMIN ONLY)
-  const deleteMemberAccount = (id) => {
+  const deleteMemberAccount = async (id) => {
     const isAdmin = Boolean(
       currentUser?.role === 'admin' ||
       currentUser?.memberCode === 'ADMIN' ||
@@ -640,6 +658,8 @@ export const ClubProvider = ({ children }) => {
       return false;
     }
 
+    await deleteMemberAPI(memberToDelete?.memberCode || id);
+
     updateDb(prev => ({
       ...prev,
       members: (prev.members || []).filter(m => m.id !== id)
@@ -651,19 +671,28 @@ export const ClubProvider = ({ children }) => {
   };
 
   // Toggle account status
-  const toggleAccountStatus = (id) => {
+  const toggleAccountStatus = async (id) => {
+    const member = db.members.find(m => m.id === id);
+    if (!member) return;
+
+    const newStatus = member.status === 'Active' ? 'Suspended' : 'Active';
+    await updateMemberAPI(member.memberCode || member.id, {
+      status: newStatus,
+      name: member.name
+    });
+
+    const newMilestone = {
+      id: 'm-' + Date.now(),
+      date: new Date().toLocaleDateString('vi-VN'),
+      title: newStatus === 'Suspended' ? 'Đã dừng hoạt động (Bị khóa)' : 'Tiếp tục hoạt động (Đã mở khóa)',
+      badgeText: newStatus === 'Suspended' ? '[Dừng hoạt động]' : '[Đang hoạt động]',
+      badgeStyle: newStatus === 'Suspended' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+    };
+
     updateDb(prev => ({
       ...prev,
       members: prev.members.map(m => {
         if (m.id === id) {
-          const newStatus = m.status === 'Active' ? 'Suspended' : 'Active';
-          const newMilestone = {
-            id: 'm-' + Date.now(),
-            date: new Date().toLocaleDateString('vi-VN'),
-            title: newStatus === 'Suspended' ? 'Đã dừng hoạt động (Bị khóa)' : 'Tiếp tục hoạt động (Đã mở khóa)',
-            badgeText: newStatus === 'Suspended' ? '[Dừng hoạt động]' : '[Đang hoạt động]',
-            badgeStyle: newStatus === 'Suspended' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-          };
           return { 
             ...m, 
             status: newStatus,
@@ -875,19 +904,29 @@ export const ClubProvider = ({ children }) => {
   // -------------------------------------------------------------
   // NEW: MEETING & SEEDING (ATTENDANCE) FUNCTIONS
   // -------------------------------------------------------------
-  const createMeeting = (meeting) => {
+  const createMeeting = async (meeting) => {
+    const meetingObj = {
+      id: 'mtg-' + Date.now(),
+      title: meeting.title,
+      date: meeting.date,
+      time: meeting.time,
+      status: 'pending',
+      attendanceData: [],
+      minutesLink: null
+    };
+
+    await createEntityAPI('meetings', meetingObj);
+
     updateDb(prev => ({
       ...prev,
-      meetings: [
-        { ...meeting, id: 'mtg-' + Date.now(), status: 'pending', attendanceData: [], minutesLink: null },
-        ...(prev.meetings || [])
-      ]
+      meetings: [meetingObj, ...(prev.meetings || [])]
     }));
     triggerConfetti();
   };
 
-  const cancelMeeting = (meetingId) => {
+  const cancelMeeting = async (meetingId) => {
     if (window.confirm("Bạn có chắc chắn muốn hủy cuộc họp này không?")) {
+      await updateEntityAPI('meetings', meetingId, { status: 'cancelled' });
       updateDb(prev => ({
         ...prev,
         meetings: (prev.meetings || []).map(m => m.id === meetingId ? { ...m, status: 'cancelled' } : m)
@@ -896,18 +935,25 @@ export const ClubProvider = ({ children }) => {
     }
   };
 
-  const updateMeeting = (meetingId, newDate, newTime, isPostponed) => {
+  const updateMeeting = async (meetingId, newDate, newTime, isPostponed) => {
+    const status = isPostponed ? 'postponed' : 'pending';
+    await updateEntityAPI('meetings', meetingId, { date: newDate, time: newTime, status });
     updateDb(prev => ({
       ...prev,
       meetings: (prev.meetings || []).map(m => 
-        m.id === meetingId ? { ...m, date: newDate || m.date, time: newTime || m.time, status: isPostponed ? 'postponed' : 'pending' } : m
+        m.id === meetingId ? { ...m, date: newDate || m.date, time: newTime || m.time, status } : m
       )
     }));
     alert(isPostponed ? 'Đã chuyển sang chế độ Hoãn cuộc họp!' : 'Đã cập nhật thời gian cuộc họp!');
   };
 
-  const submitMeetingAttendance = (meetingId, attendanceData) => {
+  const submitMeetingAttendance = async (meetingId, attendanceData) => {
     // attendanceData is an array of objects: { memberId, status: 'present' | 'late' | 'absent' }
+    const meeting = (db.meetings || []).find(m => String(m.id) === String(meetingId));
+    const nextStatus = meeting?.minutesLink ? 'completed' : 'pending_minutes';
+
+    await updateEntityAPI('meetings', meetingId, { status: nextStatus, attendanceData });
+
     updateDb(prev => {
       const lateMemberIds = attendanceData.filter(d => d.status === 'late').map(d => d.memberId);
       const absentMemberIds = attendanceData.filter(d => d.status === 'absent').map(d => d.memberId);
@@ -925,7 +971,7 @@ export const ClubProvider = ({ children }) => {
 
         if (penalty !== 0) {
           const newPoints = (m.points || 0) + penalty;
-          updateMemberAPI(m.memberCode || m.id, { points: newPoints }).catch(e => console.log(e));
+          updateMemberAPI(m.memberCode || m.id, { points: newPoints, name: m.name }).catch(e => console.log(e));
           return { ...m, points: newPoints };
         }
         return m;
@@ -933,7 +979,7 @@ export const ClubProvider = ({ children }) => {
 
       const newMeetings = (prev.meetings || []).map(mtg => {
         if (mtg.id === meetingId) {
-          return { ...mtg, attendanceData, status: mtg.minutesLink ? 'completed' : 'pending_minutes' };
+          return { ...mtg, attendanceData, status: nextStatus };
         }
         return mtg;
       });
@@ -943,11 +989,16 @@ export const ClubProvider = ({ children }) => {
     alert('✅ Đã chốt điểm danh. Thành viên vắng/muộn đã tự động bị trừ điểm (x2 nếu thuộc ban ĐN-NS)!');
   };
 
-  const submitMeetingMinutes = (meetingId, link) => {
+  const submitMeetingMinutes = async (meetingId, link) => {
+    const meeting = (db.meetings || []).find(m => String(m.id) === String(meetingId));
+    const nextStatus = (meeting?.attendanceData && meeting.attendanceData.length > 0) ? 'completed' : 'pending_attendance';
+
+    await updateEntityAPI('meetings', meetingId, { minutes_link: link, status: nextStatus });
+
     updateDb(prev => ({
       ...prev,
       meetings: (prev.meetings || []).map(mtg => 
-        mtg.id === meetingId ? { ...mtg, minutesLink: link, status: (mtg.attendanceData && mtg.attendanceData.length > 0) ? 'completed' : 'pending_attendance' } : mtg
+        mtg.id === meetingId ? { ...mtg, minutesLink: link, status: nextStatus } : mtg
       )
     }));
     alert('✅ Đã nộp biên bản cuộc họp!');
@@ -1000,23 +1051,38 @@ export const ClubProvider = ({ children }) => {
   // -------------------------------------------------------------
   // NEW: BIRTHDAY MANAGEMENT FUNCTIONS
   // -------------------------------------------------------------
-  const assignBirthdayDuty = (month, year, memberId) => {
+  const assignBirthdayDuty = async (month, year, memberId) => {
     const exists = (db.birthdayAssignments || []).find(a => String(a.month) === String(month) && String(a.year) === String(year));
     if (exists) {
       alert(`⚠️ Nhiệm vụ sinh nhật tháng ${month}/${year} đã được giao! Hệ thống không cho phép giao lại lần 2.`);
       return false;
     }
 
+    const bdayObj = {
+      id: 'bday-' + Date.now(),
+      assign_month: month,
+      month,
+      assign_year: year,
+      year,
+      member_id: memberId,
+      memberId,
+      link: null,
+      status: 'pending'
+    };
+
+    await createEntityAPI('birthday-assignments', bdayObj);
+
     updateDb(prev => {
       const assignments = prev.birthdayAssignments || [];
-      const newAssignments = [...assignments, { id: 'bday-' + Date.now(), month, year, memberId, link: null, status: 'pending' }];
-      return { ...prev, birthdayAssignments: newAssignments };
+      return { ...prev, birthdayAssignments: [...assignments, bdayObj] };
     });
     alert(`✅ Đã phân công nhiệm vụ trực sinh nhật tháng ${month}/${year}`);
     return true;
   };
 
-  const submitBirthdayImage = (assignmentId, link) => {
+  const submitBirthdayImage = async (assignmentId, link) => {
+    await updateEntityAPI('birthday-assignments', assignmentId, { link, status: 'completed' });
+
     updateDb(prev => ({
       ...prev,
       birthdayAssignments: (prev.birthdayAssignments || []).map(a => 

@@ -125,7 +125,7 @@ app.get('/api/members', async (req, res) => {
   try {
     const sql = `
       SELECT 
-        id, member_code, username, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, status, points
+        id, member_code, username, password, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, address, facebook, points, is_first_login, status
       FROM Members 
       ORDER BY id ASC
     `;
@@ -138,6 +138,7 @@ app.get('/api/members', async (req, res) => {
         id: m.id,
         memberCode: m.member_code,
         username: m.username,
+        password: m.password,
         name: m.full_name,
         role: m.role,
         roleTitle: m.role_title,
@@ -148,8 +149,11 @@ app.get('/api/members', async (req, res) => {
         phone: m.phone,
         email: m.email,
         dob: m.dob,
+        address: m.address,
+        facebook: m.facebook,
         status: m.status,
-        points: m.points
+        points: m.points,
+        isFirstLogin: Boolean(m.is_first_login)
       }))
     });
   } catch (error) {
@@ -165,7 +169,11 @@ app.get('/api/members', async (req, res) => {
 // API Endpoint 3: PUT /api/members/:id
 app.put('/api/members/:id', async (req, res) => {
   const { id } = req.params;
-  const { full_name, role, role_title, member_code, class_name, department, phone, dob, email, points } = req.body;
+  const { 
+    full_name, role, role_title, member_code, class_name, department, 
+    phone, dob, email, points, address, facebook, avatar_url, avatar, 
+    status, password, is_first_login, isFirstLogin 
+  } = req.body;
 
   try {
     const sql = `
@@ -180,11 +188,37 @@ app.put('/api/members/:id', async (req, res) => {
         phone = COALESCE(?, phone), 
         dob = COALESCE(?, dob), 
         email = COALESCE(?, email),
-        points = COALESCE(?, points)
+        points = COALESCE(?, points),
+        address = COALESCE(?, address),
+        facebook = COALESCE(?, facebook),
+        avatar_url = COALESCE(?, COALESCE(?, avatar_url)),
+        status = COALESCE(?, status),
+        password = COALESCE(?, password),
+        is_first_login = COALESCE(?, COALESCE(?, is_first_login))
       WHERE (id = ? OR UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?))
     `;
     
-    await queryDatabase(sql, [full_name, role, role_title, member_code, class_name, department, phone, dob, email, points, id, id, id]);
+    await queryDatabase(sql, [
+      full_name !== undefined ? full_name : null,
+      role !== undefined ? role : null,
+      role_title !== undefined ? role_title : null,
+      member_code !== undefined ? member_code : null,
+      class_name !== undefined ? class_name : null,
+      department !== undefined ? department : null,
+      phone !== undefined ? phone : null,
+      dob !== undefined ? dob : null,
+      email !== undefined ? email : null,
+      points !== undefined ? points : null,
+      address !== undefined ? address : null,
+      facebook !== undefined ? facebook : null,
+      avatar_url !== undefined ? avatar_url : null,
+      avatar !== undefined ? avatar : null,
+      status !== undefined ? status : null,
+      password !== undefined ? password : null,
+      is_first_login !== undefined ? is_first_login : null,
+      isFirstLogin !== undefined ? (isFirstLogin ? 1 : 0) : null,
+      id, id, id
+    ]);
 
     console.log(`✅ Đã cập nhật CSDL MySQL thành công cho ID/Code: [${id}]`);
     res.json({
@@ -201,15 +235,29 @@ app.put('/api/members/:id', async (req, res) => {
   }
 });
 
+// API Endpoint: DELETE /api/members/:id
+app.delete('/api/members/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const sql = `DELETE FROM Members WHERE (id = ? OR UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?))`;
+    await queryDatabase(sql, [id, id, id]);
+    console.log(`✅ Đã xóa vĩnh viễn thành viên khỏi CSDL MySQL: [${id}]`);
+    res.json({ success: true, message: 'Đã xóa thành viên khỏi CSDL SQL!' });
+  } catch (error) {
+    console.error('❌ Lỗi API /api/members/:id DELETE:', error.message);
+    res.status(500).json({ success: false, message: 'Lỗi xóa thành viên khỏi CSDL!', error: error.message });
+  }
+});
+
 // API Endpoint 4: POST /api/members/create
 app.post('/api/members/create', async (req, res) => {
-  const { member_code, username, password, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob } = req.body;
+  const { member_code, username, password, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, address, facebook } = req.body;
 
   try {
     const sql = `
       INSERT INTO Members 
-        (member_code, username, password, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, is_first_login, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, 'Active')
+        (member_code, username, password, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, address, facebook, is_first_login, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, 'Active')
     `;
     await queryDatabase(sql, [
       member_code,
@@ -224,7 +272,9 @@ app.post('/api/members/create', async (req, res) => {
       avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=400',
       phone,
       email,
-      dob
+      dob,
+      address || null,
+      facebook || null
     ]);
 
     res.json({
