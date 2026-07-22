@@ -329,3 +329,14 @@ h1, h2, h3, h4, h5, h6 {
   margin: 0 auto;
   padding: 0 1.5rem;
 }
+
+/* Fix option tags color (OS overrides) */
+select option {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme='light'] select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}

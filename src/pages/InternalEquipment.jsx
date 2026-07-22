@@ -7,11 +7,16 @@ export const InternalEquipment = () => {
     equipment, 
     borrowEquipment, 
     returnEquipment, 
-    currentUser 
+    currentUser,
+    addEquipment
   } = useClub();
 
   const [selectedEq, setSelectedEq] = useState(null);
   const [returnDate, setReturnDate] = useState('2026-07-30');
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newEq, setNewEq] = useState({ name: '', category: 'CAMERA', code: '', condition: 'Tốt' });
+
+  const isAdmin = currentUser?.roleTitle?.toLowerCase().includes('trưởng') || currentUser?.role === 'admin' || currentUser?.memberCode === 'ADMIN';
 
   const handleBorrowSubmit = (e) => {
     e.preventDefault();
@@ -19,6 +24,13 @@ export const InternalEquipment = () => {
     borrowEquipment(selectedEq.id, returnDate);
     setSelectedEq(null);
     alert(`Đã đăng ký mượn ${selectedEq.name} thành công! Vui lòng bảo quản cẩn thận.`);
+  };
+
+  const handleAddSubmit = (e) => {
+    e.preventDefault();
+    addEquipment(newEq);
+    setNewEq({ name: '', category: 'CAMERA', code: '', condition: 'Tốt' });
+    setShowAddForm(false);
   };
 
   return (
@@ -36,20 +48,63 @@ export const InternalEquipment = () => {
           </p>
         </div>
 
-        <div className="p-3 rounded-2xl bg-slate-900 border border-blue-500/30 text-xs text-slate-300 space-y-0.5">
-          <div className="font-bold text-blue-400 flex items-center gap-1">
-            <ShieldCheck className="w-4 h-4" /> Quy định mượn máy:
+        <div className="flex gap-4">
+          <div className="p-3 rounded-2xl bg-slate-900 border border-blue-500/30 text-xs text-slate-300 space-y-0.5 hidden md:block">
+            <div className="font-bold text-blue-400 flex items-center gap-1">
+              <ShieldCheck className="w-4 h-4" /> Quy định mượn máy:
+            </div>
+            <div>Mượn trước 24h • Kiểm tra tình trạng pin/thẻ nhớ trước khi trả</div>
           </div>
-          <div>Mượn trước 24h • Kiểm tra tình trạng pin/thẻ nhớ trước khi trả</div>
+          
+          {isAdmin && (
+            <button onClick={() => setShowAddForm(true)} className="btn-primary text-xs px-4 py-2 self-start md:self-center shrink-0">
+              + Thêm Thiết Bị
+            </button>
+          )}
         </div>
       </div>
+
+      {showAddForm && (
+        <form onSubmit={handleAddSubmit} className="bg-slate-900 p-5 rounded-2xl border border-cyan-500/30 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-slate-400 mb-1 block">Tên thiết bị</label>
+              <input required type="text" className="input-field" placeholder="VD: Máy ảnh Sony A7IV" value={newEq.name} onChange={e => setNewEq({...newEq, name: e.target.value})} />
+            </div>
+            <div>
+              <label className="text-xs text-slate-400 mb-1 block">Mã quản lý</label>
+              <input required type="text" className="input-field" placeholder="VD: VMC-CAM-03" value={newEq.code} onChange={e => setNewEq({...newEq, code: e.target.value})} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-slate-400 mb-1 block">Loại</label>
+              <select className="input-field" value={newEq.category} onChange={e => setNewEq({...newEq, category: e.target.value})}>
+                <option value="CAMERA">CAMERA</option>
+                <option value="ỐNG KÍNH">ỐNG KÍNH</option>
+                <option value="GIMBAL">GIMBAL</option>
+                <option value="ÂM THANH">ÂM THANH</option>
+                <option value="KHÁC">KHÁC</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-slate-400 mb-1 block">Tình trạng</label>
+              <input required type="text" className="input-field" placeholder="VD: Tốt / Hỏng móp méo..." value={newEq.condition} onChange={e => setNewEq({...newEq, condition: e.target.value})} />
+            </div>
+          </div>
+          <div className="flex justify-end gap-3 pt-2">
+            <button type="button" onClick={() => setShowAddForm(false)} className="px-4 py-2 text-sm text-slate-400 hover:text-white">Hủy</button>
+            <button type="submit" className="btn-primary py-2 px-6">Thêm mới</button>
+          </div>
+        </form>
+      )}
 
       {/* Equipment List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {equipment.map(item => (
           <div
             key={item.id}
-            className="glass-card p-6 rounded-2xl border border-white/10 flex flex-col justify-between space-y-4"
+            className="glass-card p-6 rounded-2xl border border-white/10 flex flex-col justify-between space-y-4 h-full"
           >
             <div className="space-y-3">
               <div className="flex justify-between items-center">

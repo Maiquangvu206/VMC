@@ -28,7 +28,8 @@ export const Navbar = () => {
     logout,
     tasks,
     drafts,
-    isHRMember
+    isHRMember,
+    isAdmin
   } = useClub();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -82,15 +83,19 @@ export const Navbar = () => {
           {navItems.map(item => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
+            const isRestricted = !isAdmin && ['equipment', 'drafts', 'resources'].includes(item.id);
             return (
               <button
                 key={item.id}
-                onClick={() => handleNavClick(item.id)}
+                onClick={() => !isRestricted && handleNavClick(item.id)}
                 className={`flex flex-row items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-xs whitespace-nowrap transition-all duration-200 ${
+                  isRestricted ? 'opacity-30 blur-[1px] cursor-not-allowed' : ''
+                } ${
                   isActive
                     ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
                     : 'text-slate-300 hover:text-white hover:bg-white/10'
                 }`}
+                title={isRestricted ? 'Chức năng chỉ dành cho Admin' : ''}
               >
                 <Icon className="w-3.5 h-3.5 shrink-0" />
                 <span>{item.label}</span>
@@ -206,15 +211,19 @@ export const Navbar = () => {
           {navItems.map(item => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
+            const isRestricted = !isAdmin && ['equipment', 'drafts', 'resources'].includes(item.id);
             return (
               <button
                 key={item.id}
-                onClick={() => handleNavClick(item.id)}
+                onClick={() => !isRestricted && handleNavClick(item.id)}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-semibold text-xs transition-all ${
+                  isRestricted ? 'opacity-30 blur-[1px] cursor-not-allowed' : ''
+                } ${
                   isActive
                     ? 'bg-blue-600 text-white font-bold'
                     : 'text-slate-300 hover:bg-white/5'
                 }`}
+                title={isRestricted ? 'Chức năng chỉ dành cho Admin' : ''}
               >
                 <div className="flex items-center gap-2.5">
                   <Icon className="w-4 h-4" />

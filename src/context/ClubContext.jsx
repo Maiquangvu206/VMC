@@ -54,21 +54,7 @@ export const ClubProvider = ({ children }) => {
       ];
     }
     
-    // Seed test accounts
-    const testAccounts = [
-      { id: 'test-admin', memberCode: 'ADMIN', username: 'admin', name: 'Quản Trị Viên (Root)', roleTitle: 'Super Admin', role: 'admin', deptName: 'Ban Chủ Nhiệm', isFirstLogin: false, password: 'admin123', status: 'Active', dob: '01/01/2000' },
-      { id: 'test-1', memberCode: 'BCN_TEST', username: 'bcntest', name: 'Ban Chủ Nhiệm Test', roleTitle: 'Chủ Nhiệm CLB', role: 'admin', deptName: 'Ban Chủ Nhiệm', isFirstLogin: false, password: '123', status: 'Active', dob: '01/01/2008' },
-      { id: 'test-2', memberCode: 'ND_TEST', username: 'ndtest', name: 'Nội Dung Test', roleTitle: 'Thành viên Ban Nội Dung', role: 'member', deptName: 'Ban Nội Dung - Phát Thanh', isFirstLogin: false, password: '123', status: 'Active', dob: '02/02/2008' },
-      { id: 'test-3', memberCode: 'SX_TEST', username: 'sxtest', name: 'Sản Xuất Test', roleTitle: 'Thành viên Ban Sản Xuất', role: 'member', deptName: 'Ban Sản Xuất', isFirstLogin: false, password: '123', status: 'Active', dob: '03/03/2008' },
-      { id: 'test-4', memberCode: 'HR_TEST', username: 'hrtest', name: 'Đối Ngoại Nhân Sự Test', roleTitle: 'Trưởng Ban Đối Ngoại - Nhân Sự', role: 'admin', deptName: 'Ban Đối Ngoại - Nhân Sự', isFirstLogin: false, password: '123', status: 'Active', dob: '04/04/2008' },
-      { id: 'test-5', memberCode: 'CV_TEST', username: 'cvtest', name: 'Cố Vấn Test', roleTitle: 'Cố Vấn CLB', role: 'admin', deptName: 'Ban Cố Vấn', isFirstLogin: false, password: '123', status: 'Active', dob: '05/05/2008' },
-    ];
     if (!loaded.members) loaded.members = [];
-    testAccounts.forEach(acc => {
-      if (!loaded.members.find(m => m.memberCode === acc.memberCode)) {
-        loaded.members.push(acc);
-      }
-    });
 
     return loaded;
   });
@@ -85,15 +71,13 @@ export const ClubProvider = ({ children }) => {
     const silentAutoSync = async () => {
       try {
         const serverMembers = await fetchMembersFromDatabaseAPI();
-        if (isMounted && Array.isArray(serverMembers) && serverMembers.length > 0) {
+        if (isMounted && Array.isArray(serverMembers)) {
           setDb(prev => {
             const mergedMembers = serverMembers.map(serverMem => {
               const localMem = (prev.members || []).find(m => m.id === serverMem.id) || {};
               return { ...localMem, ...serverMem };
             });
-            // Keep local test accounts
-            const testAccs = (prev.members || []).filter(m => m.id && m.id.startsWith('test-'));
-            const finalMembers = [...mergedMembers, ...testAccs.filter(t => !mergedMembers.find(m => m.memberCode === t.memberCode))];
+            const finalMembers = [...mergedMembers];
             
             const prevStr = JSON.stringify(prev.members || []);
             const newStr = JSON.stringify(finalMembers);
@@ -127,7 +111,7 @@ export const ClubProvider = ({ children }) => {
 
   const [currentUser, setCurrentUser] = useState(() => {
     try {
-      const savedUser = localStorage.getItem('VMC_CURRENT_USER');
+      const savedUser = sessionStorage.getItem('VMC_CURRENT_USER');
       return savedUser ? JSON.parse(savedUser) : null;
     } catch (e) {
       return null;
@@ -147,7 +131,7 @@ export const ClubProvider = ({ children }) => {
 
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     try {
-      return localStorage.getItem('VMC_IS_AUTH') === 'true';
+      return sessionStorage.getItem('VMC_IS_AUTH') === 'true';
     } catch (e) {
       return false;
     }
@@ -157,11 +141,11 @@ export const ClubProvider = ({ children }) => {
 
   useEffect(() => {
     if (isAuthenticated && currentUser) {
-      localStorage.setItem('VMC_IS_AUTH', 'true');
-      localStorage.setItem('VMC_CURRENT_USER', JSON.stringify(currentUser));
+      sessionStorage.setItem('VMC_IS_AUTH', 'true');
+      sessionStorage.setItem('VMC_CURRENT_USER', JSON.stringify(currentUser));
     } else {
-      localStorage.removeItem('VMC_IS_AUTH');
-      localStorage.removeItem('VMC_CURRENT_USER');
+      sessionStorage.removeItem('VMC_IS_AUTH');
+      sessionStorage.removeItem('VMC_CURRENT_USER');
     }
   }, [isAuthenticated, currentUser]);
 
@@ -713,6 +697,22 @@ export const ClubProvider = ({ children }) => {
     triggerConfetti();
   };
 
+  // Add New Equipment
+  const addEquipment = (newEquipment) => {
+    updateDb(prev => ({
+      ...prev,
+      equipment: [
+        {
+          id: 'eq-' + Date.now(),
+          status: 'available',
+          ...newEquipment
+        },
+        ...(prev.equipment || [])
+      ]
+    }));
+    triggerConfetti();
+  };
+
   // Borrow Equipment
   const borrowEquipment = (equipmentId, returnDate) => {
     updateDb(prev => ({
@@ -817,10 +817,22 @@ export const ClubProvider = ({ children }) => {
     updateDb(prev => ({
       ...prev,
       finances: [
-        { ...record, id: 'fin-' + Date.now() },
+        { ...record, id: 'fin-' + Date.now(), status: record.status || 'approved' },
         ...(prev.finances || [])
       ]
     }));
+  };
+
+  const updateFinanceStatus = (recordId, newStatus) => {
+    updateDb(prev => ({
+      ...prev,
+      finances: (prev.finances || []).map(f => f.id === recordId ? { ...f, status: newStatus } : f)
+    }));
+    if (newStatus === 'approved') {
+      alert('Đã duyệt dự trù kinh phí thành công!');
+    } else {
+      alert('Đã từ chối dự trù kinh phí!');
+    }
   };
 
   // -------------------------------------------------------------
@@ -837,14 +849,47 @@ export const ClubProvider = ({ children }) => {
     triggerConfetti();
   };
 
+  const cancelMeeting = (meetingId) => {
+    if (window.confirm("Bạn có chắc chắn muốn hủy cuộc họp này không?")) {
+      updateDb(prev => ({
+        ...prev,
+        meetings: (prev.meetings || []).map(m => m.id === meetingId ? { ...m, status: 'cancelled' } : m)
+      }));
+      alert('Đã hủy cuộc họp thành công!');
+    }
+  };
+
+  const updateMeeting = (meetingId, newDate, newTime, isPostponed) => {
+    updateDb(prev => ({
+      ...prev,
+      meetings: (prev.meetings || []).map(m => 
+        m.id === meetingId ? { ...m, date: newDate || m.date, time: newTime || m.time, status: isPostponed ? 'postponed' : 'pending' } : m
+      )
+    }));
+    alert(isPostponed ? 'Đã chuyển sang chế độ Hoãn cuộc họp!' : 'Đã cập nhật thời gian cuộc họp!');
+  };
+
   const submitMeetingAttendance = (meetingId, attendanceData) => {
     // attendanceData is an array of objects: { memberId, status: 'present' | 'late' | 'absent' }
     updateDb(prev => {
       const lateMemberIds = attendanceData.filter(d => d.status === 'late').map(d => d.memberId);
+      const absentMemberIds = attendanceData.filter(d => d.status === 'absent').map(d => d.memberId);
       
       const newMembers = prev.members.map(m => {
-        if (lateMemberIds.includes(m.id)) {
-          return { ...m, points: (m.points || 0) - 5 };
+        const isHR = m.deptName?.toLowerCase().includes('đối ngoại') || m.deptName?.toLowerCase().includes('nhân sự') || m.deptName?.toLowerCase().includes('đn-ns');
+        
+        let penalty = 0;
+        if (lateMemberIds.includes(m.id)) penalty = -3;
+        else if (absentMemberIds.includes(m.id)) penalty = -10;
+
+        if (penalty < 0 && isHR) {
+          penalty *= 2; // X2 penalty for HR members
+        }
+
+        if (penalty !== 0) {
+          const newPoints = (m.points || 0) + penalty;
+          updateMemberAPI(m.memberCode || m.id, { points: newPoints }).catch(e => console.log(e));
+          return { ...m, points: newPoints };
         }
         return m;
       });
@@ -858,7 +903,7 @@ export const ClubProvider = ({ children }) => {
 
       return { ...prev, members: newMembers, meetings: newMeetings };
     });
-    alert('✅ Đã chốt điểm danh. Thành viên đi muộn đã tự động bị trừ 5 điểm thi đua!');
+    alert('✅ Đã chốt điểm danh. Thành viên vắng/muộn đã tự động bị trừ điểm (x2 nếu thuộc ban ĐN-NS)!');
   };
 
   const submitMeetingMinutes = (meetingId, link) => {
@@ -871,25 +916,67 @@ export const ClubProvider = ({ children }) => {
     alert('✅ Đã nộp biên bản cuộc họp!');
   };
 
-  const penalizeMember = (memberId, pointsToDeduct, reason) => {
+  const penalizeMember = async (memberId, pointsToDeduct, reason) => {
+    const member = db.members?.find(m => m.id === memberId);
+    if (!member) return;
+    const newPoints = (member.points || 0) - pointsToDeduct;
+
     updateDb(prev => ({
       ...prev,
-      members: prev.members.map(m => m.id === memberId ? { ...m, points: (m.points || 0) - pointsToDeduct } : m)
+      members: prev.members.map(m => m.id === memberId ? { ...m, points: newPoints } : m)
     }));
+
+    try {
+      await updateMemberAPI(member.memberCode || member.id, { points: newPoints });
+    } catch(err) { console.error(err); }
+
     alert(`✅ Đã trừ ${pointsToDeduct} điểm của thành viên với lý do: ${reason}`);
+  };
+
+  const updateMemberPoints = async (memberId, pointsDelta, reason) => {
+    let finalDelta = parseInt(pointsDelta, 10);
+    const member = db.members?.find(m => m.id === memberId);
+    if (!member) return;
+    
+    const isHR = member.deptName?.toLowerCase().includes('đối ngoại') || member.deptName?.toLowerCase().includes('nhân sự') || member.deptName?.toLowerCase().includes('đn-ns');
+    
+    // X2 penalty for HR department if points are deducted
+    if (finalDelta < 0 && isHR) {
+      finalDelta *= 2;
+    }
+
+    const newPoints = (member.points || 0) + finalDelta;
+
+    updateDb(prev => ({
+      ...prev,
+      members: prev.members.map(m => m.id === memberId ? { ...m, points: newPoints } : m)
+    }));
+
+    try {
+      await updateMemberAPI(member.memberCode || member.id, { points: newPoints });
+    } catch(err) { console.error(err); }
+
+    const actionText = finalDelta > 0 ? 'CỘNG' : 'TRỪ';
+    alert(`✅ Đã ${actionText} ${Math.abs(finalDelta)} điểm của [${member.name}].\nLý do: ${reason}\n(Ban ĐN-NS sẽ bị x2 điểm phạt)`);
   };
 
   // -------------------------------------------------------------
   // NEW: BIRTHDAY MANAGEMENT FUNCTIONS
   // -------------------------------------------------------------
   const assignBirthdayDuty = (month, year, memberId) => {
+    const exists = (db.birthdayAssignments || []).find(a => String(a.month) === String(month) && String(a.year) === String(year));
+    if (exists) {
+      alert(`⚠️ Nhiệm vụ sinh nhật tháng ${month}/${year} đã được giao! Hệ thống không cho phép giao lại lần 2.`);
+      return false;
+    }
+
     updateDb(prev => {
       const assignments = prev.birthdayAssignments || [];
-      const newAssignments = assignments.filter(a => !(a.month === month && a.year === year));
-      newAssignments.push({ id: 'bday-' + Date.now(), month, year, memberId, link: null, status: 'pending' });
+      const newAssignments = [...assignments, { id: 'bday-' + Date.now(), month, year, memberId, link: null, status: 'pending' }];
       return { ...prev, birthdayAssignments: newAssignments };
     });
     alert(`✅ Đã phân công nhiệm vụ trực sinh nhật tháng ${month}/${year}`);
+    return true;
   };
 
   const submitBirthdayImage = (assignmentId, link) => {
@@ -899,7 +986,7 @@ export const ClubProvider = ({ children }) => {
         a.id === assignmentId ? { ...a, link, status: 'completed' } : a
       )
     }));
-    alert('✅ Đã nộp link bài đăng sinh nhật thành công!');
+    alert('✅ Đã nộp link bài đăng sinh nhật thành công!\n\n📧 Đã tự động gửi Email tới bộ phận phụ trách Ban Sản Xuất.\n🔔 Đã gửi thông báo tới bộ phận phụ trách Ban Nội Dung - PT.\n☁️ Dữ liệu đã được lưu trữ an toàn vào hệ thống Drive riêng của Ban.');
   };
 
   return (
@@ -911,6 +998,7 @@ export const ClubProvider = ({ children }) => {
       db,
       finances: db.finances || [],
       addFinanceRecord,
+      updateFinanceStatus,
       currentUser,
       isAdmin,
       isAuthenticated,
@@ -926,6 +1014,7 @@ export const ClubProvider = ({ children }) => {
       updateTaskStatus,
       addTask,
       equipment,
+      addEquipment,
       borrowEquipment,
       returnEquipment,
       drafts,
@@ -963,7 +1052,18 @@ export const ClubProvider = ({ children }) => {
       isNewDraftModalOpen,
       setIsNewDraftModalOpen,
       isNewAccountModalOpen,
-      setIsNewAccountModalOpen
+      setIsNewAccountModalOpen,
+      meetings: db.meetings || [],
+      createMeeting,
+      cancelMeeting,
+      updateMeeting,
+      submitMeetingAttendance,
+      submitMeetingMinutes,
+      penalizeMember,
+      updateMemberPoints,
+      birthdayAssignments: db.birthdayAssignments || [],
+      assignBirthdayDuty,
+      submitBirthdayImage
     }}>
       {children}
     </ClubContext.Provider>
