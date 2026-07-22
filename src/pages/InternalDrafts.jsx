@@ -53,23 +53,10 @@ export const InternalDrafts = () => {
   return (
     <div className="container py-8 space-y-8 pb-20">
       
-      {/* Locked Notice Banner */}
-      <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-between gap-4 text-xs text-amber-200 shadow-lg">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0 text-amber-400 text-lg font-bold">
-            🔒
-          </div>
-          <div>
-            <strong className="block text-amber-300 font-bold text-sm">Chức năng đang trong quá trình phát triển!</strong>
-            <span className="text-amber-200/80">Tính năng Soạn Kịch Bản, Phê Duyệt & Lên Lịch Đăng Bài hiện đang tạm khóa để nâng cấp trải nghiệm hệ thống.</span>
-          </div>
-        </div>
-      </div>
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="badge badge-amber">Content Studio VMC (Đang Phát Triển)</span>
+          <span className="badge badge-amber">Content Studio VMC</span>
           <h1 className="font-heading text-3xl font-extrabold text-white mt-1">
             Kho Kịch Bản & <span className="gradient-text">Duyệt Bài Fanpage</span>
           </h1>
@@ -79,11 +66,11 @@ export const InternalDrafts = () => {
         </div>
 
         <button
-          onClick={() => alert('🔒 Chức năng Soạn Kịch Bản & Duyệt Bài đang trong quá trình phát triển!')}
-          className="btn-primary text-xs px-5 py-2.5 shadow-amber-600/30 opacity-80 hover:opacity-100 bg-amber-600 border-amber-500"
+          onClick={() => setIsNewDraftModalOpen(true)}
+          className="btn-primary text-xs px-5 py-2.5 shadow-blue-600/40"
         >
           <Plus className="w-4 h-4" />
-          <span>Soạn Bài Viết Mới (Đang Khóa)</span>
+          <span>Soạn Bài Viết Mới</span>
         </button>
       </div>
 
@@ -109,23 +96,23 @@ export const InternalDrafts = () => {
                   {draft.status === 'approved' ? 'Đã Lên Lịch Đăng' : 'Chờ Phê Duyệt & Lên Lịch'}
                 </span>
 
-                {draft.status === 'pending' && (
+                {draft.status === 'pending' && canApproveDraft && (
                   <button
-                    onClick={() => alert('🔒 Chức năng Lên Lịch & Giao Chấm Bài đang trong quá trình phát triển!')}
-                    className="btn-primary text-xs px-4 py-1.5 shadow-amber-600/30 bg-amber-600 border-amber-500 opacity-80 hover:opacity-100"
+                    onClick={() => setDraftToSchedule(draft.id)}
+                    className="btn-primary text-xs px-4 py-1.5 shadow-emerald-600/30"
                   >
                     <CheckCircle className="w-4 h-4" />
-                    <span>Lên Lịch (Đang Khóa)</span>
+                    <span>Lên Lịch & Giao Chấm Bài</span>
                   </button>
                 )}
                 
-                {draft.status === 'approved' && draft.gradingStatus === 'pending' && (
+                {draft.status === 'approved' && draft.gradingStatus === 'pending' && (draft.graderId === currentUser.id || canApproveDraft) && (
                   <button
-                    onClick={() => alert('🔒 Chức năng Chấm Điểm Bài Đăng đang trong quá trình phát triển!')}
-                    className="btn-primary text-xs px-4 py-1.5 shadow-amber-600/30 bg-amber-600 border-amber-500 opacity-80 hover:opacity-100"
+                    onClick={() => completeGrading(draft.id)}
+                    className="btn-primary text-xs px-4 py-1.5 shadow-blue-600/30"
                   >
                     <CheckCircle className="w-4 h-4" />
-                    <span>Hoàn Thành Chấm Điểm (Đang Khóa)</span>
+                    <span>Đã Hoàn Thành Chấm Điểm</span>
                   </button>
                 )}
               </div>

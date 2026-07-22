@@ -56,13 +56,13 @@ export const InternalProfile = () => {
     }
   };
 
-  const handleSaveAvatar = (e) => {
+  const handleSaveAvatar = async (e) => {
     e.preventDefault();
     if (!avatarPreview) {
       alert('Vui lòng chọn file ảnh từ máy tính!');
       return;
     }
-    updateSelfProfile({ ...selfData, avatar: avatarPreview });
+    await updateSelfProfile({ ...selfData, avatar: avatarPreview });
     setIsAvatarModalOpen(false);
   };
 
@@ -88,9 +88,9 @@ export const InternalProfile = () => {
 
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  const handleSelfUpdate = (e) => {
+  const handleSelfUpdate = async (e) => {
     e.preventDefault();
-    updateSelfProfile(selfData);
+    await updateSelfProfile(selfData);
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 4000);
   };

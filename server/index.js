@@ -20,7 +20,13 @@ const DIST_DIR = path.join(__dirname, '..', 'dist');
 console.log(`🔧 DB Config: host=${process.env.DB_HOST}, db=${process.env.DB_NAME}, user=${process.env.DB_USER}`);
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Tự động mở rộng cột avatar_url trong CSDL MySQL sang LONGTEXT để lưu ảnh base64
+queryDatabase('ALTER TABLE Members MODIFY COLUMN avatar_url LONGTEXT').catch(err => {
+  console.log('ℹ️ CSDL status avatar_url:', err.message);
+});
 
 // ── Sub-router cho tasks, drafts, equipment, announcements ──
 app.use('/api', apiRouter);
@@ -177,6 +183,10 @@ app.put('/api/members/:id', async (req, res) => {
   } = req.body;
 
   try {
+    const isFirstLoginVal = is_first_login !== undefined 
+      ? (is_first_login ? 1 : 0) 
+      : (isFirstLogin !== undefined ? (isFirstLogin ? 1 : 0) : null);
+
     const sql = `
       UPDATE Members 
       SET 
@@ -196,7 +206,7 @@ app.put('/api/members/:id', async (req, res) => {
         avatar_url = COALESCE(?, COALESCE(?, avatar_url)),
         status = COALESCE(?, status),
         password = COALESCE(?, password),
-        is_first_login = COALESCE(?, COALESCE(?, is_first_login))
+        is_first_login = COALESCE(?, is_first_login)
       WHERE (id = ? OR UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?))
     `;
     
@@ -218,8 +228,7 @@ app.put('/api/members/:id', async (req, res) => {
       avatar !== undefined ? avatar : null,
       status !== undefined ? status : null,
       password !== undefined ? password : null,
-      is_first_login !== undefined ? is_first_login : null,
-      isFirstLogin !== undefined ? (isFirstLogin ? 1 : 0) : null,
+      isFirstLoginVal,
       id, id, id
     ]);
 

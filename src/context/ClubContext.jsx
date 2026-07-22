@@ -360,37 +360,38 @@ export const ClubProvider = ({ children }) => {
   const changePassword = async (oldPassword, newPassword) => {
     if (currentUser?.password && currentUser.password !== oldPassword) return false;
 
-    await updateMemberAPI(currentUser.memberCode || currentUser.id, {
+    const targetId = currentUser.id || currentUser.memberCode;
+    await updateMemberAPI(targetId, {
       password: newPassword,
       isFirstLogin: false,
-      is_first_login: false,
+      is_first_login: 0,
       name: currentUser.name
     });
 
-    updateDb(prev => ({
-      ...prev,
-      members: prev.members.map(m => {
-        if (m.id === currentUser.id) {
-          return {
-            ...m,
-            password: newPassword,
-            isFirstLogin: false
-          };
-        }
-        return m;
-      })
-    }));
+    const freshMembers = await fetchMembersFromDatabaseAPI();
+    if (freshMembers && Array.isArray(freshMembers) && freshMembers.length > 0) {
+      setDb(prev => {
+        const mergedMembers = freshMembers.map(serverMem => {
+          const localMem = (prev.members || []).find(m => m.id === serverMem.id) || {};
+          return { ...localMem, ...serverMem };
+        });
+        const updated = { ...prev, members: mergedMembers };
+        saveDatabaseToStorage(updated);
+        return updated;
+      });
+    }
 
     setCurrentUser(prev => ({
       ...prev,
       password: newPassword,
-      isFirstLogin: false
+      isFirstLogin: false,
+      is_first_login: false
     }));
 
     setRequirePasswordChange(false);
     setIsAuthenticated(true);
     triggerConfetti();
-    alert('Đổi mật khẩu cá nhân thành công! Dữ liệu đã được lưu vào CSDL.');
+    alert('🎉 Đổi mật khẩu cá nhân thành công! Mật khẩu mới và trạng thái đã được lưu vào CSDL MySQL.');
     return true;
   };
 
@@ -472,17 +473,26 @@ export const ClubProvider = ({ children }) => {
     };
 
     // 1. Sync to Server API Database
-    await updateMemberAPI(currentUser.memberCode || currentUser.id, updatedUser);
+    await updateMemberAPI(currentUser.id || currentUser.memberCode, updatedUser);
+
+    // 2. Fetch fresh members directly from MySQL
+    const freshMembers = await fetchMembersFromDatabaseAPI();
+    if (freshMembers && Array.isArray(freshMembers) && freshMembers.length > 0) {
+      setDb(prev => {
+        const mergedMembers = freshMembers.map(serverMem => {
+          const localMem = (prev.members || []).find(m => m.id === serverMem.id) || {};
+          return { ...localMem, ...serverMem };
+        });
+        const updated = { ...prev, members: mergedMembers };
+        saveDatabaseToStorage(updated);
+        return updated;
+      });
+    }
 
     setCurrentUser(updatedUser);
 
-    updateDb(prev => ({
-      ...prev,
-      members: prev.members.map(m => m.id === currentUser.id ? updatedUser : m)
-    }));
-
     triggerConfetti();
-    alert('🎉 Đã cập nhật thành công thông tin hồ sơ vào CSDL!');
+    alert('🎉 Đã cập nhật thành công thông tin hồ sơ và ảnh đại diện vào CSDL MySQL!');
   };
 
   // Update Member Info by Tech Team & Ban Đối Ngoại - Nhân Sự
@@ -626,28 +636,28 @@ export const ClubProvider = ({ children }) => {
 
     const targetMem = db.members.find(m => m.username === username || m.memberCode === username);
     if (targetMem) {
-      await updateMemberAPI(targetMem.memberCode || targetMem.id, {
+      await updateMemberAPI(targetMem.id || targetMem.memberCode, {
         password: "VMC2026@VinhBao",
         isFirstLogin: true,
-        is_first_login: true,
+        is_first_login: 1,
         name: targetMem.name
       });
     }
 
-    updateDb(prev => ({
-      ...prev,
-      members: prev.members.map(m => {
-        if (m.username === username || m.memberCode === username) {
-          return {
-            ...m,
-            password: "VMC2026@VinhBao",
-            isFirstLogin: true
-          };
-        }
-        return m;
-      })
-    }));
-    alert(`Đã reset lại Mật khẩu khởi tạo (VMC2026@VinhBao) cho tài khoản [${username}].`);
+    const freshMembers = await fetchMembersFromDatabaseAPI();
+    if (freshMembers && Array.isArray(freshMembers) && freshMembers.length > 0) {
+      setDb(prev => {
+        const mergedMembers = freshMembers.map(serverMem => {
+          const localMem = (prev.members || []).find(m => m.id === serverMem.id) || {};
+          return { ...localMem, ...serverMem };
+        });
+        const updated = { ...prev, members: mergedMembers };
+        saveDatabaseToStorage(updated);
+        return updated;
+      });
+    }
+
+    alert(`🎉 Đã reset lại Mật khẩu khởi tạo (VMC2026@VinhBao) cho tài khoản [${username}] trong CSDL MySQL!`);
     return true;
   };
 
