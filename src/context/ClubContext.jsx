@@ -65,7 +65,7 @@ export const ClubProvider = ({ children }) => {
 
     const silentAutoSync = async () => {
       try {
-        const [serverMembers, serverTasks, serverDrafts, serverEquipment, serverAnnouncements, serverFinances, serverMeetings, serverBirthday] = await Promise.all([
+        const [serverMembers, serverTasks, serverDrafts, serverEquipment, serverAnnouncements, serverFinances, serverMeetings, serverBirthday, serverMilestones] = await Promise.all([
           fetchMembersFromDatabaseAPI(),
           fetchEntityAPI('tasks'),
           fetchEntityAPI('drafts'),
@@ -73,12 +73,21 @@ export const ClubProvider = ({ children }) => {
           fetchEntityAPI('announcements'),
           fetchEntityAPI('finances'),
           fetchEntityAPI('meetings'),
-          fetchEntityAPI('birthday-assignments')
+          fetchEntityAPI('birthday-assignments'),
+          fetchEntityAPI('milestones')
         ]);
         
         if (isMounted) {
+          const mergedMembers = (Array.isArray(serverMembers) ? serverMembers : []).map(m => {
+            const tableMs = (Array.isArray(serverMilestones) ? serverMilestones : []).filter(ms => String(ms.memberId) === String(m.id) || String(ms.memberId) === String(m.memberCode));
+            const existingMs = Array.isArray(m.milestones) ? m.milestones : [];
+            const combinedMs = [...tableMs, ...existingMs];
+            const uniqueMs = combinedMs.filter((v, idx, self) => self.findIndex(t => t.id === v.id) === idx);
+            return { ...m, milestones: uniqueMs };
+          });
+
           setDb({
-            members: Array.isArray(serverMembers) ? serverMembers : [],
+            members: mergedMembers,
             tasks: Array.isArray(serverTasks) ? serverTasks : [],
             drafts: Array.isArray(serverDrafts) ? serverDrafts : [],
             equipment: Array.isArray(serverEquipment) ? serverEquipment : [],
@@ -549,30 +558,27 @@ export const ClubProvider = ({ children }) => {
   const addMemberMilestone = async (memberId, milestone) => {
     const milestoneObj = {
       id: 'm-' + Date.now(),
+      memberId: memberId,
       date: milestone.date || new Date().toLocaleDateString('vi-VN'),
       title: milestone.title || 'Cập nhật chức vụ mới',
       badgeText: milestone.badgeText || '[Chức vụ]',
       badgeStyle: milestone.badgeStyle || 'bg-blue-500/10 text-blue-400 border-blue-500/30'
     };
 
-    const targetMem = db.members.find(m => m.id === memberId || m.memberCode === memberId);
+    // 1. Save directly into Member_Milestones table in MySQL
+    await createEntityAPI('milestones', milestoneObj);
+
+    // 2. Also update Members table milestones column for fast access
+    const targetMem = db.members.find(m => String(m.id) === String(memberId) || m.memberCode === memberId);
     const existingMilestones = (targetMem?.milestones && Array.isArray(targetMem.milestones)) ? targetMem.milestones : [];
     const updatedMilestones = [...existingMilestones, milestoneObj];
 
     await updateMemberAPI(memberId, { milestones: updatedMilestones });
 
-    const freshMembers = await fetchMembersFromDatabaseAPI();
-    if (freshMembers && Array.isArray(freshMembers) && freshMembers.length > 0) {
-      setDb(prev => {
-        const mergedMembers = freshMembers.map(serverMem => {
-          const localMem = (prev.members || []).find(m => m.id === serverMem.id) || {};
-          return { ...localMem, ...serverMem };
-        });
-        const updated = { ...prev, members: mergedMembers };
-        saveDatabaseToStorage(updated);
-        return updated;
-      });
-    }
+    setDb(prev => ({
+      ...prev,
+      members: prev.members.map(m => (String(m.id) === String(memberId) || m.memberCode === memberId) ? { ...m, milestones: updatedMilestones } : m)
+    }));
 
     if (currentUser.id === memberId || currentUser.memberCode === memberId) {
       setCurrentUser(prev => ({
@@ -582,7 +588,7 @@ export const ClubProvider = ({ children }) => {
     }
 
     triggerConfetti();
-    showToast('🎉 Đã thêm cột mốc lịch sử chức vụ mới thành công vào CSDL!', 'success');
+    showToast('🎉 Đã thêm cột mốc mới vào bảng CSDL Member_Milestones thành công!', 'success');
   };
 
   // Helper permission check for Account Management (Super Admin & Trưởng Ban Đối Ngoại - Nhân Sự)

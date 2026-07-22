@@ -442,4 +442,56 @@ router.put('/birthday-assignments/:id', async (req, res) => {
   }
 });
 
+// ======================= MEMBER MILESTONES =======================
+router.get('/milestones', async (req, res) => {
+  try {
+    const milestones = await queryDatabase('SELECT * FROM Member_Milestones ORDER BY created_at ASC');
+    const data = milestones.map(m => ({
+      id: m.id,
+      memberId: m.member_id,
+      date: m.date,
+      title: m.title,
+      badgeText: m.badge_text,
+      badgeStyle: m.badge_style,
+      createdAt: m.created_at
+    }));
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/milestones', async (req, res) => {
+  try {
+    const { id, memberId, member_id, date, title, badgeText, badge_text, badgeStyle, badge_style } = req.body;
+    const msId = id || generateId();
+    const targetMemId = String(memberId || member_id);
+
+    await queryDatabase(
+      'INSERT INTO Member_Milestones (id, member_id, date, title, badge_text, badge_style) VALUES (?, ?, ?, ?, ?, ?)',
+      [
+        msId,
+        targetMemId,
+        date || new Date().toLocaleDateString('vi-VN'),
+        title || 'Cập nhật cột mốc mới',
+        badgeText || badge_text || '[Cột mốc]',
+        badgeStyle || badge_style || 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+      ]
+    );
+
+    res.json({ success: true, data: { id: msId, memberId: targetMemId, date, title, badgeText, badgeStyle } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete('/milestones/:id', async (req, res) => {
+  try {
+    await queryDatabase('DELETE FROM Member_Milestones WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 export default router;

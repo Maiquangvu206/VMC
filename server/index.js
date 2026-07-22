@@ -31,6 +31,21 @@ queryDatabase('ALTER TABLE Members ADD COLUMN milestones LONGTEXT').catch(err =>
   console.log('ℹ️ CSDL status milestones:', err.message);
 });
 
+// Tự động khởi tạo bảng Member_Milestones tách riêng trong MySQL
+queryDatabase(`
+  CREATE TABLE IF NOT EXISTS Member_Milestones (
+    id VARCHAR(100) PRIMARY KEY,
+    member_id VARCHAR(100) NOT NULL,
+    date VARCHAR(50),
+    title TEXT,
+    badge_text VARCHAR(100),
+    badge_style VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`).catch(err => {
+  console.log('ℹ️ CSDL status Member_Milestones table:', err.message);
+});
+
 // ── Sub-router cho tasks, drafts, equipment, announcements ──
 app.use('/api', apiRouter);
 
