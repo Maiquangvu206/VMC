@@ -30,8 +30,12 @@ export const InternalHRDashboard = () => {
 
   const filteredMembers = useMemo(() => {
     return members.filter(m => {
-      // Ẩn tài khoản hệ thống (Super Admin / ADMIN) khỏi mọi danh sách
-      if (m.roleTitle?.includes('Super Admin') || m.memberCode === 'ADMIN') return false;
+      // Ẩn tài khoản hệ thống (Super Admin / ADMIN) và Ban Cố Vấn khỏi danh sách thi đua & điểm danh
+      const roleTitle = (m.roleTitle || m.role_title || '').toLowerCase();
+      const deptName = (m.deptName || m.department || '').toLowerCase();
+      const code = (m.memberCode || m.member_code || '').toUpperCase();
+      if (roleTitle.includes('super admin') || roleTitle.includes('cố vấn') || deptName.includes('cố vấn') || code === 'ADMIN') return false;
+
       const q = normalizeText(searchQuery);
       return !q || normalizeText(m.name).includes(q) || normalizeText(m.memberCode).includes(q);
     });

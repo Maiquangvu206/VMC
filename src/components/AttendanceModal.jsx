@@ -136,7 +136,12 @@ export const AttendanceModal = () => {
               </label>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto p-1">
-                {members.filter(m => !m.roleTitle?.includes('Super Admin')).map(m => {
+                {members.filter(m => {
+                  const roleTitle = (m.roleTitle || m.role_title || '').toLowerCase();
+                  const deptName = (m.deptName || m.department || '').toLowerCase();
+                  const code = (m.memberCode || m.member_code || '').toUpperCase();
+                  return !roleTitle.includes('super admin') && !roleTitle.includes('cố vấn') && !deptName.includes('cố vấn') && code !== 'ADMIN';
+                }).map(m => {
                   const isChecked = selectedPresentIds.includes(m.id);
                   return (
                     <div

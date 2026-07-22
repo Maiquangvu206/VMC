@@ -216,7 +216,12 @@ export const MeetingManagement = () => {
                 <p>Thành viên bị đánh dấu "Đi muộn" hoặc "Vắng không phép" sẽ bị trừ điểm tự động ngay khi bạn chốt điểm danh.</p>
               </div>
 
-              {members.filter(m => !m.roleTitle?.includes('Super Admin')).map(m => (
+              {members.filter(m => {
+                const roleTitle = (m.roleTitle || m.role_title || '').toLowerCase();
+                const deptName = (m.deptName || m.department || '').toLowerCase();
+                const code = (m.memberCode || m.member_code || '').toUpperCase();
+                return !roleTitle.includes('super admin') && !roleTitle.includes('cố vấn') && !deptName.includes('cố vấn') && code !== 'ADMIN';
+              }).map(m => (
                 <div key={m.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-slate-950 rounded-xl border border-white/5">
                   <div className="flex-1">
                     <div className="font-bold text-sm text-white">{m.name}</div>

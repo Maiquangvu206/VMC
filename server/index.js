@@ -40,7 +40,6 @@ queryDatabase('ALTER TABLE Members ADD COLUMN milestones LONGTEXT').catch(err =>
   console.log('ℹ️ CSDL status milestones:', err.message);
 });
 
-// Tự động khởi tạo bảng Member_Milestones tách riêng trong MySQL
 queryDatabase(`
   CREATE TABLE IF NOT EXISTS Member_Milestones (
     id VARCHAR(100) PRIMARY KEY,
@@ -51,7 +50,35 @@ queryDatabase(`
     badge_style VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )
-`).catch(err => {
+`).then(async () => {
+  const countRes = await queryDatabase('SELECT COUNT(*) as cnt FROM Member_Milestones').catch(() => []);
+  if (countRes && countRes[0] && countRes[0].cnt === 0) {
+    const members = await queryDatabase('SELECT id, department, milestones FROM Members').catch(() => []);
+    for (const m of members) {
+      let msList = [];
+      if (m.milestones) {
+        try {
+          msList = typeof m.milestones === 'string' ? JSON.parse(m.milestones) : m.milestones;
+        } catch (e) { msList = []; }
+      }
+      if (!Array.isArray(msList) || msList.length === 0) {
+        msList = [{
+          id: 'm-init-1-' + m.id,
+          date: '20/09/2024',
+          title: `Bắt đầu làm thành viên VMC (${m.department || 'Ban Chuyên Môn'})`,
+          badgeText: '[Gia nhập]',
+          badgeStyle: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+        }];
+      }
+      for (const ms of msList) {
+        await queryDatabase(
+          `INSERT IGNORE INTO Member_Milestones (id, member_id, date, title, badge_text, badge_style) VALUES (?, ?, ?, ?, ?, ?)`,
+          [ms.id || ('m-' + Date.now()), String(m.id), ms.date || '20/09/2024', ms.title || 'Cột mốc mới', ms.badgeText || '[Cột mốc]', ms.badgeStyle || 'bg-blue-500/10 text-blue-400 border-blue-500/30']
+        ).catch(() => {});
+      }
+    }
+  }
+}).catch(err => {
   console.log('ℹ️ CSDL status Member_Milestones table:', err.message);
 });
 

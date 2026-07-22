@@ -17,7 +17,7 @@ const ToastItem = ({ toast, onRemove }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       onRemove();
-    }, toast.duration || 5000);
+    }, toast.duration || 3000);
     return () => clearTimeout(timer);
   }, [toast, onRemove]);
 

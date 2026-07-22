@@ -16,7 +16,7 @@ export const ClubProvider = ({ children }) => {
   const [theme, setTheme] = useState('dark');
   const [toasts, setToasts] = useState([]);
 
-  const showToast = (message, type = 'success', duration = 5000) => {
+  const showToast = (message, type = 'success', duration = 3000) => {
     const id = 'toast-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
     setToasts(prev => [...prev, { id, message, type, duration }]);
   };
@@ -269,11 +269,7 @@ export const ClubProvider = ({ children }) => {
   };
 
   const triggerConfetti = () => {
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 }
-    });
+    // Disabled fireworks effect per user request
   };
 
   // Role Checks for Management Features (Admin & Ban Đối Ngoại - Nhân Sự ONLY)
