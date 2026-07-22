@@ -14,6 +14,16 @@ const ClubContext = createContext();
 
 export const ClubProvider = ({ children }) => {
   const [theme, setTheme] = useState('dark');
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = (message, type = 'success', duration = 5000) => {
+    const id = 'toast-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+    setToasts(prev => [...prev, { id, message, type, duration }]);
+  };
+
+  const removeToast = (id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  };
 
   const [activeTab, setActiveTabState] = useState(() => {
     try {
@@ -32,19 +42,16 @@ export const ClubProvider = ({ children }) => {
     }
   };
 
-  // Dynamic Database State Initialization — tất cả dữ liệu từ MySQL, không hardcode
-  const [db, setDb] = useState(() => {
-    const loaded = loadDatabaseFromStorage();
-    if (!loaded.members) loaded.members = [];
-    if (!loaded.tasks) loaded.tasks = [];
-    if (!loaded.equipment) loaded.equipment = [];
-    if (!loaded.drafts) loaded.drafts = [];
-    if (!loaded.announcements) loaded.announcements = [];
-    if (!loaded.finances) loaded.finances = [];
-    if (!loaded.attendanceRecords) loaded.attendanceRecords = [];
-    if (!loaded.meetings) loaded.meetings = [];
-    if (!loaded.birthdayAssignments) loaded.birthdayAssignments = [];
-    return loaded;
+  // Dynamic Database State Initialization — 100% dữ liệu từ CSDL MySQL
+  const [db, setDb] = useState({
+    members: [],
+    tasks: [],
+    equipment: [],
+    drafts: [],
+    announcements: [],
+    finances: [],
+    meetings: [],
+    birthdayAssignments: []
   });
 
   const members = db.members;
@@ -52,7 +59,7 @@ export const ClubProvider = ({ children }) => {
   const equipment = db.equipment;
   const drafts = db.drafts;
 
-  // Automatic Real-Time Silent Sync with MySQL Database — tất cả bảng
+  // Automatic Real-Time Silent Sync with MySQL Database — tất cả 9 bảng 100% từ MySQL Server
   useEffect(() => {
     let isMounted = true;
 
@@ -70,26 +77,15 @@ export const ClubProvider = ({ children }) => {
         ]);
         
         if (isMounted) {
-          setDb(prev => {
-            const mergedMembers = Array.isArray(serverMembers) ? serverMembers.map(serverMem => {
-              const localMem = (prev.members || []).find(m => String(m.id) === String(serverMem.id) || m.memberCode === serverMem.memberCode) || {};
-              return { ...localMem, ...serverMem };
-            }) : prev.members;
-            
-            const nextDb = {
-              ...prev,
-              members: mergedMembers || [],
-              tasks: Array.isArray(serverTasks) && serverTasks.length > 0 ? serverTasks : prev.tasks,
-              drafts: Array.isArray(serverDrafts) && serverDrafts.length > 0 ? serverDrafts : prev.drafts,
-              equipment: Array.isArray(serverEquipment) && serverEquipment.length > 0 ? serverEquipment : prev.equipment,
-              announcements: Array.isArray(serverAnnouncements) && serverAnnouncements.length > 0 ? serverAnnouncements : prev.announcements,
-              finances: Array.isArray(serverFinances) && serverFinances.length > 0 ? serverFinances : prev.finances,
-              meetings: Array.isArray(serverMeetings) && serverMeetings.length > 0 ? serverMeetings : (prev.meetings || []),
-              birthdayAssignments: Array.isArray(serverBirthday) && serverBirthday.length > 0 ? serverBirthday : (prev.birthdayAssignments || [])
-            };
-            
-            saveDatabaseToStorage(nextDb);
-            return nextDb;
+          setDb({
+            members: Array.isArray(serverMembers) ? serverMembers : [],
+            tasks: Array.isArray(serverTasks) ? serverTasks : [],
+            drafts: Array.isArray(serverDrafts) ? serverDrafts : [],
+            equipment: Array.isArray(serverEquipment) ? serverEquipment : [],
+            announcements: Array.isArray(serverAnnouncements) ? serverAnnouncements : [],
+            finances: Array.isArray(serverFinances) ? serverFinances : [],
+            meetings: Array.isArray(serverMeetings) ? serverMeetings : [],
+            birthdayAssignments: Array.isArray(serverBirthday) ? serverBirthday : []
           });
         }
       } catch (err) {
@@ -550,7 +546,7 @@ export const ClubProvider = ({ children }) => {
   };
 
   // Add Role Milestone to a Member (Ban ĐN-NS & Admin)
-  const addMemberMilestone = (memberId, milestone) => {
+  const addMemberMilestone = async (memberId, milestone) => {
     const milestoneObj = {
       id: 'm-' + Date.now(),
       date: milestone.date || new Date().toLocaleDateString('vi-VN'),
@@ -559,26 +555,34 @@ export const ClubProvider = ({ children }) => {
       badgeStyle: milestone.badgeStyle || 'bg-blue-500/10 text-blue-400 border-blue-500/30'
     };
 
-    updateDb(prev => ({
-      ...prev,
-      members: prev.members.map(m => {
-        if (m.id === memberId) {
-          const currentMilestones = m.milestones || [];
-          return { ...m, milestones: [...currentMilestones, milestoneObj] };
-        }
-        return m;
-      })
-    }));
+    const targetMem = db.members.find(m => m.id === memberId || m.memberCode === memberId);
+    const existingMilestones = (targetMem?.milestones && Array.isArray(targetMem.milestones)) ? targetMem.milestones : [];
+    const updatedMilestones = [...existingMilestones, milestoneObj];
 
-    if (currentUser.id === memberId) {
+    await updateMemberAPI(memberId, { milestones: updatedMilestones });
+
+    const freshMembers = await fetchMembersFromDatabaseAPI();
+    if (freshMembers && Array.isArray(freshMembers) && freshMembers.length > 0) {
+      setDb(prev => {
+        const mergedMembers = freshMembers.map(serverMem => {
+          const localMem = (prev.members || []).find(m => m.id === serverMem.id) || {};
+          return { ...localMem, ...serverMem };
+        });
+        const updated = { ...prev, members: mergedMembers };
+        saveDatabaseToStorage(updated);
+        return updated;
+      });
+    }
+
+    if (currentUser.id === memberId || currentUser.memberCode === memberId) {
       setCurrentUser(prev => ({
         ...prev,
-        milestones: [...(prev.milestones || []), milestoneObj]
+        milestones: updatedMilestones
       }));
     }
 
     triggerConfetti();
-    alert('🎉 Đã thêm cột mốc lịch sử chức vụ mới thành công!');
+    showToast('🎉 Đã thêm cột mốc lịch sử chức vụ mới thành công vào CSDL!', 'success');
   };
 
   // Helper permission check for Account Management (Super Admin & Trưởng Ban Đối Ngoại - Nhân Sự)
@@ -1109,13 +1113,50 @@ export const ClubProvider = ({ children }) => {
         a.id === assignmentId ? { ...a, link, status: 'completed' } : a
       )
     }));
-    alert('✅ Đã nộp link bài đăng sinh nhật thành công!\n\n📧 Đã tự động gửi Email tới bộ phận phụ trách Ban Sản Xuất.\n🔔 Đã gửi thông báo tới bộ phận phụ trách Ban Nội Dung - PT.\n☁️ Dữ liệu đã được lưu trữ an toàn vào hệ thống Drive riêng của Ban.');
+    showToast('✅ Đã nộp link bài đăng sinh nhật thành công!', 'success');
+  };
+
+  // Add BCN Announcement
+  const addAnnouncement = async (annData) => {
+    const annObj = {
+      id: 'ann-' + Date.now(),
+      title: annData.title,
+      content: annData.content,
+      authorId: currentUser?.id,
+      date: new Date().toLocaleDateString('vi-VN'),
+      priority: annData.isPinned ? 'Ghim đầu' : 'Thông báo',
+      isPinned: annData.isPinned || false
+    };
+
+    await createEntityAPI('announcements', annObj);
+
+    updateDb(prev => ({
+      ...prev,
+      announcements: [annObj, ...(prev.announcements || [])]
+    }));
+
+    showToast('🎉 Đã đăng thông báo Ban Chủ Nhiệm thành công vào CSDL!', 'success');
+    return true;
+  };
+
+  // Delete BCN Announcement
+  const deleteAnnouncement = async (id) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa thông báo này khỏi CSDL?')) return;
+    await deleteEntityAPI('announcements', id);
+    updateDb(prev => ({
+      ...prev,
+      announcements: (prev.announcements || []).filter(a => a.id !== id)
+    }));
+    showToast('Đã xóa thông báo thành công!', 'info');
   };
 
   return (
     <ClubContext.Provider value={{
       theme,
       toggleTheme,
+      toasts,
+      showToast,
+      removeToast,
       activeTab,
       setActiveTab,
       db,
@@ -1146,6 +1187,8 @@ export const ClubProvider = ({ children }) => {
       approveDraft,
       addDraft,
       announcements,
+      addAnnouncement,
+      deleteAnnouncement,
       members,
       createMemberAccount,
       deleteMemberAccount,

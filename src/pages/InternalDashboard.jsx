@@ -20,14 +20,57 @@ import {
 export const InternalDashboard = () => {
   const { 
     currentUser, 
+    members,
     tasks, 
     equipment, 
     drafts, 
     announcements, 
+    addAnnouncement,
+    deleteAnnouncement,
+    isAdmin,
     setActiveTab, 
     setIsNewTaskModalOpen,
     setIsNewDraftModalOpen
   } = useClub();
+
+  const [isAnnModalOpen, setIsAnnModalOpen] = React.useState(false);
+  const [annTitle, setAnnTitle] = React.useState('');
+  const [annContent, setAnnContent] = React.useState('');
+  const [annPinned, setAnnPinned] = React.useState(false);
+
+  const canManageAnnouncements = Boolean(
+    isAdmin ||
+    currentUser?.memberCode === 'ADMIN' ||
+    currentUser?.roleTitle?.includes('Chủ Nhiệm') ||
+    currentUser?.roleTitle?.includes('Super Admin') ||
+    currentUser?.roleTitle?.includes('Trưởng Ban') ||
+    currentUser?.roleTitle?.includes('Phó Ban')
+  );
+
+  const getDepartmentMemberCount = (deptId) => {
+    if (!members || !Array.isArray(members)) return 0;
+    return members.filter(m => {
+      const deptName = (m.deptName || m.department || '').toLowerCase();
+      const roleTitle = (m.roleTitle || m.role_title || m.role || '').toLowerCase();
+
+      if (deptId === 'bcn') {
+        return deptName.includes('chủ nhiệm') || deptName.includes('bcn') || roleTitle.includes('chủ nhiệm') || roleTitle.includes('phó chủ nhiệm');
+      }
+      if (deptId === 'content_radio') {
+        return deptName.includes('nội dung') || deptName.includes('phát thanh');
+      }
+      if (deptId === 'production') {
+        return deptName.includes('sản xuất') || deptName.includes('media') || deptName.includes('kỹ thuật');
+      }
+      if (deptId === 'hr_external') {
+        return deptName.includes('đối ngoại') || deptName.includes('nhân sự') || deptName.includes('đn-ns');
+      }
+      if (deptId === 'advisory') {
+        return deptName.includes('cố vấn') || roleTitle.includes('cố vấn');
+      }
+      return false;
+    }).length;
+  };
 
   const safeUser = currentUser || {
     name: 'Thành Viên VMC',
@@ -163,7 +206,7 @@ export const InternalDashboard = () => {
                       <Icon className="w-5 h-5" />
                     </div>
                     <span className="text-xs font-mono text-slate-400 bg-slate-900/80 px-2.5 py-1 rounded-full border border-white/5">
-                      {dept.count} Thành viên
+                      {getDepartmentMemberCount(dept.id)} Thành viên
                     </span>
                   </div>
 
@@ -269,62 +312,136 @@ export const InternalDashboard = () => {
           
           {/* Announcements */}
           <div className="glass-card p-6 rounded-3xl border border-white/10 space-y-4">
-            <h2 className="font-heading text-base font-bold text-white flex items-center gap-2 border-b border-white/10 pb-3">
-              <Bell className="w-4 h-4 text-blue-400" />
-              <span>Thông Báo Ban Chủ Nhiệm</span>
-            </h2>
-
-            <div className="space-y-3">
-              {announcements.map(ann => (
-                <div key={ann.id} className="p-3.5 rounded-2xl bg-slate-900/80 border border-white/5 space-y-1.5 text-xs">
-                  <div className="flex justify-between items-center">
-                    <span className="text-blue-400 font-mono text-[10px]">{ann.date}</span>
-                    <span className="badge badge-pink text-[9px] px-2 py-0.2">{ann.priority}</span>
-                  </div>
-                  <h4 className="font-bold text-white leading-snug">{ann.title}</h4>
-                  <p className="text-slate-400 leading-relaxed text-[11px]">{ann.content}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Equipment Widget */}
-          <div className="glass-card p-6 rounded-3xl border border-white/10 space-y-4">
             <div className="flex justify-between items-center border-b border-white/10 pb-3">
               <h2 className="font-heading text-base font-bold text-white flex items-center gap-2">
-                <Camera className="w-4 h-4 text-cyan-400" />
-                <span>Thiết Bị CLB</span>
+                <Bell className="w-4 h-4 text-blue-400" />
+                <span>Thông Báo Ban Chủ Nhiệm</span>
               </h2>
-              <button
-                onClick={() => setActiveTab('equipment')}
-                className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold"
-              >
-                Mượn Thiết Bị
-              </button>
+
+              {canManageAnnouncements && (
+                <button
+                  onClick={() => setIsAnnModalOpen(true)}
+                  className="bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/30 px-3 py-1 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ Đăng Thông Báo</span>
+                </button>
+              )}
             </div>
 
-            <div className="space-y-2.5">
-              {equipment.slice(0, 3).map(eq => (
-                <div key={eq.id} className="p-3 rounded-2xl bg-slate-900/80 border border-white/5 flex items-center justify-between gap-2 text-xs">
-                  <div className="truncate">
-                    <div className="font-semibold text-white truncate">{eq.name}</div>
-                    <div className="text-[10px] text-slate-400 font-mono">{eq.code}</div>
-                  </div>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
-                    eq.status === 'available'
-                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                      : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                  }`}>
-                    {eq.status === 'available' ? 'Sẵn Sàng' : 'Đang Mượn'}
-                  </span>
+            <div className="space-y-3">
+              {(!announcements || announcements.length === 0) ? (
+                <div className="text-center py-6 text-slate-400 text-xs italic">
+                  Chưa có thông báo nào từ Ban Chủ Nhiệm.
                 </div>
-              ))}
+              ) : (
+                announcements.map(ann => (
+                  <div key={ann.id} className="p-3.5 rounded-2xl bg-slate-900/80 border border-white/5 space-y-1.5 text-xs relative group">
+                    <div className="flex justify-between items-center">
+                      <span className="text-blue-400 font-mono text-[10px]">{ann.date || 'Hôm nay'}</span>
+                      <div className="flex items-center gap-2">
+                        <span className={`badge text-[9px] px-2 py-0.2 ${ann.isPinned ? 'badge-pink' : 'badge-purple'}`}>
+                          {ann.priority || (ann.isPinned ? 'Ghim đầu' : 'Thông báo')}
+                        </span>
+                        {canManageAnnouncements && (
+                          <button
+                            onClick={() => deleteAnnouncement(ann.id)}
+                            className="text-slate-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] underline"
+                          >
+                            Xóa
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <h4 className="font-bold text-white leading-snug">{ann.title}</h4>
+                    <p className="text-slate-400 leading-relaxed text-[11px] whitespace-pre-line">{ann.content}</p>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
         </div>
 
       </div>
+
+      {/* Modal Đăng Thông Báo Mới của Ban Chủ Nhiệm */}
+      {isAnnModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+          <div className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5 animate-slide-up text-white">
+            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Bell className="w-5 h-5 text-blue-400" />
+                <span>ĐĂNG THÔNG BÁO BAN CHỦ NHIỆM</span>
+              </h3>
+              <button onClick={() => setIsAnnModalOpen(false)} className="text-slate-400 hover:text-white">✕</button>
+            </div>
+
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              if (!annTitle || !annContent) return;
+              await addAnnouncement({ title: annTitle, content: annContent, isPinned: annPinned });
+              setAnnTitle('');
+              setAnnContent('');
+              setAnnPinned(false);
+              setIsAnnModalOpen(false);
+            }} className="space-y-4 text-xs">
+              <div>
+                <label className="text-xs font-medium text-slate-300 mb-1 block">Tiêu Đề Thông Báo *</label>
+                <input
+                  type="text"
+                  required
+                  value={annTitle}
+                  onChange={(e) => setAnnTitle(e.target.value)}
+                  placeholder="Nhập tiêu đề thông báo..."
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-slate-300 mb-1 block">Nội Dung Thông Báo *</label>
+                <textarea
+                  required
+                  rows={4}
+                  value={annContent}
+                  onChange={(e) => setAnnContent(e.target.value)}
+                  placeholder="Nhập nội dung thông báo gửi tới toàn thể thành viên CLB..."
+                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="pinAcc"
+                  checked={annPinned}
+                  onChange={(e) => setAnnPinned(e.target.checked)}
+                  className="rounded border-slate-700 bg-slate-950 text-blue-600"
+                />
+                <label htmlFor="pinAcc" className="text-xs text-slate-300 font-medium cursor-pointer">
+                  📌 Ghim thông báo này lên đầu trang
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setIsAnnModalOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 font-medium"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-600/30"
+                >
+                  ĐĂNG THÔNG BÁO
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -119,7 +119,8 @@ export const updateMemberAPI = async (memberId, updatedFields) => {
         status: updatedFields.status,
         password: updatedFields.password,
         is_first_login: updatedFields.isFirstLogin !== undefined ? updatedFields.isFirstLogin : updatedFields.is_first_login,
-        isFirstLogin: updatedFields.isFirstLogin
+        isFirstLogin: updatedFields.isFirstLogin,
+        milestones: updatedFields.milestones
       })
     });
     return await response.json();

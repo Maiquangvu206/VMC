@@ -41,7 +41,6 @@ export const Navbar = () => {
   const navItems = [
     { id: 'dashboard', label: 'Tổng Quan', icon: LayoutDashboard },
     { id: 'tasks', label: 'Phân Công', icon: CheckSquare, badge: pendingTasksCount },
-    { id: 'equipment', label: 'Thiết Bị', icon: Camera },
     { id: 'drafts', label: 'Duyệt Bài', icon: FileText, badge: pendingDraftsCount },
     { id: 'resources', label: 'Tài Nguyên', icon: FolderGit2 },
     { id: 'members', label: 'Thành Viên', icon: Users },
@@ -83,7 +82,7 @@ export const Navbar = () => {
           {navItems.map(item => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
-            const isRestricted = !isAdmin && ['equipment', 'drafts', 'resources'].includes(item.id);
+            const isRestricted = !isAdmin && ['equipment', 'resources'].includes(item.id);
             return (
               <button
                 key={item.id}
@@ -211,7 +210,7 @@ export const Navbar = () => {
           {navItems.map(item => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
-            const isRestricted = !isAdmin && ['equipment', 'drafts', 'resources'].includes(item.id);
+            const isRestricted = !isAdmin && ['equipment', 'resources'].includes(item.id);
             return (
               <button
                 key={item.id}

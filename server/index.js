@@ -27,6 +27,9 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 queryDatabase('ALTER TABLE Members MODIFY COLUMN avatar_url LONGTEXT').catch(err => {
   console.log('ℹ️ CSDL status avatar_url:', err.message);
 });
+queryDatabase('ALTER TABLE Members ADD COLUMN milestones LONGTEXT').catch(err => {
+  console.log('ℹ️ CSDL status milestones:', err.message);
+});
 
 // ── Sub-router cho tasks, drafts, equipment, announcements ──
 app.use('/api', apiRouter);
@@ -80,7 +83,7 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const sql = `
       SELECT 
-        id, member_code, username, password, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, address, facebook, points, is_first_login, status
+        id, member_code, username, password, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, address, facebook, points, is_first_login, status, milestones
       FROM Members
       WHERE (UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?))
         AND password = ?
@@ -94,6 +97,15 @@ app.post('/api/auth/login', async (req, res) => {
     const user = rows[0];
     if (user.status === 'Suspended') {
       return res.status(403).json({ success: false, message: 'Tài khoản này đã bị tạm khóa bởi Bộ Phận Kỹ Thuật!' });
+    }
+
+    let parsedMilestones = [];
+    if (user.milestones) {
+      try {
+        parsedMilestones = typeof user.milestones === 'string' ? JSON.parse(user.milestones) : user.milestones;
+      } catch (e) {
+        parsedMilestones = [];
+      }
     }
 
     res.json({
@@ -118,12 +130,13 @@ app.post('/api/auth/login', async (req, res) => {
         facebook: user.facebook,
         points: user.points,
         isFirstLogin: Boolean(user.is_first_login),
-        status: user.status
+        status: user.status,
+        milestones: parsedMilestones
       }
     });
   } catch (error) {
     console.error('❌ Lỗi API /api/auth/login:', error.message);
-    res.status(500).json({ success: false, message: 'Lỗi máy chủ xác thực!', error: error.message });
+    res.status(500).json({ success: false, message: 'Không thể đăng nhập!', error: error.message });
   }
 });
 
@@ -132,7 +145,7 @@ app.get('/api/members', async (req, res) => {
   try {
     const sql = `
       SELECT 
-        id, member_code, username, password, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, address, facebook, points, is_first_login, status
+        id, member_code, username, password, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, address, facebook, points, is_first_login, status, milestones
       FROM Members 
       ORDER BY id ASC
     `;
@@ -141,27 +154,38 @@ app.get('/api/members', async (req, res) => {
     res.json({
       success: true,
       total: members.length,
-      data: members.map(m => ({
-        id: m.id,
-        memberCode: m.member_code,
-        username: m.username,
-        password: m.password,
-        name: m.full_name,
-        role: m.role,
-        roleTitle: m.role_title,
-        class: m.class_name,
-        deptName: m.department,
-        term: m.term,
-        avatar: m.avatar_url,
-        phone: m.phone,
-        email: m.email,
-        dob: m.dob,
-        address: m.address,
-        facebook: m.facebook,
-        status: m.status,
-        points: m.points,
-        isFirstLogin: Boolean(m.is_first_login)
-      }))
+      data: members.map(m => {
+        let parsed = [];
+        if (m.milestones) {
+          try {
+            parsed = typeof m.milestones === 'string' ? JSON.parse(m.milestones) : m.milestones;
+          } catch (e) {
+            parsed = [];
+          }
+        }
+        return {
+          id: m.id,
+          memberCode: m.member_code,
+          username: m.username,
+          password: m.password,
+          name: m.full_name,
+          role: m.role,
+          roleTitle: m.role_title,
+          class: m.class_name,
+          deptName: m.department,
+          term: m.term,
+          avatar: m.avatar_url,
+          phone: m.phone,
+          email: m.email,
+          dob: m.dob,
+          address: m.address,
+          facebook: m.facebook,
+          status: m.status,
+          points: m.points,
+          isFirstLogin: Boolean(m.is_first_login),
+          milestones: parsed
+        };
+      })
     });
   } catch (error) {
     console.error('❌ Lỗi API /api/members:', error.message);
@@ -179,13 +203,17 @@ app.put('/api/members/:id', async (req, res) => {
   const { 
     full_name, role, role_title, member_code, class_name, department, term,
     phone, dob, email, points, address, facebook, avatar_url, avatar, 
-    status, password, is_first_login, isFirstLogin 
+    status, password, is_first_login, isFirstLogin, milestones 
   } = req.body;
 
   try {
     const isFirstLoginVal = is_first_login !== undefined 
       ? (is_first_login ? 1 : 0) 
       : (isFirstLogin !== undefined ? (isFirstLogin ? 1 : 0) : null);
+
+    const milestonesVal = milestones !== undefined 
+      ? (typeof milestones === 'object' ? JSON.stringify(milestones) : milestones) 
+      : null;
 
     const sql = `
       UPDATE Members 
@@ -206,7 +234,8 @@ app.put('/api/members/:id', async (req, res) => {
         avatar_url = COALESCE(?, COALESCE(?, avatar_url)),
         status = COALESCE(?, status),
         password = COALESCE(?, password),
-        is_first_login = COALESCE(?, is_first_login)
+        is_first_login = COALESCE(?, is_first_login),
+        milestones = COALESCE(?, milestones)
       WHERE (id = ? OR UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?))
     `;
     
@@ -229,6 +258,7 @@ app.put('/api/members/:id', async (req, res) => {
       status !== undefined ? status : null,
       password !== undefined ? password : null,
       isFirstLoginVal,
+      milestonesVal,
       id, id, id
     ]);
 

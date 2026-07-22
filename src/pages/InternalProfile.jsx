@@ -100,8 +100,7 @@ export const InternalProfile = () => {
     { label: "Họ và Tên", value: currentUser.name, icon: User, isMono: false, color: "text-white font-extrabold" },
     { label: "Lớp Học", value: currentUser.class, icon: GraduationCap, isMono: false, color: "text-slate-200 font-medium" },
     { label: "Ban Chuyên Môn", value: currentUser.deptName, icon: Briefcase, isMono: false, color: "text-indigo-400 font-semibold" },
-    { label: "Chức Vụ Trong CLB", value: currentUser.roleTitle, icon: ShieldCheck, isMono: false, color: "text-amber-400 font-bold" },
-    { label: "Ngày Sinh", value: currentUser.dob, icon: Calendar, isMono: true, color: "text-emerald-400 font-semibold" }
+    { label: "Chức Vụ Trong CLB", value: currentUser.roleTitle, icon: ShieldCheck, isMono: false, color: "text-amber-400 font-bold" }
   ];
 
   // Core Milestones: Lịch Sử Chức Vụ & Trạng Thái Thành Viên
@@ -309,7 +308,7 @@ export const InternalProfile = () => {
 
             <form onSubmit={handleSelfUpdate} className="space-y-4">
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="text-xs font-medium text-slate-400 mb-1 block flex items-center gap-1.5">
                     <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Số Điện Thoại / Zalo *
@@ -335,6 +334,20 @@ export const InternalProfile = () => {
                     onChange={(e) => setSelfData({ ...selfData, email: e.target.value })}
                     placeholder="hoanglong.vmc@vinhbao.edu.vn..."
                     className="w-full bg-slate-950/50 border border-slate-700/60 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-slate-400 mb-1 block flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-cyan-400 shrink-0" /> Ngày Sinh (DD/MM/YYYY) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={selfData.dob}
+                    onChange={(e) => setSelfData({ ...selfData, dob: e.target.value })}
+                    placeholder="01/01/2009..."
+                    className="w-full bg-slate-950/50 border border-slate-700/60 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm font-mono"
                   />
                 </div>
               </div>

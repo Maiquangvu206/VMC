@@ -5,6 +5,7 @@ import { Footer } from './components/Footer';
 import { LoginModal } from './components/LoginModal';
 import { ForcePasswordChangeModal } from './components/ForcePasswordChangeModal';
 import { AttendanceModal } from './components/AttendanceModal';
+import { ToastContainer } from './components/Toast';
 
 import { InternalDashboard } from './pages/InternalDashboard';
 import { InternalTasks } from './pages/InternalTasks';
@@ -17,37 +18,36 @@ import { InternalProfile } from './pages/InternalProfile';
 import { InternalHRDashboard } from './pages/InternalHRDashboard';
 
 const IntranetPortalContent = () => {
-  const { activeTab, isAuthenticated, requirePasswordChange } = useClub();
-
-  // If user is not authenticated yet, show Login Gate
-  if (!isAuthenticated && !requirePasswordChange) {
-    return <LoginModal />;
-  }
-
-  // If first time login, force password change modal
-  if (requirePasswordChange) {
-    return <ForcePasswordChangeModal />;
-  }
+  const { activeTab, isAuthenticated, requirePasswordChange, toasts, removeToast } = useClub();
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-300 flex flex-col font-body selection:bg-blue-600 selection:text-white">
-      <Navbar />
-      <div className="flex-1 pt-6 pb-20">
-        <main className="min-h-screen">
-          {activeTab === 'dashboard' && <InternalDashboard />}
-          {activeTab === 'tasks' && <InternalTasks />}
-          {activeTab === 'equipment' && <InternalEquipment />}
-          {activeTab === 'drafts' && <InternalDrafts />}
-          {activeTab === 'resources' && <InternalResources />}
-          {activeTab === 'members' && <InternalMembers />}
-          {activeTab === 'database' && <InternalDatabase />}
-          {activeTab === 'profile' && <InternalProfile />}
-          {activeTab === 'hr_dashboard' && <InternalHRDashboard />}
-        </main>
-      </div>
-      <AttendanceModal />
-      <Footer />
-    </div>
+    <>
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+      {!isAuthenticated && !requirePasswordChange ? (
+        <LoginModal />
+      ) : requirePasswordChange ? (
+        <ForcePasswordChangeModal />
+      ) : (
+        <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-300 flex flex-col font-body selection:bg-blue-600 selection:text-white">
+          <Navbar />
+          <div className="flex-1 pt-6 pb-20">
+            <main className="min-h-screen">
+              {activeTab === 'dashboard' && <InternalDashboard />}
+              {activeTab === 'tasks' && <InternalTasks />}
+              {activeTab === 'equipment' && <InternalEquipment />}
+              {activeTab === 'drafts' && <InternalDrafts />}
+              {activeTab === 'resources' && <InternalResources />}
+              {activeTab === 'members' && <InternalMembers />}
+              {activeTab === 'database' && <InternalDatabase />}
+              {activeTab === 'profile' && <InternalProfile />}
+              {activeTab === 'hr_dashboard' && <InternalHRDashboard />}
+            </main>
+          </div>
+          <AttendanceModal />
+          <Footer />
+        </div>
+      )}
+    </>
   );
 };
 
