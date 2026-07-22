@@ -2,12 +2,14 @@ import express from 'express';
 import cors from 'cors';
 import { queryDatabase } from './db.js';
 import nodemailer from 'nodemailer';
+import apiRouter from './api.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
+app.use('/api', apiRouter);
 
 // Cấu hình Nodemailer Transporter
 const transporter = nodemailer.createTransport({
@@ -106,7 +108,7 @@ app.get('/api/members', async (req, res) => {
   try {
     const sql = `
       SELECT 
-        id, member_code, username, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, status 
+        id, member_code, username, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, status, points
       FROM Members 
       ORDER BY id ASC
     `;
@@ -129,7 +131,8 @@ app.get('/api/members', async (req, res) => {
         phone: m.phone,
         email: m.email,
         dob: m.dob,
-        status: m.status
+        status: m.status,
+        points: m.points
       }))
     });
   } catch (error) {
@@ -145,7 +148,7 @@ app.get('/api/members', async (req, res) => {
 // API Endpoint 3: PUT /api/members/:id - Cập nhật thông tin thành viên
 app.put('/api/members/:id', async (req, res) => {
   const { id } = req.params;
-  const { full_name, role, role_title, member_code, class_name, department, phone, dob, email } = req.body;
+  const { full_name, role, role_title, member_code, class_name, department, phone, dob, email, points } = req.body;
 
   try {
     const sql = `
@@ -159,10 +162,12 @@ app.put('/api/members/:id', async (req, res) => {
         department = COALESCE(?, department), 
         phone = COALESCE(?, phone), 
         dob = COALESCE(?, dob), 
-        email = COALESCE(?, email) 
+        email = COALESCE(?, email),
+        points = COALESCE(?, points)
       WHERE (id = ? OR UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?))
     `;
-    const result = await queryDatabase(sql, [full_name, role, role_title, member_code, class_name, department, phone, dob, email, id, id, id]);
+    
+    await queryDatabase(sql, [full_name, role, role_title, member_code, class_name, department, phone, dob, email, points, id, id, id]);
 
     console.log(`✅ Đã cập nhật CSDL MySQL thành công cho ID/Code: [${id}]`);
     res.json({

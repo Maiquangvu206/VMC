@@ -8,6 +8,7 @@ import {
   importDatabaseJSON
 } from '../services/dbService';
 import { fetchMembersFromDatabaseAPI, loginMemberAPI, createMemberAPI, updateMemberAPI } from '../services/api';
+import { fetchEntityAPI, createEntityAPI, updateEntityAPI, deleteEntityAPI } from '../services/apiClient';
 
 const ClubContext = createContext();
 
@@ -55,6 +56,10 @@ export const ClubProvider = ({ children }) => {
     }
     
     if (!loaded.members) loaded.members = [];
+    if (!loaded.tasks) loaded.tasks = [];
+    if (!loaded.equipment) loaded.equipment = [];
+    if (!loaded.drafts) loaded.drafts = [];
+    if (!loaded.announcements) loaded.announcements = [];
 
     return loaded;
   });
@@ -64,29 +69,40 @@ export const ClubProvider = ({ children }) => {
   const equipment = db.equipment;
   const drafts = db.drafts;
 
-  // Automatic Real-Time Silent Sync with MySQL Database (Pure MySQL Data!)
+  // Automatic Real-Time Silent Sync with MySQL Database
   useEffect(() => {
     let isMounted = true;
 
     const silentAutoSync = async () => {
       try {
-        const serverMembers = await fetchMembersFromDatabaseAPI();
-        if (isMounted && Array.isArray(serverMembers)) {
+        const [serverMembers, serverTasks, serverDrafts, serverEquipment, serverAnnouncements] = await Promise.all([
+          fetchMembersFromDatabaseAPI(),
+          fetchEntityAPI('tasks'),
+          fetchEntityAPI('drafts'),
+          fetchEntityAPI('equipment'),
+          fetchEntityAPI('announcements')
+        ]);
+        
+        if (isMounted) {
           setDb(prev => {
-            const mergedMembers = serverMembers.map(serverMem => {
+            const mergedMembers = Array.isArray(serverMembers) ? serverMembers.map(serverMem => {
               const localMem = (prev.members || []).find(m => m.id === serverMem.id) || {};
               return { ...localMem, ...serverMem };
-            });
-            const finalMembers = [...mergedMembers];
+            }) : prev.members;
             
-            const prevStr = JSON.stringify(prev.members || []);
-            const newStr = JSON.stringify(finalMembers);
-            if (prevStr !== newStr) {
-              const updated = { ...prev, members: finalMembers };
-              saveDatabaseToStorage(updated);
-              return updated;
-            }
-            return prev;
+            const finalMembers = [...(mergedMembers || [])];
+            
+            const nextDb = {
+              ...prev,
+              members: finalMembers,
+              tasks: serverTasks || [],
+              drafts: serverDrafts || [],
+              equipment: serverEquipment || [],
+              announcements: serverAnnouncements || []
+            };
+            
+            saveDatabaseToStorage(nextDb);
+            return nextDb;
           });
         }
       } catch (err) {
@@ -94,10 +110,7 @@ export const ClubProvider = ({ children }) => {
       }
     };
 
-    // Immediate initial sync on page mount
     silentAutoSync();
-
-    // Auto-sync polling every 3 seconds
     const syncInterval = setInterval(silentAutoSync, 3000);
     return () => {
       isMounted = false;
@@ -167,11 +180,52 @@ export const ClubProvider = ({ children }) => {
       const sqlMembers = await fetchMembersFromDatabaseAPI();
       if (sqlMembers && sqlMembers.length > 0) {
         setDb(prev => {
-          const mergedMembers = sqlMembers.map(serverMem => {
+          let mergedMembers = sqlMembers.map(serverMem => {
             const localMem = (prev.members || []).find(m => m.id === serverMem.id) || {};
             return { ...localMem, ...serverMem };
           });
-          return { ...prev, members: mergedMembers };
+
+          const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+          let nextDb = { ...prev, members: mergedMembers };
+          
+          // 1. Check Monthly Points (+50)
+          if (prev.lastPointsAddedMonth && prev.lastPointsAddedMonth !== currentMonth) {
+            mergedMembers = mergedMembers.map(m => {
+              if (m.status !== 'Suspended') {
+                const newPoints = (m.points || 0) + 50;
+                updateMemberAPI(m.memberCode || m.member_code || m.id, { points: newPoints }).catch(e => console.log(e));
+                return { ...m, points: newPoints };
+              }
+              return m;
+            });
+            nextDb = { ...nextDb, members: mergedMembers, lastPointsAddedMonth: currentMonth };
+            console.log(`✅ Đã tự động cộng 50 điểm đầu tháng cho tất cả thành viên (${currentMonth})`);
+          } else if (!prev.lastPointsAddedMonth) {
+             nextDb = { ...nextDb, lastPointsAddedMonth: currentMonth };
+          }
+          
+          // 2. Check 24h Grader Deadline
+          const now = Date.now();
+          if (nextDb.drafts) {
+            nextDb.drafts = nextDb.drafts.map(draft => {
+              if (draft.status === 'approved' && draft.publishDate && draft.graderId && draft.gradingStatus === 'pending') {
+                const publishTime = new Date(draft.publishDate).getTime();
+                if (now > publishTime + 24 * 60 * 60 * 1000) {
+                  // Failed deadline! Penalty -5 points
+                  const grader = nextDb.members.find(m => m.id === draft.graderId);
+                  if (grader) {
+                    const newPoints = (grader.points || 0) - 5;
+                    updateMemberAPI(grader.memberCode || grader.member_code || grader.id, { points: newPoints }).catch(e => console.log(e));
+                    nextDb.members = nextDb.members.map(m => m.id === draft.graderId ? { ...m, points: newPoints } : m);
+                  }
+                  return { ...draft, gradingStatus: 'failed_deadline' };
+                }
+              }
+              return draft;
+            });
+          }
+
+          return nextDb;
         });
         console.log('✅ Đã load thành công dữ liệu thành viên từ API CSDL SQL!');
       }
@@ -680,6 +734,7 @@ export const ClubProvider = ({ children }) => {
       ...prev,
       tasks: prev.tasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t)
     }));
+    updateEntityAPI('tasks', taskId, { status: newStatus }).catch(e => console.log(e));
   };
 
   // Add New Task
@@ -694,22 +749,22 @@ export const ClubProvider = ({ children }) => {
       ...prev,
       tasks: [taskObj, ...prev.tasks]
     }));
+    createEntityAPI('tasks', taskObj).catch(e => console.log(e));
     triggerConfetti();
   };
 
   // Add New Equipment
   const addEquipment = (newEquipment) => {
+    const eqObj = {
+      id: 'eq-' + Date.now(),
+      status: 'available',
+      ...newEquipment
+    };
     updateDb(prev => ({
       ...prev,
-      equipment: [
-        {
-          id: 'eq-' + Date.now(),
-          status: 'available',
-          ...newEquipment
-        },
-        ...(prev.equipment || [])
-      ]
+      equipment: [eqObj, ...(prev.equipment || [])]
     }));
+    createEntityAPI('equipment', eqObj).catch(e => console.log(e));
     triggerConfetti();
   };
 
@@ -729,6 +784,7 @@ export const ClubProvider = ({ children }) => {
         return eq;
       })
     }));
+    updateEntityAPI('equipment', equipmentId, { status: 'borrowed', borrower_id: currentUser.id, return_date: returnDate }).catch(e => console.log(e));
     triggerConfetti();
   };
 
@@ -748,14 +804,33 @@ export const ClubProvider = ({ children }) => {
         return eq;
       })
     }));
+    updateEntityAPI('equipment', equipmentId, { status: 'available', borrower_id: null, return_date: null }).catch(e => console.log(e));
   };
 
   // Approve Draft
-  const approveDraft = (draftId) => {
+  const approveDraft = (draftId, publishDate, graderId) => {
+    const pd = publishDate || new Date().toISOString();
     updateDb(prev => ({
       ...prev,
-      drafts: prev.drafts.map(d => d.id === draftId ? { ...d, status: 'approved' } : d)
+      drafts: prev.drafts.map(d => d.id === draftId ? { 
+        ...d, 
+        status: 'approved',
+        publishDate: pd,
+        graderId: graderId || null,
+        gradingStatus: graderId ? 'pending' : 'none'
+      } : d)
     }));
+    updateEntityAPI('drafts', draftId, { status: 'approved', publishDate: pd, graderId, gradingStatus: graderId ? 'pending' : 'none' }).catch(e => console.log(e));
+    triggerConfetti();
+  };
+
+  // Complete Grading Task
+  const completeGrading = (draftId) => {
+    updateDb(prev => ({
+      ...prev,
+      drafts: prev.drafts.map(d => d.id === draftId ? { ...d, gradingStatus: 'completed' } : d)
+    }));
+    updateEntityAPI('drafts', draftId, { gradingStatus: 'completed' }).catch(e => console.log(e));
     triggerConfetti();
   };
 
@@ -774,6 +849,7 @@ export const ClubProvider = ({ children }) => {
       ...prev,
       drafts: [draftObj, ...prev.drafts]
     }));
+    createEntityAPI('drafts', draftObj).catch(e => console.log(e));
     triggerConfetti();
   };
 
@@ -1018,6 +1094,7 @@ export const ClubProvider = ({ children }) => {
       borrowEquipment,
       returnEquipment,
       drafts,
+      completeGrading,
       approveDraft,
       addDraft,
       announcements,

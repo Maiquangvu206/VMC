@@ -5,12 +5,20 @@ import { FileText, CheckCircle, Plus, Clock, User, X, Share2, Sparkles } from 'l
 export const InternalDrafts = () => {
   const { 
     drafts, 
-    approveDraft, 
+    members,
+    approveDraft,
+    completeGrading,
     addDraft, 
     isNewDraftModalOpen, 
     setIsNewDraftModalOpen,
     currentUser 
   } = useClub();
+
+  const [draftToSchedule, setDraftToSchedule] = useState(null);
+  const [scheduleForm, setScheduleForm] = useState({
+    publishDate: '',
+    graderId: ''
+  });
 
   const [formData, setFormData] = useState({
     title: '',
@@ -71,16 +79,26 @@ export const InternalDrafts = () => {
 
               <div className="flex items-center gap-3 shrink-0">
                 <span className={`badge ${draft.status === 'approved' ? 'badge-emerald' : 'badge-amber'}`}>
-                  {draft.status === 'approved' ? 'Đã Duyệt Đăng Fanpage' : 'Chờ Ban Chủ Nhiệm Duyệt'}
+                  {draft.status === 'approved' ? 'Đã Lên Lịch Đăng' : 'Chờ Ban Chủ Nhiệm Duyệt'}
                 </span>
 
                 {draft.status === 'pending' && (currentUser.role === 'admin' || currentUser.role === 'lead') && (
                   <button
-                    onClick={() => approveDraft(draft.id)}
+                    onClick={() => setDraftToSchedule(draft.id)}
                     className="btn-primary text-xs px-4 py-1.5 shadow-emerald-600/30"
                   >
                     <CheckCircle className="w-4 h-4" />
-                    <span>Duyệt Bài</span>
+                    <span>Lên Lịch & Giao Chấm Bài</span>
+                  </button>
+                )}
+                
+                {draft.status === 'approved' && draft.gradingStatus === 'pending' && draft.graderId === currentUser.id && (
+                  <button
+                    onClick={() => completeGrading(draft.id)}
+                    className="btn-primary text-xs px-4 py-1.5 shadow-blue-600/30"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Đã Hoàn Thành Chấm Điểm</span>
                   </button>
                 )}
               </div>
@@ -147,6 +165,68 @@ export const InternalDrafts = () => {
               </div>
             </form>
 
+          </div>
+        </div>
+      )}
+
+      {/* Schedule Draft Modal */}
+      {draftToSchedule && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
+          <div className="relative w-full max-w-md bg-slate-900 border border-emerald-500/40 rounded-3xl p-6 shadow-2xl text-white space-y-4">
+            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+              <h3 className="font-heading font-bold text-lg text-emerald-400">Lên Lịch Đăng Bài</h3>
+              <button onClick={() => setDraftToSchedule(null)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (!scheduleForm.publishDate || !scheduleForm.graderId) {
+                alert('Vui lòng nhập ngày giờ đăng và chọn người chấm bài!');
+                return;
+              }
+              approveDraft(draftToSchedule, scheduleForm.publishDate, scheduleForm.graderId);
+              setDraftToSchedule(null);
+              setScheduleForm({ publishDate: '', graderId: '' });
+            }} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">Ngày Giờ Đăng Thực Tế</label>
+                <input 
+                  type="datetime-local" 
+                  required
+                  value={scheduleForm.publishDate}
+                  onChange={e => setScheduleForm({...scheduleForm, publishDate: e.target.value})}
+                  className="input-field w-full"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1">Giao nhiệm vụ chấm tương tác</label>
+                <select 
+                  required
+                  value={scheduleForm.graderId}
+                  onChange={e => setScheduleForm({...scheduleForm, graderId: e.target.value})}
+                  className="input-field w-full"
+                >
+                  <option value="">-- Chọn thành viên phụ trách --</option>
+                  {members.filter(m => m.status !== 'Suspended').map(m => (
+                    <option key={m.id} value={m.id}>{m.name} ({m.deptName})</option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-amber-400 mt-2">
+                  * Hệ thống sẽ tự động đếm ngược 24 tiếng sau khi bài đăng lên. Nếu người phụ trách không hoàn thành chấm điểm sẽ bị tự động phạt -5 điểm.
+                </p>
+              </div>
+              
+              <div className="pt-2 flex justify-end gap-2">
+                <button type="button" onClick={() => setDraftToSchedule(null)} className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">
+                  Hủy
+                </button>
+                <button type="submit" className="btn-primary text-xs px-6 py-2">
+                  Xác Nhận Đăng & Giao Việc
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
