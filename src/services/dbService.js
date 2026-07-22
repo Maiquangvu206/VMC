@@ -42,21 +42,13 @@ export const loadDatabaseFromStorage = () => {
       return initialDb;
     }
     const parsed = JSON.parse(rawData);
-    if (!parsed.equipment || parsed.equipment.length === 0) {
-      parsed.equipment = [
-        { id: 'eq-1', code: 'VMC-CAM-01', name: 'Máy ảnh Sony A7III', category: 'Camera', condition: 'Tốt', status: 'available', borrower: null, returnDate: null },
-        { id: 'eq-2', code: 'VMC-CAM-02', name: 'Máy ảnh Canon 5D Mark IV', category: 'Camera', condition: 'Tốt', status: 'available', borrower: null, returnDate: null },
-        { id: 'eq-3', code: 'VMC-LENS-01', name: 'Lens Sony 24-70 f2.8 GM', category: 'Ống Kính', condition: 'Tốt', status: 'borrowed', borrower: 'ND_TEST', returnDate: '2026-07-25' },
-        { id: 'eq-4', code: 'VMC-GIM-01', name: 'Gimbal DJI RS3', category: 'Gimbal', condition: 'Bình thường', status: 'available', borrower: null, returnDate: null },
-        { id: 'eq-5', code: 'VMC-MIC-01', name: 'Micro Rode Wireless GO II', category: 'Âm Thanh', condition: 'Tốt', status: 'available', borrower: null, returnDate: null }
-      ];
-    }
-    if (!parsed.resources) {
-      parsed.resources = MEMBER_RESOURCES;
-    }
-    if (!parsed.departmentDrives) {
-      parsed.departmentDrives = DEFAULT_DEPARTMENT_DRIVES;
-    }
+    // Không fallback dữ liệu hardcode — để rỗng nếu SQL chưa có dữ liệu
+    if (!parsed.resources) parsed.resources = [];
+    if (!parsed.departmentDrives) parsed.departmentDrives = [];
+    if (!parsed.meetings) parsed.meetings = [];
+    if (!parsed.birthdayAssignments) parsed.birthdayAssignments = [];
+    if (!parsed.finances) parsed.finances = [];
+    if (!parsed.attendanceRecords) parsed.attendanceRecords = [];
     return parsed;
   } catch (error) {
     console.error('Lỗi khi đọc Cơ sở dữ liệu động:', error);

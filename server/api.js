@@ -155,4 +155,74 @@ router.delete('/announcements/:id', async (req, res) => {
   }
 });
 
+// ======================= FINANCES =======================
+router.get('/finances', async (req, res) => {
+  try {
+    const rows = await queryDatabase('SELECT * FROM Finances ORDER BY date DESC');
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/finances', async (req, res) => {
+  try {
+    const { type, amount, description, date, logged_by } = req.body;
+    const id = generateId();
+    await queryDatabase(
+      'INSERT INTO Finances (id, type, amount, description, date, logged_by) VALUES (?, ?, ?, ?, ?, ?)',
+      [id, type, amount, description, date || new Date().toISOString().slice(0, 10), logged_by || '']
+    );
+    res.json({ success: true, data: { id, type, amount, description, date, logged_by } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete('/finances/:id', async (req, res) => {
+  try {
+    await queryDatabase('DELETE FROM Finances WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ======================= ATTENDANCE =======================
+router.get('/attendance', async (req, res) => {
+  try {
+    const rows = await queryDatabase('SELECT * FROM Attendance_Records ORDER BY date DESC');
+    res.json({ success: true, data: rows });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/attendance', async (req, res) => {
+  try {
+    const { session_name, date, taken_by, present_member_ids, status } = req.body;
+    const id = generateId();
+    await queryDatabase(
+      'INSERT INTO Attendance_Records (id, session_name, date, taken_by, present_member_ids, status, approved_by) VALUES (?, ?, ?, ?, ?, ?, NULL)',
+      [id, session_name, date, taken_by, JSON.stringify(present_member_ids || []), status || 'pending_approval']
+    );
+    res.json({ success: true, data: { id, session_name, date, taken_by, present_member_ids, status } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put('/attendance/:id', async (req, res) => {
+  try {
+    const { status, approved_by } = req.body;
+    await queryDatabase(
+      'UPDATE Attendance_Records SET status = COALESCE(?, status), approved_by = COALESCE(?, approved_by) WHERE id = ?',
+      [status, approved_by, req.params.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 export default router;

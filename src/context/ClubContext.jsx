@@ -32,35 +32,19 @@ export const ClubProvider = ({ children }) => {
     }
   };
 
-  // Dynamic Database State Initialization
+  // Dynamic Database State Initialization — tất cả dữ liệu từ MySQL, không hardcode
   const [db, setDb] = useState(() => {
     const loaded = loadDatabaseFromStorage();
-    if (!loaded.attendanceRecords) {
-      loaded.attendanceRecords = [
-        {
-          id: 'att-1',
-          sessionName: 'Buổi Sinh Hoạt Định Kỳ Tuần 3 tháng 7',
-          date: '21/07/2026',
-          takenBy: 'Nguyễn Văn Kỹ (Thành Viên Ban Đối Ngoại - Nhân Sự)',
-          presentMemberIds: [1, 2, 3],
-          status: 'pending_approval',
-          approvedBy: null
-        }
-      ];
-    }
-    if (!loaded.finances) {
-      loaded.finances = [
-        { id: 'f1', type: 'income', amount: 500000, description: 'Đóng quỹ CLB tháng 7', date: '2026-07-20', loggedBy: 'Ban Đối Ngoại - Nhân Sự' },
-        { id: 'f2', type: 'expense', amount: 120000, description: 'Mua nước sinh hoạt', date: '2026-07-21', loggedBy: 'Ban Đối Ngoại - Nhân Sự' }
-      ];
-    }
-    
+    // Khởi tạo mảng rỗng — dữ liệu thực sẽ được fetch từ MySQL
     if (!loaded.members) loaded.members = [];
     if (!loaded.tasks) loaded.tasks = [];
     if (!loaded.equipment) loaded.equipment = [];
     if (!loaded.drafts) loaded.drafts = [];
     if (!loaded.announcements) loaded.announcements = [];
-
+    if (!loaded.finances) loaded.finances = [];
+    if (!loaded.attendanceRecords) loaded.attendanceRecords = [];
+    if (!loaded.meetings) loaded.meetings = [];
+    if (!loaded.birthdayAssignments) loaded.birthdayAssignments = [];
     return loaded;
   });
 
@@ -69,18 +53,20 @@ export const ClubProvider = ({ children }) => {
   const equipment = db.equipment;
   const drafts = db.drafts;
 
-  // Automatic Real-Time Silent Sync with MySQL Database
+  // Automatic Real-Time Silent Sync with MySQL Database — tất cả bảng
   useEffect(() => {
     let isMounted = true;
 
     const silentAutoSync = async () => {
       try {
-        const [serverMembers, serverTasks, serverDrafts, serverEquipment, serverAnnouncements] = await Promise.all([
+        const [serverMembers, serverTasks, serverDrafts, serverEquipment, serverAnnouncements, serverFinances, serverAttendance] = await Promise.all([
           fetchMembersFromDatabaseAPI(),
           fetchEntityAPI('tasks'),
           fetchEntityAPI('drafts'),
           fetchEntityAPI('equipment'),
-          fetchEntityAPI('announcements')
+          fetchEntityAPI('announcements'),
+          fetchEntityAPI('finances'),
+          fetchEntityAPI('attendance')
         ]);
         
         if (isMounted) {
@@ -90,15 +76,15 @@ export const ClubProvider = ({ children }) => {
               return { ...localMem, ...serverMem };
             }) : prev.members;
             
-            const finalMembers = [...(mergedMembers || [])];
-            
             const nextDb = {
               ...prev,
-              members: finalMembers,
+              members: mergedMembers || [],
               tasks: serverTasks || [],
               drafts: serverDrafts || [],
               equipment: serverEquipment || [],
-              announcements: serverAnnouncements || []
+              announcements: serverAnnouncements || [],
+              finances: serverFinances || [],
+              attendanceRecords: serverAttendance || []
             };
             
             saveDatabaseToStorage(nextDb);
@@ -886,13 +872,28 @@ export const ClubProvider = ({ children }) => {
     currentUser?.roleTitle?.includes('Super Admin')
   );
 
-  const addFinanceRecord = (record) => {
+  const addFinanceRecord = async (record) => {
+    // Lưu lên MySQL trước
+    const res = await createEntityAPI('finances', {
+      type: record.type,
+      amount: record.amount,
+      description: record.description,
+      date: record.date,
+      logged_by: record.loggedBy || currentUser?.name || ''
+    });
+    // Cập nhật local state ngay (optimistic)
+    const newRecord = { ...record, id: res?.data?.id || ('fin-' + Date.now()), status: record.status || 'approved' };
     updateDb(prev => ({
       ...prev,
-      finances: [
-        { ...record, id: 'fin-' + Date.now(), status: record.status || 'approved' },
-        ...(prev.finances || [])
-      ]
+      finances: [newRecord, ...(prev.finances || [])]
+    }));
+  };
+
+  const deleteFinanceRecord = async (recordId) => {
+    await deleteEntityAPI('finances', recordId);
+    updateDb(prev => ({
+      ...prev,
+      finances: (prev.finances || []).filter(f => f.id !== recordId)
     }));
   };
 
@@ -1072,6 +1073,7 @@ export const ClubProvider = ({ children }) => {
       finances: db.finances || [],
       addFinanceRecord,
       updateFinanceStatus,
+      deleteFinanceRecord,
       currentUser,
       isAdmin,
       isAuthenticated,
