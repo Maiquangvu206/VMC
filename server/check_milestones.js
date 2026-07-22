@@ -9,12 +9,9 @@ config({ path: path.join(__dirname, '.env') });
 
 async function check() {
   try {
-    const milestones = await queryDatabase('SELECT * FROM Member_Milestones');
-    const members = await queryDatabase('SELECT id, member_code, username, full_name, milestones FROM Members');
-    console.log('=== MEMBERS IN MYSQL ===');
-    console.log(JSON.stringify(members, null, 2));
-    console.log('=== MILESTONES IN MYSQL ===');
-    console.log(JSON.stringify(milestones, null, 2));
+    const gens = await queryDatabase('SELECT * FROM Generations');
+    console.log('=== GENERATIONS TABLE IN MYSQL ===');
+    console.log(JSON.stringify(gens, null, 2));
     process.exit(0);
   } catch (e) {
     console.error(e);

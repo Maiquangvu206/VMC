@@ -130,44 +130,51 @@ export const AttendanceModal = () => {
             </div>
 
             <div>
-              <label className="block font-bold text-slate-300 mb-2 flex items-center justify-between">
-                <span>Danh Sách Thành Viên Có Mặt (Tích chọn) *</span>
-                <span className="text-blue-400 font-mono">Đã chọn: {selectedPresentIds.length}/{members.length}</span>
-              </label>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto p-1">
-                {members.filter(m => {
+              {(() => {
+                const eligibleMembers = members.filter(m => {
                   const roleTitle = (m.roleTitle || m.role_title || '').toLowerCase();
                   const deptName = (m.deptName || m.department || '').toLowerCase();
                   const code = (m.memberCode || m.member_code || '').toUpperCase();
                   return !roleTitle.includes('super admin') && !roleTitle.includes('cố vấn') && !deptName.includes('cố vấn') && code !== 'ADMIN';
-                }).map(m => {
-                  const isChecked = selectedPresentIds.includes(m.id);
-                  return (
-                    <div
-                      key={m.id}
-                      onClick={() => handleToggleMember(m.id)}
-                      className={`p-2.5 rounded-xl border flex items-center gap-3 cursor-pointer transition-all ${
-                        isChecked 
-                          ? 'bg-blue-600/20 border-blue-500 text-white font-bold' 
-                          : 'bg-slate-950/60 border-white/5 text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      <img src={m.avatar} alt={m.name} className="w-7 h-7 rounded-full object-cover shrink-0" />
-                      <div className="truncate flex-1">
-                        <div className="truncate text-xs">{m.name}</div>
-                        <div className="text-[10px] text-slate-400 truncate">{m.deptName}</div>
-                      </div>
-                      <input 
-                        type="checkbox" 
-                        checked={isChecked} 
-                        onChange={() => {}}
-                        className="rounded border-slate-700 text-blue-600 focus:ring-0"
-                      />
+                });
+                return (
+                  <>
+                    <label className="block font-bold text-slate-300 mb-2 flex items-center justify-between">
+                      <span>Danh Sách Thành Viên Có Mặt (Tích chọn) *</span>
+                      <span className="text-blue-400 font-mono">Đã chọn: {selectedPresentIds.length}/{eligibleMembers.length}</span>
+                    </label>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto p-1">
+                      {eligibleMembers.map(m => {
+                        const isChecked = selectedPresentIds.includes(m.id);
+                        return (
+                          <div
+                            key={m.id}
+                            onClick={() => handleToggleMember(m.id)}
+                            className={`p-2.5 rounded-xl border flex items-center gap-3 cursor-pointer transition-all ${
+                              isChecked 
+                                ? 'bg-blue-600/20 border-blue-500 text-white font-bold' 
+                                : 'bg-slate-950/60 border-white/5 text-slate-400 hover:text-white'
+                            }`}
+                          >
+                            <img src={m.avatar} alt={m.name} className="w-7 h-7 rounded-full object-cover shrink-0" />
+                            <div className="truncate flex-1">
+                              <div className="truncate text-xs">{m.name}</div>
+                              <div className="text-[10px] text-slate-400 truncate">{m.deptName}</div>
+                            </div>
+                            <input 
+                              type="checkbox" 
+                              checked={isChecked} 
+                              onChange={() => {}}
+                              className="rounded border-slate-700 text-blue-600 focus:ring-0"
+                            />
+                          </div>
+                        );
+                      })}
                     </div>
-                  );
-                })}
-              </div>
+                  </>
+                );
+              })()}
             </div>
 
             <div className="pt-3 flex justify-end gap-2 border-t border-white/10">

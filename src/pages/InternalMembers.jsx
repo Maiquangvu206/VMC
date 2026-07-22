@@ -58,7 +58,8 @@ export const InternalMembers = () => {
     addMemberMilestone,
     isNewAccountModalOpen,
     setIsNewAccountModalOpen,
-    showToast
+    showToast,
+    generations = []
   } = useClub();
 
   const isAdmin = Boolean(
@@ -287,6 +288,22 @@ export const InternalMembers = () => {
     }
     createMemberAccount(formData);
     setIsNewAccountModalOpen(false);
+    setFormData({
+      username: '',
+      name: '',
+      class: '10A1',
+      role: 'member',
+      roleTitle: 'Thành Viên VMC',
+      department: 'production',
+      deptName: 'Ban Sản Xuất',
+      term: 'Gen 6',
+      termName: 'Gen 6',
+      phone: '',
+      email: '',
+      dob: '01/01/2009',
+      address: 'Thị trấn Vĩnh Bảo, Vĩnh Bảo, Hải Phòng',
+      facebook: 'https://facebook.com/'
+    });
   };
 
   const handleTechUpdateMember = async (e) => {
@@ -396,12 +413,9 @@ export const InternalMembers = () => {
               className="bg-slate-950/80 border border-slate-700/60 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-purple-500 font-medium cursor-pointer"
             >
               <option value="ALL">🌐 Tất Cả Thế Hệ (All Gen)</option>
-              <option value="Gen 6">✨ Gen 6</option>
-              <option value="Gen 5">🎓 Gen 5</option>
-              <option value="Gen 4">🏆 Gen 4</option>
-              <option value="Gen 3">👑 Gen 3</option>
-              <option value="Gen 2">🚀 Gen 2</option>
-              <option value="Gen 1">🌟 Gen 1</option>
+              {generations.map(g => (
+                <option key={g.id} value={g.name}>{g.description || g.name}</option>
+              ))}
             </select>
           </div>
 
@@ -429,7 +443,7 @@ export const InternalMembers = () => {
 
       {/* Results Count Counter */}
       <div className="flex items-center justify-between text-xs text-slate-400 px-1">
-        <span>Hiển thị <strong className="text-white font-bold">{filteredMembers.length}</strong> / {members.length} thành viên</span>
+        <span>Hiển thị <strong className="text-white font-bold">{filteredMembers.length}</strong> / {nonAdminMembers.length} thành viên</span>
         {(searchQuery || selectedTerm !== 'ALL' || selectedDept !== 'ALL') && (
           <button
             onClick={() => { setSearchQuery(''); setSelectedTerm('ALL'); setSelectedDept('ALL'); }}
@@ -804,18 +818,13 @@ export const InternalMembers = () => {
 
                 <div>
                   <label className="block text-slate-400 mb-1">Thế Hệ (Gen)</label>
-                  <select
-                    value={editingMember.term || 'Gen 6'}
+                  <input
+                    type="text"
+                    placeholder="vd: Gen 6, Gen 7, 2025-2026..."
+                    value={editingMember.term || ''}
                     onChange={(e) => setEditingMember({ ...editingMember, term: e.target.value, termName: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-medium"
-                  >
-                    <option value="Gen 6">Gen 6</option>
-                    <option value="Gen 5">Gen 5</option>
-                    <option value="Gen 4">Gen 4</option>
-                    <option value="Gen 3">Gen 3</option>
-                    <option value="Gen 2">Gen 2</option>
-                    <option value="Gen 1">Gen 1</option>
-                  </select>
+                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-medium focus:outline-none focus:border-amber-500"
+                  />
                 </div>
 
                 <div>
@@ -1094,6 +1103,17 @@ export const InternalMembers = () => {
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="0981234567"
                     className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">7. Thế Hệ (Gen)</label>
+                  <input
+                    type="text"
+                    value={formData.term || 'Gen 6'}
+                    onChange={(e) => setFormData({ ...formData, term: e.target.value, termName: e.target.value })}
+                    placeholder="vd: Gen 6, Gen 7, 2025-2026..."
+                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-medium focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>

@@ -82,6 +82,37 @@ queryDatabase(`
   console.log('ℹ️ CSDL status Member_Milestones table:', err.message);
 });
 
+// Tự động khởi tạo bảng Generations (Thế hệ Gen) riêng trong MySQL
+queryDatabase(`
+  CREATE TABLE IF NOT EXISTS Generations (
+    id VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    years VARCHAR(100),
+    description VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`).then(async () => {
+  const countRes = await queryDatabase('SELECT COUNT(*) as cnt FROM Generations').catch(() => []);
+  if (countRes && countRes[0] && countRes[0].cnt === 0) {
+    const defaultGens = [
+      { id: 'gen-6', name: 'Gen 6', years: '2025-2026', description: '✨ Gen 6 (2025 - 2026)' },
+      { id: 'gen-5', name: 'Gen 5', years: '2024-2025', description: '🎓 Gen 5 (2024 - 2025)' },
+      { id: 'gen-4', name: 'Gen 4', years: '2023-2024', description: '🏆 Gen 4 (2023 - 2024)' },
+      { id: 'gen-3', name: 'Gen 3', years: '2022-2023', description: '👑 Gen 3 (2022 - 2023)' },
+      { id: 'gen-2', name: 'Gen 2', years: '2021-2022', description: '🚀 Gen 2 (2021 - 2022)' },
+      { id: 'gen-1', name: 'Gen 1', years: '2020-2021', description: '🌟 Gen 1 (2020 - 2021)' }
+    ];
+    for (const g of defaultGens) {
+      await queryDatabase(
+        `INSERT IGNORE INTO Generations (id, name, years, description) VALUES (?, ?, ?, ?)`,
+        [g.id, g.name, g.years, g.description]
+      ).catch(() => {});
+    }
+  }
+}).catch(err => {
+  console.log('ℹ️ CSDL status Generations table:', err.message);
+});
+
 // ── Sub-router cho tasks, drafts, equipment, announcements ──
 app.use('/api', apiRouter);
 

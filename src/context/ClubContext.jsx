@@ -12,6 +12,15 @@ import { fetchEntityAPI, createEntityAPI, updateEntityAPI, deleteEntityAPI } fro
 
 const ClubContext = createContext();
 
+const DEFAULT_GENERATIONS = [
+  { id: 'gen-6', name: 'Gen 6', years: '2025-2026', description: '✨ Gen 6 (2025 - 2026)' },
+  { id: 'gen-5', name: 'Gen 5', years: '2024-2025', description: '🎓 Gen 5 (2024 - 2025)' },
+  { id: 'gen-4', name: 'Gen 4', years: '2023-2024', description: '🏆 Gen 4 (2023 - 2024)' },
+  { id: 'gen-3', name: 'Gen 3', years: '2022-2023', description: '👑 Gen 3 (2022 - 2023)' },
+  { id: 'gen-2', name: 'Gen 2', years: '2021-2022', description: '🚀 Gen 2 (2021 - 2022)' },
+  { id: 'gen-1', name: 'Gen 1', years: '2020-2021', description: '🌟 Gen 1 (2020 - 2021)' }
+];
+
 export const ClubProvider = ({ children }) => {
   const [theme, setTheme] = useState('dark');
   const [toasts, setToasts] = useState([]);
@@ -28,44 +37,89 @@ export const ClubProvider = ({ children }) => {
   const [activeTab, setActiveTabState] = useState(() => {
     try {
       return localStorage.getItem('VMC_ACTIVE_TAB') || 'dashboard';
-    } catch {
+    } catch (e) {
       return 'dashboard';
     }
   });
 
-  const setActiveTab = (tab) => {
-    setActiveTabState(tab);
+  const setActiveTab = (tabId) => {
+    setActiveTabState(tabId);
     try {
-      localStorage.setItem('VMC_ACTIVE_TAB', tab);
-    } catch (e) {
-      console.warn('Lỗi lưu active tab:', e);
-    }
+      localStorage.setItem('VMC_ACTIVE_TAB', tabId);
+    } catch (e) { }
   };
 
-  // Dynamic Database State Initialization — 100% dữ liệu từ CSDL MySQL
-  const [db, setDb] = useState({
-    members: [],
-    tasks: [],
-    equipment: [],
-    drafts: [],
-    announcements: [],
-    finances: [],
-    meetings: [],
-    birthdayAssignments: []
+  const [db, setDb] = useState(() => loadDatabaseFromStorage());
+  const [currentUser, setCurrentUser] = useState(() => {
+    return db.members?.[0] || {
+      id: 1,
+      name: 'Quản Trị Viên',
+      role: 'admin',
+      roleTitle: 'Super Admin (Chủ Nhiệm CLB)',
+      memberCode: 'ADMIN',
+      deptName: 'Ban Chủ Nhiệm',
+      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=400',
+      points: 9999,
+      isFirstLogin: false
+    };
   });
 
-  const members = db.members;
-  const tasks = db.tasks;
-  const equipment = db.equipment;
-  const drafts = db.drafts;
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [requirePasswordChange, setRequirePasswordChange] = useState(false);
+  const [isBorrowModalOpen, setIsBorrowModalOpen] = useState(false);
+  const [selectedEquipment, setSelectedEquipment] = useState(null);
 
-  // Automatic Real-Time Silent Sync with MySQL Database — tất cả 9 bảng 100% từ MySQL Server
+  const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
+  const [isNewDraftModalOpen, setIsNewDraftModalOpen] = useState(false);
+  const [isNewAccountModalOpen, setIsNewAccountModalOpen] = useState(false);
+  const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  // Load Members from SQL Database API on Mount
+  useEffect(() => {
+    const loadSqlMembers = async () => {
+      const sqlMembers = await fetchMembersFromDatabaseAPI();
+      if (sqlMembers && sqlMembers.length > 0) {
+        setDb(prev => {
+          let mergedMembers = sqlMembers.map(serverMem => {
+            const localMem = (prev.members || []).find(m => m.id === serverMem.id) || {};
+            return { ...localMem, ...serverMem };
+          });
+
+          const currentMonth = new Date().toISOString().slice(0, 7);
+          let nextDb = { ...prev, members: mergedMembers };
+          
+          if (prev.lastPointsAddedMonth && prev.lastPointsAddedMonth !== currentMonth) {
+            mergedMembers = mergedMembers.map(m => {
+              if (m.status !== 'Suspended') {
+                const newPoints = (m.points || 0) + 50;
+                updateMemberAPI(m.memberCode || m.member_code || m.id, { points: newPoints }).catch(e => console.log(e));
+                return { ...m, points: newPoints };
+              }
+              return m;
+            });
+            nextDb = { ...nextDb, members: mergedMembers, lastPointsAddedMonth: currentMonth };
+          } else if (!prev.lastPointsAddedMonth) {
+             nextDb = { ...nextDb, lastPointsAddedMonth: currentMonth };
+          }
+          saveDatabaseToStorage(nextDb);
+          return nextDb;
+        });
+      }
+    };
+    loadSqlMembers();
+  }, []);
+
+  // Automatic Real-Time Silent Sync with MySQL Database — tất cả 10 bảng 100% từ MySQL Server
   useEffect(() => {
     let isMounted = true;
 
     const silentAutoSync = async () => {
       try {
-        const [serverMembers, serverTasks, serverDrafts, serverEquipment, serverAnnouncements, serverFinances, serverMeetings, serverBirthday, serverMilestones] = await Promise.all([
+        const [serverMembers, serverTasks, serverDrafts, serverEquipment, serverAnnouncements, serverFinances, serverMeetings, serverBirthday, serverMilestones, serverGenerations] = await Promise.all([
           fetchMembersFromDatabaseAPI(),
           fetchEntityAPI('tasks'),
           fetchEntityAPI('drafts'),
@@ -74,7 +128,8 @@ export const ClubProvider = ({ children }) => {
           fetchEntityAPI('finances'),
           fetchEntityAPI('meetings'),
           fetchEntityAPI('birthday-assignments'),
-          fetchEntityAPI('milestones')
+          fetchEntityAPI('milestones'),
+          fetchEntityAPI('generations')
         ]);
         
         if (isMounted) {
@@ -94,14 +149,6 @@ export const ClubProvider = ({ children }) => {
               title: `Bổ nhiệm chức vụ: ${m.roleTitle || m.role_title || 'Thành Viên VMC'}`,
               badgeText: '[Chức vụ]',
               badgeStyle: 'bg-blue-500/10 text-blue-400 border-blue-500/30'
-            },
-            {
-              id: 'm-def-3-' + m.id,
-              memberId: m.id,
-              date: 'Hiện tại',
-              title: `Trạng Thái Hoạt Động: ${m.status === 'Active' ? 'Đang Hoạt Động' : 'Tạm Nghỉ'}`,
-              badgeText: '[ĐANG HOẠT ĐỘNG]',
-              badgeStyle: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold'
             }
           ];
 
@@ -114,24 +161,31 @@ export const ClubProvider = ({ children }) => {
             return { ...m, milestones: finalMs };
           });
 
-          setDb({
-            members: mergedMembers,
-            tasks: Array.isArray(serverTasks) ? serverTasks : [],
-            drafts: Array.isArray(serverDrafts) ? serverDrafts : [],
-            equipment: Array.isArray(serverEquipment) ? serverEquipment : [],
-            announcements: Array.isArray(serverAnnouncements) ? serverAnnouncements : [],
-            finances: Array.isArray(serverFinances) ? serverFinances : [],
-            meetings: Array.isArray(serverMeetings) ? serverMeetings : [],
-            birthdayAssignments: Array.isArray(serverBirthday) ? serverBirthday : []
+          setDb(prev => {
+            const updated = {
+              ...prev,
+              members: mergedMembers.length > 0 ? mergedMembers : prev.members,
+              tasks: Array.isArray(serverTasks) ? serverTasks : prev.tasks,
+              drafts: Array.isArray(serverDrafts) ? serverDrafts : prev.drafts,
+              equipment: Array.isArray(serverEquipment) ? serverEquipment : prev.equipment,
+              announcements: Array.isArray(serverAnnouncements) ? serverAnnouncements : prev.announcements,
+              finances: Array.isArray(serverFinances) ? serverFinances : prev.finances,
+              meetings: Array.isArray(serverMeetings) ? serverMeetings : prev.meetings,
+              birthdayAssignments: Array.isArray(serverBirthday) ? serverBirthday : prev.birthdayAssignments,
+              generations: (Array.isArray(serverGenerations) && serverGenerations.length > 0) ? serverGenerations : (prev.generations || DEFAULT_GENERATIONS)
+            };
+            saveDatabaseToStorage(updated);
+            return updated;
           });
         }
       } catch (err) {
-        console.warn('Lỗi kết nối CSDL MySQL:', err);
+        console.warn('ℹ️ Real-time MySQL sync status:', err.message);
       }
     };
 
     silentAutoSync();
-    const syncInterval = setInterval(silentAutoSync, 3000);
+    const intervalId = setInterval(silentAutoSync, 10000);
+
     return () => {
       isMounted = false;
       clearInterval(syncInterval);
