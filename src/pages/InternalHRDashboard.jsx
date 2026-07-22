@@ -30,12 +30,14 @@ export const InternalHRDashboard = () => {
 
   const filteredMembers = useMemo(() => {
     return members.filter(m => {
+      // Ẩn tài khoản hệ thống (Super Admin / ADMIN) khỏi mọi danh sách
+      if (m.roleTitle?.includes('Super Admin') || m.memberCode === 'ADMIN') return false;
       const q = normalizeText(searchQuery);
       return !q || normalizeText(m.name).includes(q) || normalizeText(m.memberCode).includes(q);
     });
   }, [members, searchQuery]);
 
-  // Points ranking
+  // Points ranking — không tính tài khoản hệ thống
   const rankedMembers = [...filteredMembers].sort((a, b) => (b.points || 0) - (a.points || 0));
 
   // Birthdays parsing
