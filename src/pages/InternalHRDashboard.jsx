@@ -200,31 +200,7 @@ export const InternalHRDashboard = () => {
             activeTab === 'birthdays' ? 'bg-rose-600 text-white' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'
           }`}
         >
-          <Calendar className="w-4 h-4" /> Sinh Nhật Sắp Tới
-        </button>
-        <button
-          onClick={() => setActiveTab('deadlines')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-xs whitespace-nowrap transition-all ${
-            activeTab === 'deadlines' ? 'bg-amber-600 text-white' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'
-          }`}
-        >
-          <Clock className="w-4 h-4" /> Tình Trạng Deadline
-        </button>
-        <button
-          onClick={() => setActiveTab('meetings')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-xs whitespace-nowrap transition-all ${
-            activeTab === 'meetings' ? 'bg-purple-600 text-white' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'
-          }`}
-        >
-          <Users className="w-4 h-4" /> Điểm Danh & Họp
-        </button>
-        <button
-          onClick={() => setActiveTab('birthday_duty')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-xs whitespace-nowrap transition-all ${
-            activeTab === 'birthday_duty' ? 'bg-pink-600 text-white' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'
-          }`}
-        >
-          <Gift className="w-4 h-4" /> Phân Công Sinh Nhật
+          <Gift className="w-4 h-4" /> Sinh Nhật
         </button>
         {(isHRMember || currentUser?.deptName === 'Ban Chủ Nhiệm' || currentUser?.department === 'bcn') && (
           <button

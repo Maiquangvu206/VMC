@@ -282,6 +282,19 @@ export const ClubProvider = ({ children }) => {
     (currentUser?.roleTitle?.includes('Trưởng Ban') && (currentUser?.deptName?.includes('Đối Ngoại') || currentUser?.deptName?.includes('Nhân Sự')))
   );
 
+  const isAdmin = Boolean(
+    currentUser?.role === 'admin' ||
+    currentUser?.memberCode === 'ADMIN' ||
+    currentUser?.roleTitle?.includes('Super Admin') ||
+    currentUser?.roleTitle?.includes('Chủ Nhiệm') ||
+    isHRHead
+  );
+
+  const isSuperAdmin = Boolean(
+    currentUser?.memberCode === 'ADMIN' ||
+    currentUser?.roleTitle?.includes('Super Admin')
+  );
+
   // Submit Attendance Checkin (Performed by External Relations - HR Member)
   const submitAttendanceCheckin = async (sessionName, presentMemberIds) => {
     const recordObj = {
@@ -1409,6 +1422,8 @@ export const ClubProvider = ({ children }) => {
       attendanceRecords: db.attendanceRecords || [],
       isHRMember,
       isHRHead,
+      isAdmin,
+      isSuperAdmin,
       submitAttendanceCheckin,
       approveAttendanceCheckin,
       isAttendanceModalOpen,

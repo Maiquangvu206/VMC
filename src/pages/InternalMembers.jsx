@@ -595,13 +595,13 @@ export const InternalMembers = () => {
 
       {/* Detail Member Modal (10 Fields View) */}
       {selectedMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up overflow-y-auto">
-          <div className="relative w-full max-w-xl max-h-[90vh] bg-slate-900 border border-blue-500/40 rounded-3xl p-4 sm:p-6 shadow-2xl text-white flex flex-col my-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up overflow-y-auto">
+          <div className="relative w-[95%] sm:w-full max-w-xl max-h-[85vh] sm:max-h-[90vh] bg-slate-900 border border-blue-500/40 rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 shadow-2xl text-white flex flex-col my-auto overflow-hidden">
             <div className="flex justify-between items-center border-b border-white/10 pb-3 shrink-0">
               <div className="flex items-center gap-3">
-                <img src={selectedMember.avatar} alt={selectedMember.name} className="w-10 h-10 rounded-full object-cover border border-blue-500/30" />
+                <img src={selectedMember.avatar} alt={selectedMember.name} className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover border border-blue-500/30" />
                 <div>
-                  <h3 className="font-heading font-bold text-base text-white">{selectedMember.name}</h3>
+                  <h3 className="font-heading font-bold text-sm sm:text-base text-white">{selectedMember.name}</h3>
                   <span className="text-xs text-purple-400 font-mono">{formatGen(selectedMember.term)}</span>
                 </div>
               </div>
@@ -614,43 +614,43 @@ export const InternalMembers = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 text-xs">
                 <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950 border border-white/5">
                   <span className="text-slate-400 block text-[10px]">1. Mã Thành Viên</span>
-                  <strong className="text-blue-400 font-mono text-xs">{selectedMember.memberCode}</strong>
+                  <strong className="text-blue-400 font-mono text-xs break-all block">{selectedMember.memberCode}</strong>
                 </div>
                 <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950 border border-white/5">
                   <span className="text-slate-400 block text-[10px]">2. Họ và Tên</span>
-                  <strong className="text-white text-xs">{selectedMember.name}</strong>
+                  <strong className="text-white text-xs break-words block">{selectedMember.name}</strong>
                 </div>
                 <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950 border border-white/5">
                   <span className="text-slate-400 block text-[10px]">3. Lớp</span>
-                  <strong className="text-slate-200 text-xs">{selectedMember.class}</strong>
+                  <strong className="text-slate-200 text-xs break-words block">{selectedMember.class}</strong>
                 </div>
                 <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950 border border-white/5">
                   <span className="text-slate-400 block text-[10px]">4. Ban Chuyên Môn</span>
-                  <strong className="text-cyan-300 text-xs">{selectedMember.deptName}</strong>
+                  <strong className="text-cyan-300 text-xs break-words block">{selectedMember.deptName}</strong>
                 </div>
                 <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950 border border-white/5">
                   <span className="text-slate-400 block text-[10px]">5. Chức Vụ Trong CLB</span>
-                  <strong className="text-purple-400 text-xs">{selectedMember.roleTitle}</strong>
+                  <strong className="text-purple-400 text-xs break-words block">{selectedMember.roleTitle}</strong>
                 </div>
                 <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950 border border-white/5">
                   <span className="text-slate-400 block text-[10px]">6. Số Điện Thoại</span>
-                  <strong className="text-slate-200 font-mono text-xs">{selectedMember.phone || 'Chưa có'}</strong>
+                  <strong className="text-slate-200 font-mono text-xs break-all block">{selectedMember.phone || 'Chưa có'}</strong>
                 </div>
                 <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950 border border-white/5">
                   <span className="text-slate-400 block text-[10px]">7. Email Học Sinh</span>
-                  <strong className="text-slate-200 text-xs truncate block">{selectedMember.email || 'Chưa có'}</strong>
+                  <strong className="text-slate-200 text-xs break-all block">{selectedMember.email || 'Chưa có'}</strong>
                 </div>
                 <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950 border border-white/5">
                   <span className="text-slate-400 block text-[10px]">8. Ngày Sinh</span>
-                  <strong className="text-amber-300 font-mono text-xs">{selectedMember.dob || 'Chưa có'}</strong>
+                  <strong className="text-amber-300 font-mono text-xs block">{selectedMember.dob || 'Chưa có'}</strong>
                 </div>
                 <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950 border border-white/5 col-span-1 sm:col-span-2">
                   <span className="text-slate-400 block text-[10px]">9. Địa Chỉ Thường Trú</span>
-                  <strong className="text-slate-200 text-xs">{selectedMember.address || 'Chưa có'}</strong>
+                  <strong className="text-slate-200 text-xs break-words block">{selectedMember.address || 'Chưa có'}</strong>
                 </div>
                 <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950 border border-white/5 col-span-1 sm:col-span-2">
                   <span className="text-slate-400 block text-[10px]">10. Facebook Cá Nhân</span>
-                  <a href={selectedMember.facebook} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline text-xs truncate block">
+                  <a href={selectedMember.facebook} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline text-xs break-all block">
                     {selectedMember.facebook || 'Chưa có'}
                   </a>
                 </div>
@@ -674,27 +674,88 @@ export const InternalMembers = () => {
                   )}
                 </div>
                 <div className="space-y-3 pt-2 pb-1 pr-1">
-                  {selectedMember.milestones && selectedMember.milestones.length > 0 ? (
-                    selectedMember.milestones.map((ms, idx) => (
-                      <div key={ms.id || idx} className="flex gap-3 relative">
-                        <div className="flex flex-col items-center">
-                          <div className="w-2.5 h-2.5 rounded-full bg-amber-400 ring-4 ring-amber-400/20 z-10" />
-                          {idx !== selectedMember.milestones.length - 1 && (
-                            <div className="w-0.5 h-full bg-slate-700/50 absolute top-2.5" />
-                          )}
+                  {(() => {
+                    const rawList = (Array.isArray(selectedMember.milestones) && selectedMember.milestones.length > 0)
+                      ? selectedMember.milestones
+                      : [
+                          {
+                            id: 'm1',
+                            date: '12/10/2021',
+                            title: `Bắt đầu làm thành viên VMC (${selectedMember.deptName || selectedMember.department || 'Ban Chuyên Môn'})`,
+                            badgeText: '[Gia Nhập]'
+                          },
+                          {
+                            id: 'm2',
+                            date: '01/06/2022',
+                            title: `Chức vụ: ${selectedMember.roleTitle || 'Thành Viên VMC'}`,
+                            badgeText: '[Thăng Chức]'
+                          }
+                        ];
+
+                    const cleanList = rawList.filter(m => {
+                      const b = (m.badgeText || '').toLowerCase();
+                      const t = (m.title || '').toLowerCase();
+                      return !b.includes('đang hoạt động') && !b.includes('tạm nghỉ') && !b.includes('ngừng') && !t.includes('trạng thái:');
+                    });
+
+                    const isSuspended = selectedMember.status === 'Suspended';
+                    const finalStatusNode = {
+                      id: 'final-status',
+                      date: isSuspended ? `Ngừng từ ${new Date().toLocaleDateString('vi-VN')}` : 'Hiện tại',
+                      title: isSuspended ? 'Trạng Thái: Đã Tạm Nghỉ / Ngừng Hoạt Động tại VMC' : 'Trạng Thái: Đang Hoạt Động Tích Cực tại VMC',
+                      badgeText: isSuspended ? '[Tạm Nghỉ]' : '[Đang Hoạt Động]'
+                    };
+
+                    const fullList = [...cleanList, finalStatusNode];
+
+                    return fullList.map((ms, idx) => {
+                      const b = (ms.badgeText || '').toLowerCase();
+                      const t = (ms.title || '').toLowerCase();
+                      let style = 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40';
+                      let bullet = 'bg-cyan-400 ring-4 ring-cyan-400/30';
+                      let dateColor = 'text-cyan-400';
+
+                      if (b.includes('đang hoạt động') || t.includes('đang hoạt động')) {
+                        style = 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50 font-bold';
+                        bullet = 'bg-emerald-400 ring-4 ring-emerald-400/40';
+                        dateColor = 'text-emerald-400';
+                      } else if (b.includes('tạm nghỉ') || b.includes('ngừng') || t.includes('tạm nghỉ')) {
+                        style = 'bg-rose-500/20 text-rose-300 border-rose-500/50 font-bold';
+                        bullet = 'bg-rose-500 ring-4 ring-rose-500/40';
+                        dateColor = 'text-rose-400';
+                      } else if (b.includes('gia nhập') || t.includes('gia nhập')) {
+                        style = 'bg-teal-500/15 text-teal-300 border-teal-500/40';
+                        bullet = 'bg-teal-400 ring-4 ring-teal-400/30';
+                        dateColor = 'text-teal-400';
+                      } else if (b.includes('thăng chức') || b.includes('chức vụ') || t.includes('thăng chức')) {
+                        style = 'bg-purple-500/15 text-purple-300 border-purple-500/40';
+                        bullet = 'bg-purple-400 ring-4 ring-purple-400/30';
+                        dateColor = 'text-purple-400';
+                      } else if (b.includes('khen thưởng') || b.includes('cột mốc') || t.includes('khen thưởng')) {
+                        style = 'bg-amber-500/15 text-amber-300 border-amber-500/40';
+                        bullet = 'bg-amber-400 ring-4 ring-amber-400/30';
+                        dateColor = 'text-amber-400';
+                      }
+
+                      return (
+                        <div key={ms.id || idx} className="flex gap-3 relative">
+                          <div className="flex flex-col items-center">
+                            <div className={`w-2.5 h-2.5 rounded-full z-10 ${bullet}`} />
+                            {idx !== fullList.length - 1 && (
+                              <div className="w-0.5 h-full bg-slate-700/50 absolute top-2.5" />
+                            )}
+                          </div>
+                          <div className="pb-3">
+                            <p className={`text-[10px] font-mono mb-0.5 ${dateColor}`}>{ms.date}</p>
+                            <p className="text-xs font-semibold text-slate-200">{ms.title}</p>
+                            <span className={`inline-block mt-1 px-2.5 py-0.5 rounded text-[9px] font-bold border ${style}`}>
+                              {ms.badgeText}
+                            </span>
+                          </div>
                         </div>
-                        <div className="pb-3">
-                          <p className="text-[10px] text-amber-400 font-mono mb-0.5">{ms.date}</p>
-                          <p className="text-xs font-semibold text-slate-200">{ms.title}</p>
-                          <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[9px] font-bold border ${ms.badgeStyle || 'bg-blue-500/10 text-blue-400 border-blue-500/30'}`}>
-                            {ms.badgeText}
-                          </span>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-xs text-slate-400 italic text-center py-2">Chưa có lịch sử hoạt động nào được ghi nhận.</p>
-                  )}
+                      );
+                    });
+                  })()}
                 </div>
               </div>
             </div>

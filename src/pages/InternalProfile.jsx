@@ -421,42 +421,107 @@ export const InternalProfile = () => {
 
             {/* UI Vertical Timeline với Đường Gạch Nối Border */}
             <div className="relative border-l-2 border-slate-700/80 space-y-6 ml-3 pl-6 py-2">
-              {(currentUser.milestones && currentUser.milestones.length > 0 ? currentUser.milestones : roleHistoryMilestones).map((m, index) => {
-                const Icon = m.icon || Award;
-                return (
-                  <div key={m.id || index} className="relative group">
-                    {/* Node Bullet Icon trên đường gạch nối */}
-                    <div className={`absolute -left-[37px] top-0.5 p-1.5 rounded-full bg-slate-900 border-2 ${m.iconBorder || 'border-blue-500 text-blue-400'} shadow-md transition-transform group-hover:scale-110`}>
-                      <Icon className="w-3.5 h-3.5" />
-                    </div>
+              {(() => {
+                const rawList = (Array.isArray(currentUser.milestones) && currentUser.milestones.length > 0)
+                  ? currentUser.milestones
+                  : [
+                      {
+                        id: 'm1',
+                        date: '12/10/2021',
+                        title: `Gia nhập VMC (Thành viên ${currentUser.deptName || 'Ban Chuyên Môn'})`,
+                        badgeText: '[Gia Nhập]'
+                      },
+                      {
+                        id: 'm2',
+                        date: '01/06/2022',
+                        title: `Cập nhật chức vụ: ${currentUser.roleTitle || 'Thành Viên VMC'}`,
+                        badgeText: '[Thăng Chức]'
+                      }
+                    ];
 
-                    {/* Nội dung Mốc Thời Gian */}
-                    <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 transition-all hover:border-slate-700 space-y-1.5">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
-                        
-                        {/* Thời gian */}
-                        <div className="flex items-center gap-2 text-xs font-mono font-semibold text-slate-400">
-                          <Clock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                          <span>{m.date}</span>
-                        </div>
+                // Filter out previous status node if present to prevent duplicate status entries
+                const baseList = rawList.filter(m => {
+                  const b = (m.badgeText || '').toLowerCase();
+                  const t = (m.title || '').toLowerCase();
+                  return !b.includes('đang hoạt động') && !b.includes('tạm nghỉ') && !b.includes('ngừng') && !t.includes('trạng thái:');
+                });
 
-                        {/* Tag Trạng Thái (Right Badge) */}
-                        <span className={`text-[10px] font-bold font-mono px-2.5 py-0.5 rounded-md border shrink-0 w-fit ${m.badgeStyle || 'bg-blue-500/10 text-blue-400 border-blue-500/30'}`}>
-                          {m.badgeText}
-                        </span>
+                const isSuspended = currentUser.status === 'Suspended';
+                const finalStatusNode = {
+                  id: 'final-status-node',
+                  date: isSuspended 
+                    ? `Ngừng từ ${currentUser.suspendedAt || new Date().toLocaleDateString('vi-VN')}` 
+                    : 'Hiện tại',
+                  title: isSuspended 
+                    ? 'Trạng Thái: Đã Tạm Nghỉ / Ngừng Hoạt Động tại CLB VMC' 
+                    : 'Trạng Thái: Đang Hoạt Động Tích Cực tại VMC',
+                  badgeText: isSuspended ? '[Tạm Nghỉ]' : '[Đang Hoạt Động]'
+                };
+
+                const fullList = [...baseList, finalStatusNode];
+
+                return fullList.map((m, index) => {
+                  const b = (m.badgeText || '').toLowerCase();
+                  const t = (m.title || '').toLowerCase();
+
+                  let badgeStyle = 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40 font-mono font-bold';
+                  let iconBorder = 'border-cyan-500 text-cyan-400 bg-slate-900';
+                  let Icon = m.icon || Clock;
+
+                  if (b.includes('đang hoạt động') || t.includes('đang hoạt động')) {
+                    badgeStyle = 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50 font-mono font-bold shadow-sm shadow-emerald-500/20';
+                    iconBorder = 'border-emerald-400 text-emerald-300 bg-emerald-950/80';
+                    Icon = ShieldCheck;
+                  } else if (b.includes('tạm nghỉ') || b.includes('ngừng') || b.includes('khóa') || t.includes('tạm nghỉ') || t.includes('ngừng')) {
+                    badgeStyle = 'bg-rose-500/20 text-rose-300 border-rose-500/50 font-mono font-bold shadow-sm shadow-rose-500/20';
+                    iconBorder = 'border-rose-500 text-rose-400 bg-rose-950/80';
+                    Icon = AlertCircle;
+                  } else if (b.includes('gia nhập') || t.includes('gia nhập')) {
+                    badgeStyle = 'bg-teal-500/15 text-teal-300 border-teal-500/40 font-mono font-bold';
+                    iconBorder = 'border-teal-500 text-teal-400 bg-teal-950/80';
+                    Icon = UserPlus;
+                  } else if (b.includes('thăng chức') || b.includes('chức vụ') || t.includes('thăng chức') || t.includes('chức vụ')) {
+                    badgeStyle = 'bg-purple-500/15 text-purple-300 border-purple-500/40 font-mono font-bold';
+                    iconBorder = 'border-purple-500 text-purple-400 bg-purple-950/80';
+                    Icon = Award;
+                  } else if (b.includes('khen thưởng') || b.includes('cột mốc') || t.includes('khen thưởng')) {
+                    badgeStyle = 'bg-amber-500/15 text-amber-300 border-amber-500/40 font-mono font-bold';
+                    iconBorder = 'border-amber-500 text-amber-400 bg-amber-950/80';
+                    Icon = Sparkles;
+                  }
+
+                  return (
+                    <div key={m.id || index} className="relative group">
+                      {/* Node Bullet Icon trên đường gạch nối */}
+                      <div className={`absolute -left-[37px] top-0.5 p-1.5 rounded-full border-2 ${iconBorder} shadow-md transition-transform group-hover:scale-110`}>
+                        <Icon className="w-3.5 h-3.5" />
                       </div>
 
-                      {/* Tên Sự Kiện / Chức Vụ In Đậm */}
-                      <h4 className="text-sm font-bold text-white leading-snug">
-                        {m.title}
-                      </h4>
+                      {/* Nội dung Mốc Thời Gian */}
+                      <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 transition-all hover:border-slate-700 space-y-1.5">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                          
+                          {/* Thời gian */}
+                          <div className="flex items-center gap-2 text-xs font-mono font-semibold text-slate-400">
+                            <Clock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                            <span>{m.date}</span>
+                          </div>
+
+                          {/* Tag Trạng Thái (Right Badge) */}
+                          <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-md border shrink-0 w-fit ${badgeStyle}`}>
+                            {m.badgeText}
+                          </span>
+                        </div>
+
+                        {/* Tên Sự Kiện / Chức Vụ In Đậm */}
+                        <h4 className="text-sm font-bold text-white leading-snug">
+                          {m.title}
+                        </h4>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-              {(!currentUser.milestones || currentUser.milestones.length === 0) && (
-                <div className="text-slate-400 italic text-sm">Chưa có lịch sử hoạt động nào được ghi nhận.</div>
-              )}
+                  );
+                });
+              })()}
             </div>
 
           </div>
