@@ -42,6 +42,8 @@ export const BirthdayManagement = () => {
 
   const [excuseModalAssignmentId, setExcuseModalAssignmentId] = useState(null);
   const [excuseReasonInput, setExcuseReasonInput] = useState('');
+  // Per-member reasons: { [memberId]: reason string }
+  const [excusePerMember, setExcusePerMember] = useState({});
 
   const handleAssign = (e) => {
     e.preventDefault();
@@ -63,10 +65,33 @@ export const BirthdayManagement = () => {
 
   const handleConfirmExcuseSubmit = (e) => {
     e.preventDefault();
-    if (!excuseReasonInput.trim() || !excuseModalAssignmentId) return;
-    submitBirthdayExcuse(excuseModalAssignmentId, excuseReasonInput.trim());
+    if (!excuseModalAssignmentId) return;
+
+    // Build combined reason string from global reason + per-member reasons
+    const assignment = birthdayAssignments.find(a => a.id === excuseModalAssignmentId);
+    const submissions = assignment?.submissions || {};
+    const birthdayMembersInMonth = members.filter(m => {
+      if (!m.dob) return false;
+      const parts = m.dob.split('/');
+      return parts.length >= 2 && parseInt(parts[1], 10) === parseInt(assignment?.month, 10);
+    });
+    const missingMembers = birthdayMembersInMonth.filter(m => !submissions[m.id]);
+
+    // Build detailed reason
+    let combinedReason = excuseReasonInput.trim();
+    if (missingMembers.length > 0) {
+      const perMemberLines = missingMembers.map(m => {
+        const r = (excusePerMember[m.id] || '').trim();
+        return `• ${m.name}: ${r || 'Chưa có lý do cụ thể'}`;
+      }).join('\n');
+      combinedReason += (combinedReason ? '\n\n' : '') + 'Chi tiết từng người chưa nộp:\n' + perMemberLines;
+    }
+
+    if (!combinedReason.trim()) return;
+    submitBirthdayExcuse(excuseModalAssignmentId, combinedReason.trim());
     setExcuseModalAssignmentId(null);
     setExcuseReasonInput('');
+    setExcusePerMember({});
   };
 
   return (
@@ -351,50 +376,114 @@ export const BirthdayManagement = () => {
       )}
 
       {/* Modal Nộp Đơn Giải Trình Lý Do */}
-      {excuseModalAssignmentId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
-          <div className="relative w-full max-w-md bg-slate-900 border border-amber-500/40 rounded-3xl p-6 shadow-2xl text-white space-y-4">
-            <div className="flex justify-between items-center border-b border-white/10 pb-3">
-              <h3 className="font-heading font-bold text-base text-white flex items-center gap-2">
-                <FileText className="text-amber-400 w-5 h-5" /> Nộp Đơn Giải Trình Nộp Chậm
-              </h3>
-              <button onClick={() => setExcuseModalAssignmentId(null)} className="text-slate-400 hover:text-white">
-                <X className="w-5 h-5" />
-              </button>
+      {excuseModalAssignmentId && (() => {
+        const assignment = birthdayAssignments.find(a => a.id === excuseModalAssignmentId);
+        const submissions = assignment?.submissions || {};
+        const birthdayMembersInMonth = members.filter(m => {
+          if (!m.dob) return false;
+          const parts = m.dob.split('/');
+          return parts.length >= 2 && parseInt(parts[1], 10) === parseInt(assignment?.month, 10);
+        });
+        const submittedMembers = birthdayMembersInMonth.filter(m => submissions[m.id]);
+        const missingMembers = birthdayMembersInMonth.filter(m => !submissions[m.id]);
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
+            <div className="relative w-full max-w-lg bg-slate-900 border border-amber-500/40 rounded-3xl p-6 shadow-2xl text-white space-y-4 max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center border-b border-white/10 pb-3">
+                <h3 className="font-heading font-bold text-base text-white flex items-center gap-2">
+                  <FileText className="text-amber-400 w-5 h-5" /> Nộp Đơn Giải Trình Nộp Chậm
+                </h3>
+                <button onClick={() => { setExcuseModalAssignmentId(null); setExcuseReasonInput(''); setExcusePerMember({}); }} className="text-slate-400 hover:text-white">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleConfirmExcuseSubmit} className="space-y-5 text-xs">
+
+                {/* Trạng thái từng thành viên */}
+                <div className="space-y-2">
+                  <p className="text-slate-300 font-semibold text-[11px] uppercase tracking-wider">Tổng quan sinh nhật tháng {assignment?.month}/{assignment?.year}</p>
+
+                  {/* Đã nộp */}
+                  {submittedMembers.length > 0 && (
+                    <div className="space-y-1.5">
+                      <p className="text-emerald-400 font-bold text-[11px]">✅ Đã nộp ảnh/bài ({submittedMembers.length} người)</p>
+                      {submittedMembers.map(m => (
+                        <div key={m.id} className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                          <div className="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold shrink-0 text-[11px]">
+                            {(m.name || 'V').charAt(0)}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-bold text-white truncate text-[12px]">{m.name}</div>
+                            <div className="text-[10px] text-emerald-400">🎂 {m.dob} • {m.deptName || m.department}</div>
+                          </div>
+                          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Chưa nộp — cần giải trình từng người */}
+                  {missingMembers.length > 0 && (
+                    <div className="space-y-3">
+                      <p className="text-rose-400 font-bold text-[11px]">⚠️ Chưa nộp — Giải trình chi tiết ({missingMembers.length} người)</p>
+                      {missingMembers.map(m => (
+                        <div key={m.id} className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 space-y-2">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold shrink-0 text-[11px]">
+                              {(m.name || 'V').charAt(0)}
+                            </div>
+                            <div>
+                              <div className="font-bold text-white text-[12px]">{m.name}</div>
+                              <div className="text-[10px] text-rose-400">🎂 {m.dob} • {m.deptName || m.department}</div>
+                            </div>
+                          </div>
+                          <textarea
+                            rows={2}
+                            placeholder={`Lý do chưa nộp ảnh/bài cho ${m.name}...`}
+                            value={excusePerMember[m.id] || ''}
+                            onChange={e => setExcusePerMember(prev => ({ ...prev, [m.id]: e.target.value }))}
+                            className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white text-[11px] focus:outline-none focus:border-amber-500 resize-none"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Lý do chung */}
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1.5">Lý do chung (không bắt buộc)</label>
+                  <textarea
+                    rows={2}
+                    placeholder="Ví dụ: Bận thi học kỳ, sự cố kỹ thuật..."
+                    value={excuseReasonInput}
+                    onChange={(e) => setExcuseReasonInput(e.target.value)}
+                    className="w-full px-3 py-2.5 bg-slate-950 border border-white/10 rounded-xl text-white text-xs focus:outline-none focus:border-amber-500 resize-none"
+                  />
+                </div>
+
+                <div className="pt-2 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setExcuseModalAssignmentId(null); setExcuseReasonInput(''); setExcusePerMember({}); }}
+                    className="btn-secondary text-xs px-4 py-2"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary text-xs px-6 py-2 bg-amber-600 hover:bg-amber-500 border border-amber-500/50 shadow-amber-600/30 flex items-center gap-2 font-bold"
+                  >
+                    <Send className="w-4 h-4" /> Gửi Đơn Giải Trình
+                  </button>
+                </div>
+              </form>
             </div>
-
-            <form onSubmit={handleConfirmExcuseSubmit} className="space-y-4 text-xs">
-              <div>
-                <label className="block text-slate-300 font-semibold mb-1.5">Lý do giải trình (Để Trưởng Ban / HR duyệt miễn trừ phạt điểm)</label>
-                <textarea
-                  required
-                  rows={4}
-                  placeholder="Nhập lý do chi tiết (ví dụ: Bận kỳ thi học kỳ, lý do sức khỏe...)"
-                  value={excuseReasonInput}
-                  onChange={(e) => setExcuseReasonInput(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-slate-950 border border-white/10 rounded-xl text-white text-xs focus:outline-none focus:border-amber-500"
-                />
-              </div>
-
-              <div className="pt-2 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setExcuseModalAssignmentId(null)}
-                  className="btn-secondary text-xs px-4 py-2"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="btn-primary text-xs px-6 py-2 bg-amber-600 hover:bg-amber-500 border border-amber-500/50 shadow-amber-600/30 flex items-center gap-2 font-bold"
-                >
-                  <Send className="w-4 h-4" /> Gửi Đơn Giải Trình
-                </button>
-              </div>
-            </form>
           </div>
-        </div>
-      )}
+        );
+      })()}
+
 
     </div>
   );
