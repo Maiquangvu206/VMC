@@ -133,16 +133,26 @@ queryDatabase(`
     device_type VARCHAR(50),
     login_time DATETIME DEFAULT CURRENT_TIMESTAMP,
     last_active DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    is_active TINYINT DEFAULT 1
+    is_active TINYINT DEFAULT 1,
+    logout_reason VARCHAR(50) DEFAULT NULL
   )
 `).catch(err => {
   console.log('ℹ️ CSDL status User_Sessions table:', err.message);
 });
 
+queryDatabase('ALTER TABLE User_Sessions ADD COLUMN logout_reason VARCHAR(50) DEFAULT NULL').catch(() => {});
+
+queryDatabase('ALTER TABLE Fanpage_Drafts ADD COLUMN likes_count INT DEFAULT 0').catch(() => {});
+queryDatabase('ALTER TABLE Fanpage_Drafts ADD COLUMN shares_count INT DEFAULT 0').catch(() => {});
+queryDatabase('ALTER TABLE Fanpage_Drafts ADD COLUMN comments_count INT DEFAULT 0').catch(() => {});
+queryDatabase('ALTER TABLE Fanpage_Drafts ADD COLUMN content_score INT DEFAULT 0').catch(() => {});
+queryDatabase('ALTER TABLE Fanpage_Drafts ADD COLUMN final_score INT DEFAULT 0').catch(() => {});
+
 queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN submissions LONGTEXT').catch(() => {});
 queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN excuse_reason TEXT').catch(() => {});
 queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN excuse_status VARCHAR(50) DEFAULT "none"').catch(() => {});
 queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN is_penalized TINYINT DEFAULT 0').catch(() => {});
+queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN wishes_template TEXT').catch(() => {});
 
 // Tự động khởi tạo bảng Resources (Tài nguyên CLB)
 queryDatabase(`

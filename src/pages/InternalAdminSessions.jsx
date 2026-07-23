@@ -308,18 +308,26 @@ export const InternalAdminSessions = () => {
                       </td>
 
                       <td className="px-4 py-3.5 text-center">
-                        {!isActive ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
-                            <XCircle className="w-3 h-3" /> Đã Hủy
-                          </span>
-                        ) : isRecent ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 animate-pulse">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Đang Online
-                          </span>
+                        {isActive ? (
+                          isRecent ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 animate-pulse">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Đang Online
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                              <Clock className="w-3 h-3 text-slate-400" /> Ngưng
+                            </span>
+                          )
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
-                            <Clock className="w-3 h-3 text-slate-400" /> Đã Ngừng
-                          </span>
+                          s.logout_reason === 'revoked' ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                              <XCircle className="w-3 h-3" /> Đã Hủy
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                              <Clock className="w-3 h-3 text-slate-400" /> Ngưng
+                            </span>
+                          )
                         )}
                       </td>
 

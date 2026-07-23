@@ -72,9 +72,11 @@ async function init() {
         device_type VARCHAR(50),
         login_time DATETIME DEFAULT CURRENT_TIMESTAMP,
         last_active DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        is_active TINYINT DEFAULT 1
+        is_active TINYINT DEFAULT 1,
+        logout_reason VARCHAR(50) DEFAULT NULL
       )
     `);
+    await queryDatabase('ALTER TABLE User_Sessions ADD COLUMN logout_reason VARCHAR(50) DEFAULT NULL').catch(() => {});
 
     // 5. Birthday_Assignments (Cập nhật các cột mới)
     console.log('5️⃣ Khởi tạo các cột mới cho Birthday_Assignments...');
@@ -82,6 +84,7 @@ async function init() {
     await queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN excuse_reason TEXT').catch(() => {});
     await queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN excuse_status VARCHAR(50) DEFAULT "none"').catch(() => {});
     await queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN is_penalized TINYINT DEFAULT 0').catch(() => {});
+    await queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN wishes_template TEXT').catch(() => {});
 
     // 6. Resources
     console.log('6️⃣ Khởi tạo bảng Resources...');

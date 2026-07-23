@@ -35,6 +35,14 @@ export const InternalDrafts = () => {
     graderId: ''
   });
 
+  const [gradingDraftId, setGradingDraftId] = useState(null);
+  const [gradingForm, setGradingForm] = useState({
+    likes: 0,
+    shares: 0,
+    comments: 0,
+    contentScore: 10
+  });
+
   const [formData, setFormData] = useState({
     title: '',
     content: ''
@@ -49,6 +57,36 @@ export const InternalDrafts = () => {
     addDraft(formData);
     setIsNewDraftModalOpen(false);
     setFormData({ title: '', content: '' });
+  };
+
+  const handleSaveGrading = (e) => {
+    e.preventDefault();
+    const likes = parseInt(gradingForm.likes, 10) || 0;
+    const shares = parseInt(gradingForm.shares, 10) || 0;
+    const comments = parseInt(gradingForm.comments, 10) || 0;
+    const content = parseInt(gradingForm.contentScore, 10) || 0;
+
+    // Tiêu chí chấm điểm:
+    // 1. Lượt thích: tối đa 30đ (1đ/like)
+    // 2. Lượt chia sẻ: tối đa 30đ (3đ/share)
+    // 3. Lượt bình luận: tối đa 20đ (2đ/comment)
+    // 4. Chất lượng nội dung: tối đa 20đ
+    const likePoints = Math.min(30, likes * 1);
+    const sharePoints = Math.min(30, shares * 3);
+    const commentPoints = Math.min(20, comments * 2);
+    const contentPoints = Math.min(20, content);
+    const finalScore = likePoints + sharePoints + commentPoints + contentPoints;
+
+    completeGrading(gradingDraftId, {
+      likesCount: likes,
+      sharesCount: shares,
+      commentsCount: comments,
+      contentScore: content,
+      finalScore: finalScore
+    });
+
+    setGradingDraftId(null);
+    setGradingForm({ likes: 0, shares: 0, comments: 0, contentScore: 10 });
   };
 
   return (
@@ -109,12 +147,24 @@ export const InternalDrafts = () => {
 
                 {draft.status === 'approved' && draft.gradingStatus === 'pending' && (draft.graderId === currentUser.id || canApproveDraft) && (
                   <button
-                    onClick={() => completeGrading(draft.id)}
-                    className="btn-primary text-xs px-4 py-1.5 shadow-blue-600/30"
+                    onClick={() => setGradingDraftId(draft.id)}
+                    className="btn-primary text-xs px-4 py-1.5 shadow-blue-600/30 flex items-center gap-1.5 animate-pulse"
                   >
                     <CheckCircle className="w-4 h-4" />
-                    <span>Đã Hoàn Thành Chấm Điểm</span>
+                    <span>Tiến Hành Chấm Điểm</span>
                   </button>
+                )}
+
+                {draft.status === 'approved' && draft.gradingStatus === 'completed' && (
+                  <div className="text-right text-xs bg-slate-950/40 p-2.5 rounded-xl border border-white/5 space-y-1">
+                    <div className="font-semibold text-emerald-400">📊 Đã Chấm Điểm: {draft.finalScore || 0}/100</div>
+                    <div className="text-[10px] text-slate-400 grid grid-cols-2 gap-x-2 gap-y-0.5">
+                      <span>• Thích: {draft.likesCount || 0}</span>
+                      <span>• Chia sẻ: {draft.sharesCount || 0}</span>
+                      <span>• Bình luận: {draft.commentsCount || 0}</span>
+                      <span>• Nội dung: {draft.contentScore || 0}/20</span>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -242,6 +292,104 @@ export const InternalDrafts = () => {
                 </button>
                 <button type="submit" className="btn-primary text-xs px-6 py-2">
                   Xác Nhận Đăng & Giao Việc
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Grading Modal */}
+      {gradingDraftId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
+          <div className="relative w-full max-w-md bg-slate-900 border border-blue-500/40 rounded-3xl p-6 shadow-2xl text-white space-y-4">
+            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+              <h3 className="font-heading font-bold text-lg text-blue-400">Chấm Điểm Bài Viết Fanpage</h3>
+              <button onClick={() => setGradingDraftId(null)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveGrading} className="space-y-4">
+              <div className="bg-slate-950/50 p-3 rounded-xl border border-white/5 space-y-1.5 text-[11px] text-slate-400 font-mono">
+                <div className="font-bold text-slate-300">Công thức tính điểm (Thang 100):</div>
+                <div>• Lượt Thích / Cảm xúc: 1 điểm/like (Tối đa 30đ)</div>
+                <div>• Lượt Chia sẻ: 3 điểm/share (Tối đa 30đ)</div>
+                <div>• Lượt Bình luận: 2 điểm/comment (Tối đa 20đ)</div>
+                <div>• Đánh giá Nội dung & Thiết kế: Tối đa 20đ</div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">Lượt Thích (Reactions)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={gradingForm.likes}
+                    onChange={e => setGradingForm({ ...gradingForm, likes: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">Lượt Chia sẻ (Shares)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={gradingForm.shares}
+                    onChange={e => setGradingForm({ ...gradingForm, shares: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">Lượt Bình luận (Comments)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    required
+                    value={gradingForm.comments}
+                    onChange={e => setGradingForm({ ...gradingForm, comments: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">Điểm Nội dung (Tối đa 20)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="20"
+                    required
+                    value={gradingForm.contentScore}
+                    onChange={e => setGradingForm({ ...gradingForm, contentScore: Math.min(20, Math.max(0, parseInt(e.target.value) || 0)) })}
+                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="border-t border-white/10 pt-3 flex items-center justify-between">
+                <div>
+                  <div className="text-[11px] text-slate-400">Tổng điểm tích lũy:</div>
+                  <div className="text-xl font-extrabold text-cyan-400">
+                    {Math.min(100, Math.min(30, gradingForm.likes) + Math.min(30, gradingForm.shares * 3) + Math.min(20, gradingForm.comments * 2) + gradingForm.contentScore)} / 100
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[11px] text-slate-400">Điểm cộng cho tác giả:</div>
+                  <div className="text-sm font-bold text-emerald-400">
+                    +{Math.max(5, Math.round(Math.min(100, Math.min(30, gradingForm.likes) + Math.min(30, gradingForm.shares * 3) + Math.min(20, gradingForm.comments * 2) + gradingForm.contentScore) / 10))} điểm
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <button type="button" onClick={() => setGradingDraftId(null)} className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">
+                  Hủy
+                </button>
+                <button type="submit" className="btn-primary text-xs px-6 py-2 shadow-emerald-600/30">
+                  Hoàn Thành Chấm Điểm
                 </button>
               </div>
             </form>

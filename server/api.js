@@ -178,7 +178,12 @@ router.get('/drafts', async (req, res) => {
       gradingStatus: d.gradingStatus || 'none',
       content: d.content,
       author: d.author,
-      createdAt: d.created_at
+      createdAt: d.created_at,
+      likesCount: d.likes_count || 0,
+      sharesCount: d.shares_count || 0,
+      commentsCount: d.comments_count || 0,
+      contentScore: d.content_score || 0,
+      finalScore: d.final_score || 0
     }));
     res.json({ success: true, data });
   } catch (err) {
@@ -216,10 +221,10 @@ router.post('/drafts', async (req, res) => {
 
 router.put('/drafts/:id', async (req, res) => {
   try {
-    const { status, publishDate, graderId, gradingStatus, title, content, content_link, author } = req.body;
+    const { status, publishDate, graderId, gradingStatus, title, content, content_link, author, likesCount, sharesCount, commentsCount, contentScore, finalScore } = req.body;
     const grId = graderId !== undefined ? toId(graderId) : undefined;
     await queryDatabase(
-      'UPDATE Fanpage_Drafts SET status = COALESCE(?, status), publishDate = COALESCE(?, publishDate), graderId = COALESCE(?, graderId), gradingStatus = COALESCE(?, gradingStatus), title = COALESCE(?, title), content = COALESCE(?, content), content_link = COALESCE(?, content_link), author = COALESCE(?, author) WHERE id = ?',
+      'UPDATE Fanpage_Drafts SET status = COALESCE(?, status), publishDate = COALESCE(?, publishDate), graderId = COALESCE(?, graderId), gradingStatus = COALESCE(?, gradingStatus), title = COALESCE(?, title), content = COALESCE(?, content), content_link = COALESCE(?, content_link), author = COALESCE(?, author), likes_count = COALESCE(?, likes_count), shares_count = COALESCE(?, shares_count), comments_count = COALESCE(?, comments_count), content_score = COALESCE(?, content_score), final_score = COALESCE(?, final_score) WHERE id = ?',
       [
         status !== undefined ? status : null,
         publishDate !== undefined ? publishDate : null,
@@ -229,6 +234,11 @@ router.put('/drafts/:id', async (req, res) => {
         content !== undefined ? content : null,
         content_link !== undefined ? content_link : null,
         author !== undefined ? author : null,
+        likesCount !== undefined ? likesCount : null,
+        sharesCount !== undefined ? sharesCount : null,
+        commentsCount !== undefined ? commentsCount : null,
+        contentScore !== undefined ? contentScore : null,
+        finalScore !== undefined ? finalScore : null,
         req.params.id
       ]
     );
@@ -617,6 +627,7 @@ router.get('/birthday-assignments', async (req, res) => {
         year: b.assign_year,
         memberId: b.member_id,
         link: b.link_image,
+        wishesTemplate: b.wishes_template || '',
         status: b.status || 'pending',
         submissions: subs,
         excuseReason: b.excuse_reason || '',
@@ -832,7 +843,7 @@ router.post('/birthday/upload', upload.single('file'), async (req, res) => {
 router.get('/sessions', async (req, res) => {
   try {
     // Tự động quét và đánh dấu phiên hết hạn (không nhận heartbeat trong 1 phút qua) là ngừng hoạt động
-    await queryDatabase('UPDATE User_Sessions SET is_active = 0 WHERE is_active = 1 AND last_active < NOW() - INTERVAL 1 MINUTE');
+    await queryDatabase("UPDATE User_Sessions SET is_active = 0, logout_reason = 'timeout' WHERE is_active = 1 AND last_active < NOW() - INTERVAL 1 MINUTE");
 
     const sql = `
       SELECT 
@@ -936,7 +947,7 @@ router.post('/sessions/heartbeat', async (req, res) => {
 
 router.delete('/sessions/:id', async (req, res) => {
   try {
-    await queryDatabase('UPDATE User_Sessions SET is_active = 0 WHERE id = ?', [req.params.id]);
+    await queryDatabase("UPDATE User_Sessions SET is_active = 0, logout_reason = 'revoked' WHERE id = ?", [req.params.id]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -948,7 +959,7 @@ router.post('/sessions/logout', async (req, res) => {
     const { sessionId } = req.body;
     if (sessionId) {
       await queryDatabase(
-        'UPDATE User_Sessions SET is_active = 0, last_active = NOW() WHERE id = ?',
+        "UPDATE User_Sessions SET is_active = 0, logout_reason = 'logout', last_active = NOW() WHERE id = ?",
         [sessionId]
       );
     }
@@ -961,7 +972,7 @@ router.post('/sessions/logout', async (req, res) => {
 router.post('/sessions/revoke-all', async (req, res) => {
   try {
     const { currentSessionId } = req.body;
-    await queryDatabase('UPDATE User_Sessions SET is_active = 0 WHERE id != ?', [currentSessionId || '']);
+    await queryDatabase("UPDATE User_Sessions SET is_active = 0, logout_reason = 'revoked' WHERE id != ?", [currentSessionId || '']);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -1105,6 +1116,7 @@ router.get('/department-drives', async (req, res) => {
       id: d.id,
       deptName: d.dept_name,
       link: d.drive_link,
+      driveUrl: d.drive_link,
       updatedAt: d.updated_at
     }));
     res.json({ success: true, data });

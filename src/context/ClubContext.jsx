@@ -349,7 +349,14 @@ export const ClubProvider = ({ children }) => {
 
   const createTaskRecord = async (taskData) => {
     const taskId = taskData.id || 'task-' + Date.now();
-    const assigneeName = taskData.assignee || getMemberNameById(taskData.assigneeId) || 'Chưa phân công';
+    let resolvedAssigneeId = taskData.assigneeId;
+    if (!resolvedAssigneeId && taskData.assignee && taskData.assignee !== 'Cả Ban') {
+      const matchMem = (db.members || []).find(m => m.name === taskData.assignee);
+      if (matchMem) {
+        resolvedAssigneeId = matchMem.id;
+      }
+    }
+    const assigneeName = taskData.assignee || getMemberNameById(resolvedAssigneeId) || 'Chưa phân công';
     const deadline = taskData.deadline || taskData.deadlineDate || new Date().toISOString().slice(0, 10);
     const taskObj = {
       id: taskId,
@@ -358,7 +365,7 @@ export const ClubProvider = ({ children }) => {
       desc: taskData.desc || taskData.description || '',
       department: taskData.department || 'hr_external',
       assignee: assigneeName,
-      assigneeId: taskData.assigneeId,
+      assigneeId: resolvedAssigneeId,
       deadline,
       status: taskData.status || 'todo',
       pointsReward: taskData.pointsReward ?? taskData.points ?? 10,
@@ -1101,12 +1108,48 @@ export const ClubProvider = ({ children }) => {
   };
 
   // Complete Grading Task
-  const completeGrading = (draftId) => {
-    updateDb(prev => ({
-      ...prev,
-      drafts: prev.drafts.map(d => d.id === draftId ? { ...d, gradingStatus: 'completed' } : d)
-    }));
-    updateEntityAPI('drafts', draftId, { gradingStatus: 'completed' }).catch(e => console.log(e));
+  const completeGrading = (draftId, gradingData) => {
+    const { likesCount, sharesCount, commentsCount, contentScore, finalScore } = gradingData || {};
+    
+    updateDb(prev => {
+      const updatedDrafts = (prev.drafts || []).map(d => {
+        if (d.id === draftId) {
+          return {
+            ...d,
+            gradingStatus: 'completed',
+            likesCount: likesCount || 0,
+            sharesCount: sharesCount || 0,
+            commentsCount: commentsCount || 0,
+            contentScore: contentScore || 0,
+            finalScore: finalScore || 0
+          };
+        }
+        return d;
+      });
+      
+      // Tìm tác giả của bài viết và cộng điểm
+      const draft = (prev.drafts || []).find(d => d.id === draftId);
+      if (draft && draft.authorId) {
+        setTimeout(() => {
+          updateMemberPoints(draft.authorId, finalScore || 10, `Được chấm điểm từ bài viết Fanpage "${draft.title}" đạt ${finalScore || 0} điểm`);
+        }, 100);
+      }
+
+      return {
+        ...prev,
+        drafts: updatedDrafts
+      };
+    });
+
+    updateEntityAPI('drafts', draftId, {
+      gradingStatus: 'completed',
+      likesCount: likesCount || 0,
+      sharesCount: sharesCount || 0,
+      commentsCount: commentsCount || 0,
+      contentScore: contentScore || 0,
+      finalScore: finalScore || 0
+    }).catch(e => console.log(e));
+
     triggerConfetti();
   };
 
@@ -1115,6 +1158,8 @@ export const ClubProvider = ({ children }) => {
     const draftObj = {
       id: "draft-" + Math.floor(200 + Math.random() * 800),
       author: `${currentUser.name} (${currentUser.roleTitle})`,
+      authorId: currentUser.id,
+      author_id: currentUser.id,
       department: currentUser.department,
       createdAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
       status: 'pending',

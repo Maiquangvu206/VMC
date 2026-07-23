@@ -14,12 +14,15 @@ export const ToastContainer = ({ toasts, removeToast }) => {
 };
 
 const ToastItem = ({ toast, onRemove }) => {
+  const onRemoveRef = React.useRef(onRemove);
+  onRemoveRef.current = onRemove;
+
   useEffect(() => {
     const timer = setTimeout(() => {
-      onRemove();
+      onRemoveRef.current();
     }, toast.duration || 3000);
     return () => clearTimeout(timer);
-  }, [toast, onRemove]);
+  }, [toast.id, toast.duration]);
 
   const icons = {
     success: <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />,
