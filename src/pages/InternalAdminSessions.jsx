@@ -111,26 +111,6 @@ export const InternalAdminSessions = () => {
 
           <div className="flex items-center gap-2.5 w-full sm:w-auto">
             <button
-              onClick={() => setAutoRefresh(!autoRefresh)}
-              className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all border ${
-                autoRefresh 
-                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
-                  : 'bg-slate-800 text-slate-400 border-white/10'
-              }`}
-            >
-              <Activity className={`w-3.5 h-3.5 ${autoRefresh ? 'animate-pulse' : ''}`} />
-              <span>Tự động cập nhật (3s)</span>
-            </button>
-
-            <button
-              onClick={loadSqlSessions}
-              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white border border-white/10 transition-all"
-              title="Làm mới ngay"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
-
-            <button
               onClick={() => {
                 if (window.confirm('Bạn có chắc chắn muốn đăng xuất TẤT CẢ các phiên khác ngoại trừ phiên hiện tại?')) {
                   revokeAllSessions();
@@ -333,7 +313,7 @@ export const InternalAdminSessions = () => {
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
-                            <CheckCircle2 className="w-3 h-3" /> Mở (Chờ)
+                            <Clock className="w-3 h-3 text-slate-400" /> Đã Ngừng
                           </span>
                         )}
                       </td>

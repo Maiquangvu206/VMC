@@ -154,8 +154,17 @@ export const InternalHRDashboard = () => {
   const upcomingBirthdays = getUpcomingBirthdays();
 
   // Deadlines (Tasks mapped to members)
-  const getMemberTasks = (memberName) => {
-    return tasks.filter(t => t.assignee === memberName || t.assignee === 'Cả Ban');
+  const getMemberTasks = (m) => {
+    if (!tasks || !Array.isArray(tasks)) return [];
+    const name = typeof m === 'string' ? m : (m?.name || '');
+    const id = typeof m === 'object' ? m?.id : null;
+    return tasks.filter(t => 
+      (id && String(t.assigneeId) === String(id)) ||
+      t.assignee === name || 
+      t.assigneeName === name || 
+      (Array.isArray(t.assignees) && t.assignees.includes(name)) ||
+      t.assignee === 'Cả Ban'
+    );
   };
 
   const handleAddFinance = (e) => {
@@ -341,8 +350,8 @@ export const InternalHRDashboard = () => {
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredMembers.map((m) => {
-                const memberTasks = getMemberTasks(m.name);
+              {allHumanMembers.map((m) => {
+                const memberTasks = getMemberTasks(m);
                 if (memberTasks.length === 0) return null;
                 
                 const doingTasks = memberTasks.filter(t => t.status === 'doing' || t.status === 'todo');
