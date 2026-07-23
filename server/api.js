@@ -67,7 +67,10 @@ router.post('/tasks', async (req, res) => {
     // Gửi email thông báo cho người được giao nhiệm vụ
     if (assId) {
       try {
-        const assignees = await queryDatabase('SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? LIMIT 1', [assId, assId]);
+        const assignees = await queryDatabase(
+          'SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? OR full_name = ? OR username = ? LIMIT 1',
+          [assId, assId, assId, assId]
+        );
         if (assignees && assignees.length > 0 && assignees[0].email) {
           const assignee = assignees[0];
           await sendMailHelper(
@@ -249,6 +252,36 @@ router.put('/drafts/:id', async (req, res) => {
         req.params.id
       ]
     );
+    if (grId) {
+      try {
+        const graders = await queryDatabase(
+          'SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? OR full_name = ? OR username = ? LIMIT 1',
+          [grId, grId, grId, grId]
+        );
+        if (graders && graders.length > 0 && graders[0].email) {
+          const grader = graders[0];
+          await sendMailHelper(
+            grader.email,
+            `✍️ [VMC Draft] Bạn được phân công chấm tương tác bài viết!`,
+            `
+              <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; max-w-lg;">
+                <h3 style="color: #2563eb;">✍️ Phân Công Chấm Tương Tác Bài Viết</h3>
+                <p>Xin chào <strong>${grader.full_name}</strong>,</p>
+                <p>Bạn vừa được phân công làm người chấm tương tác cho một bài viết trên VMC Internal Portal.</p>
+                <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
+                <p><strong>Tiêu đề bài viết:</strong> <strong style="font-size: 15px; color: #1e293b;">${title || 'Bài viết Fanpage VMC'}</strong></p>
+                <p><strong>Nhiệm vụ:</strong> Kiểm tra số lượng Like/Share/Comment và chấm điểm tương tác cho bài viết.</p>
+                <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
+                <p style="font-size: 12px; color: #64748b;">Trân trọng,<br/><strong>Bộ Phận Kỹ Thuật - CLB Truyền Thông THPT Vĩnh Bảo (VMC)</strong></p>
+              </div>
+            `
+          ).catch(() => {});
+        }
+      } catch (mailErr) {
+        console.warn('⚠️ Lỗi gửi mail phân công chấm bài:', mailErr.message);
+      }
+    }
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -572,6 +605,43 @@ router.post('/meetings', async (req, res) => {
       'INSERT INTO Meetings (id, title, meeting_date, meeting_time, attendance_taker_id, minute_taker_id, status, minutes_link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [mtgId, title, date || new Date().toISOString().slice(0, 10), time || '08:00', attTaker, minTaker, status || 'pending', minutes_link || null]
     );
+
+    // Gửi email thông báo cho người phụ trách điểm danh & ghi biên bản
+    const sendMeetingRoleEmail = async (memberId, roleTitle) => {
+      if (!memberId) return;
+      try {
+        const rows = await queryDatabase(
+          'SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? OR full_name = ? OR username = ? LIMIT 1',
+          [memberId, memberId, memberId, memberId]
+        );
+        if (rows && rows.length > 0 && rows[0].email) {
+          const m = rows[0];
+          await sendMailHelper(
+            m.email,
+            `📌 [VMC Meeting] Bạn được phân công nhiệm vụ: ${roleTitle}!`,
+            `
+              <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; max-w-lg;">
+                <h3 style="color: #7c3aed;">📌 Phân Công Nhiệm Vụ Cuộc Họp CLB VMC</h3>
+                <p>Xin chào <strong>${m.full_name}</strong>,</p>
+                <p>Bạn vừa được phân công nhiệm vụ <strong>${roleTitle}</strong> cho buổi họp sắp tới trên hệ thống VMC Internal Portal.</p>
+                <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
+                <p><strong>Nội dung họp:</strong> <strong style="font-size: 15px; color: #1e293b;">${title}</strong></p>
+                <p><strong>Thời gian:</strong> ${time || '08:00'} ngày ${date || ''}</p>
+                <p><strong>Nhiệm vụ của bạn:</strong> <span style="color: #7c3aed; font-weight: bold;">${roleTitle}</span></p>
+                <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
+                <p style="font-size: 12px; color: #64748b;">Trân trọng,<br/><strong>Bộ Phận Kỹ Thuật - CLB Truyền Thông THPT Vĩnh Bảo (VMC)</strong></p>
+              </div>
+            `
+          );
+        }
+      } catch (e) {
+        console.warn('⚠️ Lỗi gửi email phân công cuộc họp:', e.message);
+      }
+    };
+
+    if (attTaker) await sendMeetingRoleEmail(attTaker, 'Phụ trách điểm danh cuộc họp');
+    if (minTaker && minTaker !== attTaker) await sendMeetingRoleEmail(minTaker, 'Ghi biên bản cuộc họp');
+
     res.json({ success: true, data: { id: mtgId, title, date, time, status, attendanceTakerId: attTaker, minuteTakerId: minTaker } });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -668,6 +738,36 @@ router.post('/birthday-assignments', async (req, res) => {
       'INSERT INTO Birthday_Assignments (id, assign_month, assign_year, member_id, link_image, status, submissions) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [bdayId, mMonth, mYear, memId, link || link_image || null, status || 'pending', subsStr]
     );
+
+    if (memId) {
+      try {
+        const assignees = await queryDatabase(
+          'SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? OR full_name = ? OR username = ? LIMIT 1',
+          [memId, memId, memId, memId]
+        );
+        if (assignees && assignees.length > 0 && assignees[0].email) {
+          const assignee = assignees[0];
+          await sendMailHelper(
+            assignee.email,
+            `🎂 [VMC Birthday] Bạn được phân công trực mừng sinh nhật tháng ${mMonth}/${mYear}!`,
+            `
+              <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; max-w-lg;">
+                <h3 style="color: #ec4899;">🎂 Phân Công Trực Mừng Sinh Nhật</h3>
+                <p>Xin chào <strong>${assignee.full_name}</strong>,</p>
+                <p>Bạn đã được phân công trực phụ trách chúc mừng sinh nhật thành viên trong <strong>Tháng ${mMonth}/${mYear}</strong>.</p>
+                <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
+                <p><strong>Nhiệm vụ:</strong> Soạn lời chúc và đăng/nộp ảnh chúc mừng sinh nhật cho các thành viên có sinh nhật trong tháng ${mMonth}.</p>
+                <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
+                <p style="font-size: 12px; color: #64748b;">Trân trọng,<br/><strong>Ban Đối Ngoại - Nhân Sự (VMC)</strong></p>
+              </div>
+            `
+          );
+        }
+      } catch (mailErr) {
+        console.warn('⚠️ Lỗi gửi mail phân công sinh nhật:', mailErr.message);
+      }
+    }
+
     res.json({ success: true, data: { id: bdayId, month: mMonth, year: mYear, memberId: memId, status, submissions: submissions || {} } });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
