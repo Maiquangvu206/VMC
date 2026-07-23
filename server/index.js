@@ -13,7 +13,14 @@ import cors from 'cors';
 import { queryDatabase } from './db.js';
 import nodemailer from 'nodemailer';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import apiRouter from './api.js';
+
+const hashPassword = (pwd) => {
+  if (!pwd) return pwd;
+  if (/^[a-f0-9]{64}$/i.test(pwd)) return pwd;
+  return crypto.createHash('sha256').update(pwd).digest('hex');
+};
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -154,7 +161,6 @@ queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN excuse_status VARCHAR
 queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN is_penalized TINYINT DEFAULT 0').catch(() => {});
 queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN wishes_template TEXT').catch(() => {});
 
-// Tự động khởi tạo bảng Resources (Tài nguyên CLB)
 queryDatabase(`
   CREATE TABLE IF NOT EXISTS Resources (
     id VARCHAR(100) PRIMARY KEY,
@@ -166,6 +172,20 @@ queryDatabase(`
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )
 `).catch(err => console.log('ℹ️ CSDL status Resources table:', err.message));
+
+// Tự động khởi tạo bảng Finances (Quản lý thu chi)
+queryDatabase(`
+  CREATE TABLE IF NOT EXISTS Finances (
+    id VARCHAR(100) PRIMARY KEY,
+    type VARCHAR(50) NOT NULL,
+    amount INT NOT NULL,
+    description TEXT,
+    date VARCHAR(50),
+    logged_by VARCHAR(255),
+    status VARCHAR(50) DEFAULT 'approved',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`).catch(err => console.log('ℹ️ CSDL status Finances table:', err.message));
 
 // Tự động khởi tạo bảng Department_Drives (Drive Ban Chuyên Môn)
 queryDatabase(`
@@ -250,11 +270,12 @@ app.post('/api/members/reset-password', async (req, res) => {
   try {
     const { memberId, email, name, defaultPassword } = req.body;
     const pwd = defaultPassword || 'VMC2026@VinhBao';
+    const hashedPwd = hashPassword(pwd);
 
     // 1. Cập nhật CSDL: Mật khẩu mặc định và đánh dấu is_first_login = 1
     await queryDatabase(
       'UPDATE Members SET password = ?, is_first_login = 1 WHERE id = ? OR member_code = ? OR username = ?',
-      [pwd, String(memberId || ''), String(memberId || ''), String(memberId || '')]
+      [hashedPwd, String(memberId || ''), String(memberId || ''), String(memberId || '')]
     );
 
     // 2. Gửi email thông báo tự động nếu thành viên có email
@@ -343,10 +364,20 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ success: false, message: 'Mã Thành Viên hoặc Mật khẩu không chính xác!' });
     }
 
+    const user = rows[0];
+    const hashedInputPwd = hashPassword(password);
+    if (user.password && user.password !== password && user.password !== hashedInputPwd) {
+      attemptInfo.count += 1;
+      if (attemptInfo.count >= 5) {
+        attemptInfo.lockUntil = now + 15 * 60 * 1000; // Khóa 15 phút
+      }
+      failedLoginTracker.set(ip, attemptInfo);
+      return res.status(401).json({ success: false, message: 'Mã Thành Viên hoặc Mật khẩu không chính xác!' });
+    }
+
     // Reset tracker on successful login
     failedLoginTracker.delete(ip);
 
-    const user = rows[0];
     if (user.status === 'Suspended') {
       return res.status(403).json({ success: false, message: 'Tài khoản này đã bị tạm khóa bởi Bộ Phận Kỹ Thuật!' });
     }
@@ -527,7 +558,7 @@ app.put('/api/members/:id', async (req, res) => {
       avatar_url !== undefined ? avatar_url : null,
       avatar !== undefined ? avatar : null,
       status !== undefined ? status : null,
-      password !== undefined ? password : null,
+      password !== undefined ? hashPassword(password) : null,
       isFirstLoginVal,
       milestonesVal,
       id, id, id
@@ -603,7 +634,7 @@ app.post('/api/members/create', async (req, res) => {
     const result = await queryDatabase(sql, [
       member_code,
       username || member_code.toLowerCase(),
-      password || 'VMC2026@VinhBao',
+      hashPassword(password || member_code),
       full_name,
       role || 'member',
       role_title || 'Thành Viên VMC',

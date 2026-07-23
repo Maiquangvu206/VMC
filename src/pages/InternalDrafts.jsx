@@ -327,12 +327,14 @@ export const InternalDrafts = () => {
                   onChange={e => setScheduleForm({ ...scheduleForm, graderId: e.target.value })}
                   className="input-field w-full"
                 >
-                  <option value="">-- Chọn thành viên phụ trách --</option>
+                  <option value="">-- Chọn thành viên Ban Đối Ngoại - Nhân Sự --</option>
                   {members.filter(m => {
-                    const isSystemAdmin = m.roleTitle?.includes('Super Admin') || m.role === 'admin' || m.memberCode === 'ADMIN' || m.name?.includes('Quản Trị Viên') || m.name?.includes('Super Admin');
-                    return !isSystemAdmin && m.status !== 'Suspended';
+                    const isSystemAdmin = m.roleTitle?.includes('Super Admin') || m.role === 'admin' || m.memberCode === 'ADMIN';
+                    const dept = (m.deptName || m.department || '').toLowerCase();
+                    const isHRExternal = dept.includes('đối ngoại') || dept.includes('nhân sự') || dept.includes('đn-ns') || dept.includes('dn-ns') || dept.includes('hr_external');
+                    return !isSystemAdmin && isHRExternal && m.status !== 'Suspended';
                   }).map(m => (
-                    <option key={m.id} value={m.id}>{m.name} ({m.deptName})</option>
+                    <option key={m.id} value={m.id}>{m.name} ({m.roleTitle || 'Thành Viên'})</option>
                   ))}
                 </select>
                 <p className="text-[10px] text-amber-400 mt-2">
@@ -352,93 +354,130 @@ export const InternalDrafts = () => {
           </div>
         </div>
       )}
-      {/* Grading Modal */}
+
+      {/* Grading Modal - Per Member Checklist (+1/-1) */}
       {gradingDraftId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
-          <div className="relative w-full max-w-md bg-slate-900 border border-blue-500/40 rounded-3xl p-6 shadow-2xl text-white space-y-4">
-            <div className="flex justify-between items-center border-b border-white/10 pb-3">
-              <h3 className="font-heading font-bold text-lg text-blue-400">Chấm Điểm Bài Viết Fanpage</h3>
+          <div className="relative w-full max-w-3xl bg-slate-900 border border-blue-500/40 rounded-3xl p-6 shadow-2xl text-white space-y-4 max-h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center border-b border-white/10 pb-3 shrink-0">
+              <div>
+                <h3 className="font-heading font-bold text-lg text-blue-400 flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-blue-400" /> Chấm Điểm Tương Tác Từng Thành Viên
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">Tích chọn các tiêu chí tương tác bài viết cho mỗi thành viên trong CLB.</p>
+              </div>
               <button onClick={() => setGradingDraftId(null)} className="text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveGrading} className="space-y-4">
-              <div className="bg-slate-950/50 p-3 rounded-xl border border-white/5 space-y-1.5 text-[11px] text-slate-400 font-mono">
-                <div className="font-bold text-slate-300">Công thức tính điểm (Thang 100):</div>
-                <div>• Lượt Thích / Cảm xúc: 1 điểm/like (Tối đa 30đ)</div>
-                <div>• Lượt Chia sẻ: 3 điểm/share (Tối đa 30đ)</div>
-                <div>• Lượt Bình luận: 2 điểm/comment (Tối đa 20đ)</div>
-                <div>• Đánh giá Nội dung & Thiết kế: Tối đa 20đ</div>
+            {/* Criteria Legend */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-950/60 p-3 rounded-xl border border-white/5 text-[11px] text-slate-300 shrink-0">
+              <div className="space-y-1">
+                <div className="font-bold text-emerald-400">➕ Điểm Cộng (+1đ mỗi mục):</div>
+                <div>• +1đ: Share bài viết mới trên page</div>
+                <div>• +1đ: Thả cảm xúc bài viết mới trên page</div>
+                <div>• +1đ: Tối thiểu 3 comment bài viết mới trên page</div>
               </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">Lượt Thích (Reactions)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    required
-                    value={gradingForm.likes}
-                    onChange={e => setGradingForm({ ...gradingForm, likes: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">Lượt Chia sẻ (Shares)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    required
-                    value={gradingForm.shares}
-                    onChange={e => setGradingForm({ ...gradingForm, shares: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
-                  />
-                </div>
+              <div className="space-y-1">
+                <div className="font-bold text-rose-400">➖ Điểm Trừ (-1đ nếu không đạt):</div>
+                <div>• -1đ: Không share bài viết / share kín</div>
+                <div>• -1đ: Không reaction bài viết mới</div>
+                <div>• -1đ: Không comment đủ số lượng (dưới 3)</div>
               </div>
+            </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">Lượt Bình luận (Comments)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    required
-                    value={gradingForm.comments}
-                    onChange={e => setGradingForm({ ...gradingForm, comments: parseInt(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-300 mb-1">Điểm Nội dung (Tối đa 20)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="20"
-                    required
-                    value={gradingForm.contentScore}
-                    onChange={e => setGradingForm({ ...gradingForm, contentScore: Math.min(20, Math.max(0, parseInt(e.target.value) || 0)) })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
-                  />
-                </div>
+            {/* Batch Controls */}
+            <div className="flex items-center justify-between gap-2 py-1 border-b border-white/10 text-xs shrink-0">
+              <span className="font-semibold text-slate-300 flex items-center gap-1.5">
+                <Users className="w-4 h-4 text-cyan-400" /> Danh Sách Thành Viên ({activeMembers.length})
+              </span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => toggleAllForCriteria('shared')}
+                  className="px-2.5 py-1 rounded-lg bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 text-[10px] font-bold border border-blue-500/30"
+                >
+                  <Share2 className="w-3 h-3 inline mr-1" /> Chọn tất cả Share
+                </button>
+                <button
+                  type="button"
+                  onClick={() => toggleAllForCriteria('reacted')}
+                  className="px-2.5 py-1 rounded-lg bg-pink-500/20 text-pink-300 hover:bg-pink-500/30 text-[10px] font-bold border border-pink-500/30"
+                >
+                  <ThumbsUp className="w-3 h-3 inline mr-1" /> Chọn tất cả Thích
+                </button>
+                <button
+                  type="button"
+                  onClick={() => toggleAllForCriteria('commented')}
+                  className="px-2.5 py-1 rounded-lg bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 text-[10px] font-bold border border-purple-500/30"
+                >
+                  <MessageSquare className="w-3 h-3 inline mr-1" /> Chọn tất cả 3 Cmt
+                </button>
               </div>
+            </div>
 
-              <div className="border-t border-white/10 pt-3 flex items-center justify-between">
-                <div>
-                  <div className="text-[11px] text-slate-400">Tổng điểm tích lũy:</div>
-                  <div className="text-xl font-extrabold text-cyan-400">
-                    {Math.min(100, Math.min(30, gradingForm.likes) + Math.min(30, gradingForm.shares * 3) + Math.min(20, gradingForm.comments * 2) + gradingForm.contentScore)} / 100
+            {/* Member List */}
+            <form onSubmit={handleSaveGrading} className="flex-1 overflow-y-auto pr-1 space-y-2 custom-scrollbar">
+              {activeMembers.map(m => {
+                const g = memberGrades[m.id] || { shared: false, reacted: false, commented: false };
+                const score = getMemberScore(m.id);
+                return (
+                  <div key={m.id} className="p-3 bg-slate-950 rounded-xl border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-slate-700 transition-colors">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-7 h-7 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-xs shrink-0 border border-blue-500/30">
+                        {m.name.charAt(0)}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-bold text-xs text-white truncate">{m.name}</div>
+                        <div className="text-[10px] text-slate-400">{m.deptName || m.department || 'Ban Chuyên Môn'}</div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3 shrink-0 justify-between sm:justify-end">
+                      <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-slate-300 hover:text-white">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(g.shared)}
+                          onChange={() => toggleMemberCriteria(m.id, 'shared')}
+                          className="rounded border-slate-700 bg-slate-900 text-blue-500 focus:ring-0"
+                        />
+                        <span>Share (+1/ -1)</span>
+                      </label>
+
+                      <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-slate-300 hover:text-white">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(g.reacted)}
+                          onChange={() => toggleMemberCriteria(m.id, 'reacted')}
+                          className="rounded border-slate-700 bg-slate-900 text-pink-500 focus:ring-0"
+                        />
+                        <span>Thả tim (+1/ -1)</span>
+                      </label>
+
+                      <label className="flex items-center gap-1.5 cursor-pointer text-[11px] text-slate-300 hover:text-white">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(g.commented)}
+                          onChange={() => toggleMemberCriteria(m.id, 'commented')}
+                          className="rounded border-slate-700 bg-slate-900 text-purple-500 focus:ring-0"
+                        />
+                        <span>≥ 3 Cmt (+1/ -1)</span>
+                      </label>
+
+                      <div className={`font-mono font-bold text-xs px-2 py-0.5 rounded-md min-w-[50px] text-center ${
+                        score > 0 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 
+                        score < 0 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 
+                        'bg-slate-800 text-slate-400'
+                      }`}>
+                        {score > 0 ? `+${score}đ` : `${score}đ`}
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-[11px] text-slate-400">Điểm cộng cho tác giả:</div>
-                  <div className="text-sm font-bold text-emerald-400">
-                    +{Math.max(5, Math.round(Math.min(100, Math.min(30, gradingForm.likes) + Math.min(30, gradingForm.shares * 3) + Math.min(20, gradingForm.comments * 2) + gradingForm.contentScore) / 10))} điểm
-                  </div>
-                </div>
-              </div>
+                );
+              })}
 
-              <div className="pt-2 flex justify-end gap-2">
+              <div className="pt-3 border-t border-white/10 flex justify-end gap-2 shrink-0">
                 <button type="button" onClick={() => setGradingDraftId(null)} className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">
                   Hủy
                 </button>

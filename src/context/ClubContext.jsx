@@ -106,14 +106,12 @@ export const ClubProvider = ({ children }) => {
 
   const logoutMember = () => {
     try {
-      const sessionId = sessionStorage.getItem('VMC_SESSION_ID');
-      if (sessionId) {
-        fetch('/api/sessions/logout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId })
-        }).catch(() => {});
-      }
+      const sessionId = sessionStorage.getItem('VMC_SESSION_ID') || currentSessionId;
+      fetch('/api/sessions/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, memberId: currentUser?.id, username: currentUser?.username || currentUser?.memberCode })
+      }).catch(() => {});
       sessionStorage.removeItem('VMC_IS_AUTH');
       sessionStorage.removeItem('VMC_CURRENT_USER');
       sessionStorage.removeItem('VMC_SESSION_ID');
@@ -235,12 +233,13 @@ export const ClubProvider = ({ children }) => {
           });
 
           setDb(prev => {
+            const currentMembers = mergedMembers.length > 0 ? mergedMembers : (prev.members || []);
             const normalizedTasks = Array.isArray(serverTasks)
-              ? serverTasks.map(st => normalizeServerTask(st, (prev.tasks || []).find(t => t.id === st.id)))
+              ? serverTasks.map(st => normalizeServerTask(st, (prev.tasks || []).find(t => t.id === st.id), currentMembers))
               : prev.tasks;
             const updated = {
               ...prev,
-              members: mergedMembers.length > 0 ? mergedMembers : prev.members,
+              members: currentMembers,
               tasks: normalizedTasks,
               drafts: Array.isArray(serverDrafts) ? serverDrafts : prev.drafts,
               equipment: Array.isArray(serverEquipment) ? serverEquipment : prev.equipment,
@@ -308,17 +307,18 @@ export const ClubProvider = ({ children }) => {
     return text.split(/\r?\n/)[0] || text;
   };
 
-  const findMemberById = (memberId) => {
+  const findMemberById = (memberId, membersList) => {
     if (!memberId) return null;
-    return (db.members || []).find(m =>
+    const list = (membersList && membersList.length > 0) ? membersList : (db.members || []);
+    return list.find(m =>
       String(m.id) === String(memberId) ||
       String(m.memberCode) === String(memberId) ||
       String(m.username) === String(memberId)
     );
   };
 
-  const getMemberNameById = (memberId) => {
-    const member = findMemberById(memberId);
+  const getMemberNameById = (memberId, membersList) => {
+    const member = findMemberById(memberId, membersList);
     return member?.name || member?.full_name || member?.memberCode || '';
   };
 
@@ -335,14 +335,25 @@ export const ClubProvider = ({ children }) => {
     }) || (db.members || []).find(m => m.role === 'admin' || m.memberCode === 'ADMIN');
   };
 
-  const normalizeServerTask = (task, localTask = {}) => {
+  const normalizeServerTask = (task, localTask = {}, membersList = []) => {
+    const assId = task.assigneeId || task.assignee_id || localTask.assigneeId;
+    const resolvedName = getMemberNameById(assId, membersList);
+    
+    let assigneeName = task.assignee || localTask.assignee;
+    if (resolvedName && resolvedName !== '') {
+      assigneeName = resolvedName;
+    } else if (!assigneeName || assigneeName === 'Chưa phân công') {
+      assigneeName = 'Chưa phân công';
+    }
+
     return {
       ...task,
       department: task.department || localTask.department || 'hr_external',
-      desc: localTask.desc ?? task.description ?? '',
-      assignee: (localTask.assignee ?? getMemberNameById(task.assigneeId)) || task.assignee || 'Chưa phân công',
+      desc: task.description || task.desc || localTask.desc || '',
+      assigneeId: assId,
+      assignee: assigneeName,
       pointsReward: task.pointsReward ?? task.points_reward ?? localTask.pointsReward ?? 10,
-      status: task.status || 'todo',
+      status: task.status || localTask.status || 'todo',
       deadline: task.deadline || localTask.deadline || ''
     };
   };
@@ -625,19 +636,16 @@ export const ClubProvider = ({ children }) => {
     }
   };
 
-  // Logout — marks session inactive in DB then resets state
   const logout = async () => {
-    const sessionId = sessionStorage.getItem('VMC_SESSION_ID');
-    if (sessionId) {
-      try {
-        await fetch('/api/sessions/logout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId })
-        });
-      } catch (e) {
-        console.warn('⚠️ Không thể cập nhật trạng thái phiên khi đăng xuất:', e.message);
-      }
+    const sessionId = sessionStorage.getItem('VMC_SESSION_ID') || currentSessionId;
+    try {
+      await fetch('/api/sessions/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, memberId: currentUser?.id, username: currentUser?.username || currentUser?.memberCode })
+      });
+    } catch (e) {
+      console.warn('⚠️ Không thể cập nhật trạng thái phiên khi đăng xuất:', e.message);
     }
     sessionStorage.removeItem('VMC_SESSION_ID');
     setIsAuthenticated(false);
@@ -882,7 +890,8 @@ export const ClubProvider = ({ children }) => {
     const accountObj = {
       id: "vmc-acc-" + Math.floor(100 + Math.random() * 900),
       memberCode: generatedCode,
-      password: "VMC2026@VinhBao",
+      password: generatedCode,
+      term: newAcc.term || newAcc.generation || 'Gen 6 (2025-2026)',
       isFirstLogin: true,
       avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=400",
       points: 100,
@@ -913,42 +922,50 @@ export const ClubProvider = ({ children }) => {
     }));
 
     triggerConfetti();
-    showToast(`🎉 Đã cấp thành công tài khoản mới vào CSDL MySQL!\nMã Thành Viên: ${generatedCode}\nMật khẩu: VMC2026@VinhBao`, 'success');
+    showToast(`🎉 Thành viên ${accountObj.name || accountObj.full_name} đã được cấp tài khoản với mã thành viên ${generatedCode}`, 'success');
     return true;
   };
 
   // Reset password by Admin (SUPER ADMIN & TRƯỞNG BAN ĐỐI NGOẠI - NHÂN SỰ ONLY)
   const resetAccountPassword = async (username) => {
     if (!canManageAccounts) {
-      showToast('⛔ Quyền bị từ chối! Chỉ có Super Admin (Chủ Nhiệm CLB) và Trưởng Ban Đối Ngoại - Nhân Sự mới có quyền cấp / reset mật khẩu tài khoản!', 'error');
+      showToast('⛔ Quyền bị từ chối! Chỉ có Super Admin (Chủ Nhiệm CLB) và Trưởng Ban Đối Ngoại - Nhân Sự mới có quyền đặt lại mật khẩu thành viên!', 'error');
       return false;
     }
 
-    const targetMem = db.members.find(m => m.username === username || m.memberCode === username);
-    if (targetMem) {
-      await updateMemberAPI(targetMem.id || targetMem.memberCode, {
-        password: "VMC2026@VinhBao",
-        isFirstLogin: true,
-        is_first_login: 1,
-        name: targetMem.name
+    const member = db.members.find(m => m.username === username || m.memberCode === username || m.id === username);
+    if (!member) return false;
+
+    const defaultPwd = member.memberCode || 'VMC2026@VinhBao';
+
+    try {
+      await fetch('/api/members/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          memberId: member.id,
+          email: member.email,
+          name: member.name,
+          defaultPassword: defaultPwd
+        })
       });
+    } catch (e) {
+      console.warn('⚠️ Lỗi kết nối API reset password:', e.message);
     }
 
-    const freshMembers = await fetchMembersFromDatabaseAPI();
-    if (freshMembers && Array.isArray(freshMembers) && freshMembers.length > 0) {
-      setDb(prev => {
-        const mergedMembers = freshMembers.map(serverMem => {
-          const localMem = (prev.members || []).find(m => m.id === serverMem.id) || {};
-          return { ...localMem, ...serverMem };
-        });
-        const updated = { ...prev, members: mergedMembers };
-        saveDatabaseToStorage(updated);
-        return updated;
-      });
-    }
+    updateDb(prev => ({
+      ...prev,
+      members: prev.members.map(m => m.id === member.id ? { ...m, password: defaultPwd, isFirstLogin: true } : m)
+    }));
 
-    showToast(`🎉 Đã reset lại Mật khẩu khởi tạo (VMC2026@VinhBao) cho tài khoản [${username}] trong CSDL MySQL!`, 'success');
+    showToast(`🔑 Đã đặt lại mật khẩu cho ${member.name} về mã thành viên (${defaultPwd}) thành công!`, 'success');
     return true;
+  };
+
+  const resetMemberPassword = async (memberId) => {
+    const member = db.members.find(m => m.id === memberId || m.memberCode === memberId);
+    if (!member) return false;
+    return resetAccountPassword(member.username || member.memberCode || member.id);
   };
 
   // Delete Member Account (SUPER ADMIN & TRƯỞNG BAN ĐỐI NGOẠI - NHÂN SỰ ONLY)
@@ -993,8 +1010,9 @@ export const ClubProvider = ({ children }) => {
 
     const newMilestone = {
       id: 'm-' + Date.now(),
+      memberId: member.id,
       date: new Date().toLocaleDateString('vi-VN'),
-      title: newStatus === 'Suspended' ? 'Đã dừng hoạt động (Bị khóa)' : 'Tiếp tục hoạt động (Đã mở khóa)',
+      title: newStatus === 'Suspended' ? 'Đã dừng hoạt động (Bị khóa bởi Admin)' : 'Tiếp tục hoạt động (Đã mở khóa)',
       badgeText: newStatus === 'Suspended' ? '[Dừng hoạt động]' : '[Đang hoạt động]',
       badgeStyle: newStatus === 'Suspended' ? 'bg-rose-500/10 text-rose-400 border-rose-500/30' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
     };

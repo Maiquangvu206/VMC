@@ -59,19 +59,14 @@ export const InternalAdminSessions = () => {
     );
   }
 
-  // Calculate session metrics
+  // Calculate session metrics for 3 distinct statuses
   const now = new Date();
   const activeSessions = sessions.filter(s => Number(s.is_active) === 1);
-  const onlineNow = activeSessions.filter(s => {
-    if (!s.last_active) return false;
-    const lastActive = new Date(s.last_active);
-    const diffMins = (now - lastActive) / (1000 * 60);
-    return diffMins <= 5;
-  });
+  const endedSessions = sessions.filter(s => Number(s.is_active) === 0 && s.logout_reason !== 'revoked');
+  const revokedSessions = sessions.filter(s => Number(s.is_active) === 0 && s.logout_reason === 'revoked');
 
   const mobileCount = activeSessions.filter(s => (s.device_type || '').toLowerCase().includes('mobile')).length;
   const desktopCount = activeSessions.length - mobileCount;
-  const revokedCount = sessions.filter(s => Number(s.is_active) === 0).length;
 
   const filteredSessions = sessions.filter(s => {
     const matchesSearch = 
@@ -81,8 +76,9 @@ export const InternalAdminSessions = () => {
 
     if (!matchesSearch) return false;
 
-    if (statusFilter === 'online') return Number(s.is_active) === 1;
-    if (statusFilter === 'revoked') return Number(s.is_active) === 0;
+    if (statusFilter === 'active') return Number(s.is_active) === 1;
+    if (statusFilter === 'ended') return Number(s.is_active) === 0 && s.logout_reason !== 'revoked';
+    if (statusFilter === 'revoked') return Number(s.is_active) === 0 && s.logout_reason === 'revoked';
     return true;
   });
 
@@ -125,32 +121,41 @@ export const InternalAdminSessions = () => {
         </div>
       </div>
 
-      {/* Analytics Metric Cards */}
+      {/* Analytics Metric Cards - 3 Distinct Statuses */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="glass-panel p-4 rounded-2xl border border-emerald-500/30 bg-slate-900/60">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
-            <span>Đang Online Thực Tế</span>
+            <span>Đang Hoạt Động</span>
             <Wifi className="w-4 h-4 text-emerald-400 animate-pulse" />
           </div>
-          <div className="text-2xl font-black text-emerald-400 font-mono">{onlineNow.length}</div>
-          <div className="text-[10px] text-slate-400 mt-1">Hoạt động trong 5 phút qua</div>
+          <div className="text-2xl font-black text-emerald-400 font-mono">{activeSessions.length}</div>
+          <div className="text-[10px] text-slate-400 mt-1">Phiên đang kết nối thực tế</div>
         </div>
 
-        <div className="glass-panel p-4 rounded-2xl border border-cyan-500/30 bg-slate-900/60">
+        <div className="glass-panel p-4 rounded-2xl border border-slate-700 bg-slate-900/60">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
-            <span>Tổng Phiên Hoạt Động</span>
-            <UserCheck className="w-4 h-4 text-cyan-400" />
+            <span>Kết Thúc Phiên</span>
+            <Clock className="w-4 h-4 text-slate-400" />
           </div>
-          <div className="text-2xl font-black text-cyan-300 font-mono">{activeSessions.length}</div>
-          <div className="text-[10px] text-slate-400 mt-1">Trạng thái phiên đang mở</div>
+          <div className="text-2xl font-black text-slate-300 font-mono">{endedSessions.length}</div>
+          <div className="text-[10px] text-slate-400 mt-1">Tự đăng xuất hoặc hết hạn</div>
+        </div>
+
+        <div className="glass-panel p-4 rounded-2xl border border-rose-500/30 bg-slate-900/60">
+          <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
+            <span>Bị Hủy</span>
+            <XCircle className="w-4 h-4 text-rose-400" />
+          </div>
+          <div className="text-2xl font-black text-rose-400 font-mono">{revokedSessions.length}</div>
+          <div className="text-[10px] text-slate-400 mt-1">Admin cưỡng chế thu hồi</div>
         </div>
 
         <div className="glass-panel p-4 rounded-2xl border border-purple-500/30 bg-slate-900/60">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
-            <span>Tỷ Lệ Thiết Bị</span>
+            <span>Thiết Bị</span>
             <Monitor className="w-4 h-4 text-purple-400" />
           </div>
-          <div className="text-base font-bold text-white flex items-center gap-3">
+          <div className="text-base font-bold text-white flex items-center gap-3 mt-1">
             <span className="flex items-center gap-1 text-xs text-purple-300 font-mono">
               <Monitor className="w-3.5 h-3.5" /> {desktopCount} PC
             </span>
@@ -158,20 +163,11 @@ export const InternalAdminSessions = () => {
               <Smartphone className="w-3.5 h-3.5" /> {mobileCount} Mobile
             </span>
           </div>
-          <div className="text-[10px] text-slate-400 mt-1">Máy tính vs Điện thoại</div>
-        </div>
-
-        <div className="glass-panel p-4 rounded-2xl border border-rose-500/30 bg-slate-900/60">
-          <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
-            <span>Phiên Đã Hủy</span>
-            <XCircle className="w-4 h-4 text-rose-400" />
-          </div>
-          <div className="text-2xl font-black text-rose-400 font-mono">{revokedCount}</div>
-          <div className="text-[10px] text-slate-400 mt-1">Đã bị cưỡng chế đăng xuất</div>
+          <div className="text-[10px] text-slate-400 mt-1">Máy tính / Điện thoại</div>
         </div>
       </div>
 
-      {/* Filter & Search Bar */}
+      {/* Filter & Search Bar - 3 Status Filters */}
       <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-900 p-4 rounded-2xl border border-slate-800">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
@@ -184,31 +180,39 @@ export const InternalAdminSessions = () => {
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-          <span className="text-xs text-slate-400">Lọc theo:</span>
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end overflow-x-auto">
+          <span className="text-xs text-slate-400 shrink-0">Lọc:</span>
           <button
             onClick={() => setStatusFilter('all')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
               statusFilter === 'all' ? 'bg-cyan-600 text-white' : 'bg-slate-950 text-slate-400 hover:text-white'
             }`}
           >
             Tất Cả ({sessions.length})
           </button>
           <button
-            onClick={() => setStatusFilter('online')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              statusFilter === 'online' ? 'bg-emerald-600 text-white' : 'bg-slate-950 text-slate-400 hover:text-white'
+            onClick={() => setStatusFilter('active')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
+              statusFilter === 'active' ? 'bg-emerald-600 text-white' : 'bg-slate-950 text-slate-400 hover:text-white'
             }`}
           >
-            Đang Hoạt Động ({activeSessions.length})
+            🟢 Đang Hoạt Động ({activeSessions.length})
+          </button>
+          <button
+            onClick={() => setStatusFilter('ended')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
+              statusFilter === 'ended' ? 'bg-slate-700 text-white' : 'bg-slate-950 text-slate-400 hover:text-white'
+            }`}
+          >
+            ⏸️ Kết Thúc Phiên ({endedSessions.length})
           </button>
           <button
             onClick={() => setStatusFilter('revoked')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
               statusFilter === 'revoked' ? 'bg-rose-600 text-white' : 'bg-slate-950 text-slate-400 hover:text-white'
             }`}
           >
-            Đã Hủy ({revokedCount})
+            🔴 Bị Hủy ({revokedSessions.length})
           </button>
         </div>
       </div>
@@ -309,25 +313,17 @@ export const InternalAdminSessions = () => {
 
                       <td className="px-4 py-3.5 text-center">
                         {isActive ? (
-                          isRecent ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 animate-pulse">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Đang Online
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
-                              <Clock className="w-3 h-3 text-slate-400" /> Ngưng
-                            </span>
-                          )
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Đang Hoạt Động
+                          </span>
+                        ) : s.logout_reason === 'revoked' ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                            <XCircle className="w-3 h-3" /> Bị Hủy
+                          </span>
                         ) : (
-                          s.logout_reason === 'revoked' ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
-                              <XCircle className="w-3 h-3" /> Đã Hủy
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
-                              <Clock className="w-3 h-3 text-slate-400" /> Ngưng
-                            </span>
-                          )
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                            <Clock className="w-3 h-3 text-slate-400" /> Kết Thúc Phiên
+                          </span>
                         )}
                       </td>
 

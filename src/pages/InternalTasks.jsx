@@ -69,6 +69,18 @@ export const InternalTasks = () => {
     return dl < now;
   };
 
+  const getTaskAssignee = (task) => {
+    if (task.assignee && task.assignee !== 'Chưa phân công' && task.assignee !== 'Thành viên còn thiếu') {
+      return task.assignee;
+    }
+    const assId = task.assigneeId || task.assignee_id;
+    if (assId) {
+      const match = members.find(m => String(m.id) === String(assId) || String(m.memberCode) === String(assId));
+      if (match) return match.name || match.full_name;
+    }
+    return task.assignee || 'Chưa phân công';
+  };
+
   const getDeptBadge = (deptId) => {
     switch(deptId) {
       case 'bcn': return { label: 'BAN CHỦ NHIỆM', class: 'badge-pink' };
@@ -165,7 +177,7 @@ export const InternalTasks = () => {
                   <p className="text-xs text-slate-400 line-clamp-2">{task.desc}</p>
 
                   <div className="pt-2 border-t border-white/10 flex items-center justify-between text-xs">
-                    <span className="text-slate-300 font-semibold">{task.assignee}</span>
+                    <span className="text-slate-300 font-semibold">{getTaskAssignee(task)}</span>
                     <button
                       onClick={() => updateTaskStatus(task.id, 'doing')}
                       className="px-3 py-1 bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white rounded-lg text-[11px] font-semibold transition-all"
@@ -212,7 +224,7 @@ export const InternalTasks = () => {
                   <p className="text-xs text-slate-400 line-clamp-2">{task.desc}</p>
 
                   <div className="pt-2 border-t border-white/10 flex items-center justify-between text-xs">
-                    <span className="text-slate-300 font-semibold">{task.assignee}</span>
+                    <span className="text-slate-300 font-semibold">{getTaskAssignee(task)}</span>
                     <button
                       onClick={() => updateTaskStatus(task.id, 'done')}
                       className="px-3 py-1 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded-lg text-[11px] font-semibold transition-all"
@@ -249,7 +261,7 @@ export const InternalTasks = () => {
                   <p className="text-xs text-slate-400 line-clamp-1">{task.desc}</p>
 
                   <div className="pt-2 border-t border-white/10 text-xs text-slate-400">
-                    Phụ trách: {task.assignee}
+                    Phụ trách: {getTaskAssignee(task)}
                   </div>
                 </div>
               );

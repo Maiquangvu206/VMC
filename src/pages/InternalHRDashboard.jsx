@@ -374,14 +374,29 @@ export const InternalHRDashboard = () => {
                     
                     <div className="space-y-2">
                       <div className="text-xs font-semibold text-slate-400">Đang thực hiện ({doingTasks.length})</div>
-                      {doingTasks.length > 0 ? doingTasks.map(t => (
-                        <div key={t.id} className="flex justify-between items-center bg-slate-900 rounded-lg p-2 border border-amber-500/20">
-                          <div className="text-xs text-slate-300 truncate pr-2 max-w-[70%]">{t.title}</div>
-                          <div className="text-[10px] text-amber-400 font-mono whitespace-nowrap flex items-center gap-1">
-                            <Clock className="w-3 h-3" /> {t.deadline}
+                      {doingTasks.length > 0 ? doingTasks.map(t => {
+                        const isTaskOverdue = (() => {
+                          if (!t.deadline) return false;
+                          const n = new Date(); n.setHours(0, 0, 0, 0);
+                          const d = new Date(t.deadline); d.setHours(0, 0, 0, 0);
+                          return d < n;
+                        })();
+                        return (
+                          <div key={t.id} className={`flex justify-between items-center rounded-lg p-2 border ${isTaskOverdue ? 'bg-rose-950/30 border-rose-500/50' : 'bg-slate-900 border-amber-500/20'}`}>
+                            <div className="text-xs text-slate-300 truncate pr-2 max-w-[65%] flex items-center gap-1.5">
+                              {isTaskOverdue && (
+                                <span className="px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-400 text-[9px] font-bold border border-rose-500/30 animate-pulse shrink-0">
+                                  ⚠ Quá hạn
+                                </span>
+                              )}
+                              <span className="truncate">{t.title}</span>
+                            </div>
+                            <div className={`text-[10px] font-mono whitespace-nowrap flex items-center gap-1 ${isTaskOverdue ? 'text-rose-400 font-bold' : 'text-amber-400'}`}>
+                              <Clock className="w-3 h-3" /> {t.deadline}
+                            </div>
                           </div>
-                        </div>
-                      )) : (
+                        );
+                      }) : (
                         <div className="text-xs text-slate-500 italic">Không có công việc đang làm</div>
                       )}
                     </div>

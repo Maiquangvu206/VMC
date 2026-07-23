@@ -53,6 +53,19 @@ export const BirthdayManagement = () => {
       if (showToast) showToast('Vui lòng chọn người phụ trách', 'error');
       return;
     }
+
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth() + 1; // 1-indexed
+
+    const selectedYear = parseInt(assignForm.year, 10);
+    const selectedMonth = parseInt(assignForm.month, 10);
+
+    if (selectedYear < currentYear || (selectedYear === currentYear && selectedMonth < currentMonth)) {
+      if (showToast) showToast(`⚠️ Không thể phân công trực sinh nhật cho tháng đã qua (Tháng ${selectedMonth}/${selectedYear})!`, 'error');
+      return;
+    }
+
     assignBirthdayDuty(assignForm.month, assignForm.year, assignForm.memberId);
     setAssignForm({ ...assignForm, memberId: '' });
   };
@@ -166,19 +179,21 @@ export const BirthdayManagement = () => {
             <div>
               <label className="text-slate-400 mb-1 block">Người phụ trách *</label>
               <select required className="input-field" value={assignForm.memberId} onChange={e => setAssignForm({...assignForm, memberId: e.target.value})}>
-                <option value="">-- Chọn thành viên phụ trách --</option>
+                <option value="">-- Chọn thành viên Ban Đối Ngoại - Nhân Sự --</option>
                 {members
                   .filter(m => {
                     const roleTitle = (m.roleTitle || m.role_title || '').toLowerCase();
                     const code = (m.memberCode || m.member_code || '').toUpperCase();
                     const dept = (m.deptName || m.department || '').toLowerCase();
+                    const isHRExternal = dept.includes('đối ngoại') || dept.includes('nhân sự') || dept.includes('đn-ns') || dept.includes('dn-ns') || dept.includes('hr_external');
                     return !roleTitle.includes('super admin') 
                       && code !== 'ADMIN'
-                      && !dept.includes('cố vấn');
+                      && isHRExternal
+                      && m.status !== 'Suspended';
                   })
                   .map(m => (
                     <option key={m.id} value={m.id}>
-                      {m.name} ({m.deptName || m.department || 'Thành Viên'})
+                      {m.name} ({m.roleTitle || 'Thành Viên'})
                     </option>
                   ))}
               </select>

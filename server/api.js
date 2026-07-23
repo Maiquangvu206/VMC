@@ -27,12 +27,19 @@ const toId = (val) => (val !== undefined && val !== null && val !== '') ? String
 // ======================= TASKS =======================
 router.get('/tasks', async (req, res) => {
   try {
-    const tasks = await queryDatabase('SELECT * FROM Tasks ORDER BY created_at DESC');
+    const tasks = await queryDatabase(`
+      SELECT t.*, m.full_name AS assignee_name, m.name AS m_name 
+      FROM Tasks t 
+      LEFT JOIN Members m ON (t.assignee_id = m.id OR t.assignee_id = m.member_code) 
+      ORDER BY t.created_at DESC
+    `);
     const data = tasks.map(t => ({
       id: t.id,
       title: t.title,
       description: t.description,
+      department: t.department || 'hr_external',
       assigneeId: t.assignee_id,
+      assignee: t.assignee_name || t.m_name || 'Chưa phân công',
       createdById: t.created_by,
       deadline: t.deadline ? new Date(t.deadline).toISOString().slice(0, 10) : null,
       status: t.status || 'todo',
@@ -839,6 +846,71 @@ router.post('/birthday/upload', upload.single('file'), async (req, res) => {
 });
 
 
+// ======================= FINANCES =======================
+router.get('/finances', async (req, res) => {
+  try {
+    const rows = await queryDatabase('SELECT * FROM Finances ORDER BY created_at DESC');
+    const data = rows.map(f => ({
+      id: f.id,
+      type: f.type,
+      amount: f.amount,
+      description: f.description,
+      date: f.date,
+      loggedBy: f.logged_by,
+      status: f.status || 'approved',
+      createdAt: f.created_at
+    }));
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/finances', async (req, res) => {
+  try {
+    const { id, type, amount, description, date, loggedBy, logged_by, status } = req.body;
+    const finId = id || generateId();
+    const lBy = loggedBy || logged_by || '';
+
+    await queryDatabase(
+      'INSERT INTO Finances (id, type, amount, description, date, logged_by, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [finId, type || 'income', parseInt(amount, 10) || 0, description || '', date || new Date().toISOString().slice(0, 10), lBy, status || 'approved']
+    );
+    res.json({ success: true, data: { id: finId, type, amount, description, date, loggedBy: lBy, status } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put('/finances/:id', async (req, res) => {
+  try {
+    const { status, type, amount, description, date } = req.body;
+    await queryDatabase(
+      'UPDATE Finances SET status = COALESCE(?, status), type = COALESCE(?, type), amount = COALESCE(?, amount), description = COALESCE(?, description), date = COALESCE(?, date) WHERE id = ?',
+      [
+        status !== undefined ? status : null,
+        type !== undefined ? type : null,
+        amount !== undefined ? parseInt(amount, 10) : null,
+        description !== undefined ? description : null,
+        date !== undefined ? date : null,
+        req.params.id
+      ]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete('/finances/:id', async (req, res) => {
+  try {
+    await queryDatabase('DELETE FROM Finances WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // ======================= USER SESSIONS (SUPER ADMIN) =======================
 router.get('/sessions', async (req, res) => {
   try {
@@ -956,11 +1028,17 @@ router.delete('/sessions/:id', async (req, res) => {
 
 router.post('/sessions/logout', async (req, res) => {
   try {
-    const { sessionId } = req.body;
+    const { sessionId, memberId, username } = req.body;
     if (sessionId) {
       await queryDatabase(
         "UPDATE User_Sessions SET is_active = 0, logout_reason = 'logout', last_active = NOW() WHERE id = ?",
         [sessionId]
+      );
+    }
+    if (memberId || username) {
+      await queryDatabase(
+        "UPDATE User_Sessions SET is_active = 0, logout_reason = 'logout', last_active = NOW() WHERE is_active = 1 AND (member_id = ? OR username = ? OR member_id = ?)",
+        [String(memberId || ''), String(username || ''), String(username || '')]
       );
     }
     res.json({ success: true });

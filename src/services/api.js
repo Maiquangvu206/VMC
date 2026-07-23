@@ -77,6 +77,7 @@ export const createMemberAPI = async (newAcc) => {
         role_title: newAcc.roleTitle,
         class_name: newAcc.class,
         department: newAcc.deptName,
+        term: newAcc.term || newAcc.generation || newAcc.termName || 'Gen 6',
         phone: newAcc.phone,
         email: newAcc.email,
         dob: newAcc.dob,
