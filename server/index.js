@@ -47,29 +47,6 @@ queryDatabase('ALTER TABLE Members ADD COLUMN milestones LONGTEXT').catch(err =>
   console.log('ℹ️ CSDL status milestones:', err.message);
 });
 
-// Auto-migrate: Hash tất cả mật khẩu plaintext còn lại trong CSDL
-(async () => {
-  try {
-    const members = await queryDatabase('SELECT id, password FROM Members');
-    let migrated = 0;
-    for (const m of (members || [])) {
-      const p = m.password || '';
-      if (p && !p.startsWith('$2b$') && !p.startsWith('$2a$')) {
-        const hashed = await bcrypt.hash(p, 10);
-        await queryDatabase('UPDATE Members SET password = ? WHERE id = ?', [hashed, m.id]);
-        migrated++;
-      }
-    }
-    if (migrated > 0) {
-      console.log(`🔐 Đã mã hóa bcrypt ${migrated} mật khẩu plaintext trong CSDL.`);
-    } else {
-      console.log('🔐 Tất cả mật khẩu đã được mã hóa bcrypt trước đó.');
-    }
-  } catch (e) {
-    console.warn('⚠️ Migration hash mật khẩu thất bại:', e.message);
-  }
-})();
-
 queryDatabase(`
   CREATE TABLE IF NOT EXISTS Member_Milestones (
     id VARCHAR(100) PRIMARY KEY,
@@ -261,27 +238,14 @@ app.post('/api/send-email', async (req, res) => {
 // API Cấp lại mật khẩu mặc định & gửi email thông báo
 app.post('/api/members/reset-password', async (req, res) => {
   try {
-    const { memberId, email, name } = req.body;
-    // Mật khẩu mặc định sau reset = chính mã thành viên
-    const plainPwd = String(memberId || '').toUpperCase();
-    if (!plainPwd) return res.status(400).json({ success: false, message: 'Thiếu mã thành viên!' });
-    const hashedPwd = await bcrypt.hash(plainPwd, 10);
+    const { memberId, email, name, defaultPassword } = req.body;
+    const pwd = defaultPassword || 'VMC2026@VinhBao';
 
-    // 1. Cập nhật CSDL: Mật khẩu mặc định (đã mã hóa) và đánh dấu is_first_login = 1
-    // Lấy mã thành viên thực tế từ CSDL để đảm bảo đúng
-    const memberRows = await queryDatabase(
-      'SELECT member_code FROM Members WHERE id = ? OR member_code = ? OR username = ?',
-      [String(memberId), String(memberId), String(memberId)]
-    );
-    const realCode = (memberRows && memberRows[0]?.member_code) ? memberRows[0].member_code.toUpperCase() : plainPwd;
-    const realHashedPwd = await bcrypt.hash(realCode, 10);
-
+    // 1. Cập nhật CSDL: Mật khẩu mặc định và đánh dấu is_first_login = 1
     await queryDatabase(
       'UPDATE Members SET password = ?, is_first_login = 1 WHERE id = ? OR member_code = ? OR username = ?',
-      [realHashedPwd, String(memberId || ''), String(memberId || ''), String(memberId || '')]
+      [pwd, String(memberId || ''), String(memberId || ''), String(memberId || '')]
     );
-
-    const pwd = realCode; // dùng plaintext cho email thông báo
 
     // 2. Gửi email thông báo tự động nếu thành viên có email
     let emailSent = false;
@@ -298,16 +262,15 @@ app.post('/api/members/reset-password', async (req, res) => {
                 <p style="color: #64748b; font-size: 13px; margin-top: 4px;">Cổng thông tin nội bộ CLB Truyền Thông THPT Vĩnh Bảo</p>
               </div>
               <p>Kính gửi <strong>${name || 'Thành Viên VMC'}</strong>,</p>
-              <p>Mật khẩu đăng nhập tài khoản VMC Internal Portal của bạn vừa được Quản trị viên đặt lại thành <strong>mật khẩu mặc định</strong>.</p>
+              <p>Mật khẩu đăng nhập tài khoản hệ thống VMC Internal Portal của bạn vừa được Quản trị viên đặt lại về mật khẩu mặc định khởi tạo thành công.</p>
               
               <div style="background: #e0f2fe; border-left: 4px solid #0284c7; padding: 14px 18px; margin: 20px 0; border-radius: 8px;">
-                <p style="margin: 0 0 6px 0; font-size: 13px; color: #0369a1;">🔑 <strong>Mật khẩu mặc định mới (chính là Mã Thành Viên của bạn):</strong></p>
-                <code style="font-size: 22px; color: #1e40af; font-weight: bold; font-family: monospace; letter-spacing: 2px;">${pwd}</code>
+                <p style="margin: 0; font-size: 14px; color: #0369a1;">🔑 <strong>Mật khẩu mặc định mới:</strong> <code style="font-size: 18px; color: #1e40af; font-weight: bold; font-family: monospace;">${pwd}</code></p>
               </div>
 
               <div style="background: #fef3c7; border-left: 4px solid #d97706; padding: 12px 16px; margin: 20px 0; border-radius: 8px; font-size: 13px; color: #92400e;">
                 <p style="margin: 0; font-weight: bold;">⚠️ QUY ĐỊNH BẮT BUỘC ĐỔI MẬT KHẨU:</p>
-                <p style="margin: 4px 0 0 0;">Ngay sau khi đăng nhập lại bằng mã thành viên trên, hệ thống sẽ <strong>bắt buộc bạn phải đặt mật khẩu cá nhân mới</strong> để bảo vệ tài khoản.</p>
+                <p style="margin: 4px 0 0 0;">Ngay sau khi đăng nhập lại bằng mật khẩu mặc định trên, hệ thống sẽ <strong>bắt buộc bạn phải thay đổi sang mật khẩu mới cá nhân</strong> để đảm bảo an toàn tuyệt đối cho tài khoản.</p>
               </div>
 
               <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
@@ -324,8 +287,8 @@ app.post('/api/members/reset-password', async (req, res) => {
     res.json({
       success: true,
       message: emailSent
-        ? `🔑 Đã đặt lại mật khẩu về Mã Thành Viên [${pwd}] & gửi email thông báo thành công cho ${name || email}!`
-        : `🔑 Đã đặt lại mật khẩu về Mã Thành Viên [${pwd}] cho thành viên ${name || ''}!`
+        ? `🔑 Đã đặt lại mật khẩu mặc định (${pwd}) & gửi email thông báo thành công cho ${name || email}!`
+        : `🔑 Đã đặt lại mật khẩu mặc định (${pwd}) cho thành viên ${name || ''}!`
     });
   } catch (error) {
     console.error('❌ Lỗi /api/members/reset-password:', error.message);
@@ -551,7 +514,7 @@ app.put('/api/members/:id', async (req, res) => {
       avatar_url !== undefined ? avatar_url : null,
       avatar !== undefined ? avatar : null,
       status !== undefined ? status : null,
-      (password !== undefined && password !== null && password !== '') ? await bcrypt.hash(password, 10) : null,
+      password !== undefined ? password : null,
       isFirstLoginVal,
       milestonesVal,
       id, id, id
@@ -618,13 +581,10 @@ app.post('/api/members/create', async (req, res) => {
         (member_code, username, password, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, address, facebook, is_first_login, status)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, 'Active')
     `;
-    // Mật khẩu mặc định khi tạo tài khoản = chính mã thành viên (viết hoa)
-    const plainPwd = password || member_code.toUpperCase();
-    const hashedPwd = await bcrypt.hash(plainPwd, 10);
     const result = await queryDatabase(sql, [
       member_code,
       username || member_code.toLowerCase(),
-      hashedPwd,
+      password || 'VMC2026@VinhBao',
       full_name,
       role || 'member',
       role_title || 'Thành Viên VMC',

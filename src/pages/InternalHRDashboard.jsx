@@ -34,13 +34,17 @@ export const InternalHRDashboard = () => {
     currentUser?.roleTitle?.toLowerCase().includes('cố vấn')
   );
 
+  const currentUserDeptName = String(currentUser?.deptName || currentUser?.department || '').toLowerCase();
+  const currentUserRoleTitle = String(currentUser?.roleTitle || '').toLowerCase();
+
   const isAllowedBirthdayDuty = !isAdvisor && Boolean(
     isHRMember ||
-    currentUser?.deptName?.includes('Đối Ngoại') ||
-    currentUser?.deptName?.includes('Nhân Sự') ||
-    currentUser?.deptName?.includes('ĐN-NS') ||
-    currentUser?.deptName === 'Ban Chủ Nhiệm' ||
-    currentUser?.department === 'bcn' ||
+    currentUserDeptName.includes('đối ngoại') ||
+    currentUserDeptName.includes('nhân sự') ||
+    currentUserDeptName.includes('đn-ns') ||
+    currentUserDeptName.includes('dn-ns') ||
+    currentUserDeptName === 'ban chủ nhiệm' ||
+    currentUserDeptName === 'bcn' ||
     currentUser?.role === 'admin' ||
     currentUser?.memberCode === 'ADMIN'
   );
@@ -348,81 +352,44 @@ export const InternalHRDashboard = () => {
             <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
               <Clock className="text-amber-400" /> Theo Dõi Tình Trạng Deadline
             </h3>
-
-            {/* Nhiệm vụ của tôi */}
-            {(() => {
-              const myTasks = getMemberTasks(currentUser);
-              if (myTasks.length === 0) return null;
-              const myDoing = myTasks.filter(t => t.status === 'doing' || t.status === 'todo');
-              const myDone  = myTasks.filter(t => t.status === 'done');
-              return (
-                <div className="bg-blue-950/40 border border-blue-500/30 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center gap-2 text-sm font-bold text-blue-300">
-                    <CheckCircle2 className="w-4 h-4" /> Nhiệm vụ được giao cho tôi
-                    <span className="ml-auto text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full">{myTasks.length} nhiệm vụ</span>
-                  </div>
-                  {myDoing.length > 0 ? myDoing.map(t => (
-                    <div key={t.id} className="flex justify-between items-center bg-slate-900 rounded-lg p-2 border border-amber-500/30">
-                      <div className="text-xs text-slate-200 truncate pr-2 max-w-[70%] font-medium">{t.title}</div>
-                      <div className="text-[10px] text-amber-400 font-mono whitespace-nowrap flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> {t.deadline}
-                      </div>
-                    </div>
-                  )) : (
-                    <div className="text-xs text-emerald-400 font-semibold flex items-center gap-1.5">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Bạn đã hoàn thành tất cả {myDone.length} nhiệm vụ 🎉
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {(() => {
-                const membersWithTasks = allHumanMembers.filter(m => getMemberTasks(m).length > 0);
-                if (membersWithTasks.length === 0) {
-                  return (
-                    <div className="col-span-2 flex flex-col items-center justify-center py-16 text-center space-y-3">
-                      <CheckCircle2 className="w-12 h-12 text-slate-700" />
-                      <p className="text-slate-400 font-semibold">Chưa có nhiệm vụ nào được giao</p>
-                      <p className="text-slate-600 text-xs max-w-xs">Nhiệm vụ được tạo trong trang <span className="text-amber-400">Quản Lý Công Việc</span> và giao cho thành viên sẽ hiện ở đây.</p>
+              {allHumanMembers.map((m) => {
+                const memberTasks = getMemberTasks(m);
+                if (memberTasks.length === 0) return null;
+                
+                const doingTasks = memberTasks.filter(t => t.status === 'doing' || t.status === 'todo');
+                const doneTasks = memberTasks.filter(t => t.status === 'done');
+                
+                return (
+                  <div key={m.id} className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
+                    <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                      <div className="font-bold text-sm text-white">{m.name}</div>
+                      <div className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full">{m.deptName || m.department}</div>
                     </div>
-                  );
-                }
-                return membersWithTasks.map((m) => {
-                  const memberTasks = getMemberTasks(m);
-                  const doingTasks = memberTasks.filter(t => t.status === 'doing' || t.status === 'todo');
-                  const doneTasks  = memberTasks.filter(t => t.status === 'done');
-                  return (
-                    <div key={m.id} className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
-                      <div className="flex justify-between items-center border-b border-white/5 pb-2">
-                        <div className="font-bold text-sm text-white">{m.name}</div>
-                        <div className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full">{m.deptName || m.department}</div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div className="text-xs font-semibold text-slate-400">Đang thực hiện ({doingTasks.length})</div>
-                        {doingTasks.length > 0 ? doingTasks.map(t => (
-                          <div key={t.id} className="flex justify-between items-center bg-slate-900 rounded-lg p-2 border border-amber-500/20">
-                            <div className="text-xs text-slate-300 truncate pr-2 max-w-[70%]">{t.title}</div>
-                            <div className="text-[10px] text-amber-400 font-mono whitespace-nowrap flex items-center gap-1">
-                              <Clock className="w-3 h-3" /> {t.deadline}
-                            </div>
+                    
+                    <div className="space-y-2">
+                      <div className="text-xs font-semibold text-slate-400">Đang thực hiện ({doingTasks.length})</div>
+                      {doingTasks.length > 0 ? doingTasks.map(t => (
+                        <div key={t.id} className="flex justify-between items-center bg-slate-900 rounded-lg p-2 border border-amber-500/20">
+                          <div className="text-xs text-slate-300 truncate pr-2 max-w-[70%]">{t.title}</div>
+                          <div className="text-[10px] text-amber-400 font-mono whitespace-nowrap flex items-center gap-1">
+                            <Clock className="w-3 h-3" /> {t.deadline}
                           </div>
-                        )) : (
-                          <div className="text-xs text-slate-500 italic">Không có công việc đang làm</div>
-                        )}
-                      </div>
-                      
-                      <div className="pt-2 border-t border-white/5">
-                        <div className="text-xs font-semibold text-emerald-500 flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" /> Đã hoàn thành ({doneTasks.length})
                         </div>
+                      )) : (
+                        <div className="text-xs text-slate-500 italic">Không có công việc đang làm</div>
+                      )}
+                    </div>
+                    
+                    <div className="pt-2 border-t border-white/5">
+                      <div className="text-xs font-semibold text-emerald-500 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" /> Đã hoàn thành ({doneTasks.length})
                       </div>
                     </div>
-                  );
-                });
-              })()}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
