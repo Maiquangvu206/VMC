@@ -14,7 +14,8 @@ import {
   Film,
   Handshake,
   Users,
-  Award
+  Award,
+  UserPlus
 } from 'lucide-react';
 
 export const InternalDashboard = () => {
@@ -30,7 +31,9 @@ export const InternalDashboard = () => {
     isAdmin,
     setActiveTab, 
     setIsNewTaskModalOpen,
-    setIsNewDraftModalOpen
+    setIsNewDraftModalOpen,
+    setIsBorrowModalOpen,
+    setIsNewAccountModalOpen
   } = useClub();
 
   const [isAnnModalOpen, setIsAnnModalOpen] = React.useState(false);
