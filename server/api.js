@@ -576,6 +576,21 @@ router.delete('/sessions/:id', async (req, res) => {
   }
 });
 
+router.post('/sessions/logout', async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    if (sessionId) {
+      await queryDatabase(
+        'UPDATE User_Sessions SET is_active = 0, last_active = NOW() WHERE id = ?',
+        [sessionId]
+      );
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 router.post('/sessions/revoke-all', async (req, res) => {
   try {
     const { currentSessionId } = req.body;

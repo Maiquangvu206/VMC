@@ -117,7 +117,10 @@ export const BirthdayManagement = () => {
                   .filter(m => {
                     const roleTitle = (m.roleTitle || m.role_title || '').toLowerCase();
                     const code = (m.memberCode || m.member_code || '').toUpperCase();
-                    return !roleTitle.includes('super admin') && code !== 'ADMIN';
+                    const dept = (m.deptName || m.department || '').toLowerCase();
+                    return !roleTitle.includes('super admin') 
+                      && code !== 'ADMIN'
+                      && !dept.includes('cố vấn');
                   })
                   .map(m => (
                     <option key={m.id} value={m.id}>

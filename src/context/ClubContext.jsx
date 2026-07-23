@@ -92,8 +92,17 @@ export const ClubProvider = ({ children }) => {
 
   const logoutMember = () => {
     try {
+      const sessionId = sessionStorage.getItem('VMC_SESSION_ID');
+      if (sessionId) {
+        fetch('/api/sessions/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId })
+        }).catch(() => {});
+      }
       sessionStorage.removeItem('VMC_IS_AUTH');
       sessionStorage.removeItem('VMC_CURRENT_USER');
+      sessionStorage.removeItem('VMC_SESSION_ID');
     } catch (e) {}
     setIsAuthenticated(false);
     setCurrentUser(null);
@@ -478,10 +487,24 @@ export const ClubProvider = ({ children }) => {
     }
   };
 
-  // Logout
-  const logout = () => {
+  // Logout — marks session inactive in DB then resets state
+  const logout = async () => {
+    const sessionId = sessionStorage.getItem('VMC_SESSION_ID');
+    if (sessionId) {
+      try {
+        await fetch('/api/sessions/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId })
+        });
+      } catch (e) {
+        console.warn('⚠️ Không thể cập nhật trạng thái phiên khi đăng xuất:', e.message);
+      }
+    }
+    sessionStorage.removeItem('VMC_SESSION_ID');
     setIsAuthenticated(false);
     setRequirePasswordChange(false);
+    setCurrentUser(null);
   };
 
   // Add new Resource item (Google Drive Link)

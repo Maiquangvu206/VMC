@@ -12,6 +12,7 @@ import express from 'express';
 import cors from 'cors';
 import { queryDatabase } from './db.js';
 import nodemailer from 'nodemailer';
+import bcrypt from 'bcryptjs';
 import apiRouter from './api.js';
 
 const app = express();
@@ -320,10 +321,9 @@ app.post('/api/auth/login', async (req, res) => {
         id, member_code, username, password, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, address, facebook, points, is_first_login, status, milestones
       FROM Members
       WHERE (UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?))
-        AND password = ?
       LIMIT 1
     `;
-    const rows = await queryDatabase(sql, [memberCode, memberCode, password]);
+    const rows = await queryDatabase(sql, [memberCode, memberCode]);
     if (!rows || rows.length === 0) {
       attemptInfo.count += 1;
       if (attemptInfo.count >= 5) {
