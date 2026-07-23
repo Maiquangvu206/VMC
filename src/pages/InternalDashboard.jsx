@@ -75,6 +75,84 @@ export const InternalDashboard = () => {
     }).length;
   };
 
+  const renderDepartmentLeadership = (dept) => {
+    const deptId = (dept.id || '').toLowerCase();
+    const deptName = (dept.name || '').toLowerCase();
+
+    // Ban Cố Vấn -> Không hiện Trưởng/Phó Ban, chỉ để số lượng & mô tả
+    if (deptId.includes('advisory') || deptId.includes('cv') || deptName.includes('cố vấn')) {
+      return null;
+    }
+
+    // Lọc danh sách thành viên thuộc ban này từ db.members
+    const deptMembers = (members || []).filter(m => {
+      const mDept = (m.deptName || m.department || '').toLowerCase();
+      if (deptId === 'bcn' || deptName.includes('chủ nhiệm')) {
+        return mDept.includes('chủ nhiệm') || mDept.includes('bcn');
+      }
+      if (deptId === 'content_radio' || deptName.includes('nội dung')) {
+        return mDept.includes('nội dung') || mDept.includes('phát thanh');
+      }
+      if (deptId === 'production' || deptName.includes('sản xuất')) {
+        return mDept.includes('sản xuất') || mDept.includes('media');
+      }
+      if (deptId === 'hr_external' || deptName.includes('đối ngoại') || deptName.includes('nhân sự')) {
+        return mDept.includes('đối ngoại') || mDept.includes('nhân sự') || mDept.includes('đn-ns');
+      }
+      return false;
+    });
+
+    // Ban Chủ Nhiệm -> Chủ Nhiệm & Phó Chủ Nhiệm
+    if (deptId === 'bcn' || deptName.includes('chủ nhiệm')) {
+      const leader = deptMembers.find(m => {
+        const title = (m.roleTitle || m.role_title || '').toLowerCase();
+        return title.includes('chủ nhiệm') && !title.includes('phó');
+      });
+      const viceLeaders = deptMembers.filter(m => {
+        const title = (m.roleTitle || m.role_title || '').toLowerCase();
+        return title.includes('phó chủ nhiệm');
+      });
+
+      const leaderName = leader ? (leader.name || leader.full_name) : 'Vũ Mai Quang';
+      const viceNames = viceLeaders.length > 0 ? viceLeaders.map(m => m.name || m.full_name).join(', ') : 'Chưa cập nhật';
+
+      return (
+        <div className="text-xs space-y-0.5 mt-1">
+          <div className="text-purple-300 font-semibold">
+            <span className="text-purple-400 font-bold">Chủ Nhiệm:</span> {leaderName}
+          </div>
+          <div className="text-slate-300">
+            <span className="text-slate-400 font-semibold">Phó Chủ Nhiệm:</span> {viceNames}
+          </div>
+        </div>
+      );
+    }
+
+    // Các Ban Còn Lại -> Trưởng Ban & Phó Ban
+    const leader = deptMembers.find(m => {
+      const title = (m.roleTitle || m.role_title || '').toLowerCase();
+      return title.includes('trưởng ban');
+    });
+    const viceLeaders = deptMembers.filter(m => {
+      const title = (m.roleTitle || m.role_title || '').toLowerCase();
+      return title.includes('phó ban');
+    });
+
+    const leaderName = leader ? (leader.name || leader.full_name) : (dept.lead || 'Chưa cập nhật');
+    const viceNames = viceLeaders.length > 0 ? viceLeaders.map(m => m.name || m.full_name).join(', ') : 'Chưa cập nhật';
+
+    return (
+      <div className="text-xs space-y-0.5 mt-1">
+        <div className="text-purple-300 font-semibold">
+          <span className="text-purple-400 font-bold">Trưởng Ban:</span> {leaderName}
+        </div>
+        <div className="text-slate-300">
+          <span className="text-slate-400 font-semibold">Phó Ban:</span> {viceNames}
+        </div>
+      </div>
+    );
+  };
+
   const safeUser = currentUser || {
     name: 'Thành Viên VMC',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
