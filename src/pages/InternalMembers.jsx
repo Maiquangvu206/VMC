@@ -802,7 +802,7 @@ export const InternalMembers = () => {
               <div className="overflow-y-auto pr-1 custom-scrollbar space-y-4 flex-1 py-1">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-400 mb-1">1. Mã Thành Viên {!isSuperAdmin && '(Cố định - Chỉ Super Admin được sửa)'}</label>
+                  <label className="block text-slate-300 text-xs font-semibold mb-1">Mã Thành Viên</label>
                   <input
                     type="text"
                     required
@@ -814,7 +814,7 @@ export const InternalMembers = () => {
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">2. Họ và Tên Thành Viên</label>
+                  <label className="block text-slate-300 text-xs font-semibold mb-1">Họ và Tên Thành Viên</label>
                   <input
                     type="text"
                     required
@@ -825,7 +825,7 @@ export const InternalMembers = () => {
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">3. Lớp Học</label>
+                  <label className="block text-slate-300 text-xs font-semibold mb-1">Lớp Học</label>
                   <input
                     type="text"
                     required
@@ -836,7 +836,7 @@ export const InternalMembers = () => {
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">4. Ban Chuyên Môn</label>
+                  <label className="block text-slate-300 text-xs font-semibold mb-1">Ban Chuyên Môn</label>
                   <select
                     value={editingMember.deptName}
                     onChange={(e) => handleEditDepartmentChange(e.target.value)}
@@ -851,7 +851,7 @@ export const InternalMembers = () => {
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">5. Chức Vụ Trong CLB {!isAdmin && '(Chỉ Admin & Trưởng Ban ĐN-NS được sửa)'}</label>
+                  <label className="block text-slate-300 text-xs font-semibold mb-1">Chức Vụ Trong CLB</label>
                   <select
                     required
                     disabled={!isAdmin}
@@ -872,7 +872,7 @@ export const InternalMembers = () => {
 
                 {isAdmin && (
                   <div>
-                    <label className="block text-slate-400 mb-1">Quyền Tài Khoản</label>
+                    <label className="block text-slate-300 text-xs font-semibold mb-1">Quyền Tài Khoản</label>
                     <select
                       value={resolvePermissionValue(editingMember)}
                       onChange={(e) => {
@@ -896,7 +896,7 @@ export const InternalMembers = () => {
                 )}
 
                 <div>
-                  <label className="block text-slate-400 mb-1">Thế Hệ (Gen)</label>
+                  <label className="block text-slate-300 text-xs font-semibold mb-1">Thế Hệ (Gen)</label>
                   <select
                     value={editingMember.term || 'Gen 6'}
                     onChange={(e) => setEditingMember({ ...editingMember, term: e.target.value, termName: e.target.value })}
@@ -909,7 +909,7 @@ export const InternalMembers = () => {
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">Trạng Thái Hoạt Động</label>
+                  <label className="block text-slate-300 text-xs font-semibold mb-1">Trạng Thái Hoạt Động</label>
                   <select
                     value={editingMember.status || 'Active'}
                     onChange={(e) => setEditingMember({ ...editingMember, status: e.target.value })}
@@ -921,7 +921,7 @@ export const InternalMembers = () => {
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">6. Số Điện Thoại / Zalo (Chỉ chủ tài khoản được sửa)</label>
+                  <label className="block text-slate-300 text-xs font-semibold mb-1">Số Điện Thoại / Zalo</label>
                   <input
                     type="tel"
                     disabled
@@ -931,7 +931,7 @@ export const InternalMembers = () => {
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1">7. Email Học Sinh (Chỉ chủ tài khoản được sửa)</label>
+                  <label className="block text-slate-300 text-xs font-semibold mb-1">Email Học Sinh</label>
                   <input
                     type="email"
                     disabled
@@ -941,7 +941,7 @@ export const InternalMembers = () => {
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">8. Ngày Sinh (Chỉ chủ tài khoản được sửa)</label>
+                  <label className="block text-slate-300 text-xs font-semibold mb-1">Ngày Sinh</label>
                   <input
                     type="text"
                     disabled
@@ -949,26 +949,26 @@ export const InternalMembers = () => {
                     className="w-full px-3 py-2 bg-slate-950/50 border border-white/10 rounded-xl text-slate-500 font-mono cursor-not-allowed"
                   />
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-slate-400 mb-1">9. Địa Chỉ Thường Trú (Chỉ chủ tài khoản được sửa)</label>
-                <input
-                  type="text"
-                  disabled
-                  value={editingMember.address}
-                  className="w-full px-3 py-2 bg-slate-950/50 border border-white/10 rounded-xl text-slate-500 cursor-not-allowed"
-                />
-              </div>
+                <div>
+                  <label className="block text-slate-300 text-xs font-semibold mb-1">Địa Chỉ Thường Trú</label>
+                  <input
+                    type="text"
+                    disabled
+                    value={editingMember.address}
+                    className="w-full px-3 py-2 bg-slate-950/50 border border-white/10 rounded-xl text-slate-500 cursor-not-allowed"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-slate-400 mb-1">10. Liên Hệ Facebook Cá Nhân (Chỉ chủ tài khoản được sửa)</label>
-                <input
-                  type="url"
-                  disabled
-                  value={editingMember.facebook}
-                  className="w-full px-3 py-2 bg-slate-950/50 border border-white/10 rounded-xl text-slate-500 cursor-not-allowed"
-                />
+                <div>
+                  <label className="block text-slate-300 text-xs font-semibold mb-1">Liên Hệ Facebook</label>
+                  <input
+                    type="url"
+                    disabled
+                    value={editingMember.facebook}
+                    className="w-full px-3 py-2 bg-slate-950/50 border border-white/10 rounded-xl text-slate-500 cursor-not-allowed"
+                  />
+                </div>
               </div>
 
               {/* Edit Milestones Section */}
@@ -1121,7 +1121,7 @@ export const InternalMembers = () => {
               <div className="overflow-y-auto pr-1 custom-scrollbar space-y-4 flex-1 py-1 text-xs">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">1. Tên Đăng Nhập (Username) *</label>
+                    <label className="block text-slate-300 text-xs font-semibold mb-1">Tên Đăng Nhập (Username) *</label>
                     <input
                       type="text"
                       required
@@ -1133,7 +1133,7 @@ export const InternalMembers = () => {
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">2. Họ và Tên Thành Viên *</label>
+                    <label className="block text-slate-300 text-xs font-semibold mb-1">Họ và Tên Thành Viên *</label>
                     <input
                       type="text"
                       required
@@ -1145,7 +1145,7 @@ export const InternalMembers = () => {
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">3. Lớp Học *</label>
+                    <label className="block text-slate-300 text-xs font-semibold mb-1">Lớp Học *</label>
                     <input
                       type="text"
                       required
@@ -1157,7 +1157,7 @@ export const InternalMembers = () => {
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">4. Ban Chuyên Môn *</label>
+                    <label className="block text-slate-300 text-xs font-semibold mb-1">Ban Chuyên Môn *</label>
                     <select
                       value={formData.deptName}
                       onChange={(e) => {
@@ -1175,7 +1175,7 @@ export const InternalMembers = () => {
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">5. Chức Vụ Trong CLB *</label>
+                    <label className="block text-slate-300 text-xs font-semibold mb-1">Chức Vụ Trong CLB *</label>
                     <select
                       required
                       value={formData.roleTitle}
@@ -1194,7 +1194,7 @@ export const InternalMembers = () => {
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">6. Số Điện Thoại / Zalo *</label>
+                    <label className="block text-slate-300 text-xs font-semibold mb-1">Số Điện Thoại / Zalo *</label>
                     <input
                       type="tel"
                       required
@@ -1206,7 +1206,7 @@ export const InternalMembers = () => {
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1">7. Thế Hệ (Gen)</label>
+                    <label className="block text-slate-300 text-xs font-semibold mb-1">Thế Hệ (Gen)</label>
                     <select
                       value={formData.term || 'Gen 6'}
                       onChange={(e) => setFormData({ ...formData, term: e.target.value, termName: e.target.value })}
