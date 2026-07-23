@@ -251,7 +251,7 @@ app.post('/api/send-email', async (req, res) => {
 
   try {
     const info = await transporter.sendMail({
-      from: `"CLB TRUYỀN THÔNG VMC (THPT VĨNH BẢO)" <${process.env.SMTP_EMAIL}>`,
+      from: `"CLB TRUYỀN THÔNG TRƯỜNG THPT VĨNH BẢO (VMC)" <${process.env.SMTP_EMAIL}>`,
       to,
       subject,
       text,
@@ -282,7 +282,7 @@ app.post('/api/members/reset-password', async (req, res) => {
     if (email && process.env.SMTP_EMAIL && process.env.SMTP_PASSWORD) {
       try {
         await transporter.sendMail({
-          from: `"CLB TRUYỀN THÔNG VMC (THPT VĨNH BẢO)" <${process.env.SMTP_EMAIL}>`,
+          from: `"[BỘ PHẬN KỸ THUẬT] BAN ĐỐI NGOẠI - NHÂN SỰ" <${process.env.SMTP_EMAIL}>`,
           to: email,
           subject: '🔑 [VMC Portal] Thông báo Cấp lại Mật Khẩu Mặc Định Tài Khoản VMC',
           html: `
@@ -635,8 +635,8 @@ app.delete('/api/members/:id', async (req, res) => {
     const mCode = String(m.member_code || '');
 
     // Xóa dữ liệu con liên quan ở các bảng (Milestones, Birthday_Assignments, etc.) để tránh lỗi Foreign Key
-    await queryDatabase('DELETE FROM Member_Milestones WHERE member_id = ? OR member_id = ?', [mId, mCode]).catch(() => {});
-    await queryDatabase('DELETE FROM Birthday_Assignments WHERE member_id = ? OR member_id = ?', [mId, mCode]).catch(() => {});
+    await queryDatabase('DELETE FROM Member_Milestones WHERE member_id = ? OR member_id = ?', [mId, mCode]).catch(() => { });
+    await queryDatabase('DELETE FROM Birthday_Assignments WHERE member_id = ? OR member_id = ?', [mId, mCode]).catch(() => { });
 
     // Xóa chính thành viên khỏi bảng Members
     await queryDatabase('DELETE FROM Members WHERE id = ?', [m.id]);
@@ -776,7 +776,7 @@ const checkAndSendDailyBirthdayEmails = async () => {
             <div style="background-color: #ffffff; padding: 25px; border-radius: 16px; border: 1px solid #f472b6; line-height: 1.6;">
               <p style="font-size: 16px; margin-top: 0;">Thân gửi <strong>${m.full_name}</strong> (${m.department || 'Thành Viên VMC'} - Lớp ${m.class_name || 'VMC'}),</p>
 
-              <p>Hôm nay là một ngày vô cùng đặc biệt! Thay mặt cho toàn thể Đại gia đình <strong>CLB Truyền Thông THPT Vĩnh Bảo (VMC)</strong>, Ban Đối Ngoại - Nhân Sự xin gửi tới bạn những lời chúc mừng sinh nhật ấm áp và rực rỡ nhất! 🥳🎈</p>
+              <p>Hôm nay là một ngày vô cùng đặc biệt! Thay mặt cho toàn thể Đại gia đình <strong>CLB Truyền Thông Trường THPT Vĩnh Bảo (VMC)</strong>, Ban Đối Ngoại - Nhân Sự xin gửi tới bạn những lời chúc mừng sinh nhật ấm áp và rực rỡ nhất! 🥳🎈</p>
 
               <p>Chúc bạn tuổi mới luôn ngập tràn niềm vui, sức khỏe, học tập xuất sắc và luôn giữ vững ngọn lửa nhiệt huyết để tiếp tục cùng VMC tạo nên những thước phim, bài viết và kỷ niệm thanh xuân tuyệt vời nhất! 💖✨</p>
 
@@ -789,9 +789,9 @@ const checkAndSendDailyBirthdayEmails = async () => {
 
         try {
           await transporter.sendMail({
-            from: `"CLB TRUYỀN THÔNG VMC (THPT VĨNH BẢO)" <${process.env.SMTP_EMAIL}>`,
+            from: `"CLB TRUYỀN THÔNG TRƯỜNG THPT VĨNH BẢO (MC)" <${process.env.SMTP_EMAIL}>`,
             to: m.email,
-            subject: `🎂🎉 Chúc Mừng Sinh Nhật ${m.full_name}! - CLB Truyền Thông VMC`,
+            subject: `🎂🎉 Chúc Mừng Sinh Nhật ${m.full_name}! - CLB Truyền Thông Trường THPT Vĩnh Bảo`,
             html: `
               <div style="font-family: Arial, sans-serif; padding: 30px; color: #1e293b; background: linear-gradient(135deg, #fdf2f8 0%, #f0f9ff 100%); border-radius: 20px; border: 1px solid #fbcfe8; max-width: 600px; margin: 0 auto; box-shadow: 0 10px 25px rgba(236,72,153,0.1);">
                 <div style="text-align: center; margin-bottom: 25px;">

@@ -1429,7 +1429,12 @@ export const ClubProvider = ({ children }) => {
       return { ...prev, birthdayAssignments: [...assignments, bdayObj] };
     });
  
-    const assignedMember = findMemberById(memberId);
+    const monthVal = parseInt(month, 10);
+    const yearVal = parseInt(year, 10);
+    const prevMonth = monthVal === 1 ? 12 : monthVal - 1;
+    const prevYear = monthVal === 1 ? yearVal - 1 : yearVal;
+    const bdayDeadline = `${prevYear}-${String(prevMonth).padStart(2, '0')}-28`;
+
     await createTaskRecord({
       id: `task-bday-${bdayObj.id}`,
       title: `Thực hiện trực sinh nhật ${month}/${year}`,
@@ -1438,7 +1443,7 @@ export const ClubProvider = ({ children }) => {
       department: 'hr_external',
       assigneeId: memberId,
       assignee: assignedMember?.name || 'Thành viên còn thiếu',
-      deadline: new Date(new Date().getFullYear(), parseInt(month, 10) - 1, 1).toISOString().slice(0, 10),
+      deadline: bdayDeadline,
       createdById: currentUser?.id,
       pointsReward: 0,
       status: 'todo'

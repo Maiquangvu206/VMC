@@ -217,6 +217,12 @@ export const BirthdayManagement = () => {
           const assignee = members.find(mem => String(mem.id) === String(a.memberId) || String(mem.memberCode) === String(a.memberId));
           const isAssignee = String(currentUser?.id) === String(a.memberId) || String(currentUser?.memberCode) === String(a.memberId);
 
+          const monthVal = parseInt(a.month, 10);
+          const yearVal = parseInt(a.year, 10);
+          const prevMonth = monthVal === 1 ? 12 : monthVal - 1;
+          const prevYear = monthVal === 1 ? yearVal - 1 : yearVal;
+          const formattedDeadline = `28/${String(prevMonth).padStart(2, '0')}/${prevYear}`;
+
           // Get members having birthday in this month
           const birthdayMembersInMonth = members.filter(m => {
             if (!m.dob) return false;
@@ -313,7 +319,7 @@ export const BirthdayManagement = () => {
               <div>
                 <h5 className="text-xs font-bold text-slate-300 mb-3.5 flex items-center justify-between">
                   <span>Danh Sách Thành Viên Sinh Nhật Tháng {a.month} ({birthdayMembersInMonth.length} người)</span>
-                  <span className="text-[10px] text-pink-400 font-mono font-normal">Hạn chót: 28/{a.month}/{a.year}</span>
+                  <span className="text-[10px] text-pink-400 font-mono font-normal">Hạn chót: {formattedDeadline}</span>
                 </h5>
 
                 {birthdayMembersInMonth.length === 0 ? (

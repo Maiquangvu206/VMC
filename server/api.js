@@ -107,7 +107,7 @@ router.put('/tasks/:id', async (req, res) => {
   try {
     const { status, title, description, deadline, assignee_id, assigneeId, points_reward } = req.body;
     const assId = (assignee_id !== undefined || assigneeId !== undefined) ? toId(assignee_id || assigneeId) : undefined;
-    
+
     // Lấy thông tin task trước khi cập nhật để kiểm tra chuyển sang trạng thái hoàn thành (done)
     const oldTasks = await queryDatabase('SELECT * FROM Tasks WHERE id = ?', [req.params.id]);
     const oldTask = oldTasks && oldTasks.length > 0 ? oldTasks[0] : null;
@@ -130,7 +130,7 @@ router.put('/tasks/:id', async (req, res) => {
       try {
         const creatorEmailResult = await queryDatabase('SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? LIMIT 1', [oldTask.created_by, oldTask.created_by]);
         const assigneeResult = await queryDatabase('SELECT full_name FROM Members WHERE id = ? OR member_code = ? LIMIT 1', [oldTask.assignee_id, oldTask.assignee_id]);
-        
+
         const creator = creatorEmailResult && creatorEmailResult.length > 0 ? creatorEmailResult[0] : null;
         const assigneeName = assigneeResult && assigneeResult.length > 0 ? assigneeResult[0].full_name : 'Thành viên VMC';
 
@@ -275,7 +275,7 @@ router.put('/drafts/:id', async (req, res) => {
                 <p style="font-size: 12px; color: #64748b;">Trân trọng,<br/><strong>Bộ Phận Kỹ Thuật - CLB Truyền Thông THPT Vĩnh Bảo (VMC)</strong></p>
               </div>
             `
-          ).catch(() => {});
+          ).catch(() => { });
         }
       } catch (mailErr) {
         console.warn('⚠️ Lỗi gửi mail phân công chấm bài:', mailErr.message);
@@ -397,7 +397,7 @@ const sendMailHelper = async (to, subject, html) => {
 
   const autoReplyNotice = `
     <div style="margin-top: 25px; padding-top: 15px; border-top: 1px dashed #cbd5e1; text-align: center; font-size: 11px; color: #94a3b8; font-style: italic;">
-      🤖 (Đây là email tự động, vui lòng không phản hồi trực tiếp email này).
+      (Đây là email tự động, vui lòng không phản hồi trực tiếp email này).
     </div>
   `;
 
@@ -414,7 +414,7 @@ const sendMailHelper = async (to, subject, html) => {
       }
     });
     await transporter.sendMail({
-      from: `"CLB TRUYỀN THÔNG VMC (THPT VĨNH BẢO)" <${process.env.SMTP_EMAIL}>`,
+      from: `"CLB TRUYỀN THÔNG TRƯỜNG THPT VĨNH BẢO (VMC)" <${process.env.SMTP_EMAIL}>`,
       to,
       subject,
       html: finalHtml
@@ -514,7 +514,7 @@ router.put('/finances/:id', async (req, res) => {
   try {
     const { status } = req.body;
     const records = await queryDatabase('SELECT * FROM Finances WHERE id = ?', [req.params.id]);
-    
+
     if (records && records.length > 0) {
       const record = records[0];
       await queryDatabase('UPDATE Finances SET status = ? WHERE id = ?', [status, req.params.id]);
@@ -552,7 +552,7 @@ router.put('/finances/:id', async (req, res) => {
     } else {
       await queryDatabase('UPDATE Finances SET status = ? WHERE id = ?', [status, req.params.id]);
     }
-    
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -865,7 +865,7 @@ router.put('/birthday-assignments/:id', async (req, res) => {
             // Lấy thông tin thành viên đó
             const members = await queryDatabase('SELECT full_name FROM Members WHERE id = ? LIMIT 1', [newNoPhotoMemberId]);
             const memberName = (members && members.length > 0) ? members[0].full_name : 'Thành viên';
-            
+
             // Lấy thông tin người phụ trách (assignee)
             const assignees = await queryDatabase('SELECT full_name FROM Members WHERE id = ? OR member_code = ? LIMIT 1', [oldAssignment.assignee_id, oldAssignment.assignee_id]);
             const assigneeName = (assignees && assignees.length > 0) ? assignees[0].full_name : 'Người phụ trách';
@@ -1036,8 +1036,8 @@ router.get('/sessions', async (req, res) => {
       success: true,
       data: sessions.map(s => ({
         ...s,
-        name: (s.real_name && s.real_name !== 'Quản Trị Viên') 
-          ? s.real_name 
+        name: (s.real_name && s.real_name !== 'Quản Trị Viên')
+          ? s.real_name
           : ((s.username === 'admin' || s.member_id === 'ADMIN' || s.name === 'Quản Trị Viên') ? 'Vũ Mai Quang' : (s.name || 'Thành Viên VMC')),
         role_title: s.real_role_title || s.role_title || 'Thành Viên VMC'
       }))
