@@ -224,6 +224,8 @@ export const ClubProvider = ({ children }) => {
             };
             saveDatabaseToStorage(updated);
             return updated;
+          });
+
           // Sync Sessions for Super Admin Session Management in real-time
           fetchEntityAPI('sessions').then(serverSessions => {
             if (Array.isArray(serverSessions)) setSessions(serverSessions);
