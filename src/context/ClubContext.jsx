@@ -1440,7 +1440,7 @@ export const ClubProvider = ({ children }) => {
       assignee: assignedMember?.name || 'Thành viên còn thiếu',
       deadline: new Date(new Date().getFullYear(), parseInt(month, 10) - 1, 1).toISOString().slice(0, 10),
       createdById: currentUser?.id,
-      pointsReward: 20,
+      pointsReward: 0,
       status: 'todo'
     });
  

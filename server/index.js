@@ -251,7 +251,7 @@ app.post('/api/send-email', async (req, res) => {
 
   try {
     const info = await transporter.sendMail({
-      from: `"VMC Internal Portal" <${process.env.SMTP_EMAIL}>`,
+      from: `"CLB TRUYỀN THÔNG VMC (THPT VĨNH BẢO)" <${process.env.SMTP_EMAIL}>`,
       to,
       subject,
       text,
@@ -282,7 +282,7 @@ app.post('/api/members/reset-password', async (req, res) => {
     if (email && process.env.SMTP_EMAIL && process.env.SMTP_PASSWORD) {
       try {
         await transporter.sendMail({
-          from: `"BỘ PHẬN KỸ THUẬT VMC" <${process.env.SMTP_EMAIL}>`,
+          from: `"CLB TRUYỀN THÔNG VMC (THPT VĨNH BẢO)" <${process.env.SMTP_EMAIL}>`,
           to: email,
           subject: '🔑 [VMC Portal] Thông báo Cấp lại Mật Khẩu Mặc Định Tài Khoản VMC',
           html: `
@@ -706,6 +706,91 @@ app.post('/api/members/create', async (req, res) => {
   }
 });
 
+// ── AUTOMATIC DAILY BIRTHDAY EMAIL SENDER ──
+const checkAndSendDailyBirthdayEmails = async () => {
+  if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) return [];
+  const results = [];
+  try {
+    const today = new Date();
+    const todayDay = today.getDate();
+    const todayMonth = today.getMonth() + 1; // 1-12
+
+    console.log(`🎂 [Auto Birthday Mailer] Running daily check for date ${todayDay}/${todayMonth}...`);
+
+    const members = await queryDatabase(
+      'SELECT id, member_code, full_name, email, dob, class_name, department, status FROM Members WHERE email IS NOT NULL AND email != "" AND (status IS NULL OR status = "Active")'
+    );
+
+    for (const m of members) {
+      if (!m.dob) continue;
+      const parts = String(m.dob).split(/[\/\-]/);
+      if (parts.length < 2) continue;
+
+      let dDay = 0;
+      let dMonth = 0;
+
+      if (parts[0].length === 4) { // YYYY-MM-DD
+        dMonth = parseInt(parts[1], 10);
+        dDay = parseInt(parts[2], 10);
+      } else { // DD/MM/YYYY
+        dDay = parseInt(parts[0], 10);
+        dMonth = parseInt(parts[1], 10);
+      }
+
+      if (dDay === todayDay && dMonth === todayMonth) {
+        console.log(`🎉 [Auto Birthday] Today is ${m.full_name}'s birthday (${m.dob})! Sending email to ${m.email}...`);
+
+        try {
+          await transporter.sendMail({
+            from: `"CLB TRUYỀN THÔNG VMC (THPT VĨNH BẢO)" <${process.env.SMTP_EMAIL}>`,
+            to: m.email,
+            subject: `🎂🎉 Chúc Mừng Sinh Nhật ${m.full_name}! - CLB Truyền Thông VMC`,
+            html: `
+              <div style="font-family: Arial, sans-serif; padding: 30px; color: #1e293b; background: linear-gradient(135deg, #fdf2f8 0%, #f0f9ff 100%); border-radius: 20px; border: 1px solid #fbcfe8; max-width: 600px; margin: 0 auto; box-shadow: 0 10px 25px rgba(236,72,153,0.1);">
+                <div style="text-align: center; margin-bottom: 25px;">
+                  <span style="font-size: 50px;">🎂🎉✨</span>
+                  <h1 style="color: #db2777; margin: 10px 0 5px 0; font-size: 24px;">HAPPY BIRTHDAY!</h1>
+                  <p style="color: #64748b; font-size: 14px; margin: 0;">CLB Truyền Thông THPT Vĩnh Bảo (VMC)</p>
+                </div>
+
+                <div style="background-color: #ffffff; padding: 25px; border-radius: 16px; border: 1px solid #f472b6; line-height: 1.6;">
+                  <p style="font-size: 16px; margin-top: 0;">Thân gửi <strong>${m.full_name}</strong> (${m.department || 'Thành Viên VMC'} - Lớp ${m.class_name || 'VMC'}),</p>
+
+                  <p>Hôm nay là một ngày vô cùng đặc biệt! Thay mặt cho toàn thể Đại gia đình <strong>CLB Truyền Thông THPT Vĩnh Bảo (VMC)</strong>, Ban Đối Ngoại - Nhân Sự xin gửi tới bạn những lời chúc mừng sinh nhật ấm áp và rực rỡ nhất! 🥳🎈</p>
+
+                  <p>Chúc bạn tuổi mới luôn ngập tràn niềm vui, sức khỏe, học tập xuất sắc và luôn giữ vững ngọn lửa nhiệt huyết để tiếp tục cùng VMC tạo nên những thước phim, bài viết và kỷ niệm thanh xuân tuyệt vời nhất! 💖✨</p>
+
+                  <div style="background-color: #fdf2f8; padding: 15px 20px; border-radius: 12px; border-left: 4px solid #ec4899; margin: 20px 0; font-style: italic; color: #831843;">
+                    "Tuổi mới tỏa sáng rực rỡ, luôn tự tin và gặt hái được thật nhiều thành công mới cùng gia đình VMC!" 🌟
+                  </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 25px; font-size: 13px; color: #64748b;">
+                  <p style="margin: 0;">Trân trọng & Thân yêu,<br/><strong style="color: #db2777;">BAN CHỦ NHIỆM & BAN ĐỐI NGOẠI - NHÂN SỰ VMC</strong></p>
+                </div>
+              </div>
+            `
+          });
+          results.push({ name: m.full_name, email: m.email, status: 'sent' });
+          console.log(`✅ [Auto Birthday Mailer] Successfully delivered birthday email to ${m.email}!`);
+        } catch (mailErr) {
+          console.error(`❌ [Auto Birthday Mailer] Error sending to ${m.email}:`, mailErr.message);
+          results.push({ name: m.full_name, email: m.email, status: 'failed', error: mailErr.message });
+        }
+      }
+    }
+  } catch (err) {
+    console.error('❌ [Auto Birthday Mailer] Error checking birthdays:', err.message);
+  }
+  return results;
+};
+
+// API Endpoint kích hoạt kiểm tra & gửi mail sinh nhật thủ công
+app.post('/api/birthdays/trigger-daily-emails', async (req, res) => {
+  const results = await checkAndSendDailyBirthdayEmails();
+  res.json({ success: true, count: results.length, data: results });
+});
+
 // Catch-all: trả về index.html cho React Router SPA (Express 5 compatible)
 app.use((req, res) => {
   const indexPath = path.join(DIST_DIR, 'index.html');
@@ -729,4 +814,13 @@ app.use((req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
   console.log(`📁 Serving frontend từ: ${DIST_DIR}`);
+
+  // Chạy tự động kiểm tra mail sinh nhật daily (10 giây sau khi server khởi động + lặp lại mỗi 12 tiếng)
+  setTimeout(() => {
+    checkAndSendDailyBirthdayEmails();
+  }, 10000);
+
+  setInterval(() => {
+    checkAndSendDailyBirthdayEmails();
+  }, 12 * 60 * 60 * 1000);
 });

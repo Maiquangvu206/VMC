@@ -405,7 +405,7 @@ const sendMailHelper = async (to, subject, html) => {
       }
     });
     await transporter.sendMail({
-      from: `"VMC Internal Portal" <${process.env.SMTP_EMAIL}>`,
+      from: `"CLB TRUYỀN THÔNG VMC (THPT VĨNH BẢO)" <${process.env.SMTP_EMAIL}>`,
       to,
       subject,
       html
@@ -753,18 +753,60 @@ router.post('/birthday-assignments', async (req, res) => {
         );
         if (assignees && assignees.length > 0 && assignees[0].email) {
           const assignee = assignees[0];
+
+          // Lấy danh sách tổng quan các thành viên có sinh nhật trong tháng mMonth
+          const allMembers = await queryDatabase('SELECT full_name, class_name, department, dob, phone FROM Members');
+          const monthMembers = (allMembers || []).filter(m => {
+            if (!m.dob) return false;
+            const parts = String(m.dob).split(/[\/\-]/);
+            if (parts.length >= 2) {
+              const monthNum = parts[0].length === 4 ? parseInt(parts[1], 10) : parseInt(parts[1], 10);
+              return monthNum === mMonth;
+            }
+            return false;
+          });
+
+          const tableRows = monthMembers.map((m, idx) => `
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+              <td style="padding: 8px; border: 1px solid #cbd5e1; text-align: center;">${idx + 1}</td>
+              <td style="padding: 8px; border: 1px solid #cbd5e1; font-weight: bold; color: #1e293b;">${m.full_name}</td>
+              <td style="padding: 8px; border: 1px solid #cbd5e1; color: #db2777; font-weight: bold;">${m.dob}</td>
+              <td style="padding: 8px; border: 1px solid #cbd5e1;">${m.class_name || 'N/A'}</td>
+              <td style="padding: 8px; border: 1px solid #cbd5e1;">${m.department || 'Thành Viên'}</td>
+            </tr>
+          `).join('');
+
+          const bdayTableHtml = monthMembers.length > 0 ? `
+            <h4 style="color: #ec4899; margin-top: 18px; margin-bottom: 8px;">📋 Danh sách tổng quan thành viên sinh nhật tháng ${mMonth}:</h4>
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 5px;">
+              <thead>
+                <tr style="background-color: #f1f5f9; color: #475569; text-align: left;">
+                  <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: center;">STT</th>
+                  <th style="padding: 8px; border: 1px solid #cbd5e1;">Họ và Tên</th>
+                  <th style="padding: 8px; border: 1px solid #cbd5e1;">Ngày Sinh</th>
+                  <th style="padding: 8px; border: 1px solid #cbd5e1;">Lớp</th>
+                  <th style="padding: 8px; border: 1px solid #cbd5e1;">Ban Chuyên Môn</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tableRows}
+              </tbody>
+            </table>
+          ` : '<p style="font-style: italic; color: #64748b; margin-top: 10px;">Chưa có dữ liệu ngày sinh thành viên trong tháng này.</p>';
+
           await sendMailHelper(
             assignee.email,
-            `🎂 [VMC Birthday] Bạn được phân công trực mừng sinh nhật tháng ${mMonth}/${mYear}!`,
+            `🎂 [VMC Birthday] Phân công trực mừng sinh nhật tháng ${mMonth}/${mYear}`,
             `
-              <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; max-w-lg;">
-                <h3 style="color: #ec4899;">🎂 Phân Công Trực Mừng Sinh Nhật</h3>
+              <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; max-w-2xl;">
+                <h3 style="color: #ec4899; margin-top: 0;">🎂 Phân Công Trực Mừng Sinh Nhật Tháng ${mMonth}/${mYear}</h3>
                 <p>Xin chào <strong>${assignee.full_name}</strong>,</p>
-                <p>Bạn đã được phân công trực phụ trách chúc mừng sinh nhật thành viên trong <strong>Tháng ${mMonth}/${mYear}</strong>.</p>
+                <p>Bạn đã được phân công phụ trách mừng sinh nhật thành viên trong <strong>Tháng ${mMonth}/${mYear}</strong>.</p>
                 <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
-                <p><strong>Nhiệm vụ:</strong> Soạn lời chúc và đăng/nộp ảnh chúc mừng sinh nhật cho các thành viên có sinh nhật trong tháng ${mMonth}.</p>
-                <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
-                <p style="font-size: 12px; color: #64748b;">Trân trọng,<br/><strong>Ban Đối Ngoại - Nhân Sự (VMC)</strong></p>
+                <p><strong>Nhiệm vụ:</strong> Soạn lời chúc và đăng/nộp ảnh chúc mừng sinh nhật cho từng thành viên có sinh nhật trong tháng ${mMonth}.</p>
+                ${bdayTableHtml}
+                <hr style="border:0; border-top:1px solid #e2e8f0; margin: 18px 0;"/>
+                <p style="font-size: 12px; color: #64748b;">Trân trọng,<br/><strong>Ban Đối Ngoại - Nhân Sự | CLB Truyền Thông THPT Vĩnh Bảo (VMC)</strong></p>
               </div>
             `
           );
