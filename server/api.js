@@ -80,7 +80,7 @@ router.post('/tasks', async (req, res) => {
               <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; max-w-lg;">
                 <h3 style="color: #2563eb;">🔔 Nhiệm vụ mới được phân công</h3>
                 <p>Xin chào <strong>${assignee.full_name}</strong>,</p>
-                <p>Bạn vừa được giao một nhiệm vụ mới trên hệ thống VMC Internal Portal.</p>
+                <p>Bạn vừa được giao một nhiệm vụ mới trên hệ thống VMC Portal.</p>
                 <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
                 <p><strong>Nhiệm vụ:</strong> <strong style="font-size: 15px; color: #1e293b;">${title}</strong></p>
                 <p><strong>Mô tả:</strong> ${description || 'Không có mô tả chi tiết.'}</p>
@@ -148,7 +148,7 @@ router.put('/tasks/:id', async (req, res) => {
                 <p><strong>Người thực hiện:</strong> <strong>${assigneeName}</strong></p>
                 <p><strong>Hạn chót:</strong> ${oldTask.deadline || 'Không giới hạn'}</p>
                 <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
-                <p style="font-size: 12px; color: #64748b;">Trân trọng,<br/><strong>Bộ Phận Kỹ Thuật VMC</strong></p>
+                <p style="font-size: 12px; color: #64748b;">Trân trọng,<br/><strong>Ban Đối Ngoại - Nhân Sự | CLB Truyền Thông THPT Vĩnh Bảo (VMC)</strong></p>
               </div>
             `
           );
@@ -267,12 +267,12 @@ router.put('/drafts/:id', async (req, res) => {
               <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; max-w-lg;">
                 <h3 style="color: #2563eb;">✍️ Phân Công Chấm Tương Tác Bài Viết</h3>
                 <p>Xin chào <strong>${grader.full_name}</strong>,</p>
-                <p>Bạn vừa được phân công làm người chấm tương tác cho một bài viết trên VMC Internal Portal.</p>
+                <p>Bạn vừa được phân công làm người chấm tương tác cho một bài viết trên VMC Portal.</p>
                 <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
                 <p><strong>Tiêu đề bài viết:</strong> <strong style="font-size: 15px; color: #1e293b;">${title || 'Bài viết Fanpage VMC'}</strong></p>
                 <p><strong>Nhiệm vụ:</strong> Kiểm tra số lượng Like/Share/Comment và chấm điểm tương tác cho bài viết.</p>
                 <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
-                <p style="font-size: 12px; color: #64748b;">Trân trọng,<br/><strong>Bộ Phận Kỹ Thuật - CLB Truyền Thông THPT Vĩnh Bảo (VMC)</strong></p>
+                <p style="font-size: 12px; color: #64748b;">Trân trọng,<br/><strong>Ban Đối Ngoại - Nhân Sự | CLB Truyền Thông THPT Vĩnh Bảo (VMC)</strong></p>
               </div>
             `
           ).catch(() => { });
@@ -486,7 +486,7 @@ router.post('/finances', async (req, res) => {
             `
               <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; max-w-lg;">
                 <h3 style="color: #2563eb;">💰 Yêu cầu duyệt dự trù Kinh phí mới</h3>
-                <p>Một yêu cầu dự trù thu chi vừa được tạo trên hệ thống VMC Internal Portal và đang chờ được bạn duyệt.</p>
+                <p>Một yêu cầu dự trù thu chi vừa được tạo trên hệ thống VMC Portal và đang chờ được bạn duyệt.</p>
                 <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
                 <p><strong>Loại giao dịch:</strong> <span style="color: ${type === 'income' ? '#10b981' : '#ef4444'}; font-weight:bold;">${typeStr}</span></p>
                 <p><strong>Số tiền:</strong> <strong style="font-size: 16px; color: #1e293b;">${amountFormatted}</strong></p>
@@ -494,7 +494,7 @@ router.post('/finances', async (req, res) => {
                 <p><strong>Ngày thực hiện:</strong> ${recDate}</p>
                 <p><strong>Người gửi yêu cầu:</strong> ${recBy}</p>
                 <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
-                <p style="font-size: 12px; color: #64748b;">Vui lòng đăng nhập hệ thống VMC Internal Portal -> trang Quản Lý Thu Chi để kiểm tra và xác nhận duyệt yêu cầu này.</p>
+                <p style="font-size: 12px; color: #64748b;">Vui lòng đăng nhập hệ thống VMC Portal -> trang Quản Lý Thu Chi để kiểm tra và xác nhận duyệt yêu cầu này.</p>
               </div>
             `
           );
@@ -536,7 +536,7 @@ router.put('/finances/:id', async (req, res) => {
             <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; max-w-lg;">
               <h3 style="color: ${status === 'approved' ? '#10b981' : '#ef4444'};">💰 Kết quả duyệt yêu cầu Kinh phí</h3>
               <p>Xin chào <strong>${requester.full_name}</strong>,</p>
-              <p>Yêu cầu dự trù thu chi của bạn trên hệ thống VMC Internal Portal đã được Trưởng Ban duyệt.</p>
+              <p>Yêu cầu dự trù thu chi của bạn trên hệ thống VMC Portal đã được Trưởng Ban duyệt.</p>
               <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
               <p><strong>Trạng thái duyệt:</strong> <strong style="color: ${status === 'approved' ? '#10b981' : '#ef4444'}; font-size: 15px;">${statusStr}</strong></p>
               <p><strong>Loại giao dịch:</strong> ${typeStr}</p>
@@ -544,7 +544,7 @@ router.put('/finances/:id', async (req, res) => {
               <p><strong>Nội dung:</strong> ${record.description}</p>
               <p><strong>Ngày thực hiện:</strong> ${record.record_date ? new Date(record.record_date).toISOString().slice(0, 10) : ''}</p>
               <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
-              <p style="font-size: 12px; color: #64748b;">Trân trọng,<br/><strong>Bộ Phận Kỹ Thuật - CLB Truyền Thông THPT Vĩnh Bảo (VMC)</strong></p>
+              <p style="font-size: 12px; color: #64748b;">Trân trọng,<br/><strong>Ban Đối Ngoại - Nhân Sự | CLB Truyền Thông THPT Vĩnh Bảo (VMC)</strong></p>
             </div>
           `
         );
@@ -644,7 +644,7 @@ router.post('/meetings', async (req, res) => {
                 <p><strong>Thời gian:</strong> ${time || '08:00'} ngày ${date || ''}</p>
                 <p><strong>Nhiệm vụ của bạn:</strong> <span style="color: #7c3aed; font-weight: bold;">${roleTitle}</span></p>
                 <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
-                <p style="font-size: 12px; color: #64748b;">Trân trọng,<br/><strong>Bộ Phận Kỹ Thuật - CLB Truyền Thông THPT Vĩnh Bảo (VMC)</strong></p>
+                <p style="font-size: 12px; color: #64748b;">Trân trọng,<br/><strong>Ban Đối Ngoại - Nhân Sự | CLB Truyền Thông THPT Vĩnh Bảo (VMC)</strong></p>
               </div>
             `
           );
@@ -883,14 +883,14 @@ router.put('/birthday-assignments/:id', async (req, res) => {
                 `
                   <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; max-w-lg;">
                     <h3 style="color: #d97706;">⚠️ Báo cáo không có ảnh sinh nhật thành viên</h3>
-                    <p>Chào Ban Quản Trị / Trưởng Ban,</p>
+                    <p>Chào bạn,</p>
                     <p>Thành viên <strong>${assigneeName}</strong> vừa nộp giải trình không có ảnh/video cho thành viên mừng sinh nhật.</p>
                     <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
                     <p><strong>Thành viên sinh nhật:</strong> ${memberName}</p>
                     <p><strong>Tháng sinh nhật:</strong> Tháng ${oldAssignment.month}/${oldAssignment.year}</p>
                     <p><strong>Lý do giải trình:</strong> <span style="color: #b45309; font-weight: bold;">"${noPhotoReason}"</span></p>
                     <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
-                    <p style="font-size: 12px; color: #64748b;">Trân trọng,<br/><strong>Hệ thống quản lý VMC Portal</strong></p>
+                    <p style="font-size: 12px; color: #64748b;">Trân trọng,<br/><strong>Ban Đối Ngoại - Nhân Sự | CLB Truyền Thông THPT Vĩnh Bảo (VMC)</strong></p>
                   </div>
                 `
               );

@@ -751,7 +751,7 @@ const checkAndSendDailyBirthdayEmails = async () => {
       }
 
       if (dDay === todayDay && dMonth === todayMonth) {
-        console.log(`🎉 [Auto Birthday] Today is ${m.full_name}'s birthday (${m.dob})! Sending email to ${m.email}...`);
+        console.log(`🎉 [Happy Birthday] Today is ${m.full_name}'s birthday (${m.dob})! Sending email to ${m.email}...`);
 
         let wishContentHtml = '';
 
@@ -789,7 +789,7 @@ const checkAndSendDailyBirthdayEmails = async () => {
 
         try {
           await transporter.sendMail({
-            from: `"CLB TRUYỀN THÔNG TRƯỜNG THPT VĨNH BẢO (MC)" <${process.env.SMTP_EMAIL}>`,
+            from: `"CLB TRUYỀN THÔNG TRƯỜNG THPT VĨNH BẢO (VMC)" <${process.env.SMTP_EMAIL}>`,
             to: m.email,
             subject: `🎂🎉 Chúc Mừng Sinh Nhật ${m.full_name}! - CLB Truyền Thông Trường THPT Vĩnh Bảo`,
             html: `
