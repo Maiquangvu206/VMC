@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Google Service Account Keys
+vmc-*.json
+*.json.key
+key.json
+

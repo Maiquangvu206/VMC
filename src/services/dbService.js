@@ -34,39 +34,12 @@ export const getInitialDatabase = () => ({
 
 // Load Database from Persistence
 export const loadDatabaseFromStorage = () => {
-  try {
-    const rawData = localStorage.getItem(DB_STORAGE_KEY);
-    if (!rawData) {
-      const initialDb = getInitialDatabase();
-      localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(initialDb));
-      return initialDb;
-    }
-    const parsed = JSON.parse(rawData);
-    // Không fallback dữ liệu hardcode — để rỗng nếu SQL chưa có dữ liệu
-    if (!parsed.resources) parsed.resources = [];
-    if (!parsed.departmentDrives) parsed.departmentDrives = [];
-    if (!parsed.meetings) parsed.meetings = [];
-    if (!parsed.birthdayAssignments) parsed.birthdayAssignments = [];
-    if (!parsed.finances) parsed.finances = [];
-    if (!parsed.attendanceRecords) parsed.attendanceRecords = [];
-    return parsed;
-  } catch (error) {
-    console.error('Lỗi khi đọc Cơ sở dữ liệu động:', error);
-    return getInitialDatabase();
-  }
+  return getInitialDatabase();
 };
 
 // Save Database to Persistence
 export const saveDatabaseToStorage = (db) => {
-  try {
-    const dbToSave = {
-      ...db,
-      lastUpdated: new Date().toISOString()
-    };
-    localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(dbToSave));
-  } catch (error) {
-    console.error('Lỗi khi lưu Cơ sở dữ liệu động:', error);
-  }
+  // No-op: Direct MySQL phpMyAdmin synchronization ONLY
 };
 
 // Reset Database to Factory Seed

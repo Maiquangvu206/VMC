@@ -51,6 +51,20 @@ export const ClubProvider = ({ children }) => {
 
   const [db, setDb] = useState(() => loadDatabaseFromStorage());
 
+  const [sessions, setSessions] = useState([]);
+  const [currentSessionId, setCurrentSessionId] = useState(() => {
+    try {
+      let savedId = sessionStorage.getItem('VMC_SESSION_ID');
+      if (!savedId) {
+        savedId = 'sess-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now();
+        sessionStorage.setItem('VMC_SESSION_ID', savedId);
+      }
+      return savedId;
+    } catch (e) {
+      return 'sess-' + Date.now();
+    }
+  });
+
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const savedUser = sessionStorage.getItem('VMC_CURRENT_USER');
@@ -106,6 +120,11 @@ export const ClubProvider = ({ children }) => {
     } catch (e) {}
     setIsAuthenticated(false);
     setCurrentUser(null);
+    const newId = 'sess-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now();
+    setCurrentSessionId(newId);
+    try {
+      sessionStorage.setItem('VMC_SESSION_ID', newId);
+    } catch (e) {}
   };
 
   // Load Members from SQL Database API on Mount
@@ -617,6 +636,11 @@ export const ClubProvider = ({ children }) => {
     setIsAuthenticated(false);
     setRequirePasswordChange(false);
     setCurrentUser(null);
+    const newId = 'sess-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now();
+    setCurrentSessionId(newId);
+    try {
+      sessionStorage.setItem('VMC_SESSION_ID', newId);
+    } catch (e) {}
   };
 
   // Add new Resource item (Google Drive Link)
@@ -985,6 +1009,10 @@ export const ClubProvider = ({ children }) => {
 
   // Update Task Status
   const updateTaskStatus = (taskId, newStatus) => {
+    if (String(taskId).startsWith('virtual-')) {
+      showToast('Nhiệm vụ này được quản lý tự động. Vui lòng thực hiện trong phần Điểm Danh / Sinh Nhật tương ứng!', 'warning');
+      return;
+    }
     updateDb(prev => ({
       ...prev,
       tasks: prev.tasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t)
@@ -1454,19 +1482,6 @@ export const ClubProvider = ({ children }) => {
   // -------------------------------------------------------------
   // SESSIONS MANAGEMENT (SUPER ADMIN)
   // -------------------------------------------------------------
-  const [sessions, setSessions] = useState([]);
-  const [currentSessionId, setCurrentSessionId] = useState(() => {
-    try {
-      let savedId = sessionStorage.getItem('VMC_SESSION_ID');
-      if (!savedId) {
-        savedId = 'sess-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now();
-        sessionStorage.setItem('VMC_SESSION_ID', savedId);
-      }
-      return savedId;
-    } catch (e) {
-      return 'sess-' + Date.now();
-    }
-  });
 
   const loadSqlSessions = async () => {
     try {
@@ -1607,7 +1622,90 @@ export const ClubProvider = ({ children }) => {
       addMemberMilestone,
       user: currentUser,
       members: db.members || [],
-      tasks: db.tasks || [],
+      tasks: [
+        ...(db.tasks || []),
+        ...((() => {
+          const virtuals = [];
+          
+          // 1. Birthday Assignments -> Tasks
+          const birthdayAssignments = db.birthdayAssignments || [];
+          birthdayAssignments.forEach(b => {
+            const assigneeObj = (db.members || []).find(m => String(m.id) === String(b.memberId) || String(m.memberCode) === String(b.memberId));
+            const assigneeName = assigneeObj ? assigneeObj.name : 'Chưa phân công';
+            
+            const status = b.status === 'completed' ? 'done' : 'doing';
+            const pad = (num) => String(num).padStart(2, '0');
+            const deadline = `${b.year}-${pad(b.month)}-28`;
+
+            virtuals.push({
+              id: `virtual-bday-${b.id}`,
+              title: `🎂 Chuẩn bị tư liệu sinh nhật tháng ${b.month}/${b.year}`,
+              description: `Tìm hình ảnh, viết lời chúc và làm bài mừng sinh nhật cho thành viên CLB trong tháng.`,
+              desc: `Tìm hình ảnh, viết lời chúc và làm bài mừng sinh nhật cho thành viên CLB trong tháng.`,
+              department: 'hr_external',
+              assignee: assigneeName,
+              assigneeId: b.memberId,
+              deadline,
+              status,
+              pointsReward: 10,
+              isVirtual: true,
+              virtualType: 'birthday'
+            });
+          });
+
+          // 2. Meeting Attendance & Minutes Takers -> Tasks
+          const meetings = db.meetings || [];
+          meetings.forEach(m => {
+            if (m.attendanceTakerId || m.attendance_taker_id) {
+              const takerId = m.attendanceTakerId || m.attendance_taker_id;
+              const takerObj = (db.members || []).find(mem => String(mem.id) === String(takerId) || String(mem.memberCode) === String(takerId));
+              const takerName = takerObj ? takerObj.name : 'Chưa phân công';
+              
+              const status = (m.status === 'completed' || m.status === 'pending_minutes') ? 'done' : 'todo';
+              
+              virtuals.push({
+                id: `virtual-meet-att-${m.id}`,
+                title: `📝 Phụ trách điểm danh họp: ${m.title}`,
+                description: `Tiến hành điểm danh các thành viên có mặt và vắng mặt trong buổi họp diễn ra vào lúc ${m.time} ngày ${m.date}.`,
+                desc: `Tiến hành điểm danh các thành viên có mặt và vắng mặt trong buổi họp diễn ra vào lúc ${m.time} ngày ${m.date}.`,
+                department: 'hr_external',
+                assignee: takerName,
+                assigneeId: takerId,
+                deadline: m.date,
+                status,
+                pointsReward: 10,
+                isVirtual: true,
+                virtualType: 'attendance'
+              });
+            }
+
+            if (m.minuteTakerId || m.minute_taker_id) {
+              const takerId = m.minuteTakerId || m.minute_taker_id;
+              const takerObj = (db.members || []).find(mem => String(mem.id) === String(takerId) || String(mem.memberCode) === String(takerId));
+              const takerName = takerObj ? takerObj.name : 'Chưa phân công';
+              
+              const status = (m.status === 'completed' || m.minutesLink) ? 'done' : 'todo';
+
+              virtuals.push({
+                id: `virtual-meet-min-${m.id}`,
+                title: `✍️ Ghi biên bản cuộc họp: ${m.title}`,
+                description: `Ghi lại biên bản chi tiết các nội dung, biểu quyết và phân công công việc của buổi họp vào Google Docs.`,
+                desc: `Ghi lại biên bản chi tiết các nội dung, biểu quyết và phân công công việc của buổi họp vào Google Docs.`,
+                department: 'hr_external',
+                assignee: takerName,
+                assigneeId: takerId,
+                deadline: m.date,
+                status,
+                pointsReward: 10,
+                isVirtual: true,
+                virtualType: 'minutes'
+              });
+            }
+          });
+
+          return virtuals;
+        })())
+      ],
       updateTaskStatus,
       addTask,
       equipment: db.equipment || [],

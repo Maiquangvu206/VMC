@@ -1,9 +1,28 @@
 import express from 'express';
 import { queryDatabase } from './db.js';
+import { google } from 'googleapis';
+import nodemailer from 'nodemailer';
+import fs from 'fs';
+import path from 'path';
+import multer from 'multer';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Khởi tạo thư mục uploads nếu chưa tồn tại
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Multer upload config
+const upload = multer({ dest: uploadsDir });
 
 const router = express.Router();
 const generateId = () => Math.random().toString(36).substr(2, 9);
 const toId = (val) => (val !== undefined && val !== null && val !== '') ? String(val) : null;
+
 
 // ======================= TASKS =======================
 router.get('/tasks', async (req, res) => {
@@ -249,6 +268,33 @@ router.delete('/announcements/:id', async (req, res) => {
   }
 });
 
+// Helper to send email from backend APIs
+const sendMailHelper = async (to, subject, html) => {
+  if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
+    console.warn('⚠️ SMTP credentials not set in environment. Cannot send email.');
+    return false;
+  }
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.SMTP_EMAIL,
+        pass: process.env.SMTP_PASSWORD
+      }
+    });
+    await transporter.sendMail({
+      from: `"VMC Internal Portal" <${process.env.SMTP_EMAIL}>`,
+      to,
+      subject,
+      html
+    });
+    return true;
+  } catch (err) {
+    console.error('❌ Failed to send email via helper:', err.message);
+    return false;
+  }
+};
+
 // ======================= FINANCES =======================
 router.get('/finances', async (req, res) => {
   try {
@@ -261,7 +307,8 @@ router.get('/finances', async (req, res) => {
       date: r.record_date ? new Date(r.record_date).toISOString().slice(0, 10) : '',
       record_date: r.record_date ? new Date(r.record_date).toISOString().slice(0, 10) : '',
       recorded_by: r.recorded_by,
-      status: 'approved'
+      loggedBy: r.recorded_by, // map for frontend
+      status: r.status || 'approved'
     }));
     res.json({ success: true, data });
   } catch (err) {
@@ -271,16 +318,101 @@ router.get('/finances', async (req, res) => {
 
 router.post('/finances', async (req, res) => {
   try {
-    const { id, type, amount, description, record_date, date, recorded_by, logged_by } = req.body;
+    const { id, type, amount, description, record_date, date, recorded_by, logged_by, status } = req.body;
     const finId = id || generateId();
-    const recBy = toId(recorded_by || logged_by);
+    const recBy = recorded_by || logged_by || 'Thành viên VMC';
     const recDate = record_date || date || new Date().toISOString().slice(0, 10);
+    const stat = status || 'approved';
 
     await queryDatabase(
-      'INSERT INTO Finances (id, type, amount, description, record_date, recorded_by) VALUES (?, ?, ?, ?, ?, ?)',
-      [finId, type, amount, description, recDate, recBy]
+      'INSERT INTO Finances (id, type, amount, description, record_date, recorded_by, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [finId, type, amount, description, recDate, recBy, stat]
     );
-    res.json({ success: true, data: { id: finId, type, amount, description, record_date: recDate } });
+
+    // Gửi mail thông báo duyệt thu chi nếu trạng thái là pending
+    if (stat === 'pending') {
+      try {
+        const reviewers = await queryDatabase(
+          `SELECT email FROM Members WHERE role = 'admin' OR LOWER(department) LIKE '%đối ngoại%' OR LOWER(department) LIKE '%nhân sự%' OR LOWER(department) LIKE '%đn-ns%'`
+        );
+        const emails = reviewers.filter(r => r.email).map(r => r.email);
+        if (emails.length > 0) {
+          const typeStr = type === 'income' ? 'THU' : 'CHI';
+          const amountFormatted = Number(amount).toLocaleString('vi-VN') + ' VND';
+          await sendMailHelper(
+            emails.join(','),
+            '💰 [VMC Finance] Yêu cầu duyệt dự trù kinh phí mới',
+            `
+              <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; max-w-lg;">
+                <h3 style="color: #2563eb;">💰 Yêu cầu duyệt dự trù Kinh phí mới</h3>
+                <p>Một yêu cầu dự trù thu chi vừa được tạo trên hệ thống VMC Internal Portal và đang chờ được bạn duyệt.</p>
+                <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
+                <p><strong>Loại giao dịch:</strong> <span style="color: ${type === 'income' ? '#10b981' : '#ef4444'}; font-weight:bold;">${typeStr}</span></p>
+                <p><strong>Số tiền:</strong> <strong style="font-size: 16px; color: #1e293b;">${amountFormatted}</strong></p>
+                <p><strong>Nội dung:</strong> ${description}</p>
+                <p><strong>Ngày thực hiện:</strong> ${recDate}</p>
+                <p><strong>Người gửi yêu cầu:</strong> ${recBy}</p>
+                <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
+                <p style="font-size: 12px; color: #64748b;">Vui lòng đăng nhập hệ thống VMC Internal Portal -> trang Quản Lý Thu Chi để kiểm tra và xác nhận duyệt yêu cầu này.</p>
+              </div>
+            `
+          );
+        }
+      } catch (mailErr) {
+        console.warn('⚠️ Lỗi gửi mail thông báo duyệt thu chi:', mailErr.message);
+      }
+    }
+
+    res.json({ success: true, data: { id: finId, type, amount, description, record_date: recDate, recorded_by: recBy, status: stat } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put('/finances/:id', async (req, res) => {
+  try {
+    const { status } = req.body;
+    const records = await queryDatabase('SELECT * FROM Finances WHERE id = ?', [req.params.id]);
+    
+    if (records && records.length > 0) {
+      const record = records[0];
+      await queryDatabase('UPDATE Finances SET status = ? WHERE id = ?', [status, req.params.id]);
+
+      // Gửi email thông báo cho người yêu cầu về kết quả duyệt
+      const requesters = await queryDatabase(
+        'SELECT email, full_name FROM Members WHERE full_name = ? OR member_code = ? LIMIT 1',
+        [record.recorded_by, record.recorded_by]
+      );
+      if (requesters && requesters.length > 0 && requesters[0].email) {
+        const requester = requesters[0];
+        const statusStr = status === 'approved' ? 'Đã được duyệt ✅' : 'Đã bị từ chối ❌';
+        const typeStr = record.type === 'income' ? 'THU' : 'CHI';
+        const amountFormatted = Number(record.amount).toLocaleString('vi-VN') + ' VND';
+        await sendMailHelper(
+          requester.email,
+          `💰 [VMC Finance] Kết quả duyệt yêu cầu dự trù kinh phí: ${status === 'approved' ? 'ĐÃ DUYỆT' : 'TỪ CHỐI'}`,
+          `
+            <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; max-w-lg;">
+              <h3 style="color: ${status === 'approved' ? '#10b981' : '#ef4444'};">💰 Kết quả duyệt yêu cầu Kinh phí</h3>
+              <p>Xin chào <strong>${requester.full_name}</strong>,</p>
+              <p>Yêu cầu dự trù thu chi của bạn trên hệ thống VMC Internal Portal đã được Trưởng Ban duyệt.</p>
+              <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
+              <p><strong>Trạng thái duyệt:</strong> <strong style="color: ${status === 'approved' ? '#10b981' : '#ef4444'}; font-size: 15px;">${statusStr}</strong></p>
+              <p><strong>Loại giao dịch:</strong> ${typeStr}</p>
+              <p><strong>Số tiền:</strong> ${amountFormatted}</p>
+              <p><strong>Nội dung:</strong> ${record.description}</p>
+              <p><strong>Ngày thực hiện:</strong> ${record.record_date ? new Date(record.record_date).toISOString().slice(0, 10) : ''}</p>
+              <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
+              <p style="font-size: 12px; color: #64748b;">Trân trọng,<br/><strong>Bộ Phận Kỹ Thuật - CLB Truyền Thông THPT Vĩnh Bảo (VMC)</strong></p>
+            </div>
+          `
+        );
+      }
+    } else {
+      await queryDatabase('UPDATE Finances SET status = ? WHERE id = ?', [status, req.params.id]);
+    }
+    
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -475,9 +607,101 @@ router.put('/birthday-assignments/:id', async (req, res) => {
   }
 });
 
+// ======================= GOOGLE DRIVE CONFIG & HELPERS =======================
+const authDrive = () => {
+  const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  if (!credentialsPath || !fs.existsSync(credentialsPath)) {
+    console.warn('⚠️ Google Application Credentials not configured or file not found!');
+    return null;
+  }
+  const auth = new google.auth.GoogleAuth({
+    keyFile: credentialsPath,
+    scopes: ['https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/drive']
+  });
+  return google.drive({ version: 'v3', auth });
+};
+
+const getHRDriveFolderId = async () => {
+  try {
+    const rows = await queryDatabase('SELECT drive_link FROM Department_Drives WHERE dept_name = ? OR dept_name = ? LIMIT 1', ['Ban Đối Ngoại - Nhân Sự', 'Ban Đối Ngoại - Nhân sự']);
+    if (rows && rows.length > 0) {
+      const link = rows[0].drive_link;
+      const match = link.match(/\/folders\/([a-zA-Z0-9-_]+)/);
+      if (match) return match[1];
+    }
+  } catch (e) {
+    console.error('⚠️ Failed to query HR drive folder ID:', e.message);
+  }
+  return null;
+};
+
+// Route for birthday image/file upload directly to Google Drive
+router.post('/birthday/upload', upload.single('file'), async (req, res) => {
+  const file = req.file;
+  if (!file) {
+    return res.status(400).json({ success: false, message: 'Không tìm thấy file tải lên!' });
+  }
+
+  try {
+    const drive = authDrive();
+    if (!drive) {
+      if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+      return res.status(500).json({ success: false, message: 'Google Drive API chưa được cấu hình hoặc file credentials không tồn tại!' });
+    }
+
+    const folderId = await getHRDriveFolderId();
+    const fileMetadata = {
+      name: file.originalname,
+    };
+    if (folderId) {
+      fileMetadata.parents = [folderId];
+    }
+
+    const media = {
+      mimeType: file.mimetype,
+      body: fs.createReadStream(file.path),
+    };
+
+    const driveFile = await drive.files.create({
+      resource: fileMetadata,
+      media: media,
+      fields: 'id, webViewLink',
+    });
+
+    // Make public
+    try {
+      await drive.permissions.create({
+        fileId: driveFile.data.id,
+        requestBody: {
+          role: 'reader',
+          type: 'anyone',
+        },
+      });
+    } catch (permErr) {
+      console.warn('⚠️ Could not set public permissions on drive file:', permErr.message);
+    }
+
+    if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+
+    res.json({
+      success: true,
+      webViewLink: driveFile.data.webViewLink,
+      fileId: driveFile.data.id
+    });
+  } catch (err) {
+    console.error('❌ Google Drive upload error:', err.message);
+    if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+
 // ======================= USER SESSIONS (SUPER ADMIN) =======================
 router.get('/sessions', async (req, res) => {
   try {
+    // Tự động quét và đánh dấu phiên hết hạn (không nhận heartbeat trong 1 phút qua) là ngừng hoạt động
+    await queryDatabase('UPDATE User_Sessions SET is_active = 0 WHERE is_active = 1 AND last_active < NOW() - INTERVAL 1 MINUTE');
+
     const sql = `
       SELECT 
         s.*,

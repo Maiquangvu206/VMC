@@ -43,6 +43,10 @@ export const BirthdayManagement = () => {
   const [excuseModalAssignmentId, setExcuseModalAssignmentId] = useState(null);
   const [excuseReasonInput, setExcuseReasonInput] = useState('');
 
+  const [submissionMethod, setSubmissionMethod] = useState('upload'); // 'upload' or 'link'
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+
   const handleAssign = (e) => {
     e.preventDefault();
     if (!assignForm.memberId) {
@@ -53,12 +57,44 @@ export const BirthdayManagement = () => {
     setAssignForm({ ...assignForm, memberId: '' });
   };
 
-  const handleConfirmMemberSubmit = (e) => {
+  const handleConfirmMemberSubmit = async (e) => {
     e.preventDefault();
-    if (!memberLinkInput.trim() || !activeAssignmentId || !submittingMemberId) return;
-    submitMemberBirthdayData(activeAssignmentId, submittingMemberId, memberLinkInput.trim());
-    setSubmittingMemberId(null);
-    setMemberLinkInput('');
+    if (!activeAssignmentId || !submittingMemberId) return;
+
+    if (submissionMethod === 'upload') {
+      if (!selectedFile) {
+        if (showToast) showToast('Vui lòng chọn file ảnh để tải lên!', 'warning');
+        return;
+      }
+      setIsUploading(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+
+        const response = await fetch('/api/birthday/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const result = await response.json();
+        if (result.success && result.webViewLink) {
+          submitMemberBirthdayData(activeAssignmentId, submittingMemberId, result.webViewLink);
+          if (showToast) showToast('🎉 Đã tải ảnh lên Google Drive Ban thành công!', 'success');
+          setSubmittingMemberId(null);
+          setSelectedFile(null);
+        } else {
+          if (showToast) showToast(result.message || 'Không thể tải ảnh lên Google Drive!', 'error');
+        }
+      } catch (err) {
+        if (showToast) showToast('Lỗi khi kết nối đến máy chủ!', 'error');
+      } finally {
+        setIsUploading(false);
+      }
+    } else {
+      if (!memberLinkInput.trim()) return;
+      submitMemberBirthdayData(activeAssignmentId, submittingMemberId, memberLinkInput.trim());
+      setSubmittingMemberId(null);
+      setMemberLinkInput('');
+    }
   };
 
   const handleConfirmExcuseSubmit = (e) => {
@@ -305,6 +341,7 @@ export const BirthdayManagement = () => {
       </div>
 
       {/* Modal Nộp Link Sinh Nhật cho 1 Thành Viên Cụ Thể */}
+      {/* Modal Nộp Link/Ảnh Sinh Nhật cho 1 Thành Viên Cụ Thể */}
       {submittingMemberId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
           <div className="relative w-full max-w-md bg-slate-900 border border-pink-500/40 rounded-3xl p-6 shadow-2xl text-white space-y-4">
@@ -312,37 +349,76 @@ export const BirthdayManagement = () => {
               <h3 className="font-heading font-bold text-base text-white flex items-center gap-2">
                 <ImageIcon className="text-pink-400 w-5 h-5" /> Nộp Ảnh / Link Mừng Sinh Nhật
               </h3>
-              <button onClick={() => setSubmittingMemberId(null)} className="text-slate-400 hover:text-white">
+              <button onClick={() => { setSubmittingMemberId(null); setSelectedFile(null); }} className="text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleConfirmMemberSubmit} className="space-y-4 text-xs">
-              <div>
-                <label className="block text-slate-300 font-semibold mb-1.5">Link Ảnh / Bài Đăng chúc mừng cá nhân (Drive, Facebook...)</label>
-                <input
-                  type="url"
-                  required
-                  placeholder="https://drive.google.com/... hoặc https://facebook.com/..."
-                  value={memberLinkInput}
-                  onChange={(e) => setMemberLinkInput(e.target.value)}
-                  className="w-full px-3 py-2.5 bg-slate-950 border border-white/10 rounded-xl text-white font-mono text-xs focus:outline-none focus:border-pink-500"
-                />
+              {/* Method Tabs */}
+              <div className="flex gap-2 p-1 bg-slate-950 rounded-xl border border-white/5">
+                <button
+                  type="button"
+                  onClick={() => setSubmissionMethod('upload')}
+                  className={`flex-1 py-1.5 rounded-lg text-center font-bold transition-all ${
+                    submissionMethod === 'upload' ? 'bg-pink-600 text-white' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Tải Ảnh Lên Drive Ban
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSubmissionMethod('link')}
+                  className={`flex-1 py-1.5 rounded-lg text-center font-bold transition-all ${
+                    submissionMethod === 'link' ? 'bg-pink-600 text-white' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Dán Link Ảnh / Bài Đăng
+                </button>
               </div>
+
+              {submissionMethod === 'upload' ? (
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1.5">Chọn file ảnh / video mừng sinh nhật</label>
+                  <input
+                    type="file"
+                    required
+                    accept="image/*,video/*"
+                    onChange={(e) => setSelectedFile(e.target.files[0])}
+                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white text-xs file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-pink-600/20 file:text-pink-400 hover:file:bg-pink-600/30"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">Hệ thống sẽ tự động tải lên Google Drive của Ban Đối Ngoại - Nhân Sự.</p>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1.5">Link Ảnh / Bài Đăng chúc mừng cá nhân (Drive, Facebook...)</label>
+                  <input
+                    type="url"
+                    required
+                    placeholder="https://drive.google.com/... hoặc https://facebook.com/..."
+                    value={memberLinkInput}
+                    onChange={(e) => setMemberLinkInput(e.target.value)}
+                    className="w-full px-3 py-2.5 bg-slate-950 border border-white/10 rounded-xl text-white font-mono text-xs focus:outline-none focus:border-pink-500"
+                  />
+                </div>
+              )}
 
               <div className="pt-2 flex justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setSubmittingMemberId(null)}
+                  disabled={isUploading}
+                  onClick={() => { setSubmittingMemberId(null); setSelectedFile(null); }}
                   className="btn-secondary text-xs px-4 py-2"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="btn-primary text-xs px-6 py-2 bg-pink-600 hover:bg-pink-500 border border-pink-500/50 shadow-pink-600/30 flex items-center gap-2 font-bold"
+                  disabled={isUploading}
+                  className="btn-primary text-xs px-6 py-2 bg-pink-600 hover:bg-pink-500 border border-pink-500/50 shadow-pink-600/30 flex items-center gap-2 font-bold disabled:opacity-50"
                 >
-                  <Send className="w-4 h-4" /> Xác Nhận Nộp
+                  <Send className="w-4 h-4" /> 
+                  <span>{isUploading ? 'Đang Tải Lên...' : 'Xác Nhận Nộp'}</span>
                 </button>
               </div>
             </form>

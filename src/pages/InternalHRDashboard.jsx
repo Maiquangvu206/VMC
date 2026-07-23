@@ -173,12 +173,16 @@ export const InternalHRDashboard = () => {
 
   const handleAddFinance = (e) => {
     e.preventDefault();
-    if (!financeForm.amount || !financeForm.description || !financeForm.date) return;
+    if (!financeForm.amount || !financeForm.description) return;
+    
+    // Nếu không điền ngày thì lấy ngày thao tác hiện tại
+    const finalDate = financeForm.date || new Date().toLocaleDateString('en-CA');
+    
     addFinanceRecord({
       type: financeForm.type,
       amount: parseInt(financeForm.amount, 10),
       description: financeForm.description,
-      date: financeForm.date,
+      date: finalDate,
       loggedBy: currentUser?.name || 'Ban Đối Ngoại - Nhân Sự',
       status: isHRHead ? 'approved' : 'pending'
     });
@@ -458,10 +462,9 @@ export const InternalHRDashboard = () => {
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-slate-400 mb-1 block">Ngày Thực Hiện</label>
+                      <label className="text-xs text-slate-400 mb-1 block">Ngày Thực Hiện (Để trống để lấy ngày hôm nay)</label>
                       <input
                         type="date"
-                        required
                         value={financeForm.date}
                         onChange={(e) => setFinanceForm({ ...financeForm, date: e.target.value })}
                         className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"

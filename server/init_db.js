@@ -134,6 +134,38 @@ async function init() {
       )
     `);
 
+    // 8.1. Meetings
+    console.log('8️⃣.1️⃣ Khởi tạo bảng Meetings...');
+    await queryDatabase(`
+      CREATE TABLE IF NOT EXISTS Meetings (
+        id VARCHAR(100) PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        meeting_date VARCHAR(50),
+        meeting_time VARCHAR(50),
+        attendance_taker_id VARCHAR(100),
+        minute_taker_id VARCHAR(100),
+        status VARCHAR(50) DEFAULT 'pending',
+        minutes_link TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    // 8.2. Meeting_Attendance
+    console.log('8️⃣.2️⃣ Khởi tạo bảng Meeting_Attendance...');
+    await queryDatabase(`
+      CREATE TABLE IF NOT EXISTS Meeting_Attendance (
+        meeting_id VARCHAR(100) NOT NULL,
+        member_id VARCHAR(100) NOT NULL,
+        status VARCHAR(50) DEFAULT 'present',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (meeting_id, member_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    // 9. Finances
+    console.log('9️⃣ Khởi tạo các cột mới cho Finances...');
+    await queryDatabase('ALTER TABLE Finances ADD COLUMN status VARCHAR(50) DEFAULT "approved"').catch(() => {});
+
     // Tạo file SQL Dump trọn bộ để Import trực tiếp vào phpMyAdmin nếu muốn
     const sqlDumpContent = `-- ============================================================
 -- VMC PORTAL - DATABASE SCHEMA FOR PHPMYADMIN / MYSQL
@@ -249,6 +281,26 @@ CREATE TABLE IF NOT EXISTS Attendance_Records (
   present_members LONGTEXT,
   status VARCHAR(50) DEFAULT 'approved',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS Meetings (
+  id VARCHAR(100) PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  meeting_date VARCHAR(50),
+  meeting_time VARCHAR(50),
+  attendance_taker_id VARCHAR(100),
+  minute_taker_id VARCHAR(100),
+  status VARCHAR(50) DEFAULT 'pending',
+  minutes_link TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS Meeting_Attendance (
+  meeting_id VARCHAR(100) NOT NULL,
+  member_id VARCHAR(100) NOT NULL,
+  status VARCHAR(50) DEFAULT 'present',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (meeting_id, member_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 `;
 
