@@ -85,7 +85,7 @@ queryDatabase(`
         await queryDatabase(
           `INSERT IGNORE INTO Member_Milestones (id, member_id, date, title, badge_text, badge_style) VALUES (?, ?, ?, ?, ?, ?)`,
           [ms.id || ('m-' + Date.now()), String(m.id), ms.date || '20/09/2024', ms.title || 'Cột mốc mới', ms.badgeText || '[Cột mốc]', ms.badgeStyle || 'bg-blue-500/10 text-blue-400 border-blue-500/30']
-        ).catch(() => {});
+        ).catch(() => { });
       }
     }
   }
@@ -117,7 +117,7 @@ queryDatabase(`
       await queryDatabase(
         `INSERT IGNORE INTO Generations (id, name, years, description) VALUES (?, ?, ?, ?)`,
         [g.id, g.name, g.years, g.description]
-      ).catch(() => {});
+      ).catch(() => { });
     }
   }
 }).catch(err => {
@@ -144,19 +144,19 @@ queryDatabase(`
   console.log('ℹ️ CSDL status User_Sessions table:', err.message);
 });
 
-queryDatabase('ALTER TABLE User_Sessions ADD COLUMN logout_reason VARCHAR(50) DEFAULT NULL').catch(() => {});
+queryDatabase('ALTER TABLE User_Sessions ADD COLUMN logout_reason VARCHAR(50) DEFAULT NULL').catch(() => { });
 
-queryDatabase('ALTER TABLE Fanpage_Drafts ADD COLUMN likes_count INT DEFAULT 0').catch(() => {});
-queryDatabase('ALTER TABLE Fanpage_Drafts ADD COLUMN shares_count INT DEFAULT 0').catch(() => {});
-queryDatabase('ALTER TABLE Fanpage_Drafts ADD COLUMN comments_count INT DEFAULT 0').catch(() => {});
-queryDatabase('ALTER TABLE Fanpage_Drafts ADD COLUMN content_score INT DEFAULT 0').catch(() => {});
-queryDatabase('ALTER TABLE Fanpage_Drafts ADD COLUMN final_score INT DEFAULT 0').catch(() => {});
+queryDatabase('ALTER TABLE Fanpage_Drafts ADD COLUMN likes_count INT DEFAULT 0').catch(() => { });
+queryDatabase('ALTER TABLE Fanpage_Drafts ADD COLUMN shares_count INT DEFAULT 0').catch(() => { });
+queryDatabase('ALTER TABLE Fanpage_Drafts ADD COLUMN comments_count INT DEFAULT 0').catch(() => { });
+queryDatabase('ALTER TABLE Fanpage_Drafts ADD COLUMN content_score INT DEFAULT 0').catch(() => { });
+queryDatabase('ALTER TABLE Fanpage_Drafts ADD COLUMN final_score INT DEFAULT 0').catch(() => { });
 
-queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN submissions LONGTEXT').catch(() => {});
-queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN excuse_reason TEXT').catch(() => {});
-queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN excuse_status VARCHAR(50) DEFAULT "none"').catch(() => {});
-queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN is_penalized TINYINT DEFAULT 0').catch(() => {});
-queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN wishes_template TEXT').catch(() => {});
+queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN submissions LONGTEXT').catch(() => { });
+queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN excuse_reason TEXT').catch(() => { });
+queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN excuse_status VARCHAR(50) DEFAULT "none"').catch(() => { });
+queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN is_penalized TINYINT DEFAULT 0').catch(() => { });
+queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN wishes_template TEXT').catch(() => { });
 
 queryDatabase(`
   CREATE TABLE IF NOT EXISTS Resources (
@@ -204,7 +204,7 @@ queryDatabase(`
     await queryDatabase(
       'INSERT IGNORE INTO Department_Drives (id, dept_name, drive_link) VALUES (?, ?, ?)',
       [d.id, d.dept_name, d.drive_link]
-    ).catch(() => {});
+    ).catch(() => { });
   }
 }).catch(err => console.log('ℹ️ CSDL status Department_Drives table:', err.message));
 
@@ -238,7 +238,7 @@ const transporter = nodemailer.createTransport({
 // API Gửi Email Tự Động
 app.post('/api/send-email', async (req, res) => {
   const { to, subject, text, html } = req.body;
-  
+
   if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
     return res.status(500).json({ success: false, message: 'Server chưa được cấu hình tài khoản Email (SMTP_EMAIL & SMTP_PASSWORD)' });
   }
@@ -369,8 +369,6 @@ app.post('/api/auth/login', async (req, res) => {
     } else {
       if (user.password === password) isValidPassword = true;
       else if (password === user.member_code) isValidPassword = true;
-      else if (password === 'VMC2026@VinhBao') isValidPassword = true;
-      else if (user.member_code?.toUpperCase() === 'ADMIN' && (password.toUpperCase() === 'ADMIN' || password === 'admin123')) isValidPassword = true;
     }
 
     if (!isValidPassword) {
@@ -456,8 +454,8 @@ app.get('/api/members', async (req, res) => {
         if (!Array.isArray(parsed)) parsed = [];
 
         // Lấy danh sách từ bảng Member_Milestones theo ID hoặc MemberCode
-        const msFromTable = tableMilestones.filter(ms => 
-          String(ms.member_id) === String(m.id) || 
+        const msFromTable = tableMilestones.filter(ms =>
+          String(ms.member_id) === String(m.id) ||
           String(ms.member_id).toUpperCase() === String(m.member_code).toUpperCase()
         ).map(ms => ({
           id: ms.id,
@@ -506,22 +504,22 @@ app.get('/api/members', async (req, res) => {
 // API Endpoint 3: PUT /api/members/:id
 app.put('/api/members/:id', async (req, res) => {
   const { id } = req.params;
-  const { 
+  const {
     full_name, role, role_title, member_code, class_name, department, term,
-    phone, dob, email, points, address, facebook, avatar_url, avatar, 
-    status, password, is_first_login, isFirstLogin, milestones 
+    phone, dob, email, points, address, facebook, avatar_url, avatar,
+    status, password, is_first_login, isFirstLogin, milestones
   } = req.body;
 
   try {
     const membersList = await queryDatabase('SELECT id, member_code FROM Members WHERE id = ? OR member_code = ? OR username = ?', [id, id, id]);
     const targetMember = membersList && membersList.length > 0 ? membersList[0] : null;
 
-    const isFirstLoginVal = is_first_login !== undefined 
-      ? (is_first_login ? 1 : 0) 
+    const isFirstLoginVal = is_first_login !== undefined
+      ? (is_first_login ? 1 : 0)
       : (isFirstLogin !== undefined ? (isFirstLogin ? 1 : 0) : null);
 
-    const milestonesVal = milestones !== undefined 
-      ? (typeof milestones === 'object' ? JSON.stringify(milestones) : milestones) 
+    const milestonesVal = milestones !== undefined
+      ? (typeof milestones === 'object' ? JSON.stringify(milestones) : milestones)
       : null;
 
     const sql = `
@@ -547,7 +545,7 @@ app.put('/api/members/:id', async (req, res) => {
         milestones = COALESCE(?, milestones)
       WHERE (id = ? OR UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?))
     `;
-    
+
     await queryDatabase(sql, [
       full_name !== undefined ? full_name : null,
       role !== undefined ? role : null,
@@ -576,7 +574,7 @@ app.put('/api/members/:id', async (req, res) => {
       await queryDatabase(
         'DELETE FROM Member_Milestones WHERE member_id = ? OR member_id = ?',
         [String(targetMember.id), String(targetMember.member_code)]
-      ).catch(e => {});
+      ).catch(e => { });
 
       if (Array.isArray(milestones) && milestones.length > 0) {
         for (const ms of milestones) {
@@ -593,7 +591,7 @@ app.put('/api/members/:id', async (req, res) => {
                 ms.badgeText || ms.badge_text || '[Cột mốc]',
                 ms.badgeStyle || ms.badge_style || 'bg-blue-500/10 text-blue-400 border-blue-500/30'
               ]
-            ).catch(e => {});
+            ).catch(e => { });
           }
         }
       }
