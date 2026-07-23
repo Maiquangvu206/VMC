@@ -90,6 +90,16 @@ export const BirthdayManagement = () => {
         setIsUploading(false);
       }
     } else if (submissionMethod === 'no_photo') {
+      const assignment = (birthdayAssignments || []).find(a => String(a.id) === String(activeAssignmentId));
+      if (assignment) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const deadlineDate = new Date(parseInt(assignment.year, 10), parseInt(assignment.month, 10) - 1, 28);
+        if (today < deadlineDate) {
+          if (showToast) showToast(`⚠️ Lý do không có ảnh chỉ được phép dùng kể từ ngày hạn chót (28/${assignment.month}/${assignment.year})!`, 'error');
+          return;
+        }
+      }
       if (!memberLinkInput.trim()) {
         if (showToast) showToast('Vui lòng nhập lý do không có ảnh!', 'warning');
         return;
@@ -323,8 +333,8 @@ export const BirthdayManagement = () => {
                                   <ImageIcon className="w-3 h-3" /> Xem Bài
                                 </a>
                               ) : (
-                                <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20 text-[10px] font-medium max-w-[120px] truncate" title={submittedLink}>
-                                  📝 {submittedLink.replace(/^Lý do:\s*/i, '')}
+                                <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20 text-[10px] font-medium max-w-[120px] truncate cursor-help" title={submittedLink.replace(/^Lý do:\s*/i, '')}>
+                                  📝 Không đăng page
                                 </span>
                               )
                             ) : (
@@ -390,7 +400,19 @@ export const BirthdayManagement = () => {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSubmissionMethod('no_photo')}
+                  onClick={() => {
+                    const assignment = (birthdayAssignments || []).find(a => String(a.id) === String(activeAssignmentId));
+                    if (assignment) {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const deadlineDate = new Date(parseInt(assignment.year, 10), parseInt(assignment.month, 10) - 1, 28);
+                      if (today < deadlineDate) {
+                        if (showToast) showToast(`⚠️ Lý do không có ảnh chỉ được phép dùng kể từ ngày hạn chót (28/${assignment.month}/${assignment.year})!`, 'warning');
+                        return;
+                      }
+                    }
+                    setSubmissionMethod('no_photo');
+                  }}
                   className={`flex-1 py-1.5 rounded-lg text-center font-bold transition-all ${
                     submissionMethod === 'no_photo' ? 'bg-pink-600 text-white' : 'text-slate-400 hover:text-slate-200'
                   }`}

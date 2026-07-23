@@ -1165,7 +1165,8 @@ export const ClubProvider = ({ children }) => {
       amount: record.amount,
       description: record.description,
       date: record.date,
-      logged_by: record.loggedBy || currentUser?.name || ''
+      logged_by: record.loggedBy || currentUser?.name || '',
+      status: record.status
     });
     // Cập nhật local state ngay (optimistic)
     const newRecord = { ...record, id: res?.data?.id || ('fin-' + Date.now()), status: record.status || 'approved' };

@@ -7,7 +7,7 @@ import { PointManagement } from '../components/hr/PointManagement';
 
 export const InternalHRDashboard = () => {
   const { 
-    members, tasks, currentUser, isHRMember, isHRHead, finances, addFinanceRecord, updateFinanceStatus,
+    members, tasks, currentUser, isHRMember, isHRHead, isAdmin, finances, addFinanceRecord, updateFinanceStatus,
     meetings, createMeeting, submitMeetingAttendance, submitMeetingMinutes, penalizeMember, updateMemberPoints,
     birthdayAssignments, assignBirthdayDuty, submitBirthdayImage
   } = useClub();
@@ -479,7 +479,7 @@ export const InternalHRDashboard = () => {
 
               {/* History List */}
               <div className={`${isHRMember ? 'lg:col-span-2' : 'lg:col-span-3'} space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar`}>
-                {(finances || []).filter(f => isHRHead || f.status === 'approved' || f.loggedBy === currentUser?.name).map((f) => (
+                {(finances || []).filter(f => isHRHead || isAdmin || f.status === 'approved' || f.loggedBy === currentUser?.name).map((f) => (
                   <div key={f.id} className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col gap-3 hover:border-slate-600 transition-colors">
                     <div className="flex justify-between items-center">
                       <div className="flex gap-4 items-center">
@@ -503,7 +503,7 @@ export const InternalHRDashboard = () => {
                         {f.type === 'income' ? '+' : '-'}{f.amount.toLocaleString()} đ
                       </div>
                     </div>
-                    {isHRHead && f.status === 'pending' && (
+                    {(isHRHead || isAdmin) && f.status === 'pending' && (
                       <div className="flex justify-end gap-2 border-t border-slate-800 pt-2">
                         <button onClick={() => updateFinanceStatus(f.id, 'rejected')} className="px-3 py-1 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 rounded text-[10px] font-semibold transition-colors">Từ Chối</button>
                         <button onClick={() => updateFinanceStatus(f.id, 'approved')} className="px-3 py-1 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 rounded text-[10px] font-semibold transition-colors">Duyệt Chi</button>

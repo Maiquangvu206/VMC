@@ -56,6 +56,37 @@ router.post('/tasks', async (req, res) => {
       'INSERT INTO Tasks (id, title, description, assignee_id, created_by, deadline, status, points_reward) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [taskId, title, description || '', assId, creatorId, deadline || null, status || 'todo', points_reward || 10]
     );
+
+    // Gửi email thông báo cho người được giao nhiệm vụ
+    if (assId) {
+      try {
+        const assignees = await queryDatabase('SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? LIMIT 1', [assId, assId]);
+        if (assignees && assignees.length > 0 && assignees[0].email) {
+          const assignee = assignees[0];
+          await sendMailHelper(
+            assignee.email,
+            '🔔 [VMC Task] Bạn được giao nhiệm vụ mới!',
+            `
+              <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; max-w-lg;">
+                <h3 style="color: #2563eb;">🔔 Nhiệm vụ mới được phân công</h3>
+                <p>Xin chào <strong>${assignee.full_name}</strong>,</p>
+                <p>Bạn vừa được giao một nhiệm vụ mới trên hệ thống VMC Internal Portal.</p>
+                <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
+                <p><strong>Nhiệm vụ:</strong> <strong style="font-size: 15px; color: #1e293b;">${title}</strong></p>
+                <p><strong>Mô tả:</strong> ${description || 'Không có mô tả chi tiết.'}</p>
+                <p><strong>Hạn chót:</strong> ${deadline || 'Không giới hạn'}</p>
+                <p><strong>Điểm thưởng:</strong> ${points_reward || 10} points</p>
+                <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
+                <p style="font-size: 12px; color: #64748b;">Vui lòng truy cập hệ thống để cập nhật tiến độ công việc.</p>
+              </div>
+            `
+          );
+        }
+      } catch (mailErr) {
+        console.warn('⚠️ Lỗi gửi mail thông báo giao nhiệm vụ:', mailErr.message);
+      }
+    }
+
     res.json({ success: true, data: { id: taskId, title, description, assigneeId: assId, deadline, status } });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -66,6 +97,11 @@ router.put('/tasks/:id', async (req, res) => {
   try {
     const { status, title, description, deadline, assignee_id, assigneeId, points_reward } = req.body;
     const assId = (assignee_id !== undefined || assigneeId !== undefined) ? toId(assignee_id || assigneeId) : undefined;
+    
+    // Lấy thông tin task trước khi cập nhật để kiểm tra chuyển sang trạng thái hoàn thành (done)
+    const oldTasks = await queryDatabase('SELECT * FROM Tasks WHERE id = ?', [req.params.id]);
+    const oldTask = oldTasks && oldTasks.length > 0 ? oldTasks[0] : null;
+
     await queryDatabase(
       'UPDATE Tasks SET status = COALESCE(?, status), title = COALESCE(?, title), description = COALESCE(?, description), deadline = COALESCE(?, deadline), assignee_id = COALESCE(?, assignee_id), points_reward = COALESCE(?, points_reward) WHERE id = ?',
       [
@@ -78,6 +114,40 @@ router.put('/tasks/:id', async (req, res) => {
         req.params.id
       ]
     );
+
+    // Gửi email thông báo hoàn thành nhiệm vụ nếu chuyển trạng thái sang 'done'
+    if (oldTask && status === 'done' && oldTask.status !== 'done') {
+      try {
+        const creatorEmailResult = await queryDatabase('SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? LIMIT 1', [oldTask.created_by, oldTask.created_by]);
+        const assigneeResult = await queryDatabase('SELECT full_name FROM Members WHERE id = ? OR member_code = ? LIMIT 1', [oldTask.assignee_id, oldTask.assignee_id]);
+        
+        const creator = creatorEmailResult && creatorEmailResult.length > 0 ? creatorEmailResult[0] : null;
+        const assigneeName = assigneeResult && assigneeResult.length > 0 ? assigneeResult[0].full_name : 'Thành viên VMC';
+
+        if (creator && creator.email) {
+          await sendMailHelper(
+            creator.email,
+            '✅ [VMC Task] Nhiệm vụ được giao đã hoàn thành!',
+            `
+              <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; max-w-lg;">
+                <h3 style="color: #10b981;">✅ Nhiệm vụ đã hoàn thành</h3>
+                <p>Xin chào <strong>${creator.full_name}</strong>,</p>
+                <p>Nhiệm vụ bạn giao đã được đánh dấu là hoàn thành.</p>
+                <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
+                <p><strong>Nhiệm vụ:</strong> ${oldTask.title}</p>
+                <p><strong>Người thực hiện:</strong> <strong>${assigneeName}</strong></p>
+                <p><strong>Hạn chót:</strong> ${oldTask.deadline || 'Không giới hạn'}</p>
+                <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
+                <p style="font-size: 12px; color: #64748b;">Trân trọng,<br/><strong>Bộ Phận Kỹ Thuật VMC</strong></p>
+              </div>
+            `
+          );
+        }
+      } catch (mailErr) {
+        console.warn('⚠️ Lỗi gửi mail thông báo hoàn thành nhiệm vụ:', mailErr.message);
+      }
+    }
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -588,6 +658,68 @@ router.put('/birthday-assignments/:id', async (req, res) => {
     const exReason = excuseReason !== undefined ? excuseReason : excuse_reason;
     const exStatus = excuseStatus !== undefined ? excuseStatus : excuse_status;
     const pen = isPenalized !== undefined ? (isPenalized ? 1 : 0) : (is_penalized !== undefined ? (is_penalized ? 1 : 0) : undefined);
+
+    // Kiểm tra xem có lý do không nộp ảnh mới nào được nộp không
+    if (submissions !== undefined) {
+      try {
+        const oldAssignments = await queryDatabase('SELECT submissions, assignee_id, month, year FROM Birthday_Assignments WHERE id = ?', [req.params.id]);
+        if (oldAssignments && oldAssignments.length > 0) {
+          const oldAssignment = oldAssignments[0];
+          const oldSubs = oldAssignment.submissions ? JSON.parse(oldAssignment.submissions) : {};
+          const newSubs = typeof submissions === 'string' ? JSON.parse(submissions) : submissions;
+
+          // Tìm xem có memberId nào mới được gán lý do không
+          let newNoPhotoMemberId = null;
+          let noPhotoReason = '';
+          for (const key of Object.keys(newSubs)) {
+            const val = String(newSubs[key]);
+            if (val.startsWith('Lý do:') && (!oldSubs[key] || oldSubs[key] !== val)) {
+              newNoPhotoMemberId = key;
+              noPhotoReason = val.replace(/^Lý do:\s*/i, '');
+              break;
+            }
+          }
+
+          if (newNoPhotoMemberId) {
+            // Lấy thông tin thành viên đó
+            const members = await queryDatabase('SELECT full_name FROM Members WHERE id = ? LIMIT 1', [newNoPhotoMemberId]);
+            const memberName = (members && members.length > 0) ? members[0].full_name : 'Thành viên';
+            
+            // Lấy thông tin người phụ trách (assignee)
+            const assignees = await queryDatabase('SELECT full_name FROM Members WHERE id = ? OR member_code = ? LIMIT 1', [oldAssignment.assignee_id, oldAssignment.assignee_id]);
+            const assigneeName = (assignees && assignees.length > 0) ? assignees[0].full_name : 'Người phụ trách';
+
+            // Tìm Trưởng Ban Đối Ngoại - Nhân Sự (HR Head/Admin)
+            const reviewers = await queryDatabase(
+              `SELECT email, full_name FROM Members WHERE role = 'admin' OR LOWER(department) LIKE '%đối ngoại%' OR LOWER(department) LIKE '%nhân sự%' OR LOWER(department) LIKE '%đn-ns%'`
+            );
+
+            const emails = reviewers.map(r => r.email).filter(Boolean);
+            if (emails.length > 0) {
+              await sendMailHelper(
+                emails.join(','),
+                `⚠️ [VMC Birthday] Giải trình không nộp ảnh sinh nhật tháng ${oldAssignment.month}/${oldAssignment.year}`,
+                `
+                  <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; max-w-lg;">
+                    <h3 style="color: #d97706;">⚠️ Báo cáo không có ảnh sinh nhật thành viên</h3>
+                    <p>Chào Ban Quản Trị / Trưởng Ban,</p>
+                    <p>Thành viên <strong>${assigneeName}</strong> vừa nộp giải trình không có ảnh/video cho thành viên mừng sinh nhật.</p>
+                    <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
+                    <p><strong>Thành viên sinh nhật:</strong> ${memberName}</p>
+                    <p><strong>Tháng sinh nhật:</strong> Tháng ${oldAssignment.month}/${oldAssignment.year}</p>
+                    <p><strong>Lý do giải trình:</strong> <span style="color: #b45309; font-weight: bold;">"${noPhotoReason}"</span></p>
+                    <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
+                    <p style="font-size: 12px; color: #64748b;">Trân trọng,<br/><strong>Hệ thống quản lý VMC Portal</strong></p>
+                  </div>
+                `
+              );
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('⚠️ Lỗi gửi mail giải trình không nộp ảnh:', err.message);
+      }
+    }
 
     await queryDatabase(
       'UPDATE Birthday_Assignments SET link_image = COALESCE(?, link_image), status = COALESCE(?, status), submissions = COALESCE(?, submissions), excuse_reason = COALESCE(?, excuse_reason), excuse_status = COALESCE(?, excuse_status), is_penalized = COALESCE(?, is_penalized) WHERE id = ?',

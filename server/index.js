@@ -465,6 +465,9 @@ app.put('/api/members/:id', async (req, res) => {
   } = req.body;
 
   try {
+    const membersList = await queryDatabase('SELECT id, member_code FROM Members WHERE id = ? OR member_code = ? OR username = ?', [id, id, id]);
+    const targetMember = membersList && membersList.length > 0 ? membersList[0] : null;
+
     const isFirstLoginVal = is_first_login !== undefined 
       ? (is_first_login ? 1 : 0) 
       : (isFirstLogin !== undefined ? (isFirstLogin ? 1 : 0) : null);
@@ -521,23 +524,29 @@ app.put('/api/members/:id', async (req, res) => {
     ]);
 
     // Đồng bộ vào bảng Member_Milestones
-    if (Array.isArray(milestones) && milestones.length > 0) {
-      for (const ms of milestones) {
-        if (ms.title) {
-          const msId = ms.id || ('m-' + Date.now() + Math.random().toString(36).substring(2, 5));
-          await queryDatabase(
-            `INSERT INTO Member_Milestones (id, member_id, date, title, badge_text, badge_style) 
-             VALUES (?, ?, ?, ?, ?, ?) 
-             ON DUPLICATE KEY UPDATE date = VALUES(date), title = VALUES(title), badge_text = VALUES(badge_text), badge_style = VALUES(badge_style)`,
-            [
-              msId,
-              String(id),
-              ms.date || new Date().toLocaleDateString('vi-VN'),
-              ms.title,
-              ms.badgeText || ms.badge_text || '[Cột mốc]',
-              ms.badgeStyle || ms.badge_style || 'bg-blue-500/10 text-blue-400 border-blue-500/30'
-            ]
-          ).catch(e => {});
+    if (milestones !== undefined && targetMember) {
+      await queryDatabase(
+        'DELETE FROM Member_Milestones WHERE member_id = ? OR member_id = ?',
+        [String(targetMember.id), String(targetMember.member_code)]
+      ).catch(e => {});
+
+      if (Array.isArray(milestones) && milestones.length > 0) {
+        for (const ms of milestones) {
+          if (ms.title) {
+            const msId = ms.id || ('m-' + Date.now() + Math.random().toString(36).substring(2, 5));
+            await queryDatabase(
+              `INSERT INTO Member_Milestones (id, member_id, date, title, badge_text, badge_style) 
+               VALUES (?, ?, ?, ?, ?, ?)`,
+              [
+                msId,
+                String(targetMember.id),
+                ms.date || new Date().toLocaleDateString('vi-VN'),
+                ms.title,
+                ms.badgeText || ms.badge_text || '[Cột mốc]',
+                ms.badgeStyle || ms.badge_style || 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+              ]
+            ).catch(e => {});
+          }
         }
       }
     }
