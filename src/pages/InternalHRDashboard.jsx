@@ -28,6 +28,23 @@ export const InternalHRDashboard = () => {
 
   const [selectedMember, setSelectedMember] = useState(null);
 
+  const isAdvisor = Boolean(
+    currentUser?.deptName?.toLowerCase().includes('cố vấn') ||
+    currentUser?.department?.toLowerCase().includes('cố vấn') ||
+    currentUser?.roleTitle?.toLowerCase().includes('cố vấn')
+  );
+
+  const isAllowedBirthdayDuty = !isAdvisor && Boolean(
+    isHRMember ||
+    currentUser?.deptName?.includes('Đối Ngoại') ||
+    currentUser?.deptName?.includes('Nhân Sự') ||
+    currentUser?.deptName?.includes('ĐN-NS') ||
+    currentUser?.deptName === 'Ban Chủ Nhiệm' ||
+    currentUser?.department === 'bcn' ||
+    currentUser?.role === 'admin' ||
+    currentUser?.memberCode === 'ADMIN'
+  );
+
   const normalizeText = (text) => text ? text.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : '';
 
   // All members including Ban Cố Vấn (excluding only System Admin)
@@ -291,10 +308,12 @@ export const InternalHRDashboard = () => {
               )}
             </div>
 
-            {/* Phân Công Nhiệm Vụ Sinh Nhật */}
-            <div className="mt-8 pt-8 border-t border-slate-800">
-              <BirthdayManagement />
-            </div>
+            {/* Phân Công Nhiệm Vụ Sinh Nhật (Chỉ hiển thị cho Ban ĐN-NS & BCN/Admin, ẩn hoàn toàn với Cố Vấn và các ban khác) */}
+            {isAllowedBirthdayDuty && (
+              <div className="mt-8 pt-8 border-t border-slate-800">
+                <BirthdayManagement />
+              </div>
+            )}
           </div>
         )}
 
