@@ -1234,10 +1234,12 @@ export const ClubProvider = ({ children }) => {
       ...prev,
       finances: (prev.finances || []).map(f => f.id === recordId ? { ...f, status: newStatus } : f)
     }));
+    // Persist to backend
+    updateEntityAPI('finances', recordId, { status: newStatus }).catch(e => console.log(e));
     if (newStatus === 'approved') {
-      showToast('Đã duyệt dự trù kinh phí thành công!', 'success');
+      showToast('✅ Đã duyệt dự trù kinh phí thành công!', 'success');
     } else {
-      showToast('Đã từ chối dự trù kinh phí!', 'info');
+      showToast('❌ Đã từ chối dự trù kinh phí!', 'info');
     }
   };
 

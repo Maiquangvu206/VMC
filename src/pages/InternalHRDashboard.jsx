@@ -422,6 +422,66 @@ export const InternalHRDashboard = () => {
               </div>
             </div>
 
+            {/* Pending Approvals Section — only visible to HR Head/Admin */}
+            {(() => {
+              const pendingList = (finances || []).filter(f => f.status === 'pending');
+              if (pendingList.length === 0 || (!isHRHead && !isAdmin)) return null;
+              return (
+                <div className="bg-amber-950/30 border border-amber-500/40 rounded-2xl p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-bold text-amber-300 text-sm flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      Yêu Cầu Chờ Duyệt
+                      <span className="ml-1 px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-extrabold animate-pulse">
+                        {pendingList.length}
+                      </span>
+                    </h4>
+                  </div>
+                  <div className="space-y-3">
+                    {pendingList.map((f) => (
+                      <div key={f.id} className="bg-slate-950/80 p-4 rounded-xl border border-amber-500/30 space-y-3">
+                        <div className="flex justify-between items-center">
+                          <div className="flex gap-3 items-center">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${f.type === 'income' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                              {f.type === 'income' ? <ArrowDownRight className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
+                            </div>
+                            <div>
+                              <div className="text-sm font-semibold text-white flex items-center gap-2">
+                                {f.description}
+                                <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[10px] font-bold border border-amber-500/30">⏳ Chờ duyệt</span>
+                              </div>
+                              <div className="text-[10px] text-slate-400 flex gap-2 mt-0.5">
+                                <span>📅 {f.date}</span>
+                                <span>•</span>
+                                <span>👤 Gửi bởi: {f.loggedBy}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className={`font-mono font-bold text-lg whitespace-nowrap ${f.type === 'income' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            {f.type === 'income' ? '+' : '-'}{(f.amount || 0).toLocaleString()} đ
+                          </div>
+                        </div>
+                        <div className="flex justify-end gap-2 border-t border-amber-500/20 pt-3">
+                          <button
+                            onClick={() => updateFinanceStatus(f.id, 'rejected')}
+                            className="px-4 py-1.5 bg-rose-500/10 text-rose-400 hover:bg-rose-500/30 rounded-lg text-xs font-bold transition-all border border-rose-500/20 hover:border-rose-500/40"
+                          >
+                            ❌ Từ Chối
+                          </button>
+                          <button
+                            onClick={() => updateFinanceStatus(f.id, 'approved')}
+                            className="px-4 py-1.5 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/30 rounded-lg text-xs font-bold transition-all border border-emerald-500/20 hover:border-emerald-500/40"
+                          >
+                            ✅ Duyệt {f.type === 'income' ? 'Thu' : 'Chi'}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Form Add */}
               {isHRMember && (
@@ -470,6 +530,11 @@ export const InternalHRDashboard = () => {
                         className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white"
                       />
                     </div>
+                    {!isHRHead && (
+                      <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 text-[10px] text-amber-300">
+                        ⚠️ Yêu cầu của bạn sẽ được gửi tới Trưởng Ban Đối Ngoại - Nhân Sự để duyệt trước khi ghi nhận.
+                      </div>
+                    )}
                     <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2.5 rounded-xl flex items-center justify-center gap-2 transition-colors">
                       <Plus className="w-4 h-4" /> {isHRHead ? 'Thêm Giao Dịch' : 'Gửi Yêu Cầu Duyệt'}
                     </button>
@@ -478,20 +543,17 @@ export const InternalHRDashboard = () => {
               )}
 
               {/* History List */}
-              <div className={`${isHRMember ? 'lg:col-span-2' : 'lg:col-span-3'} space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar`}>
-                {(finances || []).filter(f => isHRHead || isAdmin || f.status === 'approved' || f.loggedBy === currentUser?.name).map((f) => (
-                  <div key={f.id} className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex flex-col gap-3 hover:border-slate-600 transition-colors">
-                    <div className="flex justify-between items-center">
+              <div className={`${isHRMember ? 'lg:col-span-2' : 'lg:col-span-3'} space-y-3`}>
+                <h4 className="font-bold text-white text-sm mb-2 flex items-center gap-2">📋 Lịch Sử Giao Dịch Đã Duyệt</h4>
+                <div className="max-h-[400px] overflow-y-auto pr-2 custom-scrollbar space-y-3">
+                  {(finances || []).filter(f => f.status === 'approved').map((f) => (
+                    <div key={f.id} className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex justify-between items-center hover:border-slate-600 transition-colors">
                       <div className="flex gap-4 items-center">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${f.type === 'income' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
                           {f.type === 'income' ? <ArrowDownRight className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
                         </div>
                         <div>
-                          <div className="text-sm font-semibold text-white flex items-center gap-2">
-                            {f.description}
-                            {f.status === 'pending' && <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-[10px]">Chờ duyệt</span>}
-                            {f.status === 'rejected' && <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-400 text-[10px]">Đã từ chối</span>}
-                          </div>
+                          <div className="text-sm font-semibold text-white">{f.description}</div>
                           <div className="text-[10px] text-slate-400 flex gap-2">
                             <span>{f.date}</span>
                             <span>•</span>
@@ -499,21 +561,39 @@ export const InternalHRDashboard = () => {
                           </div>
                         </div>
                       </div>
-                      <div className={`font-mono font-bold whitespace-nowrap ${f.type === 'income' ? 'text-emerald-400' : 'text-rose-400'} ${f.status !== 'approved' ? 'opacity-50 line-through' : ''}`}>
-                        {f.type === 'income' ? '+' : '-'}{f.amount.toLocaleString()} đ
+                      <div className={`font-mono font-bold whitespace-nowrap ${f.type === 'income' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {f.type === 'income' ? '+' : '-'}{(f.amount || 0).toLocaleString()} đ
                       </div>
                     </div>
-                    {(isHRHead || isAdmin) && f.status === 'pending' && (
-                      <div className="flex justify-end gap-2 border-t border-slate-800 pt-2">
-                        <button onClick={() => updateFinanceStatus(f.id, 'rejected')} className="px-3 py-1 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 rounded text-[10px] font-semibold transition-colors">Từ Chối</button>
-                        <button onClick={() => updateFinanceStatus(f.id, 'approved')} className="px-3 py-1 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 rounded text-[10px] font-semibold transition-colors">Duyệt Chi</button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-                {(finances || []).length === 0 && (
-                  <div className="text-center py-10 text-slate-500 text-sm">Chưa có giao dịch nào được ghi nhận.</div>
-                )}
+                  ))}
+
+                  {/* Rejected items */}
+                  {(finances || []).filter(f => f.status === 'rejected').length > 0 && (
+                    <>
+                      <h5 className="text-xs font-bold text-rose-400 mt-4 pt-3 border-t border-white/5">🚫 Đã Từ Chối</h5>
+                      {(finances || []).filter(f => f.status === 'rejected').map((f) => (
+                        <div key={f.id} className="bg-slate-950 p-3 rounded-xl border border-rose-500/20 flex justify-between items-center opacity-60">
+                          <div className="flex gap-3 items-center">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${f.type === 'income' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+                              {f.type === 'income' ? <ArrowDownRight className="w-4 h-4" /> : <ArrowUpRight className="w-4 h-4" />}
+                            </div>
+                            <div>
+                              <div className="text-xs font-semibold text-white line-through">{f.description}</div>
+                              <div className="text-[10px] text-slate-400">{f.date} • {f.loggedBy}</div>
+                            </div>
+                          </div>
+                          <div className="text-xs font-mono text-rose-400 line-through">
+                            {f.type === 'income' ? '+' : '-'}{(f.amount || 0).toLocaleString()} đ
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )}
+
+                  {(finances || []).filter(f => f.status === 'approved').length === 0 && (
+                    <div className="text-center py-10 text-slate-500 text-sm">Chưa có giao dịch nào được ghi nhận.</div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

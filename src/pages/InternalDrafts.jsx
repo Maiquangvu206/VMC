@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useClub } from '../context/ClubContext';
-import { FileText, CheckCircle, Plus, Clock, User, X, Share2, Sparkles } from 'lucide-react';
+import { FileText, CheckCircle, Plus, Clock, User, X, Share2, Sparkles, ThumbsUp, MessageSquare, Users } from 'lucide-react';
 
 export const InternalDrafts = () => {
   const {
@@ -36,17 +36,71 @@ export const InternalDrafts = () => {
   });
 
   const [gradingDraftId, setGradingDraftId] = useState(null);
-  const [gradingForm, setGradingForm] = useState({
-    likes: 0,
-    shares: 0,
-    comments: 0,
-    contentScore: 10
-  });
+  // Per-member grading: { [memberId]: { shared: bool, reacted: bool, commented: bool } }
+  const [memberGrades, setMemberGrades] = useState({});
 
   const [formData, setFormData] = useState({
     title: '',
     content: ''
   });
+
+  // Get active members for grading (exclude system admin)
+  const activeMembers = useMemo(() => {
+    return members.filter(m => {
+      const isSystemAdmin = m.roleTitle?.includes('Super Admin') || m.role === 'admin' || m.memberCode === 'ADMIN' || m.name?.includes('Quản Trị Viên') || m.name?.includes('Super Admin');
+      return !isSystemAdmin && m.status !== 'Suspended';
+    });
+  }, [members]);
+
+  const initMemberGrades = () => {
+    const grades = {};
+    activeMembers.forEach(m => {
+      grades[m.id] = { shared: false, reacted: false, commented: false };
+    });
+    return grades;
+  };
+
+  const openGradingModal = (draftId) => {
+    // Check if draft already has member_grades saved, restore them
+    const draft = drafts.find(d => d.id === draftId);
+    if (draft?.memberGrades && typeof draft.memberGrades === 'object' && Object.keys(draft.memberGrades).length > 0) {
+      setMemberGrades(draft.memberGrades);
+    } else {
+      setMemberGrades(initMemberGrades());
+    }
+    setGradingDraftId(draftId);
+  };
+
+  const toggleMemberCriteria = (memberId, criteria) => {
+    setMemberGrades(prev => ({
+      ...prev,
+      [memberId]: {
+        ...prev[memberId],
+        [criteria]: !prev[memberId]?.[criteria]
+      }
+    }));
+  };
+
+  const toggleAllForCriteria = (criteria) => {
+    const allChecked = activeMembers.every(m => memberGrades[m.id]?.[criteria]);
+    setMemberGrades(prev => {
+      const next = { ...prev };
+      activeMembers.forEach(m => {
+        next[m.id] = { ...next[m.id], [criteria]: !allChecked };
+      });
+      return next;
+    });
+  };
+
+  const getMemberScore = (memberId) => {
+    const g = memberGrades[memberId];
+    if (!g) return 0;
+    let score = 0;
+    score += g.shared ? 1 : -1;
+    score += g.reacted ? 1 : -1;
+    score += g.commented ? 1 : -1;
+    return score;
+  };
 
   const handleSubmitNewDraft = (e) => {
     e.preventDefault();
@@ -61,32 +115,32 @@ export const InternalDrafts = () => {
 
   const handleSaveGrading = (e) => {
     e.preventDefault();
-    const likes = parseInt(gradingForm.likes, 10) || 0;
-    const shares = parseInt(gradingForm.shares, 10) || 0;
-    const comments = parseInt(gradingForm.comments, 10) || 0;
-    const content = parseInt(gradingForm.contentScore, 10) || 0;
 
-    // Tiêu chí chấm điểm:
-    // 1. Lượt thích: tối đa 30đ (1đ/like)
-    // 2. Lượt chia sẻ: tối đa 30đ (3đ/share)
-    // 3. Lượt bình luận: tối đa 20đ (2đ/comment)
-    // 4. Chất lượng nội dung: tối đa 20đ
-    const likePoints = Math.min(30, likes * 1);
-    const sharePoints = Math.min(30, shares * 3);
-    const commentPoints = Math.min(20, comments * 2);
-    const contentPoints = Math.min(20, content);
-    const finalScore = likePoints + sharePoints + commentPoints + contentPoints;
+    // Calculate per-member scores and build summary
+    const memberScores = {};
+    let totalPositive = 0;
+    let totalNegative = 0;
+    activeMembers.forEach(m => {
+      const score = getMemberScore(m.id);
+      memberScores[m.id] = {
+        name: m.name,
+        ...memberGrades[m.id],
+        score
+      };
+      if (score > 0) totalPositive += score;
+      if (score < 0) totalNegative += Math.abs(score);
+    });
 
     completeGrading(gradingDraftId, {
-      likesCount: likes,
-      sharesCount: shares,
-      commentsCount: comments,
-      contentScore: content,
-      finalScore: finalScore
+      memberGrades: memberGrades,
+      memberScores: memberScores,
+      totalPositive,
+      totalNegative,
+      finalScore: totalPositive - totalNegative
     });
 
     setGradingDraftId(null);
-    setGradingForm({ likes: 0, shares: 0, comments: 0, contentScore: 10 });
+    setMemberGrades({});
   };
 
   return (
