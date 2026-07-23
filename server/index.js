@@ -717,6 +717,16 @@ const checkAndSendDailyBirthdayEmails = async () => {
 
     console.log(`🎂 [Auto Birthday Mailer] Running daily check for date ${todayDay}/${todayMonth}...`);
 
+    // Lấy mẫu lời chúc sinh nhật do Người phụ trách sinh nhật tháng này biên soạn
+    const bdayAssignments = await queryDatabase(
+      'SELECT wishes_template FROM Birthday_Assignments WHERE assign_month = ? ORDER BY assign_year DESC, created_at DESC LIMIT 1',
+      [todayMonth]
+    );
+
+    const customTemplate = (bdayAssignments && bdayAssignments.length > 0 && bdayAssignments[0].wishes_template)
+      ? bdayAssignments[0].wishes_template.trim()
+      : '';
+
     const members = await queryDatabase(
       'SELECT id, member_code, full_name, email, dob, class_name, department, status FROM Members WHERE email IS NOT NULL AND email != "" AND (status IS NULL OR status = "Active")'
     );
@@ -740,6 +750,40 @@ const checkAndSendDailyBirthdayEmails = async () => {
       if (dDay === todayDay && dMonth === todayMonth) {
         console.log(`🎉 [Auto Birthday] Today is ${m.full_name}'s birthday (${m.dob})! Sending email to ${m.email}...`);
 
+        let wishContentHtml = '';
+
+        if (customTemplate) {
+          let formattedWish = customTemplate
+            .replace(/\{name\}/gi, m.full_name)
+            .replace(/\{full_name\}/gi, m.full_name)
+            .replace(/\{class\}/gi, m.class_name || 'VMC')
+            .replace(/\{department\}/gi, m.department || 'Thành Viên VMC')
+            .replace(/\n/g, '<br/>');
+
+          wishContentHtml = `
+            <div style="background-color: #ffffff; padding: 25px; border-radius: 16px; border: 1px solid #f472b6; line-height: 1.6;">
+              <p style="font-size: 16px; margin-top: 0;">Thân gửi <strong>${m.full_name}</strong> (${m.department || 'Thành Viên VMC'} - Lớp ${m.class_name || 'VMC'}),</p>
+              <div style="font-size: 15px; color: #334155; margin: 15px 0;">
+                ${formattedWish}
+              </div>
+            </div>
+          `;
+        } else {
+          wishContentHtml = `
+            <div style="background-color: #ffffff; padding: 25px; border-radius: 16px; border: 1px solid #f472b6; line-height: 1.6;">
+              <p style="font-size: 16px; margin-top: 0;">Thân gửi <strong>${m.full_name}</strong> (${m.department || 'Thành Viên VMC'} - Lớp ${m.class_name || 'VMC'}),</p>
+
+              <p>Hôm nay là một ngày vô cùng đặc biệt! Thay mặt cho toàn thể Đại gia đình <strong>CLB Truyền Thông THPT Vĩnh Bảo (VMC)</strong>, Ban Đối Ngoại - Nhân Sự xin gửi tới bạn những lời chúc mừng sinh nhật ấm áp và rực rỡ nhất! 🥳🎈</p>
+
+              <p>Chúc bạn tuổi mới luôn ngập tràn niềm vui, sức khỏe, học tập xuất sắc và luôn giữ vững ngọn lửa nhiệt huyết để tiếp tục cùng VMC tạo nên những thước phim, bài viết và kỷ niệm thanh xuân tuyệt vời nhất! 💖✨</p>
+
+              <div style="background-color: #fdf2f8; padding: 15px 20px; border-radius: 12px; border-left: 4px solid #ec4899; margin: 20px 0; font-style: italic; color: #831843;">
+                "Tuổi mới tỏa sáng rực rỡ, luôn tự tin và gặt hái được thật nhiều thành công mới cùng gia đình VMC!" 🌟
+              </div>
+            </div>
+          `;
+        }
+
         try {
           await transporter.sendMail({
             from: `"CLB TRUYỀN THÔNG VMC (THPT VĨNH BẢO)" <${process.env.SMTP_EMAIL}>`,
@@ -753,17 +797,7 @@ const checkAndSendDailyBirthdayEmails = async () => {
                   <p style="color: #64748b; font-size: 14px; margin: 0;">CLB Truyền Thông THPT Vĩnh Bảo (VMC)</p>
                 </div>
 
-                <div style="background-color: #ffffff; padding: 25px; border-radius: 16px; border: 1px solid #f472b6; line-height: 1.6;">
-                  <p style="font-size: 16px; margin-top: 0;">Thân gửi <strong>${m.full_name}</strong> (${m.department || 'Thành Viên VMC'} - Lớp ${m.class_name || 'VMC'}),</p>
-
-                  <p>Hôm nay là một ngày vô cùng đặc biệt! Thay mặt cho toàn thể Đại gia đình <strong>CLB Truyền Thông THPT Vĩnh Bảo (VMC)</strong>, Ban Đối Ngoại - Nhân Sự xin gửi tới bạn những lời chúc mừng sinh nhật ấm áp và rực rỡ nhất! 🥳🎈</p>
-
-                  <p>Chúc bạn tuổi mới luôn ngập tràn niềm vui, sức khỏe, học tập xuất sắc và luôn giữ vững ngọn lửa nhiệt huyết để tiếp tục cùng VMC tạo nên những thước phim, bài viết và kỷ niệm thanh xuân tuyệt vời nhất! 💖✨</p>
-
-                  <div style="background-color: #fdf2f8; padding: 15px 20px; border-radius: 12px; border-left: 4px solid #ec4899; margin: 20px 0; font-style: italic; color: #831843;">
-                    "Tuổi mới tỏa sáng rực rỡ, luôn tự tin và gặt hái được thật nhiều thành công mới cùng gia đình VMC!" 🌟
-                  </div>
-                </div>
+                ${wishContentHtml}
 
                 <div style="text-align: center; margin-top: 25px; font-size: 13px; color: #64748b;">
                   <p style="margin: 0;">Trân trọng & Thân yêu,<br/><strong style="color: #db2777;">BAN CHỦ NHIỆM & BAN ĐỐI NGOẠI - NHÂN SỰ VMC</strong></p>
