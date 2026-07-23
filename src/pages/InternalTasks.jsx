@@ -6,6 +6,7 @@ import {
   Clock, 
   User, 
   AlertCircle, 
+  AlertTriangle,
   CheckCircle, 
   ArrowRight,
   Filter,
@@ -57,6 +58,15 @@ export const InternalTasks = () => {
       priority: 'Medium',
       desc: ''
     });
+  };
+
+  const isOverdue = (deadline) => {
+    if (!deadline) return false;
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const dl = new Date(deadline);
+    dl.setHours(0, 0, 0, 0);
+    return dl < now;
   };
 
   const getDeptBadge = (deptId) => {
@@ -134,12 +144,22 @@ export const InternalTasks = () => {
           <div className="space-y-3">
             {todoTasks.map(task => {
               const deptInfo = getDeptBadge(task.department);
+              const overdue = isOverdue(task.deadline);
               return (
-                <div key={task.id} className="glass-card p-4 rounded-xl border border-white/10 space-y-3">
+                <div key={task.id} className={`glass-card p-4 rounded-xl border space-y-3 ${overdue ? 'border-red-500/50 bg-red-950/20' : 'border-white/10'}`}>
                   <div className="flex justify-between items-center text-[11px]">
                     <span className={`badge ${deptInfo.class}`}>{deptInfo.label}</span>
-                    <span className="text-slate-400 font-mono">Hạn: {task.deadline}</span>
+                    <span className={`font-mono flex items-center gap-1 ${overdue ? 'text-red-400 font-bold' : 'text-slate-400'}`}>
+                      {overdue && <AlertTriangle className="w-3 h-3" />}
+                      Hạn: {task.deadline}
+                    </span>
                   </div>
+
+                  {overdue && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-500/20 text-red-400 text-[10px] font-bold border border-red-500/30 animate-pulse">
+                      <AlertTriangle className="w-3 h-3" /> QUÁ HẠN
+                    </span>
+                  )}
 
                   <h4 className="font-heading font-bold text-sm text-white">{task.title}</h4>
                   <p className="text-xs text-slate-400 line-clamp-2">{task.desc}</p>
@@ -171,12 +191,22 @@ export const InternalTasks = () => {
           <div className="space-y-3">
             {doingTasks.map(task => {
               const deptInfo = getDeptBadge(task.department);
+              const overdue = isOverdue(task.deadline);
               return (
-                <div key={task.id} className="glass-card p-4 rounded-xl border border-blue-500/30 space-y-3">
+                <div key={task.id} className={`glass-card p-4 rounded-xl border space-y-3 ${overdue ? 'border-red-500/50 bg-red-950/20' : 'border-blue-500/30'}`}>
                   <div className="flex justify-between items-center text-[11px]">
                     <span className={`badge ${deptInfo.class}`}>{deptInfo.label}</span>
-                    <span className="text-blue-400 font-mono">Hạn: {task.deadline}</span>
+                    <span className={`font-mono flex items-center gap-1 ${overdue ? 'text-red-400 font-bold' : 'text-blue-400'}`}>
+                      {overdue && <AlertTriangle className="w-3 h-3" />}
+                      Hạn: {task.deadline}
+                    </span>
                   </div>
+
+                  {overdue && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-500/20 text-red-400 text-[10px] font-bold border border-red-500/30 animate-pulse">
+                      <AlertTriangle className="w-3 h-3" /> QUÁ HẠN
+                    </span>
+                  )}
 
                   <h4 className="font-heading font-bold text-sm text-white">{task.title}</h4>
                   <p className="text-xs text-slate-400 line-clamp-2">{task.desc}</p>
