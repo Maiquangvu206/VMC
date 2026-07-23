@@ -69,6 +69,14 @@ export const InternalMembers = () => {
     currentUser?.memberCode === 'ADMIN' ||
     currentUser?.roleTitle?.includes('Super Admin') ||
     currentUser?.roleTitle?.includes('Chủ Nhiệm CLB') ||
+    currentUser?.roleTitle?.includes('Chủ Nhiệm') ||
+    ((currentUser?.roleTitle?.includes('Kỹ Thuật') || currentUser?.roleTitle?.includes('Trưởng Ban')) && (
+      currentUser?.deptName?.includes('Đối Ngoại') ||
+      currentUser?.deptName?.includes('Nhân Sự') ||
+      currentUser?.deptName?.includes('ĐN-NS') ||
+      currentUser?.department?.includes('Đối Ngoại') ||
+      currentUser?.department?.includes('Nhân Sự')
+    )) ||
     isHRHead
   );
 
