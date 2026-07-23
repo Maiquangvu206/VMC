@@ -219,6 +219,22 @@ export const InternalHRDashboard = () => {
         >
           <Gift className="w-4 h-4" /> Sinh Nhật
         </button>
+        <button
+          onClick={() => setActiveTab('deadlines')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-xs whitespace-nowrap transition-all ${
+            activeTab === 'deadlines' ? 'bg-amber-600 text-white' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'
+          }`}
+        >
+          <Clock className="w-4 h-4" /> Theo Dõi Deadline
+        </button>
+        <button
+          onClick={() => setActiveTab('meetings')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-xs whitespace-nowrap transition-all ${
+            activeTab === 'meetings' ? 'bg-cyan-600 text-white' : 'bg-slate-900 text-slate-400 hover:bg-slate-800'
+          }`}
+        >
+          <Calendar className="w-4 h-4" /> Quản Lý Cuộc Họp
+        </button>
         {(isHRMember || currentUser?.deptName === 'Ban Chủ Nhiệm' || currentUser?.department === 'bcn') && (
           <button
             onClick={() => setActiveTab('finance')}

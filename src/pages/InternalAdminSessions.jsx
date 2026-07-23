@@ -21,6 +21,7 @@ export const InternalAdminSessions = () => {
     currentUser, 
     isSuperAdmin, 
     sessions, 
+    members,
     currentSessionId, 
     loadSqlSessions, 
     revokeSession, 
@@ -35,12 +36,12 @@ export const InternalAdminSessions = () => {
     loadSqlSessions();
   }, []);
 
-  // Auto refresh every 10 seconds
+  // Auto refresh every 3 seconds for real-time live database updates
   useEffect(() => {
     if (!autoRefresh) return;
     const interval = setInterval(() => {
       loadSqlSessions();
-    }, 10000);
+    }, 3000);
     return () => clearInterval(interval);
   }, [autoRefresh]);
 
@@ -118,7 +119,7 @@ export const InternalAdminSessions = () => {
               }`}
             >
               <Activity className={`w-3.5 h-3.5 ${autoRefresh ? 'animate-pulse' : ''}`} />
-              <span>Tự động cập nhật (10s)</span>
+              <span>Tự động cập nhật (3s)</span>
             </button>
 
             <button
@@ -259,6 +260,15 @@ export const InternalAdminSessions = () => {
                   const isActive = Number(s.is_active) === 1;
                   const isMobile = (s.device_type || '').toLowerCase().includes('mobile');
                   
+                  const memberObj = (members || []).find(m => 
+                    String(m.id) === String(s.member_id) || 
+                    String(m.memberCode || '').toUpperCase() === String(s.member_id || '').toUpperCase() ||
+                    String(m.username || '').toLowerCase() === String(s.username || '').toLowerCase()
+                  );
+
+                  const displayName = memberObj?.name || s.name || 'Thành Viên VMC';
+                  const displayRole = memberObj?.roleTitle || s.role_title || 'Thành Viên VMC';
+
                   const lastActiveDate = s.last_active ? new Date(s.last_active) : null;
                   const isRecent = lastActiveDate && ((now - lastActiveDate) / (1000 * 60)) <= 5;
 
@@ -267,11 +277,11 @@ export const InternalAdminSessions = () => {
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold font-heading shrink-0 border border-blue-500/30">
-                            {(s.name || 'V').charAt(0).toUpperCase()}
+                            {displayName.charAt(0).toUpperCase()}
                           </div>
                           <div>
                             <div className="font-bold text-white flex items-center gap-1.5">
-                              <span>{s.name || 'Thành viên'}</span>
+                              <span>{displayName}</span>
                               {isCurrent && (
                                 <span className="bg-cyan-500/20 text-cyan-300 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border border-cyan-500/30">
                                   Bạn (Phiên này)
@@ -279,7 +289,7 @@ export const InternalAdminSessions = () => {
                               )}
                             </div>
                             <div className="text-[10px] text-slate-400 font-mono">
-                              @{s.username || 'user'} • <span className="text-purple-400">{s.role_title || 'Thành Viên'}</span>
+                              @{s.username || 'user'} • <span className="text-purple-400">{displayRole}</span>
                             </div>
                           </div>
                         </div>

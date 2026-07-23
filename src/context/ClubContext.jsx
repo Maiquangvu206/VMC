@@ -86,9 +86,16 @@ export const ClubProvider = ({ children }) => {
       sessionStorage.setItem('VMC_CURRENT_USER', JSON.stringify(currentUser));
     } else {
       sessionStorage.removeItem('VMC_IS_AUTH');
-      sessionStorage.removeItem('VMC_CURRENT_USER');
-    }
   }, [isAuthenticated, currentUser]);
+
+  const logoutMember = () => {
+    try {
+      sessionStorage.removeItem('VMC_IS_AUTH');
+      sessionStorage.removeItem('VMC_CURRENT_USER');
+    } catch (e) {}
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+  };
 
   // Load Members from SQL Database API on Mount
   useEffect(() => {
@@ -215,7 +222,10 @@ export const ClubProvider = ({ children }) => {
             };
             saveDatabaseToStorage(updated);
             return updated;
-          });
+          // Sync Sessions for Super Admin Session Management in real-time
+          fetchEntityAPI('sessions').then(serverSessions => {
+            if (Array.isArray(serverSessions)) setSessions(serverSessions);
+          }).catch(() => {});
         }
       } catch (err) {
         console.warn('ℹ️ Real-time MySQL sync status:', err.message);
@@ -223,7 +233,7 @@ export const ClubProvider = ({ children }) => {
     };
 
     silentAutoSync();
-    const intervalId = setInterval(silentAutoSync, 10000);
+    const intervalId = setInterval(silentAutoSync, 3000);
 
     return () => {
       isMounted = false;
@@ -1296,10 +1306,10 @@ export const ClubProvider = ({ children }) => {
         const data = await resp.json();
         if (data && data.success && data.isActive === false) {
           showToast('⚠️ Phiên làm việc của bạn đã bị Super Admin đóng từ xa.', 'error');
-          logout();
+          logoutMember();
         }
       } catch (e) {}
-    }, 20000);
+    }, 3000);
 
     return () => clearInterval(hbInterval);
   }, [isAuthenticated, currentUser?.id]);
@@ -1456,6 +1466,7 @@ export const ClubProvider = ({ children }) => {
       loadSqlSessions,
       revokeSession,
       revokeAllSessions,
+      logoutMember,
       works: [],
       events: [],
       products: [],

@@ -467,8 +467,28 @@ router.put('/birthday-assignments/:id', async (req, res) => {
 // ======================= USER SESSIONS (SUPER ADMIN) =======================
 router.get('/sessions', async (req, res) => {
   try {
-    const sessions = await queryDatabase('SELECT * FROM User_Sessions ORDER BY last_active DESC');
-    res.json({ success: true, data: sessions });
+    const sql = `
+      SELECT 
+        s.*,
+        COALESCE(NULLIF(m.full_name, ''), s.name) as real_name,
+        COALESCE(NULLIF(m.role_title, ''), s.role_title) as real_role_title
+      FROM User_Sessions s
+      LEFT JOIN Members m ON (
+        CAST(s.member_id AS CHAR) = CAST(m.id AS CHAR) 
+        OR UPPER(s.member_id) = UPPER(m.member_code) 
+        OR LOWER(s.username) = LOWER(m.username)
+      )
+      ORDER BY s.last_active DESC
+    `;
+    const sessions = await queryDatabase(sql);
+    res.json({
+      success: true,
+      data: sessions.map(s => ({
+        ...s,
+        name: s.real_name || s.name || 'Thành Viên VMC',
+        role_title: s.real_role_title || s.role_title || 'Thành Viên VMC'
+      }))
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
