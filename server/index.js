@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'url';
 import path from 'path';
+import fs from 'fs';
 import { config } from 'dotenv';
 
 // Load .env từ thư mục server/ — đúng dù PM2 chạy từ thư mục gốc dự án
@@ -112,6 +113,79 @@ queryDatabase(`
 }).catch(err => {
   console.log('ℹ️ CSDL status Generations table:', err.message);
 });
+
+// Tự động khởi tạo bảng User_Sessions (Phiên làm việc)
+queryDatabase(`
+  CREATE TABLE IF NOT EXISTS User_Sessions (
+    id VARCHAR(100) PRIMARY KEY,
+    member_id VARCHAR(100) NOT NULL,
+    username VARCHAR(100),
+    name VARCHAR(255),
+    role_title VARCHAR(100),
+    ip_address VARCHAR(100),
+    user_agent TEXT,
+    device_type VARCHAR(50),
+    login_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_active DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    is_active TINYINT DEFAULT 1
+  )
+`).catch(err => {
+  console.log('ℹ️ CSDL status User_Sessions table:', err.message);
+});
+
+queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN submissions LONGTEXT').catch(() => {});
+queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN excuse_reason TEXT').catch(() => {});
+queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN excuse_status VARCHAR(50) DEFAULT "none"').catch(() => {});
+queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN is_penalized TINYINT DEFAULT 0').catch(() => {});
+
+// Tự động khởi tạo bảng Resources (Tài nguyên CLB)
+queryDatabase(`
+  CREATE TABLE IF NOT EXISTS Resources (
+    id VARCHAR(100) PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    category VARCHAR(100),
+    link TEXT,
+    uploader_id VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`).catch(err => console.log('ℹ️ CSDL status Resources table:', err.message));
+
+// Tự động khởi tạo bảng Department_Drives (Drive Ban Chuyên Môn)
+queryDatabase(`
+  CREATE TABLE IF NOT EXISTS Department_Drives (
+    id VARCHAR(100) PRIMARY KEY,
+    dept_name VARCHAR(100) NOT NULL UNIQUE,
+    drive_link TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  )
+`).then(async () => {
+  const defaultDrives = [
+    { id: 'drive-bcn', dept_name: 'Ban Chủ Nhiệm', drive_link: 'https://drive.google.com' },
+    { id: 'drive-cv', dept_name: 'Ban Cố Vấn', drive_link: 'https://drive.google.com' },
+    { id: 'drive-dnns', dept_name: 'Ban Đối Ngoại - Nhân Sự', drive_link: 'https://drive.google.com' },
+    { id: 'drive-sx', dept_name: 'Ban Sản Xuất Media', drive_link: 'https://drive.google.com' },
+    { id: 'drive-ndpt', dept_name: 'Ban Nội Dung - Phát Thanh', drive_link: 'https://drive.google.com' }
+  ];
+  for (const d of defaultDrives) {
+    await queryDatabase(
+      'INSERT IGNORE INTO Department_Drives (id, dept_name, drive_link) VALUES (?, ?, ?)',
+      [d.id, d.dept_name, d.drive_link]
+    ).catch(() => {});
+  }
+}).catch(err => console.log('ℹ️ CSDL status Department_Drives table:', err.message));
+
+// Tự động khởi tạo bảng Attendance_Records (Điểm danh sinh hoạt định kỳ)
+queryDatabase(`
+  CREATE TABLE IF NOT EXISTS Attendance_Records (
+    id VARCHAR(100) PRIMARY KEY,
+    session_name VARCHAR(255),
+    record_date VARCHAR(50),
+    present_members LONGTEXT,
+    status VARCHAR(50) DEFAULT 'approved',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`).catch(err => console.log('ℹ️ CSDL status Attendance_Records table:', err.message));
 
 // ── Sub-router cho tasks, drafts, equipment, announcements ──
 app.use('/api', apiRouter);
@@ -475,7 +549,22 @@ app.post('/api/members/create', async (req, res) => {
 
 // Catch-all: trả về index.html cho React Router SPA (Express 5 compatible)
 app.use((req, res) => {
-  res.sendFile(path.join(DIST_DIR, 'index.html'));
+  const indexPath = path.join(DIST_DIR, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(200).send(`
+      <!DOCTYPE html>
+      <html>
+      <head><title>VMC Portal Server</title></head>
+      <body style="font-family: sans-serif; text-align: center; padding: 50px; background: #0f172a; color: #f8fafc;">
+        <h1>🚀 VMC Backend API Server Running</h1>
+        <p>Frontend dist bundle chưa được build hoặc chưa có file <code>dist/index.html</code>.</p>
+        <p>Vui lòng chạy <code>npm run build</code> tại máy local hoặc server để sinh tệp frontend!</p>
+      </body>
+      </html>
+    `);
+  }
 });
 
 app.listen(PORT, () => {

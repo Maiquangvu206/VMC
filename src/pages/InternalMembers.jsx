@@ -590,109 +590,111 @@ export const InternalMembers = () => {
 
       {/* Detail Member Modal (10 Fields View) */}
       {selectedMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
-          <div className="relative w-full max-w-xl bg-slate-900 border border-blue-500/40 rounded-3xl p-6 shadow-2xl text-white space-y-4">
-            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up overflow-y-auto">
+          <div className="relative w-full max-w-xl max-h-[90vh] bg-slate-900 border border-blue-500/40 rounded-3xl p-4 sm:p-6 shadow-2xl text-white flex flex-col my-auto">
+            <div className="flex justify-between items-center border-b border-white/10 pb-3 shrink-0">
               <div className="flex items-center gap-3">
-                <img src={selectedMember.avatar} alt={selectedMember.name} className="w-10 h-10 rounded-full object-cover" />
+                <img src={selectedMember.avatar} alt={selectedMember.name} className="w-10 h-10 rounded-full object-cover border border-blue-500/30" />
                 <div>
                   <h3 className="font-heading font-bold text-base text-white">{selectedMember.name}</h3>
                   <span className="text-xs text-purple-400 font-mono">{formatGen(selectedMember.term)}</span>
                 </div>
               </div>
-              <button onClick={() => setSelectedMember(null)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setSelectedMember(null)} className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-all">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div className="p-3 rounded-xl bg-slate-950 border border-white/5">
-                <span className="text-slate-400 block text-[10px]">1. Mã Thành Viên</span>
-                <strong className="text-blue-400 font-mono text-xs">{selectedMember.memberCode}</strong>
+            <div className="overflow-y-auto space-y-4 my-2 pr-1 custom-scrollbar flex-1 pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 text-xs">
+                <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950 border border-white/5">
+                  <span className="text-slate-400 block text-[10px]">1. Mã Thành Viên</span>
+                  <strong className="text-blue-400 font-mono text-xs">{selectedMember.memberCode}</strong>
+                </div>
+                <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950 border border-white/5">
+                  <span className="text-slate-400 block text-[10px]">2. Họ và Tên</span>
+                  <strong className="text-white text-xs">{selectedMember.name}</strong>
+                </div>
+                <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950 border border-white/5">
+                  <span className="text-slate-400 block text-[10px]">3. Lớp</span>
+                  <strong className="text-slate-200 text-xs">{selectedMember.class}</strong>
+                </div>
+                <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950 border border-white/5">
+                  <span className="text-slate-400 block text-[10px]">4. Ban Chuyên Môn</span>
+                  <strong className="text-cyan-300 text-xs">{selectedMember.deptName}</strong>
+                </div>
+                <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950 border border-white/5">
+                  <span className="text-slate-400 block text-[10px]">5. Chức Vụ Trong CLB</span>
+                  <strong className="text-purple-400 text-xs">{selectedMember.roleTitle}</strong>
+                </div>
+                <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950 border border-white/5">
+                  <span className="text-slate-400 block text-[10px]">6. Số Điện Thoại</span>
+                  <strong className="text-slate-200 font-mono text-xs">{selectedMember.phone || 'Chưa có'}</strong>
+                </div>
+                <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950 border border-white/5">
+                  <span className="text-slate-400 block text-[10px]">7. Email Học Sinh</span>
+                  <strong className="text-slate-200 text-xs truncate block">{selectedMember.email || 'Chưa có'}</strong>
+                </div>
+                <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950 border border-white/5">
+                  <span className="text-slate-400 block text-[10px]">8. Ngày Sinh</span>
+                  <strong className="text-amber-300 font-mono text-xs">{selectedMember.dob || 'Chưa có'}</strong>
+                </div>
+                <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950 border border-white/5 col-span-1 sm:col-span-2">
+                  <span className="text-slate-400 block text-[10px]">9. Địa Chỉ Thường Trú</span>
+                  <strong className="text-slate-200 text-xs">{selectedMember.address || 'Chưa có'}</strong>
+                </div>
+                <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950 border border-white/5 col-span-1 sm:col-span-2">
+                  <span className="text-slate-400 block text-[10px]">10. Facebook Cá Nhân</span>
+                  <a href={selectedMember.facebook} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline text-xs truncate block">
+                    {selectedMember.facebook || 'Chưa có'}
+                  </a>
+                </div>
               </div>
-              <div className="p-3 rounded-xl bg-slate-950 border border-white/5">
-                <span className="text-slate-400 block text-[10px]">2. Họ và Tên</span>
-                <strong className="text-white text-xs">{selectedMember.name}</strong>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-950 border border-white/5">
-                <span className="text-slate-400 block text-[10px]">3. Lớp</span>
-                <strong className="text-slate-200 text-xs">{selectedMember.class}</strong>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-950 border border-white/5">
-                <span className="text-slate-400 block text-[10px]">4. Ban Chuyên Môn</span>
-                <strong className="text-cyan-300 text-xs">{selectedMember.deptName}</strong>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-950 border border-white/5">
-                <span className="text-slate-400 block text-[10px]">5. Chức Vụ Trong CLB</span>
-                <strong className="text-purple-400 text-xs">{selectedMember.roleTitle}</strong>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-950 border border-white/5">
-                <span className="text-slate-400 block text-[10px]">6. Số Điện Thoại</span>
-                <strong className="text-slate-200 font-mono text-xs">{selectedMember.phone || 'Chưa có'}</strong>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-950 border border-white/5">
-                <span className="text-slate-400 block text-[10px]">7. Email Học Sinh</span>
-                <strong className="text-slate-200 text-xs truncate block">{selectedMember.email || 'Chưa có'}</strong>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-950 border border-white/5">
-                <span className="text-slate-400 block text-[10px]">8. Ngày Sinh</span>
-                <strong className="text-amber-300 font-mono text-xs">{selectedMember.dob || 'Chưa có'}</strong>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-950 border border-white/5 col-span-1 sm:col-span-2">
-                <span className="text-slate-400 block text-[10px]">9. Địa Chỉ Thường Trú</span>
-                <strong className="text-slate-200 text-xs">{selectedMember.address || 'Chưa có'}</strong>
-              </div>
-              <div className="p-3 rounded-xl bg-slate-950 border border-white/5 col-span-1 sm:col-span-2">
-                <span className="text-slate-400 block text-[10px]">10. Facebook Cá Nhân</span>
-                <a href={selectedMember.facebook} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline text-xs truncate block">
-                  {selectedMember.facebook || 'Chưa có'}
-                </a>
+
+              {/* Lịch sử hoạt động */}
+              <div className="mt-4 pt-2 border-t border-white/10">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    <Award className="w-4 h-4 text-amber-400" />
+                    Lịch sử hoạt động & Chức vụ
+                  </h4>
+                  {isHRMember && (
+                    <button
+                      onClick={() => setIsAddMsModalOpen(true)}
+                      className="text-[11px] font-bold text-amber-400 hover:text-amber-300 bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/30 px-2.5 py-1 rounded-lg flex items-center gap-1 transition-all"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      <span>Thêm Cột Mốc</span>
+                    </button>
+                  )}
+                </div>
+                <div className="space-y-3 pt-2 pb-1 pr-1">
+                  {selectedMember.milestones && selectedMember.milestones.length > 0 ? (
+                    selectedMember.milestones.map((ms, idx) => (
+                      <div key={ms.id || idx} className="flex gap-3 relative">
+                        <div className="flex flex-col items-center">
+                          <div className="w-2.5 h-2.5 rounded-full bg-amber-400 ring-4 ring-amber-400/20 z-10" />
+                          {idx !== selectedMember.milestones.length - 1 && (
+                            <div className="w-0.5 h-full bg-slate-700/50 absolute top-2.5" />
+                          )}
+                        </div>
+                        <div className="pb-3">
+                          <p className="text-[10px] text-amber-400 font-mono mb-0.5">{ms.date}</p>
+                          <p className="text-xs font-semibold text-slate-200">{ms.title}</p>
+                          <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[9px] font-bold border ${ms.badgeStyle || 'bg-blue-500/10 text-blue-400 border-blue-500/30'}`}>
+                            {ms.badgeText}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-slate-400 italic text-center py-2">Chưa có lịch sử hoạt động nào được ghi nhận.</p>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Lịch sử hoạt động */}
-            <div className="mt-4">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Award className="w-4 h-4 text-amber-400" />
-                  Lịch sử hoạt động & Chức vụ
-                </h4>
-                {isHRMember && (
-                  <button
-                    onClick={() => setIsAddMsModalOpen(true)}
-                    className="text-[11px] font-bold text-amber-400 hover:text-amber-300 bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/30 px-2.5 py-1 rounded-lg flex items-center gap-1 transition-all"
-                  >
-                    <Sparkles className="w-3 h-3" />
-                    <span>Thêm Cột Mốc</span>
-                  </button>
-                )}
-              </div>
-              <div className="space-y-3 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
-                {selectedMember.milestones && selectedMember.milestones.length > 0 ? (
-                  selectedMember.milestones.map((ms, idx) => (
-                    <div key={ms.id || idx} className="flex gap-3 relative">
-                      <div className="flex flex-col items-center">
-                        <div className="w-2.5 h-2.5 rounded-full bg-amber-400 ring-4 ring-amber-400/20 z-10" />
-                        {idx !== selectedMember.milestones.length - 1 && (
-                          <div className="w-0.5 h-full bg-slate-700/50 absolute top-2.5" />
-                        )}
-                      </div>
-                      <div className="pb-3">
-                        <p className="text-[10px] text-amber-400 font-mono mb-0.5">{ms.date}</p>
-                        <p className="text-xs font-semibold text-slate-200">{ms.title}</p>
-                        <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[9px] font-bold border ${ms.badgeStyle || 'bg-blue-500/10 text-blue-400 border-blue-500/30'}`}>
-                          {ms.badgeText}
-                        </span>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-xs text-slate-400 italic text-center py-2">Chưa có lịch sử hoạt động nào được ghi nhận.</p>
-                )}
-              </div>
-            </div>
-
-            <div className="pt-2 flex justify-end">
+            <div className="pt-3 border-t border-white/10 flex justify-end shrink-0">
               <button onClick={() => setSelectedMember(null)} className="btn-secondary text-xs px-5 py-2">
                 Đóng
               </button>
@@ -703,9 +705,9 @@ export const InternalMembers = () => {
 
       {/* Edit Member Tech Modal (Full 10 Fields Edit) */}
       {editingMember && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up overflow-y-auto">
-          <div className="relative w-full max-w-2xl bg-slate-900 border border-amber-500/40 rounded-3xl p-6 shadow-2xl text-white space-y-4 my-8">
-            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up overflow-y-auto">
+          <div className="relative w-full max-w-2xl max-h-[90vh] bg-slate-900 border border-amber-500/40 rounded-3xl p-4 sm:p-6 shadow-2xl text-white flex flex-col my-auto">
+            <div className="flex justify-between items-center border-b border-white/10 pb-3 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold">
                   <Laptop className="w-5 h-5" />
@@ -715,12 +717,13 @@ export const InternalMembers = () => {
                   <span className="text-xs text-amber-400 font-mono">Mã TV: {editingMember.memberCode}</span>
                 </div>
               </div>
-              <button onClick={() => setEditingMember(null)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setEditingMember(null)} className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-all">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleTechUpdateMember} className="space-y-4 text-xs">
+            <form onSubmit={handleTechUpdateMember} className="flex flex-col flex-1 overflow-hidden my-2">
+              <div className="overflow-y-auto pr-1 custom-scrollbar space-y-4 flex-1 py-1">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-slate-400 mb-1">1. Mã Thành Viên {!isSuperAdmin && '(Cố định - Chỉ Super Admin được sửa)'}</label>
@@ -978,8 +981,9 @@ export const InternalMembers = () => {
                   )}
                 </div>
               </div>
+            </div>
 
-              <div className="pt-2 flex justify-end gap-2">
+              <div className="pt-3 border-t border-white/10 flex justify-end gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => setEditingMember(null)}
@@ -1002,9 +1006,9 @@ export const InternalMembers = () => {
 
       {/* Modal Cấp Tài Khoản Mới */}
       {isNewAccountModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up overflow-y-auto">
-          <div className="relative w-full max-w-xl bg-slate-900 border border-blue-500/40 rounded-3xl p-6 shadow-2xl text-white space-y-4 my-8">
-            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up overflow-y-auto">
+          <div className="relative w-full max-w-xl max-h-[90vh] bg-slate-900 border border-blue-500/40 rounded-3xl p-4 sm:p-6 shadow-2xl text-white flex flex-col my-auto">
+            <div className="flex justify-between items-center border-b border-white/10 pb-3 shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold">
                   <UserPlus className="w-5 h-5" />
@@ -1014,111 +1018,113 @@ export const InternalMembers = () => {
                   <span className="text-xs text-slate-400">Dành cho Tổ Kỹ thuật cấp mã và mật khẩu ban đầu</span>
                 </div>
               </div>
-              <button onClick={() => setIsNewAccountModalOpen(false)} className="text-slate-400 hover:text-white">
+              <button onClick={() => setIsNewAccountModalOpen(false)} className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-all">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmitNewAccount} className="space-y-4 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-300 font-semibold mb-1">1. Tên Đăng Nhập (Username) *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.username}
-                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                    placeholder="vd: hoanglong.vmc"
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-mono"
-                  />
-                </div>
+            <form onSubmit={handleSubmitNewAccount} className="flex flex-col flex-1 overflow-hidden my-2">
+              <div className="overflow-y-auto pr-1 custom-scrollbar space-y-4 flex-1 py-1 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">1. Tên Đăng Nhập (Username) *</label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.username}
+                      onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                      placeholder="vd: hoanglong.vmc"
+                      className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-mono"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-slate-300 font-semibold mb-1">2. Họ và Tên Thành Viên *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="vd: Vũ Hoàng Long"
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">2. Họ và Tên Thành Viên *</label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="vd: Vũ Hoàng Long"
+                      className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-slate-300 font-semibold mb-1">3. Lớp Học *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.class}
-                    onChange={(e) => setFormData({ ...formData, class: e.target.value })}
-                    placeholder="vd: 11A2"
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">3. Lớp Học *</label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.class}
+                      onChange={(e) => setFormData({ ...formData, class: e.target.value })}
+                      placeholder="vd: 11A2"
+                      className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-slate-300 font-semibold mb-1">4. Ban Chuyên Môn *</label>
-                  <select
-                    value={formData.deptName}
-                    onChange={(e) => {
-                      const dept = e.target.value;
-                      setFormData({ ...formData, deptName: dept });
-                    }}
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white"
-                  >
-                    <option value="Ban Chủ Nhiệm">Ban Chủ Nhiệm</option>
-                    <option value="Ban Cố Vấn">Ban Cố Vấn</option>
-                    <option value="Ban Đối Ngoại - Nhân Sự">Ban Đối Ngoại - Nhân Sự</option>
-                    <option value="Ban Sản Xuất">Ban Sản Xuất Media</option>
-                    <option value="Ban Nội Dung - Phát Thanh">Ban Nội Dung - Phát Thanh</option>
-                  </select>
-                </div>
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">4. Ban Chuyên Môn *</label>
+                    <select
+                      value={formData.deptName}
+                      onChange={(e) => {
+                        const dept = e.target.value;
+                        setFormData({ ...formData, deptName: dept });
+                      }}
+                      className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white"
+                    >
+                      <option value="Ban Chủ Nhiệm">Ban Chủ Nhiệm</option>
+                      <option value="Ban Cố Vấn">Ban Cố Vấn</option>
+                      <option value="Ban Đối Ngoại - Nhân Sự">Ban Đối Ngoại - Nhân Sự</option>
+                      <option value="Ban Sản Xuất">Ban Sản Xuất Media</option>
+                      <option value="Ban Nội Dung - Phát Thanh">Ban Nội Dung - Phát Thanh</option>
+                    </select>
+                  </div>
 
-                <div>
-                  <label className="block text-slate-300 font-semibold mb-1">5. Chức Vụ Trong CLB *</label>
-                  <select
-                    required
-                    value={formData.roleTitle}
-                    onChange={(e) => setFormData({ ...formData, roleTitle: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white"
-                  >
-                    <option value="">-- Chọn chức vụ --</option>
-                    <option value="Thành Viên">Thành Viên</option>
-                    <option value="Phó Ban">Phó Ban</option>
-                    <option value="Trưởng Ban">Trưởng Ban</option>
-                    <option value="Chủ Nhiệm CLB">Chủ Nhiệm CLB</option>
-                    {(!hasSuperAdmin || formData.roleTitle === 'Super Admin') && (
-                      <option value="Super Admin">Super Admin (Quyền Toàn Năng)</option>
-                    )}
-                  </select>
-                </div>
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">5. Chức Vụ Trong CLB *</label>
+                    <select
+                      required
+                      value={formData.roleTitle}
+                      onChange={(e) => setFormData({ ...formData, roleTitle: e.target.value })}
+                      className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white"
+                    >
+                      <option value="">-- Chọn chức vụ --</option>
+                      <option value="Thành Viên">Thành Viên</option>
+                      <option value="Phó Ban">Phó Ban</option>
+                      <option value="Trưởng Ban">Trưởng Ban</option>
+                      <option value="Chủ Nhiệm CLB">Chủ Nhiệm CLB</option>
+                      {(!hasSuperAdmin || formData.roleTitle === 'Super Admin') && (
+                        <option value="Super Admin">Super Admin (Quyền Toàn Năng)</option>
+                      )}
+                    </select>
+                  </div>
 
-                <div>
-                  <label className="block text-slate-300 font-semibold mb-1">6. Số Điện Thoại / Zalo *</label>
-                  <input
-                    type="tel"
-                    required
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="0981234567"
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-mono"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">6. Số Điện Thoại / Zalo *</label>
+                    <input
+                      type="tel"
+                      required
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="0981234567"
+                      className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-mono"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-slate-300 font-semibold mb-1">7. Thế Hệ (Gen)</label>
-                  <input
-                    type="text"
-                    value={formData.term || 'Gen 6'}
-                    onChange={(e) => setFormData({ ...formData, term: e.target.value, termName: e.target.value })}
-                    placeholder="vd: Gen 6, Gen 7, 2025-2026..."
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-medium focus:outline-none focus:border-blue-500"
-                  />
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1">7. Thế Hệ (Gen)</label>
+                    <input
+                      type="text"
+                      value={formData.term || 'Gen 6'}
+                      onChange={(e) => setFormData({ ...formData, term: e.target.value, termName: e.target.value })}
+                      placeholder="vd: Gen 6, Gen 7, 2025-2026..."
+                      className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-medium focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="pt-2 flex justify-end gap-2">
+              <div className="pt-3 border-t border-white/10 flex justify-end gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsNewAccountModalOpen(false)}

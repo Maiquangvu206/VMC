@@ -3,6 +3,7 @@ import { queryDatabase } from './db.js';
 
 const router = express.Router();
 const generateId = () => Math.random().toString(36).substr(2, 9);
+const toId = (val) => (val !== undefined && val !== null && val !== '') ? String(val) : null;
 
 // ======================= TASKS =======================
 router.get('/tasks', async (req, res) => {
@@ -29,8 +30,8 @@ router.post('/tasks', async (req, res) => {
   try {
     const { id, title, description, assignee_id, assigneeId, created_by, deadline, status, points_reward } = req.body;
     const taskId = id || generateId();
-    const assId = parseInt(assignee_id || assigneeId, 10) || null;
-    const creatorId = parseInt(created_by, 10) || null;
+    const assId = toId(assignee_id || assigneeId);
+    const creatorId = toId(created_by);
 
     await queryDatabase(
       'INSERT INTO Tasks (id, title, description, assignee_id, created_by, deadline, status, points_reward) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
@@ -45,7 +46,7 @@ router.post('/tasks', async (req, res) => {
 router.put('/tasks/:id', async (req, res) => {
   try {
     const { status, title, description, deadline, assignee_id, assigneeId, points_reward } = req.body;
-    const assId = (assignee_id !== undefined || assigneeId !== undefined) ? (parseInt(assignee_id || assigneeId, 10) || null) : undefined;
+    const assId = (assignee_id !== undefined || assigneeId !== undefined) ? toId(assignee_id || assigneeId) : undefined;
     await queryDatabase(
       'UPDATE Tasks SET status = COALESCE(?, status), title = COALESCE(?, title), description = COALESCE(?, description), deadline = COALESCE(?, deadline), assignee_id = COALESCE(?, assignee_id), points_reward = COALESCE(?, points_reward) WHERE id = ?',
       [
@@ -100,8 +101,8 @@ router.post('/drafts', async (req, res) => {
   try {
     const { id, title, content, content_link, author, author_id, authorId, status, publishDate, graderId, gradingStatus } = req.body;
     const draftId = id || generateId();
-    const autId = parseInt(author_id || authorId, 10) || null;
-    const grId = parseInt(graderId, 10) || null;
+    const autId = toId(author_id || authorId);
+    const grId = toId(graderId);
 
     await queryDatabase(
       'INSERT INTO Fanpage_Drafts (id, title, content_link, author_id, status, publishDate, graderId, gradingStatus, content, author) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
@@ -127,7 +128,7 @@ router.post('/drafts', async (req, res) => {
 router.put('/drafts/:id', async (req, res) => {
   try {
     const { status, publishDate, graderId, gradingStatus, title, content, content_link, author } = req.body;
-    const grId = graderId !== undefined ? (parseInt(graderId, 10) || null) : undefined;
+    const grId = graderId !== undefined ? toId(graderId) : undefined;
     await queryDatabase(
       'UPDATE Fanpage_Drafts SET status = COALESCE(?, status), publishDate = COALESCE(?, publishDate), graderId = COALESCE(?, graderId), gradingStatus = COALESCE(?, gradingStatus), title = COALESCE(?, title), content = COALESCE(?, content), content_link = COALESCE(?, content_link), author = COALESCE(?, author) WHERE id = ?',
       [
@@ -172,7 +173,7 @@ router.post('/equipment', async (req, res) => {
   try {
     const { id, code, name, category, condition_status, status, borrower_id, return_date } = req.body;
     const eqId = id || generateId();
-    const bId = parseInt(borrower_id, 10) || null;
+    const bId = toId(borrower_id);
 
     await queryDatabase(
       'INSERT INTO Equipment (id, code, name, category, condition_status, status, borrower_id, return_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
@@ -187,7 +188,7 @@ router.post('/equipment', async (req, res) => {
 router.put('/equipment/:id', async (req, res) => {
   try {
     const { status, condition_status, borrower_id, return_date } = req.body;
-    const bId = borrower_id !== undefined ? (parseInt(borrower_id, 10) || null) : undefined;
+    const bId = borrower_id !== undefined ? toId(borrower_id) : undefined;
     await queryDatabase(
       'UPDATE Equipment SET status = COALESCE(?, status), condition_status = COALESCE(?, condition_status), borrower_id = ?, return_date = ? WHERE id = ?',
       [
@@ -226,7 +227,7 @@ router.post('/announcements', async (req, res) => {
   try {
     const { id, title, content, author_id, authorId, is_pinned, isPinned } = req.body;
     const annId = id || generateId();
-    const autId = parseInt(author_id || authorId, 10) || null;
+    const autId = toId(author_id || authorId);
     const pinned = (is_pinned || isPinned) ? 1 : 0;
 
     await queryDatabase(
@@ -272,7 +273,7 @@ router.post('/finances', async (req, res) => {
   try {
     const { id, type, amount, description, record_date, date, recorded_by, logged_by } = req.body;
     const finId = id || generateId();
-    const recBy = parseInt(recorded_by || logged_by, 10) || null;
+    const recBy = toId(recorded_by || logged_by);
     const recDate = record_date || date || new Date().toISOString().slice(0, 10);
 
     await queryDatabase(
@@ -328,8 +329,8 @@ router.post('/meetings', async (req, res) => {
   try {
     const { id, title, date, time, attendance_taker_id, minute_taker_id, status, minutes_link } = req.body;
     const mtgId = id || generateId();
-    const attTaker = parseInt(attendance_taker_id, 10) || null;
-    const minTaker = parseInt(minute_taker_id, 10) || null;
+    const attTaker = toId(attendance_taker_id);
+    const minTaker = toId(minute_taker_id);
 
     await queryDatabase(
       'INSERT INTO Meetings (id, title, meeting_date, meeting_time, attendance_taker_id, minute_taker_id, status, minutes_link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
@@ -361,7 +362,7 @@ router.put('/meetings/:id', async (req, res) => {
     if (Array.isArray(attendanceData)) {
       await queryDatabase('DELETE FROM Meeting_Attendance WHERE meeting_id = ?', [req.params.id]);
       for (const att of attendanceData) {
-        const memId = parseInt(att.memberId || att.member_id, 10);
+        const memId = toId(att.memberId || att.member_id);
         if (memId) {
           await queryDatabase(
             'INSERT INTO Meeting_Attendance (meeting_id, member_id, status) VALUES (?, ?, ?)',
@@ -391,15 +392,26 @@ router.delete('/meetings/:id', async (req, res) => {
 router.get('/birthday-assignments', async (req, res) => {
   try {
     const rows = await queryDatabase('SELECT * FROM Birthday_Assignments ORDER BY assign_year DESC, assign_month DESC');
-    const data = rows.map(b => ({
-      id: b.id,
-      month: b.assign_month,
-      year: b.assign_year,
-      memberId: b.member_id,
-      link: b.link_image,
-      status: b.status || 'pending',
-      createdAt: b.created_at
-    }));
+    const data = rows.map(b => {
+      let subs = {};
+      try {
+        subs = b.submissions ? JSON.parse(b.submissions) : {};
+      } catch (e) { subs = {}; }
+
+      return {
+        id: b.id,
+        month: b.assign_month,
+        year: b.assign_year,
+        memberId: b.member_id,
+        link: b.link_image,
+        status: b.status || 'pending',
+        submissions: subs,
+        excuseReason: b.excuse_reason || '',
+        excuseStatus: b.excuse_status || 'none',
+        isPenalized: Boolean(b.is_penalized),
+        createdAt: b.created_at
+      };
+    });
     res.json({ success: true, data });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -408,17 +420,18 @@ router.get('/birthday-assignments', async (req, res) => {
 
 router.post('/birthday-assignments', async (req, res) => {
   try {
-    const { id, month, assign_month, year, assign_year, memberId, member_id, link, link_image, status } = req.body;
+    const { id, month, assign_month, year, assign_year, memberId, member_id, link, link_image, status, submissions } = req.body;
     const bdayId = id || generateId();
     const mMonth = parseInt(month || assign_month, 10);
     const mYear = parseInt(year || assign_year, 10);
-    const memId = parseInt(memberId || member_id, 10);
+    const memId = toId(memberId || member_id);
+    const subsStr = typeof submissions === 'object' ? JSON.stringify(submissions) : (submissions || '{}');
 
     await queryDatabase(
-      'INSERT INTO Birthday_Assignments (id, assign_month, assign_year, member_id, link_image, status) VALUES (?, ?, ?, ?, ?, ?)',
-      [bdayId, mMonth, mYear, memId, link || link_image || null, status || 'pending']
+      'INSERT INTO Birthday_Assignments (id, assign_month, assign_year, member_id, link_image, status, submissions) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [bdayId, mMonth, mYear, memId, link || link_image || null, status || 'pending', subsStr]
     );
-    res.json({ success: true, data: { id: bdayId, month: mMonth, year: mYear, memberId: memId, status } });
+    res.json({ success: true, data: { id: bdayId, month: mMonth, year: mYear, memberId: memId, status, submissions: submissions || {} } });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -426,16 +439,92 @@ router.post('/birthday-assignments', async (req, res) => {
 
 router.put('/birthday-assignments/:id', async (req, res) => {
   try {
-    const { link, link_image, status } = req.body;
+    const { link, link_image, status, submissions, excuseReason, excuse_reason, excuseStatus, excuse_status, isPenalized, is_penalized } = req.body;
     const imageLink = link !== undefined ? link : link_image;
+    const subsStr = submissions !== undefined ? (typeof submissions === 'object' ? JSON.stringify(submissions) : submissions) : undefined;
+    const exReason = excuseReason !== undefined ? excuseReason : excuse_reason;
+    const exStatus = excuseStatus !== undefined ? excuseStatus : excuse_status;
+    const pen = isPenalized !== undefined ? (isPenalized ? 1 : 0) : (is_penalized !== undefined ? (is_penalized ? 1 : 0) : undefined);
+
     await queryDatabase(
-      'UPDATE Birthday_Assignments SET link_image = COALESCE(?, link_image), status = COALESCE(?, status) WHERE id = ?',
+      'UPDATE Birthday_Assignments SET link_image = COALESCE(?, link_image), status = COALESCE(?, status), submissions = COALESCE(?, submissions), excuse_reason = COALESCE(?, excuse_reason), excuse_status = COALESCE(?, excuse_status), is_penalized = COALESCE(?, is_penalized) WHERE id = ?',
       [
         imageLink !== undefined ? imageLink : null,
         status !== undefined ? status : null,
+        subsStr !== undefined ? subsStr : null,
+        exReason !== undefined ? exReason : null,
+        exStatus !== undefined ? exStatus : null,
+        pen !== undefined ? pen : null,
         req.params.id
       ]
     );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ======================= USER SESSIONS (SUPER ADMIN) =======================
+router.get('/sessions', async (req, res) => {
+  try {
+    const sessions = await queryDatabase('SELECT * FROM User_Sessions ORDER BY last_active DESC');
+    res.json({ success: true, data: sessions });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/sessions/login', async (req, res) => {
+  try {
+    const { sessionId, memberId, username, name, roleTitle, userAgent } = req.body;
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+    const sId = sessionId || generateId();
+    const isMobile = /mobile|android|iphone|ipad|ipod/i.test(userAgent || '');
+    const deviceType = isMobile ? 'Mobile Phone' : 'Desktop / PC';
+
+    await queryDatabase(
+      `INSERT INTO User_Sessions (id, member_id, username, name, role_title, ip_address, user_agent, device_type, login_time, last_active, is_active)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), 1)
+       ON DUPLICATE KEY UPDATE last_active = NOW(), is_active = 1, ip_address = VALUES(ip_address), user_agent = VALUES(user_agent), device_type = VALUES(device_type)`,
+      [sId, String(memberId), username || '', name || '', roleTitle || '', ip, userAgent || '', deviceType]
+    );
+
+    res.json({ success: true, sessionId: sId });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/sessions/heartbeat', async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    if (!sessionId) return res.json({ success: true, isActive: true });
+
+    const rows = await queryDatabase('SELECT is_active FROM User_Sessions WHERE id = ?', [sessionId]);
+    if (rows && rows.length > 0 && Number(rows[0].is_active) === 0) {
+      return res.json({ success: true, isActive: false, message: 'Phiên đăng nhập đã bị Super Admin hủy bỏ.' });
+    }
+
+    await queryDatabase('UPDATE User_Sessions SET last_active = NOW() WHERE id = ?', [sessionId]);
+    res.json({ success: true, isActive: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete('/sessions/:id', async (req, res) => {
+  try {
+    await queryDatabase('UPDATE User_Sessions SET is_active = 0 WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/sessions/revoke-all', async (req, res) => {
+  try {
+    const { currentSessionId } = req.body;
+    await queryDatabase('UPDATE User_Sessions SET is_active = 0 WHERE id != ?', [currentSessionId || '']);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -522,6 +611,124 @@ router.delete('/generations/:id', async (req, res) => {
   try {
     await queryDatabase('DELETE FROM Generations WHERE id = ?', [req.params.id]);
     res.json({ success: true, message: 'Đã xóa Gen thành công' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ======================= RESOURCES =======================
+router.get('/resources', async (req, res) => {
+  try {
+    const rows = await queryDatabase('SELECT * FROM Resources ORDER BY created_at DESC');
+    const data = rows.map(r => ({
+      id: r.id,
+      title: r.title,
+      description: r.description,
+      category: r.category,
+      link: r.link,
+      uploaderId: r.uploader_id,
+      createdAt: r.created_at
+    }));
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/resources', async (req, res) => {
+  try {
+    const { id, title, description, category, link, uploaderId, uploader_id } = req.body;
+    const resId = id || generateId();
+    const upId = toId(uploaderId || uploader_id);
+
+    await queryDatabase(
+      'INSERT INTO Resources (id, title, description, category, link, uploader_id) VALUES (?, ?, ?, ?, ?, ?)',
+      [resId, title, description || '', category || 'Chung', link, upId]
+    );
+    res.json({ success: true, data: { id: resId, title, description, category, link, uploaderId: upId } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete('/resources/:id', async (req, res) => {
+  try {
+    await queryDatabase('DELETE FROM Resources WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ======================= DEPARTMENT DRIVES =======================
+router.get('/department-drives', async (req, res) => {
+  try {
+    const rows = await queryDatabase('SELECT * FROM Department_Drives ORDER BY id ASC');
+    const data = rows.map(d => ({
+      id: d.id,
+      deptName: d.dept_name,
+      link: d.drive_link,
+      updatedAt: d.updated_at
+    }));
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put('/department-drives/:id', async (req, res) => {
+  try {
+    const { link, drive_link } = req.body;
+    const dLink = link !== undefined ? link : drive_link;
+
+    await queryDatabase(
+      'UPDATE Department_Drives SET drive_link = ? WHERE id = ? OR dept_name = ?',
+      [dLink, req.params.id, req.params.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ======================= ATTENDANCE RECORDS =======================
+router.get('/attendance-records', async (req, res) => {
+  try {
+    const rows = await queryDatabase('SELECT * FROM Attendance_Records ORDER BY created_at DESC');
+    const data = rows.map(a => {
+      let presentIds = [];
+      try {
+        presentIds = a.present_members ? JSON.parse(a.present_members) : [];
+      } catch (e) { presentIds = []; }
+
+      return {
+        id: a.id,
+        sessionName: a.session_name,
+        date: a.record_date,
+        presentMemberIds: presentIds,
+        status: a.status || 'approved',
+        createdAt: a.created_at
+      };
+    });
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/attendance-records', async (req, res) => {
+  try {
+    const { id, sessionName, session_name, date, record_date, presentMemberIds, present_members, status } = req.body;
+    const recId = id || generateId();
+    const sName = sessionName || session_name || `Buổi Sinh Hoạt ngày ${new Date().toLocaleDateString('vi-VN')}`;
+    const rDate = date || record_date || new Date().toLocaleDateString('vi-VN');
+    const pMembersStr = Array.isArray(presentMemberIds) ? JSON.stringify(presentMemberIds) : (present_members || '[]');
+
+    await queryDatabase(
+      'INSERT INTO Attendance_Records (id, session_name, record_date, present_members, status) VALUES (?, ?, ?, ?, ?)',
+      [recId, sName, rDate, pMembersStr, status || 'approved']
+    );
+    res.json({ success: true, data: { id: recId, sessionName: sName, date: rDate, presentMemberIds: presentMemberIds || [] } });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

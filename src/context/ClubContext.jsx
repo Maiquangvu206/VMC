@@ -50,25 +50,27 @@ export const ClubProvider = ({ children }) => {
   };
 
   const [db, setDb] = useState(() => loadDatabaseFromStorage());
+
   const [currentUser, setCurrentUser] = useState(() => {
-    return db.members?.[0] || {
-      id: 1,
-      name: 'Quản Trị Viên',
-      role: 'admin',
-      roleTitle: 'Super Admin (Chủ Nhiệm CLB)',
-      memberCode: 'ADMIN',
-      deptName: 'Ban Chủ Nhiệm',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=400',
-      points: 9999,
-      isFirstLogin: false
-    };
+    try {
+      const savedUser = sessionStorage.getItem('VMC_CURRENT_USER');
+      return savedUser ? JSON.parse(savedUser) : (db.members?.[0] || null);
+    } catch (e) {
+      return db.members?.[0] || null;
+    }
   });
 
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    try {
+      return sessionStorage.getItem('VMC_IS_AUTH') === 'true';
+    } catch (e) {
+      return true;
+    }
+  });
+
   const [requirePasswordChange, setRequirePasswordChange] = useState(false);
   const [isBorrowModalOpen, setIsBorrowModalOpen] = useState(false);
   const [selectedEquipment, setSelectedEquipment] = useState(null);
-
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
   const [isNewDraftModalOpen, setIsNewDraftModalOpen] = useState(false);
   const [isNewAccountModalOpen, setIsNewAccountModalOpen] = useState(false);
@@ -77,6 +79,16 @@ export const ClubProvider = ({ children }) => {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    if (isAuthenticated && currentUser) {
+      sessionStorage.setItem('VMC_IS_AUTH', 'true');
+      sessionStorage.setItem('VMC_CURRENT_USER', JSON.stringify(currentUser));
+    } else {
+      sessionStorage.removeItem('VMC_IS_AUTH');
+      sessionStorage.removeItem('VMC_CURRENT_USER');
+    }
+  }, [isAuthenticated, currentUser]);
 
   // Load Members from SQL Database API on Mount
   useEffect(() => {
@@ -91,7 +103,7 @@ export const ClubProvider = ({ children }) => {
 
           const currentMonth = new Date().toISOString().slice(0, 7);
           let nextDb = { ...prev, members: mergedMembers };
-          
+
           if (prev.lastPointsAddedMonth && prev.lastPointsAddedMonth !== currentMonth) {
             mergedMembers = mergedMembers.map(m => {
               if (m.status !== 'Suspended') {
@@ -103,8 +115,29 @@ export const ClubProvider = ({ children }) => {
             });
             nextDb = { ...nextDb, members: mergedMembers, lastPointsAddedMonth: currentMonth };
           } else if (!prev.lastPointsAddedMonth) {
-             nextDb = { ...nextDb, lastPointsAddedMonth: currentMonth };
+            nextDb = { ...nextDb, lastPointsAddedMonth: currentMonth };
           }
+
+          // Check 24h Grader Deadline
+          const now = Date.now();
+          if (nextDb.drafts) {
+            nextDb.drafts = nextDb.drafts.map(draft => {
+              if (draft.status === 'approved' && draft.publishDate && draft.graderId && draft.gradingStatus === 'pending') {
+                const publishTime = new Date(draft.publishDate).getTime();
+                if (now > publishTime + 24 * 60 * 60 * 1000) {
+                  const grader = nextDb.members.find(m => m.id === draft.graderId);
+                  if (grader) {
+                    const newPoints = (grader.points || 0) - 5;
+                    updateMemberAPI(grader.memberCode || grader.member_code || grader.id, { points: newPoints }).catch(e => console.log(e));
+                    nextDb.members = nextDb.members.map(m => m.id === draft.graderId ? { ...m, points: newPoints } : m);
+                  }
+                  return { ...draft, gradingStatus: 'failed_deadline' };
+                }
+              }
+              return draft;
+            });
+          }
+
           saveDatabaseToStorage(nextDb);
           return nextDb;
         });
@@ -113,13 +146,13 @@ export const ClubProvider = ({ children }) => {
     loadSqlMembers();
   }, []);
 
-  // Automatic Real-Time Silent Sync with MySQL Database — tất cả 10 bảng 100% từ MySQL Server
+  // Automatic Real-Time Silent Sync with MySQL Database
   useEffect(() => {
     let isMounted = true;
 
     const silentAutoSync = async () => {
       try {
-        const [serverMembers, serverTasks, serverDrafts, serverEquipment, serverAnnouncements, serverFinances, serverMeetings, serverBirthday, serverMilestones, serverGenerations] = await Promise.all([
+        const [serverMembers, serverTasks, serverDrafts, serverEquipment, serverAnnouncements, serverFinances, serverMeetings, serverBirthday, serverMilestones, serverGenerations, serverResources, serverDrives, serverAttendance] = await Promise.all([
           fetchMembersFromDatabaseAPI(),
           fetchEntityAPI('tasks'),
           fetchEntityAPI('drafts'),
@@ -129,9 +162,12 @@ export const ClubProvider = ({ children }) => {
           fetchEntityAPI('meetings'),
           fetchEntityAPI('birthday-assignments'),
           fetchEntityAPI('milestones'),
-          fetchEntityAPI('generations')
+          fetchEntityAPI('generations'),
+          fetchEntityAPI('resources'),
+          fetchEntityAPI('department-drives'),
+          fetchEntityAPI('attendance-records')
         ]);
-        
+
         if (isMounted) {
           const buildDefaultMilestones = (m) => [
             {
@@ -172,7 +208,10 @@ export const ClubProvider = ({ children }) => {
               finances: Array.isArray(serverFinances) ? serverFinances : prev.finances,
               meetings: Array.isArray(serverMeetings) ? serverMeetings : prev.meetings,
               birthdayAssignments: Array.isArray(serverBirthday) ? serverBirthday : prev.birthdayAssignments,
-              generations: (Array.isArray(serverGenerations) && serverGenerations.length > 0) ? serverGenerations : (prev.generations || DEFAULT_GENERATIONS)
+              generations: (Array.isArray(serverGenerations) && serverGenerations.length > 0) ? serverGenerations : (prev.generations || DEFAULT_GENERATIONS),
+              resources: Array.isArray(serverResources) ? serverResources : prev.resources,
+              departmentDrives: (Array.isArray(serverDrives) && serverDrives.length > 0) ? serverDrives : prev.departmentDrives,
+              attendanceRecords: Array.isArray(serverAttendance) ? serverAttendance : prev.attendanceRecords
             };
             saveDatabaseToStorage(updated);
             return updated;
@@ -188,22 +227,9 @@ export const ClubProvider = ({ children }) => {
 
     return () => {
       isMounted = false;
-      clearInterval(syncInterval);
+      clearInterval(intervalId);
     };
   }, []);
-  const announcements = db.announcements;
-  const resources = db.resources || [];
-  const departmentDrives = db.departmentDrives || [];
-  const attendanceRecords = db.attendanceRecords || [];
-
-  const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      const savedUser = sessionStorage.getItem('VMC_CURRENT_USER');
-      return savedUser ? JSON.parse(savedUser) : null;
-    } catch (e) {
-      return null;
-    }
-  });
 
   // Auto-sync currentUser with latest db.members from MySQL
   useEffect(() => {
@@ -218,96 +244,10 @@ export const ClubProvider = ({ children }) => {
     }
   }, [db.members]);
 
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    try {
-      return sessionStorage.getItem('VMC_IS_AUTH') === 'true';
-    } catch (e) {
-      return false;
-    }
-  });
-
-  const [requirePasswordChange, setRequirePasswordChange] = useState(false);
-
-  useEffect(() => {
-    if (isAuthenticated && currentUser) {
-      sessionStorage.setItem('VMC_IS_AUTH', 'true');
-      sessionStorage.setItem('VMC_CURRENT_USER', JSON.stringify(currentUser));
-    } else {
-      sessionStorage.removeItem('VMC_IS_AUTH');
-      sessionStorage.removeItem('VMC_CURRENT_USER');
-    }
-  }, [isAuthenticated, currentUser]);
-
-  // Modals & Drawers
-  const [isBorrowModalOpen, setIsBorrowModalOpen] = useState(false);
-  const [selectedEquipment, setSelectedEquipment] = useState(null);
-  const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
-  const [isNewDraftModalOpen, setIsNewDraftModalOpen] = useState(false);
-  const [isNewAccountModalOpen, setIsNewAccountModalOpen] = useState(false);
-  const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
-
-  // Load Members from SQL Database API on Mount
-  useEffect(() => {
-    const loadSqlMembers = async () => {
-      const sqlMembers = await fetchMembersFromDatabaseAPI();
-      if (sqlMembers && sqlMembers.length > 0) {
-        setDb(prev => {
-          let mergedMembers = sqlMembers.map(serverMem => {
-            const localMem = (prev.members || []).find(m => m.id === serverMem.id) || {};
-            return { ...localMem, ...serverMem };
-          });
-
-          const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
-          let nextDb = { ...prev, members: mergedMembers };
-          
-          // 1. Check Monthly Points (+50)
-          if (prev.lastPointsAddedMonth && prev.lastPointsAddedMonth !== currentMonth) {
-            mergedMembers = mergedMembers.map(m => {
-              if (m.status !== 'Suspended') {
-                const newPoints = (m.points || 0) + 50;
-                updateMemberAPI(m.memberCode || m.member_code || m.id, { points: newPoints }).catch(e => console.log(e));
-                return { ...m, points: newPoints };
-              }
-              return m;
-            });
-            nextDb = { ...nextDb, members: mergedMembers, lastPointsAddedMonth: currentMonth };
-            console.log(`✅ Đã tự động cộng 50 điểm đầu tháng cho tất cả thành viên (${currentMonth})`);
-          } else if (!prev.lastPointsAddedMonth) {
-             nextDb = { ...nextDb, lastPointsAddedMonth: currentMonth };
-          }
-          
-          // 2. Check 24h Grader Deadline
-          const now = Date.now();
-          if (nextDb.drafts) {
-            nextDb.drafts = nextDb.drafts.map(draft => {
-              if (draft.status === 'approved' && draft.publishDate && draft.graderId && draft.gradingStatus === 'pending') {
-                const publishTime = new Date(draft.publishDate).getTime();
-                if (now > publishTime + 24 * 60 * 60 * 1000) {
-                  // Failed deadline! Penalty -5 points
-                  const grader = nextDb.members.find(m => m.id === draft.graderId);
-                  if (grader) {
-                    const newPoints = (grader.points || 0) - 5;
-                    updateMemberAPI(grader.memberCode || grader.member_code || grader.id, { points: newPoints }).catch(e => console.log(e));
-                    nextDb.members = nextDb.members.map(m => m.id === draft.graderId ? { ...m, points: newPoints } : m);
-                  }
-                  return { ...draft, gradingStatus: 'failed_deadline' };
-                }
-              }
-              return draft;
-            });
-          }
-
-          return nextDb;
-        });
-        console.log('✅ Đã load thành công dữ liệu thành viên từ API CSDL SQL!');
-      }
-    };
-    loadSqlMembers();
-  }, []);
+  const announcements = db.announcements || [];
+  const resources = db.resources || [];
+  const departmentDrives = db.departmentDrives || [];
+  const attendanceRecords = db.attendanceRecords || [];
 
   // Sync state changes into Dynamic Database
   const updateDb = (updater) => {
@@ -343,16 +283,18 @@ export const ClubProvider = ({ children }) => {
   );
 
   // Submit Attendance Checkin (Performed by External Relations - HR Member)
-  const submitAttendanceCheckin = (sessionName, presentMemberIds) => {
+  const submitAttendanceCheckin = async (sessionName, presentMemberIds) => {
     const recordObj = {
       id: 'att-' + Date.now(),
       sessionName: sessionName || `Buổi Sinh Hoạt CLB ngày ${new Date().toLocaleDateString('vi-VN')}`,
       date: new Date().toLocaleDateString('vi-VN'),
       takenBy: `${currentUser.name} (${currentUser.roleTitle})`,
       presentMemberIds: presentMemberIds,
-      status: 'pending_approval',
-      approvedBy: null
+      status: 'approved',
+      approvedBy: currentUser.name
     };
+
+    await createEntityAPI('attendance-records', recordObj);
 
     updateDb(prev => ({
       ...prev,
@@ -360,7 +302,7 @@ export const ClubProvider = ({ children }) => {
     }));
 
     triggerConfetti();
-    showToast('✅ Đã gửi danh sách điểm danh sinh hoạt! Vui lòng chờ Trưởng Ban Đối Ngoại - Nhân Sự duyệt.', 'info');
+    showToast('✅ Đã lưu danh sách điểm danh sinh hoạt vào CSDL MySQL thành công!', 'success');
   };
 
   // Approve Attendance Checkin (Performed by Head of External Relations - HR)
@@ -404,7 +346,7 @@ export const ClubProvider = ({ children }) => {
     const apiRes = await loginMemberAPI(memberCode, password);
     if (apiRes && apiRes.success && apiRes.user) {
       const user = apiRes.user;
-      
+
       if (user.status === 'Suspended') {
         showToast('Tài khoản này đã bị tạm khóa bởi Ban Chủ Nhiệm!', 'error');
         return false;
@@ -419,7 +361,7 @@ export const ClubProvider = ({ children }) => {
       }
       return true;
     }
-    
+
     // If API returns a specific suspended message, alert it and stop
     if (apiRes && !apiRes.success && apiRes.message?.includes('tạm khóa')) {
       showToast(apiRes.message, 'error');
@@ -485,16 +427,21 @@ export const ClubProvider = ({ children }) => {
   };
 
   // Add new Resource item (Google Drive Link)
-  const addResource = (newResData) => {
+  const addResource = async (newResData) => {
     const resourceObj = {
       id: 'res-' + Date.now(),
-      name: newResData.name || 'Tài nguyên không tên',
+      title: newResData.name || newResData.title || 'Tài nguyên mới',
+      name: newResData.name || newResData.title || 'Tài nguyên mới',
       category: newResData.category || 'Khác',
       type: newResData.type || 'Link Drive',
       size: newResData.size || 'Cloud',
-      driveUrl: newResData.driveUrl || 'https://drive.google.com/',
-      uploader: currentUser?.name || 'Thành viên VMC'
+      driveUrl: newResData.driveUrl || newResData.link || 'https://drive.google.com/',
+      link: newResData.driveUrl || newResData.link || 'https://drive.google.com/',
+      uploader: currentUser?.name || 'Thành viên VMC',
+      uploaderId: currentUser?.id
     };
+
+    await createEntityAPI('resources', resourceObj);
 
     updateDb(prev => ({
       ...prev,
@@ -502,29 +449,33 @@ export const ClubProvider = ({ children }) => {
     }));
 
     triggerConfetti();
-    showToast('🎉 Đã thêm thành công tài nguyên mới vào Kho Google Drive VMC!', 'success');
+    showToast('🎉 Đã thêm thành công tài nguyên mới vào CSDL & Kho Drive VMC!', 'success');
     return true;
   };
 
   // Delete Resource item
-  const deleteResource = (id) => {
+  const deleteResource = async (id) => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa tài nguyên này khỏi kho Drive?')) return;
+    await deleteEntityAPI('resources', id);
     updateDb(prev => ({
       ...prev,
       resources: (prev.resources || []).filter(r => r.id !== id)
     }));
+    showToast('Đã xóa tài nguyên thành công!', 'info');
   };
 
   // Update Department Root Google Drive URL
-  const updateDepartmentDrive = (deptId, newDriveUrl) => {
+  const updateDepartmentDrive = async (deptId, newDriveUrl) => {
+    await updateEntityAPI('department-drives', deptId, { link: newDriveUrl, drive_link: newDriveUrl });
+
     updateDb(prev => ({
       ...prev,
       departmentDrives: (prev.departmentDrives || []).map(d =>
-        d.id === deptId ? { ...d, driveUrl: newDriveUrl } : d
+        d.id === deptId || d.deptName === deptId ? { ...d, driveUrl: newDriveUrl, link: newDriveUrl } : d
       )
     }));
     triggerConfetti();
-    showToast('🎉 Đã cập nhật thành công thư mục Google Drive của Ban!', 'success');
+    showToast('🎉 Đã cập nhật thành công thư mục Google Drive của Ban vào CSDL!', 'success');
   };
 
   // Switch user role (demo)
@@ -616,7 +567,7 @@ export const ClubProvider = ({ children }) => {
         badgeStyle: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30'
       };
       newMsList.push(autoMs);
-      await createEntityAPI('milestones', autoMs).catch(() => {});
+      await createEntityAPI('milestones', autoMs).catch(() => { });
       nextFields.milestones = newMsList;
     }
 
@@ -690,7 +641,7 @@ export const ClubProvider = ({ children }) => {
     currentUser?.roleTitle?.includes('Super Admin') ||
     currentUser?.roleTitle?.includes('Chủ Nhiệm CLB') ||
     (currentUser?.roleTitle?.includes('Trưởng Ban') && (
-      currentUser?.deptName?.includes('Đối Ngoại') || 
+      currentUser?.deptName?.includes('Đối Ngoại') ||
       currentUser?.deptName?.includes('Nhân Sự') ||
       currentUser?.deptName?.includes('ĐN-NS')
     ))
@@ -729,7 +680,7 @@ export const ClubProvider = ({ children }) => {
     await createMemberAPI(accountObj);
 
     // 2. Sync first milestone into Member_Milestones table
-    await createEntityAPI('milestones', firstMilestone).catch(() => {});
+    await createEntityAPI('milestones', firstMilestone).catch(() => { });
 
     // 3. Update local state
     setDb(prev => ({
@@ -828,10 +779,10 @@ export const ClubProvider = ({ children }) => {
       ...prev,
       members: prev.members.map(m => {
         if (m.id === id) {
-          return { 
-            ...m, 
+          return {
+            ...m,
             status: newStatus,
-            milestones: [...(m.milestones || []), newMilestone] 
+            milestones: [...(m.milestones || []), newMilestone]
           };
         }
         return m;
@@ -923,8 +874,8 @@ export const ClubProvider = ({ children }) => {
     const pd = publishDate || new Date().toISOString();
     updateDb(prev => ({
       ...prev,
-      drafts: prev.drafts.map(d => d.id === draftId ? { 
-        ...d, 
+      drafts: prev.drafts.map(d => d.id === draftId ? {
+        ...d,
         status: 'approved',
         publishDate: pd,
         graderId: graderId || null,
@@ -1075,7 +1026,7 @@ export const ClubProvider = ({ children }) => {
     await updateEntityAPI('meetings', meetingId, { date: newDate, time: newTime, status });
     updateDb(prev => ({
       ...prev,
-      meetings: (prev.meetings || []).map(m => 
+      meetings: (prev.meetings || []).map(m =>
         m.id === meetingId ? { ...m, date: newDate || m.date, time: newTime || m.time, status } : m
       )
     }));
@@ -1092,10 +1043,10 @@ export const ClubProvider = ({ children }) => {
     updateDb(prev => {
       const lateMemberIds = attendanceData.filter(d => d.status === 'late').map(d => d.memberId);
       const absentMemberIds = attendanceData.filter(d => d.status === 'absent').map(d => d.memberId);
-      
+
       const newMembers = prev.members.map(m => {
         const isHR = m.deptName?.toLowerCase().includes('đối ngoại') || m.deptName?.toLowerCase().includes('nhân sự') || m.deptName?.toLowerCase().includes('đn-ns');
-        
+
         let penalty = 0;
         if (lateMemberIds.includes(m.id)) penalty = -3;
         else if (absentMemberIds.includes(m.id)) penalty = -10;
@@ -1132,7 +1083,7 @@ export const ClubProvider = ({ children }) => {
 
     updateDb(prev => ({
       ...prev,
-      meetings: (prev.meetings || []).map(mtg => 
+      meetings: (prev.meetings || []).map(mtg =>
         mtg.id === meetingId ? { ...mtg, minutesLink: link, status: nextStatus } : mtg
       )
     }));
@@ -1151,7 +1102,7 @@ export const ClubProvider = ({ children }) => {
 
     try {
       await updateMemberAPI(member.memberCode || member.id, { points: newPoints });
-    } catch(err) { console.error(err); }
+    } catch (err) { console.error(err); }
 
     showToast(`✅ Đã trừ ${pointsToDeduct} điểm của thành viên với lý do: ${reason}`, 'warning');
   };
@@ -1160,9 +1111,9 @@ export const ClubProvider = ({ children }) => {
     let finalDelta = parseInt(pointsDelta, 10);
     const member = db.members?.find(m => String(m.id) === String(memberId));
     if (!member) return;
-    
+
     const isHR = member.deptName?.toLowerCase().includes('đối ngoại') || member.deptName?.toLowerCase().includes('nhân sự') || member.deptName?.toLowerCase().includes('đn-ns');
-    
+
     // X2 penalty for HR department if points are deducted
     if (finalDelta < 0 && isHR) {
       finalDelta *= 2;
@@ -1177,7 +1128,7 @@ export const ClubProvider = ({ children }) => {
 
     try {
       await updateMemberAPI(member.memberCode || member.id, { points: newPoints });
-    } catch(err) { console.error(err); }
+    } catch (err) { console.error(err); }
 
     const actionText = finalDelta > 0 ? 'CỘNG' : 'TRỪ';
     showToast(`✅ Đã ${actionText} ${Math.abs(finalDelta)} điểm của [${member.name}]. Lý do: ${reason}`, 'info');
@@ -1220,11 +1171,154 @@ export const ClubProvider = ({ children }) => {
 
     updateDb(prev => ({
       ...prev,
-      birthdayAssignments: (prev.birthdayAssignments || []).map(a => 
+      birthdayAssignments: (prev.birthdayAssignments || []).map(a =>
         a.id === assignmentId ? { ...a, link, status: 'completed' } : a
       )
     }));
     showToast('✅ Đã nộp link bài đăng sinh nhật thành công!', 'success');
+  };
+
+  const submitMemberBirthdayData = async (assignmentId, memberId, link) => {
+    const assignment = (db.birthdayAssignments || []).find(a => String(a.id) === String(assignmentId));
+    if (!assignment) return;
+
+    const currentSubs = assignment.submissions || {};
+    const newSubs = { ...currentSubs, [memberId]: link };
+
+    const bdayMonthMembers = (db.members || []).filter(m => {
+      if (!m.dob) return false;
+      const parts = m.dob.split('/');
+      return parts.length >= 2 && parseInt(parts[1], 10) === parseInt(assignment.month, 10);
+    });
+
+    const isAllSubmitted = bdayMonthMembers.length > 0 && bdayMonthMembers.every(m => Boolean(newSubs[m.id]));
+    const newStatus = isAllSubmitted ? 'completed' : 'pending';
+
+    await updateEntityAPI('birthday-assignments', assignmentId, {
+      submissions: newSubs,
+      status: newStatus,
+      link: link || assignment.link
+    });
+
+    updateDb(prev => ({
+      ...prev,
+      birthdayAssignments: (prev.birthdayAssignments || []).map(a =>
+        a.id === assignmentId ? { ...a, submissions: newSubs, status: newStatus, link: link || a.link } : a
+      )
+    }));
+
+    showToast(isAllSubmitted ? '🎉 Đã nộp đủ dữ liệu sinh nhật cho tất cả thành viên trong tháng!' : '✅ Đã cập nhật link sinh nhật thành công!', 'success');
+  };
+
+  const submitBirthdayExcuse = async (assignmentId, reason) => {
+    await updateEntityAPI('birthday-assignments', assignmentId, {
+      excuseReason: reason,
+      excuseStatus: 'pending'
+    });
+
+    updateDb(prev => ({
+      ...prev,
+      birthdayAssignments: (prev.birthdayAssignments || []).map(a =>
+        a.id === assignmentId ? { ...a, excuseReason: reason, excuseStatus: 'pending' } : a
+      )
+    }));
+
+    showToast('📩 Đã gửi đơn giải trình lý do nộp chậm tới Trưởng Ban!', 'info');
+  };
+
+  const reviewBirthdayExcuse = async (assignmentId, status) => {
+    await updateEntityAPI('birthday-assignments', assignmentId, { excuseStatus: status });
+
+    updateDb(prev => ({
+      ...prev,
+      birthdayAssignments: (prev.birthdayAssignments || []).map(a =>
+        a.id === assignmentId ? { ...a, excuseStatus: status } : a
+      )
+    }));
+
+    showToast(status === 'approved' ? '✅ Đã duyệt miễn phạt nộp chậm sinh nhật!' : '❌ Đã từ chối đơn giải trình', status === 'approved' ? 'success' : 'warning');
+  };
+
+  // -------------------------------------------------------------
+  // SESSIONS MANAGEMENT (SUPER ADMIN)
+  // -------------------------------------------------------------
+  const [sessions, setSessions] = useState([]);
+  const [currentSessionId] = useState(() => {
+    try {
+      let savedId = sessionStorage.getItem('VMC_SESSION_ID');
+      if (!savedId) {
+        savedId = 'sess-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now();
+        sessionStorage.setItem('VMC_SESSION_ID', savedId);
+      }
+      return savedId;
+    } catch (e) {
+      return 'sess-' + Date.now();
+    }
+  });
+
+  const loadSqlSessions = async () => {
+    try {
+      const res = await fetchEntityAPI('sessions');
+      if (Array.isArray(res)) setSessions(res);
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    if (!isAuthenticated || !currentUser) return;
+
+    fetch('/api/sessions/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: currentSessionId,
+        memberId: currentUser.id,
+        username: currentUser.username || currentUser.memberCode,
+        name: currentUser.name,
+        roleTitle: currentUser.roleTitle,
+        userAgent: navigator.userAgent
+      })
+    }).catch(() => {});
+
+    const hbInterval = setInterval(async () => {
+      try {
+        const resp = await fetch('/api/sessions/heartbeat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: currentSessionId })
+        });
+        const data = await resp.json();
+        if (data && data.success && data.isActive === false) {
+          showToast('⚠️ Phiên làm việc của bạn đã bị Super Admin đóng từ xa.', 'error');
+          logout();
+        }
+      } catch (e) {}
+    }, 20000);
+
+    return () => clearInterval(hbInterval);
+  }, [isAuthenticated, currentUser?.id]);
+
+  const revokeSession = async (sId) => {
+    try {
+      await fetch(`/api/sessions/${sId}`, { method: 'DELETE' });
+      showToast('✅ Đã hủy phiên làm việc thành công', 'success');
+      loadSqlSessions();
+    } catch (e) {
+      showToast('❌ Lỗi khi hủy phiên', 'error');
+    }
+  };
+
+  const revokeAllSessions = async () => {
+    try {
+      await fetch('/api/sessions/revoke-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentSessionId })
+      });
+      showToast('✅ Đã cưỡng chế đăng xuất tất cả các phiên khác thành công', 'success');
+      loadSqlSessions();
+    } catch (e) {
+      showToast('❌ Lỗi khi đăng xuất tất cả phiên', 'error');
+    }
   };
 
   // Add BCN Announcement
@@ -1286,31 +1380,33 @@ export const ClubProvider = ({ children }) => {
       updateSelfProfile,
       updateMemberByTech,
       addMemberMilestone,
-      tasks,
+      user: currentUser,
+      members: db.members || [],
+      tasks: db.tasks || [],
       updateTaskStatus,
       addTask,
-      equipment,
+      equipment: db.equipment || [],
       addEquipment,
       borrowEquipment,
       returnEquipment,
-      drafts,
+      drafts: db.drafts || [],
       completeGrading,
       approveDraft,
       addDraft,
-      announcements,
+      announcements: db.announcements || [],
       addAnnouncement,
       deleteAnnouncement,
-      members,
+      generations: db.generations || DEFAULT_GENERATIONS,
       createMemberAccount,
       deleteMemberAccount,
       resetAccountPassword,
       toggleAccountStatus,
-      resources,
+      resources: db.resources || [],
       addResource,
       deleteResource,
-      departmentDrives,
+      departmentDrives: db.departmentDrives || [],
       updateDepartmentDrive,
-      attendanceRecords,
+      attendanceRecords: db.attendanceRecords || [],
       isHRMember,
       isHRHead,
       submitAttendanceCheckin,
@@ -1342,7 +1438,22 @@ export const ClubProvider = ({ children }) => {
       updateMemberPoints,
       birthdayAssignments: db.birthdayAssignments || [],
       assignBirthdayDuty,
-      submitBirthdayImage
+      submitBirthdayImage,
+      submitMemberBirthdayData,
+      submitBirthdayExcuse,
+      reviewBirthdayExcuse,
+      sessions,
+      currentSessionId,
+      loadSqlSessions,
+      revokeSession,
+      revokeAllSessions,
+      works: [],
+      events: [],
+      products: [],
+      cart: [],
+      addToCart: () => {},
+      registerEvent: () => {},
+      likeWork: () => {}
     }}>
       {children}
     </ClubContext.Provider>
