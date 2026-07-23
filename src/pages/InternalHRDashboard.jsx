@@ -42,9 +42,9 @@ export const InternalHRDashboard = () => {
     });
   }, [members, searchQuery]);
 
-  // Points ranking — không tính tài khoản hệ thống & Ban Cố Vấn
+  // Points ranking — đồng hạng nếu bằng điểm, không tính tài khoản hệ thống & Ban Cố Vấn
   const rankedMembers = useMemo(() => {
-    return members.filter(m => {
+    const list = members.filter(m => {
       const roleTitle = (m.roleTitle || m.role_title || '').toLowerCase();
       const deptName = (m.deptName || m.department || '').toLowerCase();
       const code = (m.memberCode || m.member_code || '').toUpperCase();
@@ -53,6 +53,18 @@ export const InternalHRDashboard = () => {
       const q = normalizeText(searchQuery);
       return !q || normalizeText(m.name).includes(q) || normalizeText(m.memberCode).includes(q);
     }).sort((a, b) => (b.points || 0) - (a.points || 0));
+
+    let currentRank = 1;
+    return list.map((m, idx) => {
+      if (idx > 0) {
+        const prevPoints = list[idx - 1].points || 0;
+        const currPoints = m.points || 0;
+        if (currPoints < prevPoints) {
+          currentRank = currentRank + 1;
+        }
+      }
+      return { ...m, displayRank: currentRank };
+    });
   }, [members, searchQuery]);
 
   // Helper to parse DOB in any format (YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY)
@@ -236,15 +248,23 @@ export const InternalHRDashboard = () => {
               <Award className="text-amber-400" /> Bảng Điểm Thi Đua (Ranking)
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {rankedMembers.map((m, idx) => (
+              {rankedMembers.map((m) => (
                 <div 
                   key={m.id} 
                   onClick={() => setSelectedMember(m)}
                   className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex items-center gap-4 cursor-pointer hover:border-amber-500/50 hover:scale-[1.01] transition-all group"
                   title="Bấm để xem chi tiết thông tin thành viên"
                 >
-                  <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-bold text-lg ${idx === 0 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' : idx === 1 ? 'bg-slate-300/20 text-slate-300 border border-slate-400/50' : idx === 2 ? 'bg-orange-600/20 text-orange-400 border border-orange-600/50' : 'bg-slate-800 text-slate-500'}`}>
-                    {idx + 1}
+                  <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-bold text-lg ${
+                    m.displayRank === 1 
+                      ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' 
+                      : m.displayRank === 2 
+                      ? 'bg-slate-300/20 text-slate-300 border border-slate-400/50' 
+                      : m.displayRank === 3 
+                      ? 'bg-orange-600/20 text-orange-400 border border-orange-600/50' 
+                      : 'bg-slate-800 text-slate-500'
+                  }`}>
+                    {m.displayRank}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-bold text-white truncate group-hover:text-amber-300 transition-colors">{m.name}</div>

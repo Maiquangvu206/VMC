@@ -26,12 +26,17 @@ app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   next();
 });
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Anti Brute-Force Rate Limiter Map for Login
+const failedLoginTracker = new Map();
 
 // Tự động mở rộng cột avatar_url trong CSDL MySQL sang LONGTEXT để lưu ảnh base64
 queryDatabase('ALTER TABLE Members MODIFY COLUMN avatar_url LONGTEXT').catch(err => {
@@ -236,6 +241,18 @@ app.post('/api/auth/login', async (req, res) => {
     return res.status(400).json({ success: false, message: 'Vui lòng nhập đầy đủ mã thành viên và mật khẩu!' });
   }
 
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+  const now = Date.now();
+  const attemptInfo = failedLoginTracker.get(ip) || { count: 0, lockUntil: 0 };
+
+  if (attemptInfo.lockUntil > now) {
+    const remainingMins = Math.ceil((attemptInfo.lockUntil - now) / 60000);
+    return res.status(429).json({
+      success: false,
+      message: `🚫 Bạn đã nhập sai mật khẩu quá 5 lần. Vui lòng thử lại sau ${remainingMins} phút để bảo vệ hệ thống!`
+    });
+  }
+
   try {
     const sql = `
       SELECT 
@@ -247,8 +264,16 @@ app.post('/api/auth/login', async (req, res) => {
     `;
     const rows = await queryDatabase(sql, [memberCode, memberCode, password]);
     if (!rows || rows.length === 0) {
+      attemptInfo.count += 1;
+      if (attemptInfo.count >= 5) {
+        attemptInfo.lockUntil = now + 15 * 60 * 1000; // Khóa 15 phút
+      }
+      failedLoginTracker.set(ip, attemptInfo);
       return res.status(401).json({ success: false, message: 'Mã Thành Viên hoặc Mật khẩu không chính xác!' });
     }
+
+    // Reset tracker on successful login
+    failedLoginTracker.delete(ip);
 
     const user = rows[0];
     if (user.status === 'Suspended') {
@@ -301,7 +326,7 @@ app.get('/api/members', async (req, res) => {
   try {
     const sql = `
       SELECT 
-        id, member_code, username, password, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, address, facebook, points, is_first_login, status, milestones
+        id, member_code, username, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, address, facebook, points, is_first_login, status, milestones
       FROM Members 
       ORDER BY id ASC
     `;
@@ -341,7 +366,6 @@ app.get('/api/members', async (req, res) => {
           id: m.id,
           memberCode: m.member_code,
           username: m.username,
-          password: m.password,
           name: m.full_name,
           role: m.role,
           roleTitle: m.role_title,

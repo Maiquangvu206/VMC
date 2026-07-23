@@ -734,4 +734,43 @@ router.post('/attendance-records', async (req, res) => {
   }
 });
 
+// ======================= GENERATIONS =======================
+router.get('/generations', async (req, res) => {
+  try {
+    const rows = await queryDatabase('SELECT * FROM Generations ORDER BY id DESC');
+    const data = rows.map(g => ({
+      id: g.id,
+      name: g.name,
+      years: g.years,
+      description: g.description || `${g.name} (${g.years || ''})`
+    }));
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/generations', async (req, res) => {
+  try {
+    const { id, name, years, description } = req.body;
+    const genId = id || ('gen-' + Date.now());
+    await queryDatabase(
+      'INSERT INTO Generations (id, name, years, description) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE name = VALUES(name), years = VALUES(years), description = VALUES(description)',
+      [genId, name, years || '', description || '']
+    );
+    res.json({ success: true, data: { id: genId, name, years, description } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.delete('/generations/:id', async (req, res) => {
+  try {
+    await queryDatabase('DELETE FROM Generations WHERE id = ?', [req.params.id]);
+    res.json({ success: true, message: 'Đã xóa Gen thành công' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 export default router;

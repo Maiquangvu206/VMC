@@ -313,11 +313,16 @@ export const InternalMembers = () => {
     setEditingMember(null);
   };
 
-  // Filter Members Logic by Search Query & Period/Term & Department
-  const filteredMembers = members.filter(m => {
-    // Ẩn tài khoản Super Admin khỏi danh sách hiển thị
-    if (m.roleTitle?.includes('Super Admin')) return false;
+  // Filter out technical Admin & Super Admin accounts from member list calculations
+  const nonAdminMembers = members.filter(m => {
+    const roleTitle = (m.roleTitle || m.role_title || '').toLowerCase();
+    const code = (m.memberCode || m.member_code || '').toUpperCase();
+    const uname = (m.username || '').toLowerCase();
+    return !roleTitle.includes('super admin') && code !== 'ADMIN' && uname !== 'admin';
+  });
 
+  // Filter Members Logic by Search Query & Period/Term & Department
+  const filteredMembers = nonAdminMembers.filter(m => {
     const memberGen = formatGen(m.termName || m.term || '');
     const memberDept = normalizeText(m.deptName || m.department || '');
 
@@ -821,13 +826,15 @@ export const InternalMembers = () => {
 
                 <div>
                   <label className="block text-slate-400 mb-1">Thế Hệ (Gen)</label>
-                  <input
-                    type="text"
-                    placeholder="vd: Gen 6, Gen 7, 2025-2026..."
-                    value={editingMember.term || ''}
+                  <select
+                    value={editingMember.term || 'Gen 6'}
                     onChange={(e) => setEditingMember({ ...editingMember, term: e.target.value, termName: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-medium focus:outline-none focus:border-amber-500"
-                  />
+                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-medium focus:outline-none focus:border-amber-500 cursor-pointer"
+                  >
+                    {generations.map(g => (
+                      <option key={g.id} value={g.name}>{g.name} ({g.years || g.description})</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
@@ -1113,13 +1120,15 @@ export const InternalMembers = () => {
 
                   <div>
                     <label className="block text-slate-300 font-semibold mb-1">7. Thế Hệ (Gen)</label>
-                    <input
-                      type="text"
+                    <select
                       value={formData.term || 'Gen 6'}
                       onChange={(e) => setFormData({ ...formData, term: e.target.value, termName: e.target.value })}
-                      placeholder="vd: Gen 6, Gen 7, 2025-2026..."
-                      className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-medium focus:outline-none focus:border-blue-500"
-                    />
+                      className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-medium focus:outline-none focus:border-blue-500 cursor-pointer"
+                    >
+                      {generations.map(g => (
+                        <option key={g.id} value={g.name}>{g.name} ({g.years || g.description})</option>
+                      ))}
+                    </select>
                   </div>
                 </div>
               </div>
