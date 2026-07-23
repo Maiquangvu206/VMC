@@ -396,10 +396,12 @@ const sendMailHelper = async (to, subject, html) => {
   }
   try {
     const transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
       auth: {
         user: process.env.SMTP_EMAIL,
-        pass: process.env.SMTP_PASSWORD
+        pass: process.env.SMTP_PASSWORD.replace(/\s+/g, '')
       }
     });
     await transporter.sendMail({
@@ -408,9 +410,13 @@ const sendMailHelper = async (to, subject, html) => {
       subject,
       html
     });
+    console.log(`📧 [SMTP] Email sent successfully to ${to} (${subject})`);
     return true;
   } catch (err) {
     console.error('❌ Failed to send email via helper:', err.message);
+    if (err.code === 'EAUTH' || err.message?.includes('Application-specific password')) {
+      console.error('💡 CHÚ Ý: Google yêu cầu Mật khẩu ứng dụng (App Password 16 ký tự). Vui lòng vào https://myaccount.google.com/apppasswords tạo mật khẩu ứng dụng cho bandoingoainhansuvmc@gmail.com');
+    }
     return false;
   }
 };
