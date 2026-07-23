@@ -246,8 +246,10 @@ export const InternalAdminSessions = () => {
                     String(m.username || '').toLowerCase() === String(s.username || '').toLowerCase()
                   );
 
-                  const displayName = memberObj?.name || s.name || 'Thành Viên VMC';
-                  const displayRole = memberObj?.roleTitle || s.role_title || 'Thành Viên VMC';
+                  let displayName = (memberObj?.name && memberObj.name !== 'Quản Trị Viên') 
+                    ? memberObj.name 
+                    : (s.name && s.name !== 'Quản Trị Viên' ? s.name : 'Vũ Mai Quang');
+                  const displayRole = memberObj?.roleTitle || s.role_title || 'Super Admin / Cố Vấn CLB';
 
                   const lastActiveDate = s.last_active ? new Date(s.last_active) : null;
                   const isRecent = lastActiveDate && ((now - lastActiveDate) / (1000 * 60)) <= 5;

@@ -485,7 +485,9 @@ router.get('/sessions', async (req, res) => {
       success: true,
       data: sessions.map(s => ({
         ...s,
-        name: (s.real_name && s.real_name !== 'Quản Trị Viên') ? s.real_name : (s.name || 'Thành Viên VMC'),
+        name: (s.real_name && s.real_name !== 'Quản Trị Viên') 
+          ? s.real_name 
+          : ((s.username === 'admin' || s.member_id === 'ADMIN' || s.name === 'Quản Trị Viên') ? 'Vũ Mai Quang' : (s.name || 'Thành Viên VMC')),
         role_title: s.real_role_title || s.role_title || 'Thành Viên VMC'
       }))
     });
@@ -499,7 +501,7 @@ router.post('/sessions/login', async (req, res) => {
     const { sessionId, memberId, username, name, roleTitle, userAgent } = req.body;
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
 
-    let realName = name || '';
+    let realName = (name && name !== 'Quản Trị Viên') ? name : '';
     let realRole = roleTitle || '';
 
     if (memberId || username) {
@@ -507,13 +509,31 @@ router.post('/sessions/login', async (req, res) => {
         'SELECT full_name, role_title FROM Members WHERE id = ? OR username = ? OR member_code = ? LIMIT 1',
         [String(memberId || ''), String(username || ''), String(username || '')]
       );
-      if (mems && mems.length > 0 && mems[0].full_name) {
+      if (mems && mems.length > 0 && mems[0].full_name && mems[0].full_name !== 'Quản Trị Viên') {
         realName = mems[0].full_name;
         realRole = mems[0].role_title || realRole;
       }
     }
 
-    const sId = sessionId || generateId();
+    if (!realName || realName === 'Quản Trị Viên') {
+      if (username === 'admin' || memberId === 'ADMIN') {
+        realName = 'Vũ Mai Quang';
+      } else {
+        realName = name || 'Thành Viên VMC';
+      }
+    }
+
+    let sId = sessionId;
+    if (sId) {
+      const existing = await queryDatabase('SELECT is_active FROM User_Sessions WHERE id = ?', [sId]);
+      if (existing && existing.length > 0 && Number(existing[0].is_active) === 0) {
+        sId = 'sess-' + Date.now() + '-' + Math.random().toString(36).substring(2, 8);
+      }
+    }
+    if (!sId) {
+      sId = 'sess-' + Date.now() + '-' + Math.random().toString(36).substring(2, 8);
+    }
+
     const isMobile = /mobile|android|iphone|ipad|ipod/i.test(userAgent || '');
     const deviceType = isMobile ? 'Mobile Phone' : 'Desktop / PC';
 
