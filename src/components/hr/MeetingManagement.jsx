@@ -103,10 +103,10 @@ export const MeetingManagement = () => {
         {meetings.length === 0 && <p className="text-sm text-slate-500 italic">Chưa có lịch họp nào.</p>}
         
         {meetings.map(m => {
-          const attendanceTaker = members.find(mem => mem.id === m.attendanceTakerId);
-          const minuteTaker = members.find(mem => mem.id === m.minuteTakerId);
-          const isAttendanceTaker = currentUser?.id === m.attendanceTakerId;
-          const isMinuteTaker = currentUser?.id === m.minuteTakerId;
+          const attendanceTaker = members.find(mem => String(mem.id) === String(m.attendanceTakerId));
+          const minuteTaker = members.find(mem => String(mem.id) === String(m.minuteTakerId));
+          const isAttendanceTaker = String(currentUser?.id) === String(m.attendanceTakerId);
+          const isMinuteTaker = String(currentUser?.id) === String(m.minuteTakerId);
 
           return (
             <div key={m.id} className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-4 relative overflow-hidden">

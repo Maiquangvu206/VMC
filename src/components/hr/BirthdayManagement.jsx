@@ -89,6 +89,14 @@ export const BirthdayManagement = () => {
       } finally {
         setIsUploading(false);
       }
+    } else if (submissionMethod === 'no_photo') {
+      if (!memberLinkInput.trim()) {
+        if (showToast) showToast('Vui lòng nhập lý do không có ảnh!', 'warning');
+        return;
+      }
+      submitMemberBirthdayData(activeAssignmentId, submittingMemberId, `Lý do: ${memberLinkInput.trim()}`);
+      setSubmittingMemberId(null);
+      setMemberLinkInput('');
     } else {
       if (!memberLinkInput.trim()) return;
       submitMemberBirthdayData(activeAssignmentId, submittingMemberId, memberLinkInput.trim());
@@ -305,14 +313,20 @@ export const BirthdayManagement = () => {
 
                           <div className="shrink-0 flex items-center gap-2">
                             {submittedLink ? (
-                              <a
-                                href={submittedLink}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold flex items-center gap-1 transition-all"
-                              >
-                                <ImageIcon className="w-3 h-3" /> Xem Bài
-                              </a>
+                              submittedLink.startsWith('http') ? (
+                                <a
+                                  href={submittedLink}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 border border-emerald-500/30 text-[11px] font-bold flex items-center gap-1 transition-all"
+                                >
+                                  <ImageIcon className="w-3 h-3" /> Xem Bài
+                                </a>
+                              ) : (
+                                <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20 text-[10px] font-medium max-w-[120px] truncate" title={submittedLink}>
+                                  📝 {submittedLink.replace(/^Lý do:\s*/i, '')}
+                                </span>
+                              )
                             ) : (
                               (isAssignee || isHRHead || isAdmin) && (
                                 <button
@@ -340,7 +354,6 @@ export const BirthdayManagement = () => {
         })}
       </div>
 
-      {/* Modal Nộp Link Sinh Nhật cho 1 Thành Viên Cụ Thể */}
       {/* Modal Nộp Link/Ảnh Sinh Nhật cho 1 Thành Viên Cụ Thể */}
       {submittingMemberId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
@@ -364,7 +377,7 @@ export const BirthdayManagement = () => {
                     submissionMethod === 'upload' ? 'bg-pink-600 text-white' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  Tải Ảnh Lên Drive Ban
+                  Tải Ảnh Lên
                 </button>
                 <button
                   type="button"
@@ -373,7 +386,16 @@ export const BirthdayManagement = () => {
                     submissionMethod === 'link' ? 'bg-pink-600 text-white' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  Dán Link Ảnh / Bài Đăng
+                  Dán Link
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSubmissionMethod('no_photo')}
+                  className={`flex-1 py-1.5 rounded-lg text-center font-bold transition-all ${
+                    submissionMethod === 'no_photo' ? 'bg-pink-600 text-white' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Không Có Ảnh
                 </button>
               </div>
 
@@ -388,6 +410,18 @@ export const BirthdayManagement = () => {
                     className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white text-xs file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-pink-600/20 file:text-pink-400 hover:file:bg-pink-600/30"
                   />
                   <p className="text-[10px] text-slate-500 mt-1">Hệ thống sẽ tự động tải lên Google Drive của Ban Đối Ngoại - Nhân Sự.</p>
+                </div>
+              ) : submissionMethod === 'no_photo' ? (
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1.5">Lý do không nộp ảnh (ví dụ: Thành viên không cung cấp ảnh...)</label>
+                  <textarea
+                    required
+                    placeholder="Nhập lý do chi tiết tại đây..."
+                    value={memberLinkInput}
+                    onChange={(e) => setMemberLinkInput(e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2.5 bg-slate-950 border border-white/10 rounded-xl text-white text-xs focus:outline-none focus:border-pink-500"
+                  />
                 </div>
               ) : (
                 <div>
