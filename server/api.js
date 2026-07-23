@@ -394,6 +394,15 @@ const sendMailHelper = async (to, subject, html) => {
     console.warn('⚠️ SMTP credentials not set in environment. Cannot send email.');
     return false;
   }
+
+  const autoReplyNotice = `
+    <div style="margin-top: 25px; padding-top: 15px; border-top: 1px dashed #cbd5e1; text-align: center; font-size: 11px; color: #94a3b8; font-style: italic;">
+      🤖 (Đây là email tự động, vui lòng không phản hồi trực tiếp email này).
+    </div>
+  `;
+
+  const finalHtml = html ? (html.includes('Đây là email tự động') ? html : (html + autoReplyNotice)) : html;
+
   try {
     const transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
@@ -408,7 +417,7 @@ const sendMailHelper = async (to, subject, html) => {
       from: `"CLB TRUYỀN THÔNG VMC (THPT VĨNH BẢO)" <${process.env.SMTP_EMAIL}>`,
       to,
       subject,
-      html
+      html: finalHtml
     });
     console.log(`📧 [SMTP] Email sent successfully to ${to} (${subject})`);
     return true;

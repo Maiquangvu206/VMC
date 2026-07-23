@@ -305,6 +305,9 @@ app.post('/api/members/reset-password', async (req, res) => {
 
               <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
               <p style="font-size: 12px; color: #64748b; margin: 0; text-align: center;">Trân trọng,<br/><strong>Bộ Phận Kỹ Thuật - CLB Truyền Thông THPT Vĩnh Bảo (VMC)</strong></p>
+              <div style="margin-top: 20px; padding-top: 12px; border-top: 1px dashed #cbd5e1; text-align: center; font-size: 11px; color: #94a3b8; font-style: italic;">
+                🤖 (Đây là email tự động, vui lòng không phản hồi trực tiếp email này).
+              </div>
             </div>
           `
         });
@@ -801,6 +804,9 @@ const checkAndSendDailyBirthdayEmails = async () => {
 
                 <div style="text-align: center; margin-top: 25px; font-size: 13px; color: #64748b;">
                   <p style="margin: 0;">Trân trọng & Thân yêu,<br/><strong style="color: #db2777;">BAN CHỦ NHIỆM & BAN ĐỐI NGOẠI - NHÂN SỰ VMC</strong></p>
+                </div>
+                <div style="margin-top: 20px; padding-top: 12px; border-top: 1px dashed #cbd5e1; text-align: center; font-size: 11px; color: #94a3b8; font-style: italic;">
+                  🤖 (Đây là email tự động, vui lòng không phản hồi trực tiếp email này).
                 </div>
               </div>
             `
