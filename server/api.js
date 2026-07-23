@@ -385,18 +385,24 @@ const sendMailHelper = async (to, subject, html) => {
 // ======================= FINANCES =======================
 router.get('/finances', async (req, res) => {
   try {
-    const rows = await queryDatabase('SELECT * FROM Finances ORDER BY record_date DESC, created_at DESC');
-    const data = rows.map(r => ({
-      id: r.id,
-      type: r.type,
-      amount: r.amount,
-      description: r.description,
-      date: r.record_date ? new Date(r.record_date).toISOString().slice(0, 10) : '',
-      record_date: r.record_date ? new Date(r.record_date).toISOString().slice(0, 10) : '',
-      recorded_by: r.recorded_by,
-      loggedBy: r.recorded_by, // map for frontend
-      status: r.status || 'approved'
-    }));
+    const rows = await queryDatabase('SELECT * FROM Finances ORDER BY created_at DESC');
+    const data = rows.map(r => {
+      const d = r.record_date || r.date ? String(r.record_date || r.date).slice(0, 10) : '';
+      const by = r.recorded_by || r.logged_by || 'Thành viên VMC';
+      return {
+        id: r.id,
+        type: r.type,
+        amount: Number(r.amount) || 0,
+        description: r.description || '',
+        date: d,
+        record_date: d,
+        recorded_by: by,
+        loggedBy: by,
+        logged_by: by,
+        status: r.status || 'approved',
+        createdAt: r.created_at
+      };
+    });
     res.json({ success: true, data });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -405,15 +411,15 @@ router.get('/finances', async (req, res) => {
 
 router.post('/finances', async (req, res) => {
   try {
-    const { id, type, amount, description, record_date, date, recorded_by, logged_by, status } = req.body;
-    const finId = id || generateId();
-    const recBy = recorded_by || logged_by || 'Thành viên VMC';
+    const { id, type, amount, description, record_date, date, recorded_by, logged_by, loggedBy, status } = req.body;
+    const finId = id || ('fin-' + Date.now() + '-' + Math.floor(Math.random() * 1000));
+    const recBy = recorded_by || logged_by || loggedBy || 'Thành viên VMC';
     const recDate = record_date || date || new Date().toISOString().slice(0, 10);
     const stat = status || 'approved';
 
     await queryDatabase(
-      'INSERT INTO Finances (id, type, amount, description, record_date, recorded_by, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [finId, type, amount, description, recDate, recBy, stat]
+      'INSERT INTO Finances (id, type, amount, description, record_date, recorded_by, date, logged_by, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [finId, type || 'income', parseFloat(amount) || 0, description || '', recDate, recBy, recDate, recBy, stat]
     );
 
     // Gửi mail thông báo duyệt thu chi nếu trạng thái là pending
@@ -847,69 +853,7 @@ router.post('/birthday/upload', upload.single('file'), async (req, res) => {
 
 
 // ======================= FINANCES =======================
-router.get('/finances', async (req, res) => {
-  try {
-    const rows = await queryDatabase('SELECT * FROM Finances ORDER BY created_at DESC');
-    const data = rows.map(f => ({
-      id: f.id,
-      type: f.type,
-      amount: f.amount,
-      description: f.description,
-      date: f.date,
-      loggedBy: f.logged_by,
-      status: f.status || 'approved',
-      createdAt: f.created_at
-    }));
-    res.json({ success: true, data });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-router.post('/finances', async (req, res) => {
-  try {
-    const { id, type, amount, description, date, loggedBy, logged_by, status } = req.body;
-    const finId = id || generateId();
-    const lBy = loggedBy || logged_by || '';
-
-    await queryDatabase(
-      'INSERT INTO Finances (id, type, amount, description, date, logged_by, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [finId, type || 'income', parseInt(amount, 10) || 0, description || '', date || new Date().toISOString().slice(0, 10), lBy, status || 'approved']
-    );
-    res.json({ success: true, data: { id: finId, type, amount, description, date, loggedBy: lBy, status } });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-router.put('/finances/:id', async (req, res) => {
-  try {
-    const { status, type, amount, description, date } = req.body;
-    await queryDatabase(
-      'UPDATE Finances SET status = COALESCE(?, status), type = COALESCE(?, type), amount = COALESCE(?, amount), description = COALESCE(?, description), date = COALESCE(?, date) WHERE id = ?',
-      [
-        status !== undefined ? status : null,
-        type !== undefined ? type : null,
-        amount !== undefined ? parseInt(amount, 10) : null,
-        description !== undefined ? description : null,
-        date !== undefined ? date : null,
-        req.params.id
-      ]
-    );
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-router.delete('/finances/:id', async (req, res) => {
-  try {
-    await queryDatabase('DELETE FROM Finances WHERE id = ?', [req.params.id]);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
+// (Duplicate finances routes removed - handled above)
 
 // ======================= USER SESSIONS (SUPER ADMIN) =======================
 router.get('/sessions', async (req, res) => {
