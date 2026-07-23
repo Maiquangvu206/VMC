@@ -184,9 +184,9 @@ export const InternalDashboard = () => {
 
       </div>
 
-      {/* 4 Ban Chuyên Môn trong CLB */}
+      {/* 5 Department Overview */}
       <div className="space-y-4">
-        <h2 className="font-heading text-xl font-bold text-white flex items-center gap-2">
+        <h2 className="font-heading font-bold text-lg text-white flex items-center gap-2">
           <Users className="w-5 h-5 text-blue-400" />
           <span>5 Ban Chuyên Môn Trong CLB VMC</span>
         </h2>
@@ -214,9 +214,7 @@ export const InternalDashboard = () => {
                     <h3 className="font-heading font-bold text-base text-white group-hover:text-blue-300 transition-colors">
                       {dept.name}
                     </h3>
-                    <p className="text-xs text-purple-400 font-semibold mt-0.5">
-                      Trưởng Ban: {dept.lead}
-                    </p>
+                    {renderDepartmentLeadership(dept)}
                   </div>
 
                   <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">
