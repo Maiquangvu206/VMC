@@ -327,16 +327,27 @@ router.get('/meetings', async (req, res) => {
 
 router.post('/meetings', async (req, res) => {
   try {
-    const { id, title, date, time, attendance_taker_id, minute_taker_id, status, minutes_link } = req.body;
+    const {
+      id,
+      title,
+      date,
+      time,
+      attendance_taker_id,
+      minute_taker_id,
+      attendanceTakerId,
+      minuteTakerId,
+      status,
+      minutes_link
+    } = req.body;
     const mtgId = id || generateId();
-    const attTaker = toId(attendance_taker_id);
-    const minTaker = toId(minute_taker_id);
+    const attTaker = toId(attendance_taker_id || attendanceTakerId);
+    const minTaker = toId(minute_taker_id || minuteTakerId);
 
     await queryDatabase(
       'INSERT INTO Meetings (id, title, meeting_date, meeting_time, attendance_taker_id, minute_taker_id, status, minutes_link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [mtgId, title, date || new Date().toISOString().slice(0, 10), time || '08:00', attTaker, minTaker, status || 'pending', minutes_link || null]
     );
-    res.json({ success: true, data: { id: mtgId, title, date, time, status } });
+    res.json({ success: true, data: { id: mtgId, title, date, time, status, attendanceTakerId: attTaker, minuteTakerId: minTaker } });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -799,6 +810,38 @@ router.post('/attendance-records', async (req, res) => {
       [recId, sName, rDate, pMembersStr, status || 'approved']
     );
     res.json({ success: true, data: { id: recId, sessionName: sName, date: rDate, presentMemberIds: presentMemberIds || [] } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put('/attendance-records/:id', async (req, res) => {
+  try {
+    const { status, presentMemberIds, present_members } = req.body;
+    const pMembersStr = presentMemberIds !== undefined ? JSON.stringify(presentMemberIds) : (present_members !== undefined ? present_members : undefined);
+
+    const setClauses = [];
+    const params = [];
+
+    if (status !== undefined) {
+      setClauses.push('status = ?');
+      params.push(status);
+    }
+    if (pMembersStr !== undefined) {
+      setClauses.push('present_members = ?');
+      params.push(pMembersStr);
+    }
+
+    if (setClauses.length === 0) {
+      return res.json({ success: true });
+    }
+
+    await queryDatabase(
+      `UPDATE Attendance_Records SET ${setClauses.join(', ')} WHERE id = ?`,
+      [...params, req.params.id]
+    );
+
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

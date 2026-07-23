@@ -216,10 +216,13 @@ export const ClubProvider = ({ children }) => {
           });
 
           setDb(prev => {
+            const normalizedTasks = Array.isArray(serverTasks)
+              ? serverTasks.map(st => normalizeServerTask(st, (prev.tasks || []).find(t => t.id === st.id)))
+              : prev.tasks;
             const updated = {
               ...prev,
               members: mergedMembers.length > 0 ? mergedMembers : prev.members,
-              tasks: Array.isArray(serverTasks) ? serverTasks : prev.tasks,
+              tasks: normalizedTasks,
               drafts: Array.isArray(serverDrafts) ? serverDrafts : prev.drafts,
               equipment: Array.isArray(serverEquipment) ? serverEquipment : prev.equipment,
               announcements: Array.isArray(serverAnnouncements) ? serverAnnouncements : prev.announcements,
@@ -281,6 +284,87 @@ export const ClubProvider = ({ children }) => {
     });
   };
 
+  const getFirstLine = (text) => {
+    if (typeof text !== 'string') return text;
+    return text.split(/\r?\n/)[0] || text;
+  };
+
+  const findMemberById = (memberId) => {
+    if (!memberId) return null;
+    return (db.members || []).find(m =>
+      String(m.id) === String(memberId) ||
+      String(m.memberCode) === String(memberId) ||
+      String(m.username) === String(memberId)
+    );
+  };
+
+  const getMemberNameById = (memberId) => {
+    const member = findMemberById(memberId);
+    return member?.name || member?.full_name || member?.memberCode || '';
+  };
+
+  const getHRHeadMember = () => {
+    return (db.members || []).find(m => {
+      const roleTitle = String(m.roleTitle || m.role_title || '').toLowerCase();
+      const deptName = String(m.deptName || m.department || '').toLowerCase();
+      return roleTitle.includes('trưởng ban') && (
+        deptName.includes('đối ngoại') ||
+        deptName.includes('nhân sự') ||
+        deptName.includes('đn-ns') ||
+        deptName.includes('dn-ns')
+      );
+    }) || (db.members || []).find(m => m.role === 'admin' || m.memberCode === 'ADMIN');
+  };
+
+  const normalizeServerTask = (task, localTask = {}) => {
+    return {
+      ...task,
+      department: task.department || localTask.department || 'hr_external',
+      desc: localTask.desc ?? task.description ?? '',
+      assignee: (localTask.assignee ?? getMemberNameById(task.assigneeId)) || task.assignee || 'Chưa phân công',
+      pointsReward: task.pointsReward ?? task.points_reward ?? localTask.pointsReward ?? 10,
+      status: task.status || 'todo',
+      deadline: task.deadline || localTask.deadline || ''
+    };
+  };
+
+  const createTaskRecord = async (taskData) => {
+    const taskId = taskData.id || 'task-' + Date.now();
+    const assigneeName = taskData.assignee || getMemberNameById(taskData.assigneeId) || 'Chưa phân công';
+    const deadline = taskData.deadline || taskData.deadlineDate || new Date().toISOString().slice(0, 10);
+    const taskObj = {
+      id: taskId,
+      title: taskData.title,
+      description: taskData.description || taskData.desc || '',
+      desc: taskData.desc || taskData.description || '',
+      department: taskData.department || 'hr_external',
+      assignee: assigneeName,
+      assigneeId: taskData.assigneeId,
+      deadline,
+      status: taskData.status || 'todo',
+      pointsReward: taskData.pointsReward ?? taskData.points ?? 10,
+      createdAt: taskData.createdAt || new Date().toISOString().slice(0, 10)
+    };
+
+    updateDb(prev => ({
+      ...prev,
+      tasks: [taskObj, ...((prev.tasks || []).filter(t => t.id !== taskId))]
+    }));
+
+    await createEntityAPI('tasks', {
+      id: taskObj.id,
+      title: taskObj.title,
+      description: taskObj.description,
+      assigneeId: taskObj.assigneeId,
+      created_by: taskData.createdById || currentUser?.id,
+      deadline: taskObj.deadline,
+      status: taskObj.status,
+      points_reward: taskObj.pointsReward
+    }).catch(() => {});
+
+    return taskObj;
+  };
+
   const toggleTheme = () => {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
@@ -290,32 +374,42 @@ export const ClubProvider = ({ children }) => {
   };
 
   // Role Checks for Management Features (Admin & Ban Đối Ngoại - Nhân Sự ONLY)
+  const currentUserRoleTitle = String(currentUser?.roleTitle || '').toLowerCase();
+  const currentUserDeptName = String(currentUser?.deptName || currentUser?.department || '').toLowerCase();
+
   const isHRMember = Boolean(
     currentUser?.role === 'admin' ||
     currentUser?.memberCode === 'ADMIN' ||
-    currentUser?.roleTitle?.includes('Super Admin') ||
-    currentUser?.deptName?.includes('Đối Ngoại') ||
-    currentUser?.deptName?.includes('Nhân Sự')
+    currentUserRoleTitle.includes('super admin') ||
+    currentUserDeptName.includes('đối ngoại') ||
+    currentUserDeptName.includes('nhân sự') ||
+    currentUserDeptName.includes('đn-ns') ||
+    currentUserDeptName.includes('dn-ns')
   );
 
   const isHRHead = Boolean(
     currentUser?.role === 'admin' ||
     currentUser?.memberCode === 'ADMIN' ||
-    currentUser?.roleTitle?.includes('Super Admin') ||
-    (currentUser?.roleTitle?.includes('Trưởng Ban') && (currentUser?.deptName?.includes('Đối Ngoại') || currentUser?.deptName?.includes('Nhân Sự')))
+    currentUserRoleTitle.includes('super admin') ||
+    (currentUserRoleTitle.includes('trưởng ban') && (
+      currentUserDeptName.includes('đối ngoại') ||
+      currentUserDeptName.includes('nhân sự') ||
+      currentUserDeptName.includes('đn-ns') ||
+      currentUserDeptName.includes('dn-ns')
+    ))
   );
 
   const isAdmin = Boolean(
     currentUser?.role === 'admin' ||
     currentUser?.memberCode === 'ADMIN' ||
-    currentUser?.roleTitle?.includes('Super Admin') ||
-    currentUser?.roleTitle?.includes('Chủ Nhiệm') ||
+    currentUserRoleTitle.includes('super admin') ||
+    currentUserRoleTitle.includes('chủ nhiệm') ||
     isHRHead
   );
 
   const isSuperAdmin = Boolean(
     currentUser?.memberCode === 'ADMIN' ||
-    currentUser?.roleTitle?.includes('Super Admin')
+    currentUserRoleTitle.includes('super admin')
   );
 
   // Submit Attendance Checkin (Performed by External Relations - HR Member)
@@ -326,8 +420,7 @@ export const ClubProvider = ({ children }) => {
       date: new Date().toLocaleDateString('vi-VN'),
       takenBy: `${currentUser.name} (${currentUser.roleTitle})`,
       presentMemberIds: presentMemberIds,
-      status: 'approved',
-      approvedBy: currentUser.name
+      status: 'pending_approval'
     };
 
     await createEntityAPI('attendance-records', recordObj);
@@ -337,16 +430,32 @@ export const ClubProvider = ({ children }) => {
       attendanceRecords: [recordObj, ...(prev.attendanceRecords || [])]
     }));
 
-    triggerConfetti();
-    showToast('✅ Đã lưu danh sách điểm danh sinh hoạt vào CSDL MySQL thành công!', 'success');
+    const hrHead = getHRHeadMember();
+    await createTaskRecord({
+      id: `task-approve-${recordObj.id}`,
+      title: `Duyệt điểm danh ${recordObj.sessionName}`,
+      description: `Có một danh sách điểm danh đang chờ Trưởng Ban Đối Ngoại - Nhân Sự duyệt. Vui lòng kiểm tra và xác nhận danh sách để cộng điểm.`,
+      desc: `Điểm danh buổi ${recordObj.sessionName} đang chờ duyệt.`,
+      department: 'hr_external',
+      assigneeId: hrHead?.id,
+      assignee: hrHead?.name || 'Trưởng Ban Đối Ngoại - Nhân Sự',
+      deadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+      createdById: currentUser?.id,
+      pointsReward: 0,
+      status: 'todo'
+    });
+
+    showToast('✅ Đã gửi yêu cầu điểm danh tới Trưởng Ban Đối Ngoại - Nhân Sự. Vui lòng chờ duyệt để cộng 50 PTS.', 'success');
   };
 
   // Approve Attendance Checkin (Performed by Head of External Relations - HR)
-  const approveAttendanceCheckin = (recordId) => {
+  const approveAttendanceCheckin = async (recordId) => {
     const record = attendanceRecords.find(r => r.id === recordId);
     if (!record) return;
 
     const presentIds = record.presentMemberIds || [];
+
+    await updateEntityAPI('attendance-records', recordId, { status: 'approved' });
 
     updateDb(prev => ({
       ...prev,
@@ -384,7 +493,8 @@ export const ClubProvider = ({ children }) => {
       const user = apiRes.user;
 
       if (user.status === 'Suspended') {
-        showToast('Tài khoản này đã bị tạm khóa bởi Ban Chủ Nhiệm!', 'error');
+        const errorText = getFirstLine('Tài khoản này đã bị tạm khóa bởi Ban Chủ Nhiệm!');
+        showToast(errorText, 'error');
         return false;
       }
 
@@ -400,20 +510,22 @@ export const ClubProvider = ({ children }) => {
 
     // If API returns a specific suspended message, alert it and stop
     if (apiRes && !apiRes.success && apiRes.message?.includes('tạm khóa')) {
-      showToast(apiRes.message, 'error');
+      const errorText = getFirstLine(apiRes.message);
+      showToast(errorText, 'error');
       return false;
     }
 
     // Nếu API thất bại (server offline / lỗi kết nối) → thông báo rõ ràng
     if (!apiRes || !apiRes.success) {
-      const errMsg = apiRes?.message || 'Server API offline';
-      // Nếu là lỗi kết nối mạng, không phải sai mật khẩu
-      if (errMsg === 'Server API offline' || errMsg.includes('offline') || errMsg.includes('fetch')) {
+      const rawErrMsg = apiRes?.message || 'Server API offline';
+      const errMsg = getFirstLine(rawErrMsg);
+      if (errMsg === 'Server API offline' || errMsg.toLowerCase().includes('offline') || errMsg.toLowerCase().includes('fetch')) {
         showToast('❌ Không thể kết nối đến máy chủ! Vui lòng kiểm tra kết nối mạng hoặc liên hệ Bộ Phận Kỹ Thuật.', 'error');
       }
       return false;
     }
 
+    showToast('Mã Thành Viên hoặc Mật khẩu không chính xác!', 'error');
     return false;
   };
 
@@ -882,17 +994,10 @@ export const ClubProvider = ({ children }) => {
 
   // Add New Task
   const addTask = (newTask) => {
-    const taskObj = {
-      id: "task-" + Math.floor(100 + Math.random() * 900),
+    createTaskRecord({
       ...newTask,
-      status: "todo"
-    };
-
-    updateDb(prev => ({
-      ...prev,
-      tasks: [taskObj, ...prev.tasks]
-    }));
-    createEntityAPI('tasks', taskObj).catch(e => console.log(e));
+      status: 'todo'
+    }).catch(() => {});
     triggerConfetti();
   };
 
@@ -1072,6 +1177,10 @@ export const ClubProvider = ({ children }) => {
       date: meeting.date,
       time: meeting.time,
       status: 'pending',
+      attendance_taker_id: meeting.attendanceTakerId || meeting.attendance_taker_id || null,
+      minute_taker_id: meeting.minuteTakerId || meeting.minute_taker_id || null,
+      attendanceTakerId: meeting.attendanceTakerId || meeting.attendance_taker_id || null,
+      minuteTakerId: meeting.minuteTakerId || meeting.minute_taker_id || null,
       attendanceData: [],
       minutesLink: null
     };
@@ -1232,22 +1341,41 @@ export const ClubProvider = ({ children }) => {
     };
 
     await createEntityAPI('birthday-assignments', bdayObj);
-
+ 
     updateDb(prev => {
       const assignments = prev.birthdayAssignments || [];
       return { ...prev, birthdayAssignments: [...assignments, bdayObj] };
     });
+ 
+    const assignedMember = findMemberById(memberId);
+    await createTaskRecord({
+      id: `task-bday-${bdayObj.id}`,
+      title: `Thực hiện trực sinh nhật ${month}/${year}`,
+      description: `Thành viên ${assignedMember?.name || assignedMember?.memberCode || 'Chưa có'} được giao trực sinh nhật cho tháng ${month}/${year}.`, 
+      desc: `Trực sinh nhật tháng ${month}/${year} đang chờ nộp link bài đăng.`,
+      department: 'hr_external',
+      assigneeId: memberId,
+      assignee: assignedMember?.name || 'Thành viên còn thiếu',
+      deadline: new Date(new Date().getFullYear(), parseInt(month, 10) - 1, 1).toISOString().slice(0, 10),
+      createdById: currentUser?.id,
+      pointsReward: 20,
+      status: 'todo'
+    });
+ 
     showToast(`✅ Đã phân công nhiệm vụ trực sinh nhật tháng ${month}/${year}`, 'success');
     return true;
   };
-
+ 
   const submitBirthdayImage = async (assignmentId, link) => {
     await updateEntityAPI('birthday-assignments', assignmentId, { link, status: 'completed' });
-
+ 
     updateDb(prev => ({
       ...prev,
       birthdayAssignments: (prev.birthdayAssignments || []).map(a =>
         a.id === assignmentId ? { ...a, link, status: 'completed' } : a
+      ),
+      tasks: (prev.tasks || []).map(task =>
+        task.id === `task-bday-${assignmentId}` ? { ...task, status: 'done' } : task
       )
     }));
     showToast('✅ Đã nộp link bài đăng sinh nhật thành công!', 'success');
@@ -1281,7 +1409,16 @@ export const ClubProvider = ({ children }) => {
         a.id === assignmentId ? { ...a, submissions: newSubs, status: newStatus, link: link || a.link } : a
       )
     }));
-
+ 
+    if (isAllSubmitted) {
+      updateDb(prev => ({
+        ...prev,
+        tasks: (prev.tasks || []).map(task =>
+          task.id === `task-bday-${assignmentId}` ? { ...task, status: 'done' } : task
+        )
+      }));
+    }
+ 
     showToast(isAllSubmitted ? '🎉 Đã nộp đủ dữ liệu sinh nhật cho tất cả thành viên trong tháng!' : '✅ Đã cập nhật link sinh nhật thành công!', 'success');
   };
 
@@ -1318,7 +1455,7 @@ export const ClubProvider = ({ children }) => {
   // SESSIONS MANAGEMENT (SUPER ADMIN)
   // -------------------------------------------------------------
   const [sessions, setSessions] = useState([]);
-  const [currentSessionId] = useState(() => {
+  const [currentSessionId, setCurrentSessionId] = useState(() => {
     try {
       let savedId = sessionStorage.getItem('VMC_SESSION_ID');
       if (!savedId) {
@@ -1341,18 +1478,31 @@ export const ClubProvider = ({ children }) => {
   useEffect(() => {
     if (!isAuthenticated || !currentUser) return;
 
-    fetch('/api/sessions/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        sessionId: currentSessionId,
-        memberId: currentUser.id,
-        username: currentUser.username || currentUser.memberCode,
-        name: currentUser.name,
-        roleTitle: currentUser.roleTitle,
-        userAgent: navigator.userAgent
-      })
-    }).catch(() => {});
+    const registerSession = async () => {
+      try {
+        const resp = await fetch('/api/sessions/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId: currentSessionId,
+            memberId: currentUser.id,
+            username: currentUser.username || currentUser.memberCode,
+            name: currentUser.name,
+            roleTitle: currentUser.roleTitle,
+            userAgent: navigator.userAgent
+          })
+        });
+        const data = await resp.json();
+        if (data && data.success && data.sessionId && data.sessionId !== currentSessionId) {
+          setCurrentSessionId(data.sessionId);
+          try {
+            sessionStorage.setItem('VMC_SESSION_ID', data.sessionId);
+          } catch (e) {}
+        }
+      } catch (e) {}
+    };
+
+    registerSession();
 
     const hbInterval = setInterval(async () => {
       try {
@@ -1370,7 +1520,7 @@ export const ClubProvider = ({ children }) => {
     }, 3000);
 
     return () => clearInterval(hbInterval);
-  }, [isAuthenticated, currentUser?.id]);
+  }, [isAuthenticated, currentUser?.id, currentSessionId]);
 
   const revokeSession = async (sId) => {
     try {

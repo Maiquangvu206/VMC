@@ -34,13 +34,17 @@ export const InternalHRDashboard = () => {
     currentUser?.roleTitle?.toLowerCase().includes('cố vấn')
   );
 
+  const currentUserDeptName = String(currentUser?.deptName || currentUser?.department || '').toLowerCase();
+  const currentUserRoleTitle = String(currentUser?.roleTitle || '').toLowerCase();
+
   const isAllowedBirthdayDuty = !isAdvisor && Boolean(
     isHRMember ||
-    currentUser?.deptName?.includes('Đối Ngoại') ||
-    currentUser?.deptName?.includes('Nhân Sự') ||
-    currentUser?.deptName?.includes('ĐN-NS') ||
-    currentUser?.deptName === 'Ban Chủ Nhiệm' ||
-    currentUser?.department === 'bcn' ||
+    currentUserDeptName.includes('đối ngoại') ||
+    currentUserDeptName.includes('nhân sự') ||
+    currentUserDeptName.includes('đn-ns') ||
+    currentUserDeptName.includes('dn-ns') ||
+    currentUserDeptName === 'ban chủ nhiệm' ||
+    currentUserDeptName === 'bcn' ||
     currentUser?.role === 'admin' ||
     currentUser?.memberCode === 'ADMIN'
   );
