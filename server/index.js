@@ -618,10 +618,28 @@ app.put('/api/members/:id', async (req, res) => {
 app.delete('/api/members/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const sql = `DELETE FROM Members WHERE (id = ? OR UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?))`;
-    await queryDatabase(sql, [id, id, id]);
-    console.log(`✅ Đã xóa vĩnh viễn thành viên khỏi CSDL MySQL: [${id}]`);
-    res.json({ success: true, message: 'Đã xóa thành viên khỏi CSDL SQL!' });
+    const members = await queryDatabase(
+      'SELECT id, member_code, username FROM Members WHERE (id = ? OR UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?))',
+      [id, id, id]
+    );
+
+    if (!members || members.length === 0) {
+      return res.status(404).json({ success: false, message: 'Không tìm thấy thành viên trong CSDL!' });
+    }
+
+    const m = members[0];
+    const mId = String(m.id);
+    const mCode = String(m.member_code || '');
+
+    // Xóa dữ liệu con liên quan ở các bảng (Milestones, Birthday_Assignments, etc.) để tránh lỗi Foreign Key
+    await queryDatabase('DELETE FROM Member_Milestones WHERE member_id = ? OR member_id = ?', [mId, mCode]).catch(() => {});
+    await queryDatabase('DELETE FROM Birthday_Assignments WHERE member_id = ? OR member_id = ?', [mId, mCode]).catch(() => {});
+
+    // Xóa chính thành viên khỏi bảng Members
+    await queryDatabase('DELETE FROM Members WHERE id = ?', [m.id]);
+
+    console.log(`✅ Đã xóa vĩnh viễn thành viên khỏi CSDL MySQL: [${mCode || mId}]`);
+    res.json({ success: true, message: 'Đã xóa vĩnh viễn thành viên khỏi CSDL MySQL!' });
   } catch (error) {
     console.error('❌ Lỗi API /api/members/:id DELETE:', error.message);
     res.status(500).json({ success: false, message: 'Lỗi xóa thành viên khỏi CSDL!', error: error.message });

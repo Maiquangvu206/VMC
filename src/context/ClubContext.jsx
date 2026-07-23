@@ -944,29 +944,44 @@ export const ClubProvider = ({ children }) => {
   // Delete Member Account (SUPER ADMIN & TRƯỞNG BAN ĐỐI NGOẠI - NHÂN SỰ ONLY)
   const deleteMemberAccount = async (id) => {
     if (!canManageAccounts) {
-      showToast('⛔ Quyền bị từ chối! Chỉ có Super Admin (Chủ Nhiệm CLB) và Trưởng Ban Đối Ngoại - Nhân Sự mới có quyền xóa tài khoản thành viên khỏi hệ thống!', 'error');
+      showToast('⛔ Quyền bị từ chối! Chỉ có Super Admin (Chủ Nhiệm CLB) và Kỹ Thuật Ban Đối Ngoại - Nhân Sự mới có quyền xóa tài khoản thành viên khỏi hệ thống!', 'error');
       return false;
     }
 
-    const memberToDelete = db.members.find(m => m.id === id);
+    const memberToDelete = (db.members || []).find(m =>
+      String(m.id) === String(id) ||
+      String(m.memberCode || m.member_code).toUpperCase() === String(id).toUpperCase()
+    );
+
     if (memberToDelete?.role === 'admin' || memberToDelete?.memberCode === 'ADMIN') {
       showToast('⛔ Không thể xóa tài khoản Super Admin chính!', 'error');
       return false;
     }
 
-    if (!window.confirm(`⚠️ XÁC NHẬN BẢO MẬT (QUYỀN ADMIN):\n\nBạn có chắc chắn muốn XÓA VĨNH VIỄN tài khoản thành viên [${memberToDelete?.name || id}] khỏi hệ thống CSDL?`)) {
+    const targetCode = memberToDelete?.memberCode || memberToDelete?.id || id;
+
+    if (!window.confirm(`⚠️ XÁC NHẬN BẢO MẬT (QUYỀN ADMIN):\n\nBạn có chắc chắn muốn XÓA VĨNH VIỄN tài khoản thành viên [${memberToDelete?.name || targetCode}] khỏi hệ thống CSDL?`)) {
       return false;
     }
 
-    await deleteMemberAPI(memberToDelete?.memberCode || id);
+    const res = await deleteMemberAPI(targetCode);
+
+    if (!res || !res.success) {
+      showToast(`❌ Xóa tài khoản thất bại: ${res?.message || 'Không thể kết nối CSDL'}`, 'error');
+      return false;
+    }
 
     updateDb(prev => ({
       ...prev,
-      members: (prev.members || []).filter(m => m.id !== id)
+      members: (prev.members || []).filter(m =>
+        String(m.id) !== String(id) &&
+        String(m.id) !== String(memberToDelete?.id) &&
+        String(m.memberCode || m.member_code).toUpperCase() !== String(targetCode).toUpperCase()
+      )
     }));
 
     triggerConfetti();
-    showToast('🎉 Chủ Nhiệm CLB (Admin) đã xóa vĩnh viễn tài khoản thành viên thành công!', 'success');
+    showToast('🎉 Đã xóa vĩnh viễn tài khoản thành viên khỏi CSDL MySQL thành công!', 'success');
     return true;
   };
 
