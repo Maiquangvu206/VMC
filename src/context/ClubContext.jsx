@@ -86,6 +86,8 @@ export const ClubProvider = ({ children }) => {
       sessionStorage.setItem('VMC_CURRENT_USER', JSON.stringify(currentUser));
     } else {
       sessionStorage.removeItem('VMC_IS_AUTH');
+      sessionStorage.removeItem('VMC_CURRENT_USER');
+    }
   }, [isAuthenticated, currentUser]);
 
   const logoutMember = () => {
