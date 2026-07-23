@@ -85,7 +85,7 @@ router.post('/tasks', async (req, res) => {
                 <p><strong>Nhiệm vụ:</strong> <strong style="font-size: 15px; color: #1e293b;">${title}</strong></p>
                 <p><strong>Mô tả:</strong> ${description || 'Không có mô tả chi tiết.'}</p>
                 <p><strong>Hạn chót:</strong> ${deadline || 'Không giới hạn'}</p>
-                <p><strong>Điểm thưởng:</strong> ${points_reward || 10} points</p>
+                ${(points_reward && Number(points_reward) > 0) ? `<p><strong>Điểm thưởng:</strong> ${points_reward} points</p>` : ''}
                 <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
                 <p style="font-size: 12px; color: #64748b;">Vui lòng truy cập hệ thống để cập nhật tiến độ công việc.</p>
               </div>
@@ -638,7 +638,7 @@ router.post('/meetings', async (req, res) => {
               <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; max-w-lg;">
                 <h3 style="color: #7c3aed;">📌 Phân Công Nhiệm Vụ Cuộc Họp CLB VMC</h3>
                 <p>Xin chào <strong>${m.full_name}</strong>,</p>
-                <p>Bạn vừa được phân công nhiệm vụ <strong>${roleTitle}</strong> cho buổi họp sắp tới trên hệ thống VMC Internal Portal.</p>
+                <p>Bạn vừa được phân công nhiệm vụ <strong>${roleTitle}</strong> cho buổi họp sắp tới trên hệ thống VMC Portal.</p>
                 <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
                 <p><strong>Nội dung họp:</strong> <strong style="font-size: 15px; color: #1e293b;">${title}</strong></p>
                 <p><strong>Thời gian:</strong> ${time || '08:00'} ngày ${date || ''}</p>

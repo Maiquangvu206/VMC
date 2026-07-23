@@ -1431,9 +1431,8 @@ export const ClubProvider = ({ children }) => {
  
     const monthVal = parseInt(month, 10);
     const yearVal = parseInt(year, 10);
-    const prevMonth = monthVal === 1 ? 12 : monthVal - 1;
-    const prevYear = monthVal === 1 ? yearVal - 1 : yearVal;
-    const bdayDeadline = `${prevYear}-${String(prevMonth).padStart(2, '0')}-28`;
+    const lastDay = new Date(yearVal, monthVal, 0).getDate();
+    const bdayDeadline = `${yearVal}-${String(monthVal).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
     await createTaskRecord({
       id: `task-bday-${bdayObj.id}`,

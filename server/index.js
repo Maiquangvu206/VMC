@@ -292,7 +292,7 @@ app.post('/api/members/reset-password', async (req, res) => {
                 <p style="color: #64748b; font-size: 13px; margin-top: 4px;">Cổng thông tin nội bộ CLB Truyền Thông THPT Vĩnh Bảo</p>
               </div>
               <p>Kính gửi <strong>${name || 'Thành Viên VMC'}</strong>,</p>
-              <p>Mật khẩu đăng nhập tài khoản hệ thống VMC Internal Portal của bạn vừa được Quản trị viên đặt lại về mật khẩu mặc định khởi tạo thành công.</p>
+              <p>Mật khẩu đăng nhập tài khoản hệ thống VMC Portal của bạn vừa được Quản trị viên đặt lại về mật khẩu mặc định khởi tạo thành công.</p>
               
               <div style="background: #e0f2fe; border-left: 4px solid #0284c7; padding: 14px 18px; margin: 20px 0; border-radius: 8px;">
                 <p style="margin: 0; font-size: 14px; color: #0369a1;">🔑 <strong>Mật khẩu mặc định mới:</strong> <code style="font-size: 18px; color: #1e40af; font-weight: bold; font-family: monospace;">${pwd}</code></p>
