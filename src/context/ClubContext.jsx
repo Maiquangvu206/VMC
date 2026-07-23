@@ -838,14 +838,12 @@ export const ClubProvider = ({ children }) => {
     showToast('🎉 Đã thêm cột mốc mới vào bảng CSDL Member_Milestones thành công!', 'success');
   };
 
-  // Helper permission check for Account Management (Super Admin & Kỹ Thuật / Trưởng Ban Đối Ngoại - Nhân Sự)
+  // Helper permission check for Account Management (STRICTLY ONLY ADMIN & KỸ THUẬT BAN ĐỐI NGOẠI - NHÂN SỰ)
   const canManageAccounts = Boolean(
     currentUser?.role === 'admin' ||
     currentUser?.memberCode === 'ADMIN' ||
     currentUser?.roleTitle?.includes('Super Admin') ||
-    currentUser?.roleTitle?.includes('Chủ Nhiệm CLB') ||
-    currentUser?.roleTitle?.includes('Chủ Nhiệm') ||
-    ((currentUser?.roleTitle?.includes('Kỹ Thuật') || currentUser?.roleTitle?.includes('Trưởng Ban')) && (
+    (currentUser?.roleTitle?.includes('Kỹ Thuật') && (
       currentUser?.deptName?.includes('Đối Ngoại') ||
       currentUser?.deptName?.includes('Nhân Sự') ||
       currentUser?.deptName?.includes('ĐN-NS') ||

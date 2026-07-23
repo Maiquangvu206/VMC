@@ -64,21 +64,21 @@ export const InternalMembers = () => {
     generations = []
   } = useClub();
 
-  const isAdmin = Boolean(
+  // STRICT PERMISSION: ONLY Admin & Kỹ Thuật Ban Đối Ngoại - Nhân Sự (Chủ Nhiệm, Trưởng/Phó Ban KHÔNG có quyền)
+  const canManageAccountsPermission = Boolean(
     currentUser?.role === 'admin' ||
     currentUser?.memberCode === 'ADMIN' ||
     currentUser?.roleTitle?.includes('Super Admin') ||
-    currentUser?.roleTitle?.includes('Chủ Nhiệm CLB') ||
-    currentUser?.roleTitle?.includes('Chủ Nhiệm') ||
-    ((currentUser?.roleTitle?.includes('Kỹ Thuật') || currentUser?.roleTitle?.includes('Trưởng Ban')) && (
+    (currentUser?.roleTitle?.includes('Kỹ Thuật') && (
       currentUser?.deptName?.includes('Đối Ngoại') ||
       currentUser?.deptName?.includes('Nhân Sự') ||
       currentUser?.deptName?.includes('ĐN-NS') ||
       currentUser?.department?.includes('Đối Ngoại') ||
       currentUser?.department?.includes('Nhân Sự')
-    )) ||
-    isHRHead
+    ))
   );
+
+  const isAdmin = canManageAccountsPermission;
 
   const isSuperAdmin = Boolean(
     currentUser?.memberCode === 'ADMIN' ||
