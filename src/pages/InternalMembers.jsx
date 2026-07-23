@@ -7,6 +7,7 @@ import {
   Phone,
   UserPlus,
   Lock,
+  Key,
   RefreshCw,
   X,
   Laptop,
@@ -53,6 +54,7 @@ export const InternalMembers = () => {
     createMemberAccount,
     deleteMemberAccount,
     resetAccountPassword,
+    resetMemberPassword,
     toggleAccountStatus,
     updateMemberByTech,
     addMemberMilestone,
@@ -1051,21 +1053,37 @@ export const InternalMembers = () => {
               </div>
             </div>
 
-              <div className="pt-3 border-t border-white/10 flex justify-end gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setEditingMember(null)}
-                  className="btn-secondary text-xs px-4 py-2"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="btn-primary text-xs px-6 py-2 shadow-amber-600/30 flex items-center gap-2"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>Lưu Thay Đổi</span>
-                </button>
+              <div className="pt-3 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 shrink-0">
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (window.confirm(`Bạn có chắc chắn muốn cấp lại mật khẩu mặc định (VMC2026@VinhBao) và gửi email thông báo cho thành viên ${editingMember.name}?`)) {
+                        await resetMemberPassword(editingMember.id || editingMember.memberCode, editingMember.email, editingMember.name);
+                      }
+                    }}
+                    className="px-3 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 border border-amber-500/30 font-bold text-xs flex items-center gap-1.5 transition-all"
+                  >
+                    <Key className="w-3.5 h-3.5" />
+                    <span>Cấp Lại Mật Khẩu Mặc Định</span>
+                  </button>
+                )}
+                <div className="flex items-center gap-2 ml-auto">
+                  <button
+                    type="button"
+                    onClick={() => setEditingMember(null)}
+                    className="btn-secondary text-xs px-4 py-2"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary text-xs px-6 py-2 shadow-amber-600/30 flex items-center gap-2"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>Lưu Thay Đổi</span>
+                  </button>
+                </div>
               </div>
             </form>
           </div>

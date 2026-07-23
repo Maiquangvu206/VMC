@@ -447,6 +447,37 @@ export const ClubProvider = ({ children }) => {
     return true;
   };
 
+  // Reset Member Password to Default and trigger Email Notification
+  const resetMemberPassword = async (memberId, email, name) => {
+    try {
+      const res = await fetch('/api/members/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ memberId, email, name, defaultPassword: 'VMC2026@VinhBao' })
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        setDb(prev => ({
+          ...prev,
+          members: (prev.members || []).map(m => {
+            if (String(m.id) === String(memberId) || m.memberCode === memberId) {
+              return { ...m, isFirstLogin: true, is_first_login: 1, password: 'VMC2026@VinhBao' };
+            }
+            return m;
+          })
+        }));
+        showToast(data.message || '🔑 Đã đặt lại mật khẩu mặc định & gửi email thông báo!', 'success');
+        return true;
+      } else {
+        showToast(data?.message || 'Không thể đặt lại mật khẩu!', 'error');
+        return false;
+      }
+    } catch (e) {
+      showToast('❌ Lỗi kết nối máy chủ!', 'error');
+      return false;
+    }
+  };
+
   // Logout
   const logout = () => {
     setIsAuthenticated(false);
@@ -1421,6 +1452,7 @@ export const ClubProvider = ({ children }) => {
       createMemberAccount,
       deleteMemberAccount,
       resetAccountPassword,
+      resetMemberPassword,
       toggleAccountStatus,
       resources: db.resources || [],
       addResource,

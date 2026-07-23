@@ -246,10 +246,11 @@ export const InternalAdminSessions = () => {
                     String(m.username || '').toLowerCase() === String(s.username || '').toLowerCase()
                   );
 
-                  let displayName = (memberObj?.name && memberObj.name !== 'Quản Trị Viên') 
+                  const displayCode = memberObj?.memberCode || memberObj?.member_code || ((s.username === 'admin' || s.member_id === 'ADMIN') ? 'VMC-8350' : (s.member_id || s.username || 'VMC-0000'));
+                  const displayRole = memberObj?.roleTitle || memberObj?.role_title || ((s.username === 'admin' || s.member_id === 'ADMIN') ? 'Cố Vấn CLB' : (s.role_title || 'Thành Viên VMC'));
+                  const displayName = (memberObj?.name && memberObj.name !== 'Quản Trị Viên') 
                     ? memberObj.name 
                     : (s.name && s.name !== 'Quản Trị Viên' ? s.name : 'Vũ Mai Quang');
-                  const displayRole = memberObj?.roleTitle || s.role_title || 'Super Admin / Cố Vấn CLB';
 
                   const lastActiveDate = s.last_active ? new Date(s.last_active) : null;
                   const isRecent = lastActiveDate && ((now - lastActiveDate) / (1000 * 60)) <= 5;
@@ -270,8 +271,10 @@ export const InternalAdminSessions = () => {
                                 </span>
                               )}
                             </div>
-                            <div className="text-[10px] text-slate-400 font-mono">
-                              @{s.username || 'user'} • <span className="text-purple-400">{displayRole}</span>
+                            <div className="text-[10px] text-slate-400 font-mono flex items-center gap-1">
+                              <span className="text-cyan-400 font-bold">{displayCode}</span>
+                              <span>•</span>
+                              <span className="text-purple-400 font-semibold">{displayRole}</span>
                             </div>
                           </div>
                         </div>

@@ -234,6 +234,67 @@ app.post('/api/send-email', async (req, res) => {
   }
 });
 
+// API Cấp lại mật khẩu mặc định & gửi email thông báo
+app.post('/api/members/reset-password', async (req, res) => {
+  try {
+    const { memberId, email, name, defaultPassword } = req.body;
+    const pwd = defaultPassword || 'VMC2026@VinhBao';
+
+    // 1. Cập nhật CSDL: Mật khẩu mặc định và đánh dấu is_first_login = 1
+    await queryDatabase(
+      'UPDATE Members SET password = ?, is_first_login = 1 WHERE id = ? OR member_code = ? OR username = ?',
+      [pwd, String(memberId || ''), String(memberId || ''), String(memberId || '')]
+    );
+
+    // 2. Gửi email thông báo tự động nếu thành viên có email
+    let emailSent = false;
+    if (email && process.env.SMTP_EMAIL && process.env.SMTP_PASSWORD) {
+      try {
+        await transporter.sendMail({
+          from: `"BỘ PHẬN KỸ THUẬT VMC" <${process.env.SMTP_EMAIL}>`,
+          to: email,
+          subject: '🔑 [VMC Portal] Thông báo Cấp lại Mật Khẩu Mặc Định Tài Khoản VMC',
+          html: `
+            <div style="font-family: Arial, sans-serif; padding: 24px; color: #1e293b; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0; max-w-xl; margin: 0 auto;">
+              <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color: #2563eb; margin: 0;">🔑 CẤP LẠI MẬT KHẨU TÀI KHOẢN VMC</h2>
+                <p style="color: #64748b; font-size: 13px; margin-top: 4px;">Cổng thông tin nội bộ CLB Truyền Thông THPT Vĩnh Bảo</p>
+              </div>
+              <p>Kính gửi <strong>${name || 'Thành Viên VMC'}</strong>,</p>
+              <p>Mật khẩu đăng nhập tài khoản hệ thống VMC Internal Portal của bạn vừa được Quản trị viên đặt lại về mật khẩu mặc định khởi tạo thành công.</p>
+              
+              <div style="background: #e0f2fe; border-left: 4px solid #0284c7; padding: 14px 18px; margin: 20px 0; border-radius: 8px;">
+                <p style="margin: 0; font-size: 14px; color: #0369a1;">🔑 <strong>Mật khẩu mặc định mới:</strong> <code style="font-size: 18px; color: #1e40af; font-weight: bold; font-family: monospace;">${pwd}</code></p>
+              </div>
+
+              <div style="background: #fef3c7; border-left: 4px solid #d97706; padding: 12px 16px; margin: 20px 0; border-radius: 8px; font-size: 13px; color: #92400e;">
+                <p style="margin: 0; font-weight: bold;">⚠️ QUY ĐỊNH BẮT BUỘC ĐỔI MẬT KHẨU:</p>
+                <p style="margin: 4px 0 0 0;">Ngay sau khi đăng nhập lại bằng mật khẩu mặc định trên, hệ thống sẽ <strong>bắt buộc bạn phải thay đổi sang mật khẩu mới cá nhân</strong> để đảm bảo an toàn tuyệt đối cho tài khoản.</p>
+              </div>
+
+              <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
+              <p style="font-size: 12px; color: #64748b; margin: 0; text-align: center;">Trân trọng,<br/><strong>Bộ Phận Kỹ Thuật - CLB Truyền Thông THPT Vĩnh Bảo (VMC)</strong></p>
+            </div>
+          `
+        });
+        emailSent = true;
+      } catch (err) {
+        console.warn('⚠️ Lỗi gửi email thông báo reset mật khẩu:', err.message);
+      }
+    }
+
+    res.json({
+      success: true,
+      message: emailSent
+        ? `🔑 Đã đặt lại mật khẩu mặc định (${pwd}) & gửi email thông báo thành công cho ${name || email}!`
+        : `🔑 Đã đặt lại mật khẩu mặc định (${pwd}) cho thành viên ${name || ''}!`
+    });
+  } catch (error) {
+    console.error('❌ Lỗi /api/members/reset-password:', error.message);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // API Endpoint 1: POST /api/auth/login
 app.post('/api/auth/login', async (req, res) => {
   const { memberCode, password } = req.body;
@@ -296,7 +357,6 @@ app.post('/api/auth/login', async (req, res) => {
         id: user.id,
         memberCode: user.member_code,
         username: user.username,
-        password: user.password,
         name: user.full_name,
         role: user.role,
         roleTitle: user.role_title,
