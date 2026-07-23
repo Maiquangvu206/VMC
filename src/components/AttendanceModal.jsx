@@ -26,7 +26,7 @@ export const AttendanceModal = () => {
   } = useClub();
 
   const [sessionName, setSessionName] = useState(`Buổi Sinh Hoạt Định Kỳ Tuần ${Math.ceil(new Date().getDate() / 7)} Tháng ${new Date().getMonth() + 1}`);
-  const [selectedPresentIds, setSelectedPresentIds] = useState([currentUser.id]);
+  const [selectedPresentIds, setSelectedPresentIds] = useState([currentUser?.id || 'admin']);
 
   if (!isAttendanceModalOpen) return null;
 

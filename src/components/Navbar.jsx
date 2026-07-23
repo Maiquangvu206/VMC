@@ -37,6 +37,14 @@ export const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
 
+  const safeUser = currentUser || {
+    name: 'Thành Viên VMC',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
+    roleTitle: 'Thành Viên VMC',
+    memberCode: 'VMC-MEMBER',
+    class: '10A1'
+  };
+
   const pendingTasksCount = tasks.filter(t => t.status !== 'done').length;
   const pendingDraftsCount = drafts.filter(d => d.status === 'pending').length;
 
@@ -127,13 +135,13 @@ export const Navbar = () => {
               className="flex items-center gap-2 p-1 pl-1.5 pr-2.5 rounded-full bg-slate-900 border border-white/10 hover:border-blue-500/50 transition-all text-xs"
             >
               <img
-                src={currentUser.avatar}
-                alt={currentUser.name}
+                src={safeUser.avatar}
+                alt={safeUser.name}
                 className="w-7 h-7 rounded-full object-cover border border-blue-400 shrink-0"
               />
               <div className="text-left max-w-[120px] truncate hidden md:block">
-                <div className="font-bold text-white text-xs truncate leading-tight">{currentUser.name}</div>
-                <div className="text-[9px] text-blue-400 font-medium truncate">{currentUser.roleTitle}</div>
+                <div className="font-bold text-white text-xs truncate leading-tight">{safeUser.name}</div>
+                <div className="text-[9px] text-blue-400 font-medium truncate">{safeUser.roleTitle}</div>
               </div>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             </button>
@@ -143,9 +151,9 @@ export const Navbar = () => {
               <div className="absolute right-0 mt-1 w-64 glass-panel border border-white/10 rounded-2xl p-2 shadow-2xl z-50 animate-slide-up space-y-1.5">
                 {/* Account Info */}
                 <div className="p-2.5 rounded-xl bg-slate-900/90 border border-white/5 space-y-0.5 text-xs">
-                  <div className="font-bold text-white truncate">{currentUser.name}</div>
-                  <div className="text-[10px] text-blue-400 font-medium truncate">{currentUser.roleTitle}</div>
-                  <div className="text-[9px] text-slate-400 font-mono">Mã TV: {currentUser.memberCode} • Lớp {currentUser.class}</div>
+                  <div className="font-bold text-white truncate">{safeUser.name}</div>
+                  <div className="text-[10px] text-blue-400 font-medium truncate">{safeUser.roleTitle}</div>
+                  <div className="text-[9px] text-slate-400 font-mono">Mã TV: {safeUser.memberCode} • Lớp {safeUser.class}</div>
                 </div>
 
                 {/* Attendance */}

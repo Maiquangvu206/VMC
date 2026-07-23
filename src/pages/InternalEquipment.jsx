@@ -181,7 +181,7 @@ export const InternalEquipment = () => {
                 <input
                   type="text"
                   disabled
-                  value={`${currentUser.name} (${currentUser.class})`}
+                  value={`${currentUser?.name || 'Thành viên VMC'} (${currentUser?.class || 'CLB'})`}
                   className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-slate-400 font-semibold"
                 />
               </div>
