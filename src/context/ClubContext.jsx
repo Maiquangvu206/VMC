@@ -663,7 +663,7 @@ export const ClubProvider = ({ children }) => {
   // Account Creation (SUPER ADMIN & TRƯỞNG BAN ĐỐI NGOẠI - NHÂN SỰ ONLY)
   const createMemberAccount = async (newAcc) => {
     if (!canManageAccounts) {
-      showToast('⛔ Quyền bị từ chối! Chỉ có Super Admin (Chủ Nhiệm CLB) và Trưởng Ban Đối Ngoại - Nhân Sự mới có quyền cấp tài khoản thành viên mới!', 'error');
+      showToast('⛔ Quyền bị từ chối! Chỉ có bộ phận kỹ thuật ban Đối Ngoại - Nhân Sự mới có quyền cấp tài khoản thành viên mới!', 'error');
       return false;
     }
 
@@ -956,12 +956,6 @@ export const ClubProvider = ({ children }) => {
       showToast('Đã khôi phục CSDL về mặc định!', 'info');
     }
   };
-
-  const isAdmin = Boolean(
-    currentUser?.role === 'admin' ||
-    currentUser?.memberCode === 'ADMIN' ||
-    currentUser?.roleTitle?.includes('Super Admin')
-  );
 
   const addFinanceRecord = async (record) => {
     // Lưu lên MySQL trước

@@ -366,7 +366,7 @@ export const InternalMembers = () => {
         <button
           onClick={() => {
             if (!isAdmin) {
-              showToast('⛔ Quyền bị từ chối! Chỉ có Chủ Nhiệm CLB (Super Admin / Admin) mới có quyền cấp tài khoản thành viên mới!', 'error');
+              showToast('⛔ Quyền bị từ chối! Chỉ có bộ phận kỹ thuật ban Đối Ngoại - Nhân Sự mới có quyền cấp tài khoản thành viên mới!', 'error');
               return;
             }
             setIsNewAccountModalOpen(true);
