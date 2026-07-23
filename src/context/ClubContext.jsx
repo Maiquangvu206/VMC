@@ -536,9 +536,11 @@ export const ClubProvider = ({ children }) => {
       }
 
       setCurrentUser(user);
-      if (user.isFirstLogin) {
+      if (user.isFirstLogin && user.memberCode !== 'ADMIN') {
         setRequirePasswordChange(true);
+        setIsAuthenticated(false);
       } else {
+        setRequirePasswordChange(false);
         setIsAuthenticated(true);
         triggerConfetti();
       }
@@ -568,9 +570,8 @@ export const ClubProvider = ({ children }) => {
 
   // Mandatory first time password change
   const changePassword = async (oldPassword, newPassword) => {
-    if (currentUser?.password && currentUser.password !== oldPassword) return false;
-
-    const targetId = currentUser.id || currentUser.memberCode;
+    const targetId = currentUser?.id || currentUser?.memberCode;
+    if (!targetId) return false;
     await updateMemberAPI(targetId, {
       password: newPassword,
       isFirstLogin: false,
