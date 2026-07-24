@@ -12,6 +12,15 @@ export const InternalRecruitment = () => {
     members, showToast 
   } = useClub();
 
+  // Prevent rendering if user data is not loaded
+  if (!currentUser) {
+    return (
+      <div className="container py-8 flex items-center justify-center">
+        <div className="text-slate-400">Đang tải dữ liệu...</div>
+      </div>
+    );
+  }
+
   const currentUserRoleTitle = String(currentUser?.roleTitle || '').toLowerCase();
   const currentUserDeptName = String(currentUser?.deptName || currentUser?.department || '').toLowerCase();
 
@@ -47,7 +56,7 @@ export const InternalRecruitment = () => {
 
   // Check if current user can score based on scoring type
   const canScore = React.useMemo(() => {
-    if (!currentSeason) return false;
+    if (!currentSeason || !currentUser) return false;
     
     const scoringTypes = Array.isArray(currentSeason.scoring_type) ? currentSeason.scoring_type : [currentSeason.scoring_type || 'teamwork'];
     const seasonDept = currentSeason.department?.toLowerCase() || '';
@@ -67,11 +76,11 @@ export const InternalRecruitment = () => {
     const canScoreDon = scoringTypes.includes('don') && (isBCN || isAdvisor || isDeptMember);
     // For teamwork, check if user is assigned as scorer for any candidate OR in season's interviewer_ids
     const canScoreTeamwork = scoringTypes.includes('teamwork') && (
-      currentSeason?.interviewer_ids?.includes(currentUser?.id) ||
-      candidates.some(c => 
+      (currentSeason?.interviewer_ids || []).includes(currentUser?.id) ||
+      (Array.isArray(candidates) && candidates.some(c => 
         (c.teamwork_scorer_ids || []).includes(currentUser?.id) ||
         (c.interviewer_ids || []).includes(currentUser?.id)
-      )
+      ))
     );
     
     return canScoreDon || canScoreTeamwork;
@@ -452,7 +461,7 @@ export const InternalRecruitment = () => {
   // Get available interviewers based on season's department + BCN + advisors
   const availableInterviewers = React.useMemo(() => {
     const targetSeason = selectedSeasonForInterviewers || currentSeason;
-    if (!targetSeason) return [];
+    if (!targetSeason || !Array.isArray(members)) return [];
     
     const seasonDept = (targetSeason.department || '').toLowerCase().trim();
     
