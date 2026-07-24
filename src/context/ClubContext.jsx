@@ -1014,6 +1014,11 @@ export const ClubProvider = ({ children }) => {
   };
 
   const toggleAccountStatus = async (id) => {
+    if (!canManageAccounts) {
+      showToast('⛔ Quyền bị từ chối! Chỉ có Super Admin (Chủ Nhiệm CLB) và Kỹ Thuật Ban Đối Ngoại - Nhân Sự mới có quyền khóa/mở khóa tài khoản!', 'error');
+      return;
+    }
+
     const member = db.members.find(m => m.id === id);
     if (!member) return;
 
@@ -1027,10 +1032,13 @@ export const ClubProvider = ({ children }) => {
 
     try {
       // Gọi API cập nhật status vào DB
+      console.log('🔒 Đang gọi API cập nhật status:', member.memberCode, '->', newStatus);
       const res = await updateMemberAPI(member.memberCode || member.member_code || member.id, {
         status: newStatus,
         name: member.name
       });
+
+      console.log('🔒 API Response:', res);
 
       if (!res || !res.success) {
         // Rollback nếu API thất bại
@@ -1038,16 +1046,17 @@ export const ClubProvider = ({ children }) => {
           ...prev,
           members: prev.members.map(m => m.id === id ? { ...m, status: member.status } : m)
         }));
-        showToast('❌ Lỗi cập nhật trạng thái tài khoản!', 'error');
+        showToast(`❌ Lỗi cập nhật trạng thái tài khoản! ${res?.message || 'Unknown error'}`, 'error');
         return;
       }
     } catch (err) {
       // Rollback nếu lỗi kết nối
+      console.error('❌ Lỗi toggleAccountStatus:', err);
       updateDb(prev => ({
         ...prev,
         members: prev.members.map(m => m.id === id ? { ...m, status: member.status } : m)
       }));
-      showToast('❌ Lỗi kết nối server!', 'error');
+      showToast(`❌ Lỗi kết nối server! ${err.message}`, 'error');
       return;
     }
 
