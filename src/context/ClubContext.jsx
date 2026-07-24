@@ -1566,7 +1566,7 @@ export const ClubProvider = ({ children }) => {
         a.id === assignmentId ? { ...a, link, status: 'completed' } : a
       ),
       tasks: (prev.tasks || []).map(task =>
-        task.id === `task-bday-${assignmentId}` ? { ...task, status: 'done' } : task
+        task.id === `task-bday-monitor-${assignmentId}` ? { ...task, status: 'done' } : task
       )
     }));
     showToast('✅ Đã nộp link bài đăng sinh nhật thành công!', 'success');
@@ -1605,7 +1605,7 @@ export const ClubProvider = ({ children }) => {
       updateDb(prev => ({
         ...prev,
         tasks: (prev.tasks || []).map(task =>
-          task.id === `task-bday-${assignmentId}` ? { ...task, status: 'done' } : task
+          task.id === `task-bday-prep-${assignmentId}` ? { ...task, status: 'done' } : task
         )
       }));
     }
@@ -1809,51 +1809,7 @@ export const ClubProvider = ({ children }) => {
         ...((() => {
           const virtuals = [];
           
-          // 1. Birthday Assignments -> Tasks (2 task riêng biệt)
-          const birthdayAssignments = db.birthdayAssignments || [];
-          birthdayAssignments.forEach(b => {
-            const assigneeObj = (db.members || []).find(m => String(m.id) === String(b.memberId) || String(m.memberCode) === String(b.memberId));
-            const assigneeName = assigneeObj ? assigneeObj.name : 'Chưa phân công';
-            const status = b.status === 'completed' ? 'done' : 'doing';
-
-            // Task 1: Chuẩn bị tư liệu — deadline ngày 28 tháng TRƯỚC
-            const prepDate = getPhotoAndDataDeadline(b.year, b.month) || new Date();
-            const prepDeadline = `${prepDate.getFullYear()}-${String(prepDate.getMonth() + 1).padStart(2, '0')}-${String(prepDate.getDate()).padStart(2, '0')}`;
-            virtuals.push({
-              id: `virtual-bday-prep-${b.id}`,
-              title: `🎂 Chuẩn bị tư liệu sinh nhật tháng ${b.month}/${b.year}`,
-              description: `Tìm hình ảnh, viết lời chúc cho thành viên sinh nhật tháng ${b.month}/${b.year}. Hạn nộp tư liệu: ngày 28 tháng trước.`,
-              desc: `Nộp tư liệu sinh nhật tháng ${b.month}/${b.year} trước ngày ${prepDeadline}.`,
-              department: 'hr_external',
-              assignee: assigneeName,
-              assigneeId: b.memberId,
-              deadline: prepDeadline,
-              status,
-              pointsReward: 10,
-              isVirtual: true,
-              virtualType: 'birthday_prep'
-            });
-
-            // Task 2: Trực sinh nhật — deadline ngày cuối tháng sinh nhật
-            const monitorDate = getMonitoringDeadline(b.year, b.month) || new Date();
-            const monitorDeadline = `${monitorDate.getFullYear()}-${String(monitorDate.getMonth() + 1).padStart(2, '0')}-${String(monitorDate.getDate()).padStart(2, '0')}`;
-            virtuals.push({
-              id: `virtual-bday-monitor-${b.id}`,
-              title: `🎉 Trực sinh nhật tháng ${b.month}/${b.year}`,
-              description: `Đăng bài chúc mừng sinh nhật cho các thành viên trong tháng ${b.month}/${b.year}. Hạn chót: cuối tháng ${b.month}.`,
-              desc: `Trực sinh nhật tháng ${b.month}/${b.year} — hạn cuối tháng (${monitorDeadline}).`,
-              department: 'hr_external',
-              assignee: assigneeName,
-              assigneeId: b.memberId,
-              deadline: monitorDeadline,
-              status,
-              pointsReward: 10,
-              isVirtual: true,
-              virtualType: 'birthday_monitor'
-            });
-          });
-
-          // 2. Meeting Attendance & Minutes Takers -> Tasks
+          // Meeting Attendance & Minutes Takers -> Tasks
           const meetings = db.meetings || [];
           meetings.forEach(m => {
             if (m.attendanceTakerId || m.attendance_taker_id) {

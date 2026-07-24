@@ -29,7 +29,7 @@ export const InternalAdminSessions = () => {
   } = useClub();
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'online', 'revoked'
+  const [statusFilter, setStatusFilter] = useState('all'); // 'all', 'active', 'ended'
   const [autoRefresh, setAutoRefresh] = useState(true);
 
   useEffect(() => {
@@ -78,7 +78,6 @@ export const InternalAdminSessions = () => {
 
     if (statusFilter === 'active') return Number(s.is_active) === 1;
     if (statusFilter === 'ended') return Number(s.is_active) === 0 && s.logout_reason !== 'revoked';
-    if (statusFilter === 'revoked') return Number(s.is_active) === 0 && s.logout_reason === 'revoked';
     return true;
   });
 
@@ -205,14 +204,6 @@ export const InternalAdminSessions = () => {
             }`}
           >
             ⏸️ Kết Thúc Phiên ({endedSessions.length})
-          </button>
-          <button
-            onClick={() => setStatusFilter('revoked')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
-              statusFilter === 'revoked' ? 'bg-rose-600 text-white' : 'bg-slate-950 text-slate-400 hover:text-white'
-            }`}
-          >
-            🔴 Bị Hủy ({revokedSessions.length})
           </button>
         </div>
       </div>
