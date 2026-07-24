@@ -116,7 +116,7 @@ export const InternalRecruitment = () => {
     try {
       const res = await fetch('/api/recruitment/seasons', { headers: { 'ngrok-skip-browser-warning': 'true' } });
       const data = await res.json();
-      if (data.success) {
+      if (data.success && Array.isArray(data.data)) {
         // Filter seasons by user's department (Super Admin sees all)
         const userDept = (currentUser?.deptName || currentUser?.department || '').toLowerCase().trim();
         const filteredSeasons = isSuperAdmin 
@@ -129,6 +129,8 @@ export const InternalRecruitment = () => {
         setSeasons(filteredSeasons);
         const active = filteredSeasons.find(s => s.is_active === 1);
         if (active) setCurrentSeason(active);
+      } else {
+        console.error('Invalid seasons data:', data);
       }
     } catch (e) {
       console.error('Error fetching seasons:', e);
@@ -139,9 +141,14 @@ export const InternalRecruitment = () => {
     try {
       const res = await fetch(`/api/recruitment/criteria/${seasonId}`, { headers: { 'ngrok-skip-browser-warning': 'true' } });
       const data = await res.json();
-      if (data.success) setCriteria(data.data);
+      if (data.success && Array.isArray(data.data)) {
+        setCriteria(data.data);
+      } else {
+        setCriteria([]);
+      }
     } catch (e) {
       console.error('Error fetching criteria:', e);
+      setCriteria([]);
     }
   };
 
@@ -150,9 +157,14 @@ export const InternalRecruitment = () => {
       const interviewerParam = !isAdmin && !isHRHead ? `?interviewer_id=${currentUser.id}` : '';
       const res = await fetch(`/api/recruitment/candidates/${seasonId}${interviewerParam}`, { headers: { 'ngrok-skip-browser-warning': 'true' } });
       const data = await res.json();
-      if (data.success) setCandidates(data.data);
+      if (data.success && Array.isArray(data.data)) {
+        setCandidates(data.data);
+      } else {
+        setCandidates([]);
+      }
     } catch (e) {
       console.error('Error fetching candidates:', e);
+      setCandidates([]);
     }
   };
 
@@ -160,9 +172,14 @@ export const InternalRecruitment = () => {
     try {
       const res = await fetch(`/api/recruitment/scores/summary/${seasonId}`, { headers: { 'ngrok-skip-browser-warning': 'true' } });
       const data = await res.json();
-      if (data.success) setScoresSummary(data.data);
+      if (data.success && Array.isArray(data.data)) {
+        setScoresSummary(data.data);
+      } else {
+        setScoresSummary([]);
+      }
     } catch (e) {
       console.error('Error fetching scores summary:', e);
+      setScoresSummary([]);
     }
   };
 
@@ -170,9 +187,14 @@ export const InternalRecruitment = () => {
     try {
       const res = await fetch(`/api/recruitment/scores/submitted?season_id=${seasonId}&interviewer_id=${currentUser.id}`, { headers: { 'ngrok-skip-browser-warning': 'true' } });
       const data = await res.json();
-      if (data.success) setSubmittedCandidates(data.data);
+      if (data.success && Array.isArray(data.data)) {
+        setSubmittedCandidates(data.data);
+      } else {
+        setSubmittedCandidates([]);
+      }
     } catch (e) {
       console.error('Error fetching submitted candidates:', e);
+      setSubmittedCandidates([]);
     }
   };
 
