@@ -22,9 +22,12 @@ export const InternalRecruitment = () => {
   const [showCriteriaModal, setShowCriteriaModal] = useState(false);
   const [showCandidateModal, setShowCandidateModal] = useState(false);
   const [showScoringModal, setShowScoringModal] = useState(false);
+  const [showInterviewerModal, setShowInterviewerModal] = useState(false);
+  const [selectedSeasonForInterviewers, setSelectedSeasonForInterviewers] = useState(null);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [submittedCandidates, setSubmittedCandidates] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedInterviewers, setSelectedInterviewers] = useState([]);
 
   // Form states
   const [seasonForm, setSeasonForm] = useState({ name: '', quota: 0 });
@@ -36,10 +39,10 @@ export const InternalRecruitment = () => {
 
   // Fetch data
   useEffect(() => {
-    if (isAdmin || isHRHead) {
+    if (isSuperAdmin || isAdmin || isHRHead || isRecruitmentSeasonActive) {
       fetchSeasons();
     }
-  }, [isAdmin, isHRHead]);
+  }, [isSuperAdmin, isAdmin, isHRHead, isRecruitmentSeasonActive]);
 
   useEffect(() => {
     if (currentSeason) {
@@ -159,10 +162,18 @@ export const InternalRecruitment = () => {
       if (res.ok) {
         showToast('✅ Đã phân công Interviewer!', 'success');
         fetchSeasons();
+        setShowInterviewerModal(false);
+        setSelectedInterviewers([]);
       }
     } catch (e) {
       showToast('❌ Lỗi phân công Interviewer!', 'error');
     }
+  };
+
+  const openInterviewerModal = (season) => {
+    setSelectedSeasonForInterviewers(season);
+    setSelectedInterviewers(season.interviewer_ids || []);
+    setShowInterviewerModal(true);
   };
 
   // Criteria operations
@@ -357,58 +368,97 @@ export const InternalRecruitment = () => {
       </div>
 
       {/* Seasons Tab */}
-      {activeTab === 'seasons' && (isAdmin || isHRHead) && (
+      {activeTab === 'seasons' && (
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold text-white">Danh Sách Mùa Tuyển</h2>
-            <button
-              onClick={() => setShowSeasonModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-violet-500/20 text-violet-300 rounded-lg hover:bg-violet-500/30 border border-violet-500/30"
-            >
-              <Plus className="w-4 h-4" /> Tạo Mùa Tuyển Mới
-            </button>
-          </div>
-          <div className="grid gap-4">
-            {seasons.map(season => (
-              <div key={season.id} className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-bold text-white text-lg">{season.name}</h3>
-                    <p className="text-slate-400 text-sm">Hạn ngạch: {season.quota} thành viên</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      {season.is_active === 1 ? (
-                        <span className="flex items-center gap-1 text-emerald-400 text-xs">
-                          <CheckCircle className="w-3 h-3" /> Đang hoạt động
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-1 text-slate-400 text-xs">
-                          <Clock className="w-3 h-3" /> Đã kết thúc
-                        </span>
-                      )}
+          {isSuperAdmin || isAdmin || isHRHead ? (
+            <>
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold text-white">Danh Sách Mùa Tuyển</h2>
+                <button
+                  onClick={() => setShowSeasonModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-violet-500/20 text-violet-300 rounded-lg hover:bg-violet-500/30 border border-violet-500/30"
+                >
+                  <Plus className="w-4 h-4" /> Tạo Mùa Tuyển Mới
+                </button>
+              </div>
+              <div className="grid gap-4">
+                {seasons.map(season => (
+                  <div key={season.id} className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-bold text-white text-lg">{season.name}</h3>
+                        <p className="text-slate-400 text-sm">Hạn ngạch: {season.quota} thành viên</p>
+                        <div className="flex items-center gap-2 mt-2">
+                          {season.is_active === 1 ? (
+                            <span className="flex items-center gap-1 text-emerald-400 text-xs">
+                              <CheckCircle className="w-3 h-3" /> Đang hoạt động
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-1 text-slate-400 text-xs">
+                              <Clock className="w-3 h-3" /> Đã kết thúc
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        {season.is_active !== 1 && (
+                          <button
+                            onClick={() => activateSeason(season.id)}
+                            className="p-2 bg-emerald-500/20 text-emerald-300 rounded-lg hover:bg-emerald-500/30"
+                            title="Kích hoạt"
+                          >
+                            <CheckCircle className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => openInterviewerModal(season)}
+                          className="p-2 bg-blue-500/20 text-blue-300 rounded-lg hover:bg-blue-500/30"
+                          title="Phân công Interviewer"
+                        >
+                          <Users className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setCurrentSeason(season)}
+                          className={`p-2 rounded-lg ${currentSeason?.id === season.id ? 'bg-violet-500/30 text-violet-300' : 'bg-slate-800 text-slate-400'}`}
+                          title="Chọn"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    {season.is_active !== 1 && (
-                      <button
-                        onClick={() => activateSeason(season.id)}
-                        className="p-2 bg-emerald-500/20 text-emerald-300 rounded-lg hover:bg-emerald-500/30"
-                        title="Kích hoạt"
-                      >
-                        <CheckCircle className="w-4 h-4" />
-                      </button>
-                    )}
-                    <button
-                      onClick={() => setCurrentSeason(season)}
-                      className={`p-2 rounded-lg ${currentSeason?.id === season.id ? 'bg-violet-500/30 text-violet-300' : 'bg-slate-800 text-slate-400'}`}
-                      title="Chọn"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            // Regular members - show only active season info
+            <>
+              <h2 className="text-xl font-bold text-white">Mùa Tuyển Hiện Tại</h2>
+              {currentSeason ? (
+                <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 bg-emerald-500/20 rounded-xl">
+                      <CheckCircle className="w-8 h-8 text-emerald-400" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-white text-xl">{currentSeason.name}</h3>
+                      <p className="text-slate-400 text-sm mt-1">Hạn ngạch: {currentSeason.quota} thành viên</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="flex items-center gap-1 text-emerald-400 text-sm">
+                          <CheckCircle className="w-4 h-4" /> Đang hoạt động
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ) : (
+                <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-6 text-center">
+                  <Clock className="w-12 h-12 text-slate-500 mx-auto mb-3" />
+                  <p className="text-slate-400">Hiện tại không có mùa tuyển nào đang hoạt động</p>
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
 
@@ -812,6 +862,66 @@ export const InternalRecruitment = () => {
                 className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
               >
                 {loading ? 'Đang gửi...' : 'Gửi Điểm'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Interviewer Assignment Modal */}
+      {showInterviewerModal && selectedSeasonForInterviewers && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-bold text-white mb-4">Phân công Interviewer - {selectedSeasonForInterviewers.name}</h3>
+            <div className="space-y-3">
+              {availableInterviewers.map(m => (
+                <div key={m.id} className="flex items-center justify-between bg-slate-800/50 rounded-lg p-3">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={m.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=100'}
+                      alt={m.name}
+                      className="w-10 h-10 rounded-full object-cover border border-slate-600"
+                    />
+                    <div>
+                      <div className="font-bold text-white text-sm">{m.name}</div>
+                      <div className="text-slate-400 text-xs">{m.roleTitle}</div>
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedInterviewers.includes(m.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedInterviewers([...selectedInterviewers, m.id]);
+                        } else {
+                          setSelectedInterviewers(selectedInterviewers.filter(id => id !== m.id));
+                        }
+                      }}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-500"></div>
+                  </label>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowInterviewerModal(false);
+                  setSelectedInterviewers([]);
+                  setSelectedSeasonForInterviewers(null);
+                }}
+                className="flex-1 px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={() => assignInterviewers(selectedSeasonForInterviewers.id, selectedInterviewers)}
+                disabled={loading}
+                className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+              >
+                {loading ? 'Đang lưu...' : 'Lưu Phân Công'}
               </button>
             </div>
           </div>
