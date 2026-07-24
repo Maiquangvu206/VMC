@@ -3,8 +3,15 @@ import { useClub } from '../context/ClubContext';
 import {
   UserPlus, ToggleLeft, ToggleRight, Plus, Edit, Trash2, Users, 
   CheckCircle, XCircle, Clock, Award, Search, Filter, Save, ChevronDown,
-  Star, FileText, Calendar, GraduationCap, Briefcase, AlertCircle
+  Star, FileText, Calendar, GraduationCap, Briefcase, AlertCircle, X
 } from 'lucide-react';
+import { SeasonModal } from '../components/recruitment/SeasonModal';
+import { CriteriaModal } from '../components/recruitment/CriteriaModal';
+import { CandidateModal } from '../components/recruitment/CandidateModal';
+import { InterviewerModal } from '../components/recruitment/InterviewerModal';
+import { ScoringModal } from '../components/recruitment/ScoringModal';
+import { CandidateInterviewerModal } from '../components/recruitment/CandidateInterviewerModal';
+import { CandidateTeamworkModal } from '../components/recruitment/CandidateTeamworkModal';
 
 export const InternalRecruitment = () => {
   const { 
@@ -1057,471 +1064,101 @@ export const InternalRecruitment = () => {
         </div>
       )}
 
-      {/* Season Modal */}
-      {showSeasonModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-white mb-4">Tạo Mùa Tuyển Mới</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="text-slate-300 text-sm block mb-1">Tên mùa tuyển</label>
-                <input
-                  type="text"
-                  value={seasonForm.name}
-                  onChange={(e) => setSeasonForm({ ...seasonForm, name: e.target.value })}
-                  className="w-full bg-slate-800 text-white rounded-lg px-4 py-2 border border-slate-700"
-                  placeholder="VD: Tuyển Gen 6 - 2025"
-                />
-              </div>
-              <div>
-                <label className="text-slate-300 text-sm block mb-1">Chỉ tiêu</label>
-                <input
-                  type="number"
-                  value={seasonForm.quota}
-                  onChange={(e) => setSeasonForm({ ...seasonForm, quota: parseInt(e.target.value) })}
-                  className="w-full bg-slate-800 text-white rounded-lg px-4 py-2 border border-slate-700"
-                  placeholder="Số lượng thành viên cần tuyển"
-                />
-              </div>
-              <div>
-                <label className="text-slate-300 text-sm block mb-1">Ban</label>
-                <select
-                  value={seasonForm.department}
-                  onChange={(e) => setSeasonForm({ ...seasonForm, department: e.target.value })}
-                  className="w-full bg-slate-800 text-white rounded-lg px-4 py-2 border border-slate-700"
-                >
-                  <option value="">Tất cả các ban</option>
-                  <option value="Đối Ngoại">Đối Ngoại</option>
-                  <option value="Nhân Sự">Nhân Sự</option>
-                  <option value="ĐN-NS">Đối Ngoại - Nhân Sự</option>
-                  <option value="Hậu Cần">Hậu Cần</option>
-                  <option value="Truyền Thông">Truyền Thông</option>
-                  <option value="Nghiên Cứu & Phát Triển">Nghiên Cứu & Phát Triển</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-slate-300 text-sm block mb-1">Hình thức chấm điểm</label>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={seasonForm.scoring_type.includes('teamwork')}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSeasonForm({ ...seasonForm, scoring_type: [...seasonForm.scoring_type, 'teamwork'] });
-                        } else {
-                          setSeasonForm({ ...seasonForm, scoring_type: seasonForm.scoring_type.filter(t => t !== 'teamwork') });
-                        }
-                      }}
-                      className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-violet-500 focus:ring-violet-500"
-                    />
-                    <span className="text-slate-300 text-sm">Teamwork (chỉ người được phân công)</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={seasonForm.scoring_type.includes('don')}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSeasonForm({ ...seasonForm, scoring_type: [...seasonForm.scoring_type, 'don'] });
-                        } else {
-                          setSeasonForm({ ...seasonForm, scoring_type: seasonForm.scoring_type.filter(t => t !== 'don') });
-                        }
-                      }}
-                      className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-violet-500 focus:ring-violet-500"
-                    />
-                    <span className="text-slate-300 text-sm">Đơn (toàn bộ ban + BCN + cố vấn)</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => setShowSeasonModal(false)}
-                className="flex-1 px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={createSeason}
-                disabled={loading}
-                className="flex-1 px-4 py-2 bg-violet-500 text-white rounded-lg hover:bg-violet-600 disabled:opacity-50"
-              >
-                {loading ? 'Đang tạo...' : 'Tạo'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <SeasonModal
+        show={showSeasonModal}
+        onClose={() => setShowSeasonModal(false)}
+        seasonForm={seasonForm}
+        setSeasonForm={setSeasonForm}
+        onSubmit={createSeason}
+        loading={loading}
+      />
 
-      {/* Criteria Modal */}
-      {showCriteriaModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-white mb-4">Thêm Tiêu Chí Chấm Điểm</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="text-slate-300 text-sm block mb-1">Tên tiêu chí</label>
-                <input
-                  type="text"
-                  value={criteriaForm.criteria_name}
-                  onChange={(e) => setCriteriaForm({ ...criteriaForm, criteria_name: e.target.value })}
-                  className="w-full bg-slate-800 text-white rounded-lg px-4 py-2 border border-slate-700"
-                  placeholder="VD: Thái độ, Kỹ năng, Kiến thức..."
-                />
-              </div>
-              <div>
-                <label className="text-slate-300 text-sm block mb-1">Điểm tối đa</label>
-                <input
-                  type="number"
-                  value={criteriaForm.max_score}
-                  onChange={(e) => setCriteriaForm({ ...criteriaForm, max_score: parseInt(e.target.value) })}
-                  className="w-full bg-slate-800 text-white rounded-lg px-4 py-2 border border-slate-700"
-                />
-              </div>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => setShowCriteriaModal(false)}
-                className="flex-1 px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={createCriteria}
-                disabled={loading}
-                className="flex-1 px-4 py-2 bg-violet-500 text-white rounded-lg hover:bg-violet-600 disabled:opacity-50"
-              >
-                {loading ? 'Đang thêm...' : 'Thêm'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CriteriaModal
+        show={showCriteriaModal}
+        onClose={() => setShowCriteriaModal(false)}
+        criteriaForm={criteriaForm}
+        setCriteriaForm={setCriteriaForm}
+        onSubmit={createCriteria}
+        loading={loading}
+      />
 
-      {/* Candidate Modal */}
-      {showCandidateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold text-white mb-4">Thêm Ứng Viên Mới</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="text-slate-300 text-sm block mb-1">Họ tên</label>
-                <input
-                  type="text"
-                  value={candidateForm.full_name}
-                  onChange={(e) => setCandidateForm({ ...candidateForm, full_name: e.target.value })}
-                  className="w-full bg-slate-800 text-white rounded-lg px-4 py-2 border border-slate-700"
-                />
-              </div>
-              <div>
-                <label className="text-slate-300 text-sm block mb-1">Lớp</label>
-                <input
-                  type="text"
-                  value={candidateForm.class_name}
-                  onChange={(e) => setCandidateForm({ ...candidateForm, class_name: e.target.value })}
-                  className="w-full bg-slate-800 text-white rounded-lg px-4 py-2 border border-slate-700"
-                />
-              </div>
-              <div>
-                <label className="text-slate-300 text-sm block mb-1">Số điện thoại</label>
-                <input
-                  type="text"
-                  value={candidateForm.phone}
-                  onChange={(e) => setCandidateForm({ ...candidateForm, phone: e.target.value })}
-                  className="w-full bg-slate-800 text-white rounded-lg px-4 py-2 border border-slate-700"
-                />
-              </div>
-              <div>
-                <label className="text-slate-300 text-sm block mb-1">Email</label>
-                <input
-                  type="email"
-                  value={candidateForm.email}
-                  onChange={(e) => setCandidateForm({ ...candidateForm, email: e.target.value })}
-                  className="w-full bg-slate-800 text-white rounded-lg px-4 py-2 border border-slate-700"
-                />
-              </div>
-              <div>
-                <label className="text-slate-300 text-sm block mb-1">Ban mong muốn</label>
-                <input
-                  type="text"
-                  value={candidateForm.desired_dept}
-                  onChange={(e) => setCandidateForm({ ...candidateForm, desired_dept: e.target.value })}
-                  className="w-full bg-slate-800 text-white rounded-lg px-4 py-2 border border-slate-700"
-                />
-              </div>
-              <div>
-                <label className="text-slate-300 text-sm block mb-1">Ghi chú</label>
-                <textarea
-                  value={candidateForm.notes}
-                  onChange={(e) => setCandidateForm({ ...candidateForm, notes: e.target.value })}
-                  className="w-full bg-slate-800 text-white rounded-lg px-4 py-2 border border-slate-700"
-                  rows={3}
-                />
-              </div>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => setShowCandidateModal(false)}
-                className="flex-1 px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={createCandidate}
-                disabled={loading}
-                className="flex-1 px-4 py-2 bg-violet-500 text-white rounded-lg hover:bg-violet-600 disabled:opacity-50"
-              >
-                {loading ? 'Đang thêm...' : 'Thêm'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CandidateModal
+        show={showCandidateModal}
+        onClose={() => setShowCandidateModal(false)}
+        candidateForm={candidateForm}
+        setCandidateForm={setCandidateForm}
+        onSubmit={createCandidate}
+        loading={loading}
+        currentSeason={currentSeason}
+      />
 
-      {/* Scoring Modal */}
-      {showScoringModal && selectedCandidate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-white mb-4">Chấm Điểm - {selectedCandidate.full_name}</h3>
-            <div className="space-y-4">
-              {criteria.map(c => (
-                <div key={c.id} className="bg-slate-800/50 rounded-lg p-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="text-slate-300 font-medium">{c.criteria_name}</label>
-                    <span className="text-slate-400 text-sm">Max: {c.max_score}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max={c.max_score}
-                    step="0.5"
-                    value={scoringData[c.id] || 0}
-                    onChange={(e) => setScoringData({ ...scoringData, [c.id]: parseFloat(e.target.value) })}
-                    className="w-full"
-                  />
-                  <div className="text-right text-white font-bold mt-1">{scoringData[c.id] || 0}/{c.max_score}</div>
-                </div>
-              ))}
-              <div>
-                <label className="text-slate-300 text-sm block mb-1">Nhận xét</label>
-                <textarea
-                  value={scoringData.comments || ''}
-                  onChange={(e) => setScoringData({ ...scoringData, comments: e.target.value })}
-                  className="w-full bg-slate-800 text-white rounded-lg px-4 py-2 border border-slate-700"
-                  rows={3}
-                  placeholder="Nhận xét chi tiết về ứng viên..."
-                />
-              </div>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => {
-                  setShowScoringModal(false);
-                  setSelectedCandidate(null);
-                  setScoringData({});
-                }}
-                className="flex-1 px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={submitScores}
-                disabled={loading}
-                className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
-              >
-                {loading ? 'Đang gửi...' : 'Gửi Điểm'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ScoringModal
+        show={showScoringModal}
+        onClose={() => {
+          setShowScoringModal(false);
+          setSelectedCandidate(null);
+          setScoringData({});
+        }}
+        candidate={selectedCandidate}
+        criteria={criteria}
+        onSubmit={(candidateId, scores, comments) => submitScores()}
+        loading={loading}
+        currentUser={currentUser}
+        currentSeason={currentSeason}
+        submittedCandidates={submittedCandidates}
+        candidates={candidates}
+      />
 
-      {/* Interviewer Assignment Modal */}
-      {showInterviewerModal && selectedSeasonForInterviewers && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-white mb-4">Phân công Phỏng vấn - {selectedSeasonForInterviewers.name}</h3>
-            <div className="space-y-3">
-              {availableInterviewers.map(m => (
-                <div key={m.id} className="flex items-center justify-between bg-slate-800/50 rounded-lg p-3">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={m.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=100'}
-                      alt={m.name}
-                      className="w-10 h-10 rounded-full object-cover border border-slate-600"
-                    />
-                    <div>
-                      <div className="font-bold text-white text-sm">{m.name}</div>
-                      <div className="text-slate-400 text-xs">{m.roleTitle}</div>
-                    </div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedInterviewers.includes(m.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedInterviewers([...selectedInterviewers, m.id]);
-                        } else {
-                          setSelectedInterviewers(selectedInterviewers.filter(id => id !== m.id));
-                        }
-                      }}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-500"></div>
-                  </label>
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => {
-                  setShowInterviewerModal(false);
-                  setSelectedInterviewers([]);
-                  setSelectedSeasonForInterviewers(null);
-                }}
-                className="flex-1 px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={() => assignInterviewers(selectedSeasonForInterviewers.id, selectedInterviewers)}
-                disabled={loading}
-                className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
-              >
-                {loading ? 'Đang lưu...' : 'Lưu Phân Công Phỏng vấn'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <InterviewerModal
+        show={showInterviewerModal}
+        onClose={() => {
+          setShowInterviewerModal(false);
+          setSelectedInterviewers([]);
+          setSelectedSeasonForInterviewers(null);
+        }}
+        selectedSeason={selectedSeasonForInterviewers}
+        availableInterviewers={availableInterviewers}
+        selectedInterviewers={selectedInterviewers}
+        setSelectedInterviewers={setSelectedInterviewers}
+        onSubmit={() => assignInterviewers(selectedSeasonForInterviewers.id, selectedInterviewers)}
+        loading={loading}
+      />
 
-      {/* Candidate Interviewer Assignment Modal */}
-      {showCandidateInterviewerModal && selectedCandidate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-white mb-4">Phân công Phỏng vấn - {selectedCandidate.full_name}</h3>
-            <div className="space-y-3">
-              {availableInterviewers.map(m => (
-                <div key={m.id} className="flex items-center justify-between bg-slate-800/50 rounded-lg p-3">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={m.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=100'}
-                      alt={m.name}
-                      className="w-10 h-10 rounded-full object-cover border border-slate-600"
-                    />
-                    <div>
-                      <div className="font-bold text-white text-sm">{m.name}</div>
-                      <div className="text-slate-400 text-xs">{m.roleTitle}</div>
-                    </div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedCandidateInterviewers.includes(m.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedCandidateInterviewers([...selectedCandidateInterviewers, m.id]);
-                        } else {
-                          setSelectedCandidateInterviewers(selectedCandidateInterviewers.filter(id => id !== m.id));
-                        }
-                      }}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-500"></div>
-                  </label>
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => {
-                  setShowCandidateInterviewerModal(false);
-                  setSelectedCandidate(null);
-                  setSelectedCandidateInterviewers([]);
-                }}
-                className="flex-1 px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={() => {
-                  assignCandidateToInterviewer(selectedCandidate.id, selectedCandidateInterviewers);
-                  setShowCandidateInterviewerModal(false);
-                }}
-                disabled={loading}
-                className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
-              >
-                {loading ? 'Đang lưu...' : 'Lưu Phân Công'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CandidateInterviewerModal
+        show={showCandidateInterviewerModal}
+        onClose={() => {
+          setShowCandidateInterviewerModal(false);
+          setSelectedCandidate(null);
+          setSelectedCandidateInterviewers([]);
+        }}
+        candidate={selectedCandidate}
+        availableInterviewers={availableInterviewers}
+        selectedInterviewers={selectedCandidateInterviewers}
+        setSelectedInterviewers={setSelectedCandidateInterviewers}
+        onSubmit={() => {
+          assignCandidateToInterviewer(selectedCandidate.id, selectedCandidateInterviewers);
+          setShowCandidateInterviewerModal(false);
+        }}
+        loading={loading}
+      />
 
-      {/* Candidate Teamwork Scorer Assignment Modal */}
-      {showCandidateTeamworkModal && selectedCandidate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-white mb-4">Phân công Chấm Teamwork - {selectedCandidate.full_name}</h3>
-            <div className="space-y-3">
-              {availableInterviewers.map(m => (
-                <div key={m.id} className="flex items-center justify-between bg-slate-800/50 rounded-lg p-3">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={m.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=100'}
-                      alt={m.name}
-                      className="w-10 h-10 rounded-full object-cover border border-slate-600"
-                    />
-                    <div>
-                      <div className="font-bold text-white text-sm">{m.name}</div>
-                      <div className="text-slate-400 text-xs">{m.roleTitle}</div>
-                    </div>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedCandidateTeamworkScorers.includes(m.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedCandidateTeamworkScorers([...selectedCandidateTeamworkScorers, m.id]);
-                        } else {
-                          setSelectedCandidateTeamworkScorers(selectedCandidateTeamworkScorers.filter(id => id !== m.id));
-                        }
-                      }}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500"></div>
-                  </label>
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-3 mt-6">
-              <button
-                onClick={() => {
-                  setShowCandidateTeamworkModal(false);
-                  setSelectedCandidate(null);
-                  setSelectedCandidateTeamworkScorers([]);
-                }}
-                className="flex-1 px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={() => {
-                  assignCandidateTeamworkScorers(selectedCandidate.id, selectedCandidateTeamworkScorers);
-                  setShowCandidateTeamworkModal(false);
-                }}
-                disabled={loading}
-                className="flex-1 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:opacity-50"
-              >
-                {loading ? 'Đang lưu...' : 'Lưu Phân Công'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CandidateTeamworkModal
+        show={showCandidateTeamworkModal}
+        onClose={() => {
+          setShowCandidateTeamworkModal(false);
+          setSelectedCandidate(null);
+          setSelectedCandidateTeamworkScorers([]);
+        }}
+        candidate={selectedCandidate}
+        availableInterviewers={availableInterviewers}
+        selectedScorers={selectedCandidateTeamworkScorers}
+        setSelectedScorers={setSelectedCandidateTeamworkScorers}
+        onSubmit={() => {
+          assignCandidateTeamworkScorers(selectedCandidate.id, selectedCandidateTeamworkScorers);
+          setShowCandidateTeamworkModal(false);
+        }}
+        loading={loading}
+      />
 
     </div>
   );

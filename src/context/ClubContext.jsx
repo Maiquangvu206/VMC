@@ -1,13 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import {
-  loadDatabaseFromStorage,
-  saveDatabaseToStorage,
-  resetDatabaseToDefault,
-  exportDatabaseJSON,
-  importDatabaseJSON
-} from '../services/dbService';
-import { fetchMembersFromDatabaseAPI, loginMemberAPI, createMemberAPI, updateMemberAPI, deleteMemberAPI } from '../services/api';
+import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../hooks/useTheme';
+import { useToast } from '../hooks/useToast';
+import { useDatabase } from '../hooks/useDatabase';
+import { fetchMembersFromDatabaseAPI, createMemberAPI, updateMemberAPI, deleteMemberAPI } from '../services/api';
 import { fetchEntityAPI, createEntityAPI, updateEntityAPI, deleteEntityAPI } from '../services/apiClient';
 
 const ClubContext = createContext();
@@ -22,17 +19,11 @@ const DEFAULT_GENERATIONS = [
 ];
 
 export const ClubProvider = ({ children }) => {
-  const [theme, setTheme] = useState('dark');
-  const [toasts, setToasts] = useState([]);
-
-  const showToast = (message, type = 'success', duration = 3000) => {
-    const id = 'toast-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-    setToasts(prev => [...prev, { id, message, type, duration }]);
-  };
-
-  const removeToast = (id) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-  };
+  const { theme, setTheme, toggleTheme } = useTheme();
+  const { toasts, showToast, removeToast } = useToast();
+  const { db, setDb, saveDatabase, resetDatabase, exportDatabase, importDatabase, updateDatabase } = useDatabase();
+  
+  const { currentUser, isAuthenticated, requirePasswordChange, setRequirePasswordChange, login, logout, updateUser, currentSessionId, setCurrentSessionId } = useAuth(db, setDb);
 
   const [activeTab, setActiveTabState] = useState(() => {
     try {
@@ -49,40 +40,7 @@ export const ClubProvider = ({ children }) => {
     } catch (e) { }
   };
 
-  const [db, setDb] = useState(() => loadDatabaseFromStorage());
-
   const [sessions, setSessions] = useState([]);
-  const [currentSessionId, setCurrentSessionId] = useState(() => {
-    try {
-      let savedId = sessionStorage.getItem('VMC_SESSION_ID');
-      if (!savedId) {
-        savedId = 'sess-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now();
-        sessionStorage.setItem('VMC_SESSION_ID', savedId);
-      }
-      return savedId;
-    } catch (e) {
-      return 'sess-' + Date.now();
-    }
-  });
-
-  const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      const savedUser = sessionStorage.getItem('VMC_CURRENT_USER');
-      return savedUser ? JSON.parse(savedUser) : (db.members?.[0] || null);
-    } catch (e) {
-      return db.members?.[0] || null;
-    }
-  });
-
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    try {
-      return sessionStorage.getItem('VMC_IS_AUTH') === 'true';
-    } catch (e) {
-      return true;
-    }
-  });
-
-  const [requirePasswordChange, setRequirePasswordChange] = useState(false);
   const [isBorrowModalOpen, setIsBorrowModalOpen] = useState(false);
   const [selectedEquipment, setSelectedEquipment] = useState(null);
   const [isNewTaskModalOpen, setIsNewTaskModalOpen] = useState(false);
@@ -432,10 +390,6 @@ export const ClubProvider = ({ children }) => {
     return taskObj;
   };
 
-  const toggleTheme = () => {
-    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
-  };
-
   const triggerConfetti = () => {
     // Disabled fireworks effect per user request
   };
@@ -552,52 +506,6 @@ export const ClubProvider = ({ children }) => {
     showToast('🎉 Trưởng Ban Đối Ngoại - Nhân Sự đã duyệt thành công buổi điểm danh sinh hoạt! Tất cả thành viên có mặt đã được cộng 50 điểm thi đua PTS.', 'success');
   };
 
-  // Login function matching Member Code & Password (API Auth & Local fallback)
-  const login = async (memberCode, password) => {
-    // 1. Authenticate via Private Server API
-    const apiRes = await loginMemberAPI(memberCode, password);
-    if (apiRes && apiRes.success && apiRes.user) {
-      const user = apiRes.user;
-
-      if (user.status === 'Suspended') {
-        const errorText = getFirstLine('Tài khoản này đã bị tạm khóa bởi Ban Chủ Nhiệm!');
-        showToast(errorText, 'error');
-        return false;
-      }
-
-      setCurrentUser(user);
-      if (user.isFirstLogin && user.memberCode !== 'ADMIN') {
-        setRequirePasswordChange(true);
-        setIsAuthenticated(false);
-      } else {
-        setRequirePasswordChange(false);
-        setIsAuthenticated(true);
-        triggerConfetti();
-      }
-      return true;
-    }
-
-    // If API returns a specific suspended message, alert it and stop
-    if (apiRes && !apiRes.success && apiRes.message?.includes('tạm khóa')) {
-      const errorText = getFirstLine(apiRes.message);
-      showToast(errorText, 'error');
-      return false;
-    }
-
-    // Nếu API thất bại (server offline / lỗi kết nối) → thông báo rõ ràng
-    if (!apiRes || !apiRes.success) {
-      const rawErrMsg = apiRes?.message || 'Server API offline';
-      const errMsg = getFirstLine(rawErrMsg);
-      if (errMsg === 'Server API offline' || errMsg.toLowerCase().includes('offline') || errMsg.toLowerCase().includes('fetch')) {
-        showToast('❌ Không thể kết nối đến máy chủ! Vui lòng kiểm tra kết nối mạng hoặc liên hệ Bộ Phận Kỹ Thuật.', 'error');
-      }
-      return false;
-    }
-
-    showToast('Mã Thành Viên hoặc Mật khẩu không chính xác!', 'error');
-    return false;
-  };
-
   // Mandatory first time password change
   const changePassword = async (oldPassword, newPassword) => {
     const targetId = currentUser?.id || currentUser?.memberCode;
@@ -634,30 +542,6 @@ export const ClubProvider = ({ children }) => {
     triggerConfetti();
     showToast('🎉 Đổi mật khẩu cá nhân thành công! Mật khẩu mới và trạng thái đã được lưu vào CSDL MySQL.', 'success');
     return true;
-  };
-
-
-
-  const logout = async () => {
-    const sessionId = sessionStorage.getItem('VMC_SESSION_ID') || currentSessionId;
-    try {
-      await fetch('/api/sessions/logout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, memberId: currentUser?.id, username: currentUser?.username || currentUser?.memberCode })
-      });
-    } catch (e) {
-      console.warn('⚠️ Không thể cập nhật trạng thái phiên khi đăng xuất:', e.message);
-    }
-    sessionStorage.removeItem('VMC_SESSION_ID');
-    setIsAuthenticated(false);
-    setRequirePasswordChange(false);
-    setCurrentUser(null);
-    const newId = 'sess-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now();
-    setCurrentSessionId(newId);
-    try {
-      sessionStorage.setItem('VMC_SESSION_ID', newId);
-    } catch (e) {}
   };
 
   // Add new Resource item (Google Drive Link)
