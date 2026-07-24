@@ -16,7 +16,10 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import apiRouter from './api.js';
 
-const hashPassword = (pwd) => pwd;
+const hashPassword = (pwd) => {
+  if (typeof pwd !== 'string' || pwd === '') return '';
+  return bcrypt.hashSync(pwd, 12);
+};
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -368,12 +371,18 @@ app.post('/api/auth/login', async (req, res) => {
 
     const user = rows[0];
 
+    const storedPassword = String(user.password || '');
     let isValidPassword = false;
-    if (!user.password) {
-      isValidPassword = true;
-    } else {
-      if (user.password === password) isValidPassword = true;
-      else if (password === user.member_code) isValidPassword = true;
+
+    if (storedPassword.startsWith('$2a$') || storedPassword.startsWith('$2b$') || storedPassword.startsWith('$2y$')) {
+      isValidPassword = await bcrypt.compare(password, storedPassword);
+    } else if (storedPassword.length > 0) {
+      isValidPassword = password === storedPassword;
+      if (isValidPassword) {
+        // Migrate legacy plain-text passwords to bcrypt on first successful login.
+        const hashed = hashPassword(password);
+        await queryDatabase('UPDATE Members SET password = ? WHERE id = ? OR member_code = ? OR username = ?', [hashed, String(user.id), String(user.member_code), String(user.username)]).catch(() => {});
+      }
     }
 
     if (!isValidPassword) {
