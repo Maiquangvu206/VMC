@@ -943,6 +943,68 @@ router.put('/birthday-assignments/:id', async (req, res) => {
   }
 });
 
+// ======================= MONTHLY BIRTHDAY CONFIG =======================
+router.get('/birthday-config', async (req, res) => {
+  try {
+    const { month, year } = req.query;
+    if (!month || !year) return res.status(400).json({ success: false, error: 'Thiếu tham số month/year' });
+    const rows = await queryDatabase(
+      'SELECT * FROM Monthly_Birthday_Config WHERE config_month = ? AND config_year = ? LIMIT 1',
+      [parseInt(month), parseInt(year)]
+    );
+    res.json({ success: true, data: rows.length > 0 ? { wishTemplate: rows[0].wish_template || '', cardUrl: rows[0].card_url || '' } : { wishTemplate: '', cardUrl: '' } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.put('/birthday-config', async (req, res) => {
+  try {
+    const { month, year, wishTemplate, cardUrl } = req.body;
+    if (!month || !year) return res.status(400).json({ success: false, error: 'Thiếu tham số month/year' });
+    const id = `bday-cfg-${month}-${year}`;
+    await queryDatabase(
+      `INSERT INTO Monthly_Birthday_Config (id, config_month, config_year, wish_template, card_url)
+       VALUES (?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE wish_template = VALUES(wish_template), card_url = VALUES(card_url)`,
+      [id, parseInt(month), parseInt(year), wishTemplate || '', cardUrl || '']
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post('/birthday-config/upload-card', upload.single('file'), async (req, res) => {
+  const file = req.file;
+  if (!file) return res.status(400).json({ success: false, message: 'Không tìm thấy file!' });
+  try {
+    const drive = authDrive();
+    if (!drive) {
+      if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+      return res.status(500).json({ success: false, message: 'Google Drive API chưa được cấu hình!' });
+    }
+    const folderId = await getHRDriveFolderId();
+    const fileMetadata = { name: `thiep-sinh-nhat-${Date.now()}-${file.originalname}` };
+    if (folderId) fileMetadata.parents = [folderId];
+    const driveFile = await drive.files.create({
+      resource: fileMetadata,
+      media: { mimeType: file.mimetype, body: fs.createReadStream(file.path) },
+      fields: 'id, webViewLink, webContentLink'
+    });
+    try {
+      await drive.permissions.create({ fileId: driveFile.data.id, requestBody: { role: 'reader', type: 'anyone' } });
+    } catch (e) { /* ignore */ }
+    if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+    // Trả về direct image link
+    const directUrl = `https://drive.google.com/uc?export=view&id=${driveFile.data.id}`;
+    res.json({ success: true, url: directUrl, webViewLink: driveFile.data.webViewLink });
+  } catch (err) {
+    if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // ======================= GOOGLE DRIVE CONFIG & HELPERS =======================
 const authDrive = () => {
   const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;

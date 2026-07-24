@@ -1481,18 +1481,37 @@ export const ClubProvider = ({ children }) => {
       return { ...prev, birthdayAssignments: [...assignments, bdayObj] };
     });
  
-    const deadlineDate = getMonitoringDeadline(year, month) || new Date();
-    const bdayDeadline = `${deadlineDate.getFullYear()}-${String(deadlineDate.getMonth() + 1).padStart(2, '0')}-${String(deadlineDate.getDate()).padStart(2, '0')}`;
+    // Task 1: Chuẩn bị tư liệu — deadline ngày 28 tháng TRƯỚC
+    const prepDeadlineDate = getPhotoAndDataDeadline(year, month) || new Date();
+    const prepDeadline = `${prepDeadlineDate.getFullYear()}-${String(prepDeadlineDate.getMonth() + 1).padStart(2, '0')}-${String(prepDeadlineDate.getDate()).padStart(2, '0')}`;
 
     await createTaskRecord({
-      id: `task-bday-${bdayObj.id}`,
-      title: `Thực hiện trực sinh nhật ${month}/${year}`,
-      description: `Thành viên ${assignedMember?.name || assignedMember?.memberCode || 'Chưa có'} được giao trực sinh nhật cho tháng ${month}/${year}.`, 
-      desc: `Trực sinh nhật tháng ${month}/${year} đang chờ nộp link bài đăng.`,
+      id: `task-bday-prep-${bdayObj.id}`,
+      title: `Chuẩn bị tư liệu sinh nhật tháng ${month}/${year}`,
+      description: `Tìm hình ảnh, viết lời chúc cho thành viên sinh nhật tháng ${month}/${year}. Hạn chót nộp tư liệu: ${prepDeadline}.`,
+      desc: `Nộp tư liệu sinh nhật tháng ${month}/${year} trước ngày ${prepDeadline}.`,
       department: 'hr_external',
       assigneeId: memberId,
       assignee: assignedMember?.name || 'Thành viên còn thiếu',
-      deadline: bdayDeadline,
+      deadline: prepDeadline,
+      createdById: currentUser?.id,
+      pointsReward: 0,
+      status: 'todo'
+    });
+
+    // Task 2: Trực sinh nhật — deadline ngày cuối tháng sinh nhật
+    const monitorDeadlineDate = getMonitoringDeadline(year, month) || new Date();
+    const monitorDeadline = `${monitorDeadlineDate.getFullYear()}-${String(monitorDeadlineDate.getMonth() + 1).padStart(2, '0')}-${String(monitorDeadlineDate.getDate()).padStart(2, '0')}`;
+
+    await createTaskRecord({
+      id: `task-bday-monitor-${bdayObj.id}`,
+      title: `Trực sinh nhật tháng ${month}/${year}`,
+      description: `Thành viên ${assignedMember?.name || assignedMember?.memberCode || 'Chưa có'} phụ trách đăng bài chúc mừng sinh nhật cho các thành viên trong tháng ${month}/${year}. Hạn chót: ${monitorDeadline}.`,
+      desc: `Trực sinh nhật tháng ${month}/${year} — hạn cuối tháng (${monitorDeadline}).`,
+      department: 'hr_external',
+      assigneeId: memberId,
+      assignee: assignedMember?.name || 'Thành viên còn thiếu',
+      deadline: monitorDeadline,
       createdById: currentUser?.id,
       pointsReward: 0,
       status: 'todo'
@@ -1735,29 +1754,47 @@ export const ClubProvider = ({ children }) => {
         ...((() => {
           const virtuals = [];
           
-          // 1. Birthday Assignments -> Tasks
+          // 1. Birthday Assignments -> Tasks (2 task riêng biệt)
           const birthdayAssignments = db.birthdayAssignments || [];
           birthdayAssignments.forEach(b => {
             const assigneeObj = (db.members || []).find(m => String(m.id) === String(b.memberId) || String(m.memberCode) === String(b.memberId));
             const assigneeName = assigneeObj ? assigneeObj.name : 'Chưa phân công';
-            
             const status = b.status === 'completed' ? 'done' : 'doing';
-            const deadlineDate = getMonitoringDeadline(b.year, b.month) || new Date();
-            const deadline = `${deadlineDate.getFullYear()}-${String(deadlineDate.getMonth() + 1).padStart(2, '0')}-${String(deadlineDate.getDate()).padStart(2, '0')}`;
 
+            // Task 1: Chuẩn bị tư liệu — deadline ngày 28 tháng TRƯỚC
+            const prepDate = getPhotoAndDataDeadline(b.year, b.month) || new Date();
+            const prepDeadline = `${prepDate.getFullYear()}-${String(prepDate.getMonth() + 1).padStart(2, '0')}-${String(prepDate.getDate()).padStart(2, '0')}`;
             virtuals.push({
-              id: `virtual-bday-${b.id}`,
+              id: `virtual-bday-prep-${b.id}`,
               title: `🎂 Chuẩn bị tư liệu sinh nhật tháng ${b.month}/${b.year}`,
-              description: `Tìm hình ảnh, viết lời chúc và làm bài mừng sinh nhật cho thành viên CLB trong tháng.`,
-              desc: `Tìm hình ảnh, viết lời chúc và làm bài mừng sinh nhật cho thành viên CLB trong tháng.`,
+              description: `Tìm hình ảnh, viết lời chúc cho thành viên sinh nhật tháng ${b.month}/${b.year}. Hạn nộp tư liệu: ngày 28 tháng trước.`,
+              desc: `Nộp tư liệu sinh nhật tháng ${b.month}/${b.year} trước ngày ${prepDeadline}.`,
               department: 'hr_external',
               assignee: assigneeName,
               assigneeId: b.memberId,
-              deadline,
+              deadline: prepDeadline,
               status,
               pointsReward: 10,
               isVirtual: true,
-              virtualType: 'birthday'
+              virtualType: 'birthday_prep'
+            });
+
+            // Task 2: Trực sinh nhật — deadline ngày cuối tháng sinh nhật
+            const monitorDate = getMonitoringDeadline(b.year, b.month) || new Date();
+            const monitorDeadline = `${monitorDate.getFullYear()}-${String(monitorDate.getMonth() + 1).padStart(2, '0')}-${String(monitorDate.getDate()).padStart(2, '0')}`;
+            virtuals.push({
+              id: `virtual-bday-monitor-${b.id}`,
+              title: `🎉 Trực sinh nhật tháng ${b.month}/${b.year}`,
+              description: `Đăng bài chúc mừng sinh nhật cho các thành viên trong tháng ${b.month}/${b.year}. Hạn chót: cuối tháng ${b.month}.`,
+              desc: `Trực sinh nhật tháng ${b.month}/${b.year} — hạn cuối tháng (${monitorDeadline}).`,
+              department: 'hr_external',
+              assignee: assigneeName,
+              assigneeId: b.memberId,
+              deadline: monitorDeadline,
+              status,
+              pointsReward: 10,
+              isVirtual: true,
+              virtualType: 'birthday_monitor'
             });
           });
 

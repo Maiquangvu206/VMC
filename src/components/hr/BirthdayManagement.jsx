@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useClub } from '../../context/ClubContext';
 import { 
   Gift, 
@@ -13,7 +13,10 @@ import {
   Check, 
   AlertTriangle,
   User,
-  Sparkles
+  Sparkles,
+  Mail,
+  Save,
+  Upload
 } from 'lucide-react';
 
 export const BirthdayManagement = () => {
@@ -48,6 +51,79 @@ export const BirthdayManagement = () => {
   const [submissionMethod, setSubmissionMethod] = useState('upload'); // 'upload' or 'link'
   const [selectedFile, setSelectedFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+
+  // --- Monthly Email Config State ---
+  // emailConfigs: { 'month-year': { wishTemplate, cardUrl, isSaving, cardUploading } }
+  const [emailConfigs, setEmailConfigs] = useState({});
+
+  const getConfigKey = (month, year) => `${month}-${year}`;
+
+  const fetchEmailConfig = useCallback(async (month, year) => {
+    const key = getConfigKey(month, year);
+    try {
+      const res = await fetch(`/api/birthday-config?month=${month}&year=${year}`);
+      const result = await res.json();
+      if (result.success) {
+        setEmailConfigs(prev => ({
+          ...prev,
+          [key]: { wishTemplate: result.data.wishTemplate, cardUrl: result.data.cardUrl, isSaving: false, cardUploading: false }
+        }));
+      }
+    } catch (e) { /* ignore */ }
+  }, []);
+
+  useEffect(() => {
+    birthdayAssignments.forEach(a => fetchEmailConfig(a.month, a.year));
+  }, [birthdayAssignments, fetchEmailConfig]);
+
+  const updateConfig = (month, year, patch) => {
+    const key = getConfigKey(month, year);
+    setEmailConfigs(prev => ({ ...prev, [key]: { ...prev[key], ...patch } }));
+  };
+
+  const handleSaveEmailConfig = async (month, year) => {
+    const key = getConfigKey(month, year);
+    const cfg = emailConfigs[key] || {};
+    updateConfig(month, year, { isSaving: true });
+    try {
+      const res = await fetch('/api/birthday-config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ month, year, wishTemplate: cfg.wishTemplate || '', cardUrl: cfg.cardUrl || '' })
+      });
+      const result = await res.json();
+      if (result.success) {
+        if (showToast) showToast('✅ Đã lưu cấu hình email tháng ' + month + '/' + year, 'success');
+      } else {
+        if (showToast) showToast('Lỗi lưu cấu hình!', 'error');
+      }
+    } catch (e) {
+      if (showToast) showToast('Lỗi kết nối server!', 'error');
+    } finally {
+      updateConfig(month, year, { isSaving: false });
+    }
+  };
+
+  const handleUploadCard = async (month, year, file) => {
+    if (!file) return;
+    updateConfig(month, year, { cardUploading: true });
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/birthday-config/upload-card', { method: 'POST', body: formData });
+      const result = await res.json();
+      if (result.success && result.url) {
+        updateConfig(month, year, { cardUrl: result.url });
+        if (showToast) showToast('🎉 Đã tải thiệp lên thành công!', 'success');
+      } else {
+        if (showToast) showToast(result.message || 'Lỗi tải thiệp lên!', 'error');
+      }
+    } catch (e) {
+      if (showToast) showToast('Lỗi kết nối server!', 'error');
+    } finally {
+      updateConfig(month, year, { cardUploading: false });
+    }
+  };
 
   const handleAssign = (e) => {
     e.preventDefault();
@@ -379,6 +455,82 @@ export const BirthdayManagement = () => {
                   </div>
                 )}
               </div>
+
+              {/* Email Config Section - HR Head / Admin only */}
+              {(isHRHead || isAdmin) && (() => {
+                const key = getConfigKey(a.month, a.year);
+                const cfg = emailConfigs[key] || {};
+                return (
+                  <div className="mt-2 pt-4 border-t border-pink-500/20">
+                    <h5 className="text-xs font-bold text-pink-300 mb-3 flex items-center gap-2">
+                      <Mail className="w-3.5 h-3.5" /> Cấu hình gửi email chúc mừng tháng {a.month}
+                    </h5>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-[11px] text-slate-400 mb-1 block">Lời chúc của tháng (template email tự động)</label>
+                        <textarea
+                          rows={3}
+                          placeholder="Nhập nội dung lời chúc sẽ gửi kèm email sinh nhật... (có thể dùng {name}, {month})..."
+                          value={cfg.wishTemplate || ''}
+                          onChange={e => updateConfig(a.month, a.year, { wishTemplate: e.target.value })}
+                          className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white text-xs focus:outline-none focus:border-pink-500 resize-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[11px] text-slate-400 mb-1 block">Thiệp chúc mừng của tháng</label>
+                        <div className="flex items-center gap-3">
+                          {cfg.cardUrl && (
+                            <a href={cfg.cardUrl} target="_blank" rel="noreferrer" className="shrink-0">
+                              <img src={cfg.cardUrl} alt="Thiệp" className="w-16 h-16 object-cover rounded-lg border border-pink-500/30" onError={e => e.target.style.display='none'} />
+                            </a>
+                          )}
+                          <div className="flex-1 space-y-1.5">
+                            <label className={`flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer text-xs font-semibold transition-all ${
+                              cfg.cardUploading ? 'opacity-50 cursor-not-allowed border-slate-700 text-slate-500' : 'border-pink-500/30 text-pink-300 hover:bg-pink-500/10'
+                            }`}>
+                              <Upload className="w-3.5 h-3.5" />
+                              {cfg.cardUploading ? 'Đang tải lên...' : (cfg.cardUrl ? 'Thay thiệp khác' : 'Tải thiệp lên')}
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                disabled={cfg.cardUploading}
+                                onChange={e => handleUploadCard(a.month, a.year, e.target.files[0])}
+                              />
+                            </label>
+                            {cfg.cardUrl && (
+                              <input
+                                type="url"
+                                value={cfg.cardUrl}
+                                onChange={e => updateConfig(a.month, a.year, { cardUrl: e.target.value })}
+                                placeholder="Hoặc dán URL thiệp..."
+                                className="w-full px-2.5 py-1.5 bg-slate-950 border border-white/10 rounded-lg text-white font-mono text-[10px] focus:outline-none focus:border-pink-500"
+                              />
+                            )}
+                          </div>
+                        </div>
+                        {!cfg.cardUrl && (
+                          <input
+                            type="url"
+                            value={cfg.cardUrl || ''}
+                            onChange={e => updateConfig(a.month, a.year, { cardUrl: e.target.value })}
+                            placeholder="Hoặc dán URL thiệp trực tiếp..."
+                            className="mt-1.5 w-full px-2.5 py-1.5 bg-slate-950 border border-white/10 rounded-lg text-white font-mono text-[10px] focus:outline-none focus:border-pink-500"
+                          />
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleSaveEmailConfig(a.month, a.year)}
+                        disabled={cfg.isSaving}
+                        className="w-full py-2 rounded-xl bg-pink-600 hover:bg-pink-500 disabled:opacity-50 text-white text-xs font-bold flex items-center justify-center gap-2 border border-pink-500/50 transition-all"
+                      >
+                        <Save className="w-3.5 h-3.5" />
+                        {cfg.isSaving ? 'Đang lưu...' : 'Lưu Cấu Hình Email'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
 
             </div>
           );

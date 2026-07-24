@@ -86,6 +86,20 @@ async function init() {
     await queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN is_penalized TINYINT DEFAULT 0').catch(() => {});
     await queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN wishes_template TEXT').catch(() => {});
 
+    // 5.1. Monthly_Birthday_Config
+    console.log('5️⃣.1️⃣ Khởi tạo bảng Monthly_Birthday_Config...');
+    await queryDatabase(`
+      CREATE TABLE IF NOT EXISTS Monthly_Birthday_Config (
+        id VARCHAR(50) PRIMARY KEY,
+        config_month INT NOT NULL,
+        config_year INT NOT NULL,
+        wish_template TEXT,
+        card_url TEXT,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_month_year (config_month, config_year)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `).catch(() => {});
+
     // 6. Resources
     console.log('6️⃣ Khởi tạo bảng Resources...');
     await queryDatabase(`
