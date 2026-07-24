@@ -339,41 +339,45 @@ export const InternalMembers = () => {
     setEditingMember(null);
   };
 
-  // Filter out technical Admin & Super Admin accounts from member list calculations
-  const nonAdminMembers = members.filter(m => {
-    const roleTitle = (m.roleTitle || m.role_title || '').toLowerCase();
-    const code = (m.memberCode || m.member_code || '').toUpperCase();
-    const uname = (m.username || '').toLowerCase();
-    return !roleTitle.includes('super admin') && code !== 'ADMIN' && uname !== 'admin';
-  });
+  // Filter out technical Admin & Super Admin accounts from member list calculations (Memoized for performance)
+  const nonAdminMembers = React.useMemo(() => {
+    return members.filter(m => {
+      const roleTitle = (m.roleTitle || m.role_title || '').toLowerCase();
+      const code = (m.memberCode || m.member_code || '').toUpperCase();
+      const uname = (m.username || '').toLowerCase();
+      return !roleTitle.includes('super admin') && code !== 'ADMIN' && uname !== 'admin';
+    });
+  }, [members]);
 
-  // Filter Members Logic by Search Query & Period/Term & Department
-  const filteredMembers = nonAdminMembers.filter(m => {
-    const memberGen = formatGen(m.termName || m.term || '');
-    const memberDept = normalizeText(m.deptName || m.department || '');
+  // Filter Members Logic by Search Query & Period/Term & Department (Memoized for performance)
+  const filteredMembers = React.useMemo(() => {
+    return nonAdminMembers.filter(m => {
+      const memberGen = formatGen(m.termName || m.term || '');
+      const memberDept = normalizeText(m.deptName || m.department || '');
 
-    // 1. Period / Term match
-    const matchesTerm = selectedTerm === 'ALL' || memberGen === selectedTerm;
+      // 1. Period / Term match
+      const matchesTerm = selectedTerm === 'ALL' || memberGen === selectedTerm;
 
-    // 2. Department match
-    const selectedDeptNormalized = normalizeText(selectedDept);
-    const matchesDept =
-      selectedDept === 'ALL' ||
-      memberDept === selectedDeptNormalized ||
-      memberDept.includes(selectedDeptNormalized);
+      // 2. Department match
+      const selectedDeptNormalized = normalizeText(selectedDept);
+      const matchesDept =
+        selectedDept === 'ALL' ||
+        memberDept === selectedDeptNormalized ||
+        memberDept.includes(selectedDeptNormalized);
 
-    // 3. Search text query match
-    const q = normalizeText(searchQuery);
-    const matchesQuery = !q ||
-      normalizeText(m.name).includes(q) ||
-      normalizeText(m.memberCode).includes(q) ||
-      normalizeText(m.class).includes(q) ||
-      normalizeText(m.deptName || m.department).includes(q) ||
-      normalizeText(m.roleTitle).includes(q) ||
-      normalizeText(m.phone).includes(q);
+      // 3. Search text query match
+      const q = normalizeText(searchQuery);
+      const matchesQuery = !q ||
+        normalizeText(m.name).includes(q) ||
+        normalizeText(m.memberCode).includes(q) ||
+        normalizeText(m.class).includes(q) ||
+        normalizeText(m.deptName || m.department).includes(q) ||
+        normalizeText(m.roleTitle).includes(q) ||
+        normalizeText(m.phone).includes(q);
 
-    return matchesTerm && matchesDept && matchesQuery;
-  });
+      return matchesTerm && matchesDept && matchesQuery;
+    });
+  }, [nonAdminMembers, searchQuery, selectedTerm, selectedDept]);
 
   return (
     <div className="container py-8 space-y-8 pb-20">

@@ -65,14 +65,12 @@ export const Navbar = () => {
     ))
   );
 
-  // Tuyển Gen visible: mùa tuyển đang bật + (Admin/HR Head/BCN hoặc bất kỳ thành viên được phân công interviewer)
-  const canSeeRecruitment = isRecruitmentSeasonActive && (
-    isAdmin ||
-    isHRHead ||
+  // Tuyển Gen visible: Admin luôn thấy, các role khác chỉ thấy khi mùa tuyển đang bật
+  const canSeeRecruitment = isAdmin || isHRHead || (isRecruitmentSeasonActive && (
     currentUserRoleTitle.includes('ch\u1ee7 nhi\u1ec7m') ||
     currentUserRoleTitle.includes('ph\u00f3 ch\u1ee7 nhi\u1ec7m') ||
     currentUserRoleTitle.includes('tr\u01b0\u1edfng ban')
-  );
+  ));
 
   const navItems = [
     { id: 'dashboard', label: 'Tổng Quan', icon: LayoutDashboard },

@@ -276,7 +276,7 @@ export const ClubProvider = ({ children }) => {
     };
 
     silentAutoSync();
-    const intervalId = setInterval(silentAutoSync, 3000);
+    const intervalId = setInterval(silentAutoSync, 30000);
 
     return () => {
       isMounted = false;
@@ -284,18 +284,20 @@ export const ClubProvider = ({ children }) => {
     };
   }, []);
 
-  // Auto-sync currentUser with latest db.members from MySQL
+  // Auto-sync currentUser with latest db.members from MySQL (Optimized to prevent unnecessary re-renders)
   useEffect(() => {
-    if (db.members && db.members.length > 0) {
-      setCurrentUser(prev => {
-        if (!prev) return db.members[0];
-        const match = db.members.find(m => String(m.id) === String(prev.id) || m.memberCode === prev.memberCode || m.username === prev.username);
-        if (!match) return db.members[0];
-        const hasChanged = Object.keys(match).some(key => match[key] !== prev[key]);
-        return hasChanged ? { ...prev, ...match } : prev;
-      });
+    if (db.members && db.members.length > 0 && currentUser) {
+      const match = db.members.find(m => String(m.id) === String(currentUser.id) || m.memberCode === currentUser.memberCode || m.username === currentUser.username);
+      if (match) {
+        // Only update if critical fields have changed
+        const criticalFields = ['status', 'points', 'role', 'roleTitle', 'deptName', 'milestones'];
+        const hasChanged = criticalFields.some(key => match[key] !== currentUser[key]);
+        if (hasChanged) {
+          setCurrentUser(prev => ({ ...prev, ...match }));
+        }
+      }
     }
-  }, [db.members]);
+  }, [db.members, currentUser?.id]);
 
   const announcements = db.announcements || [];
   const resources = db.resources || [];
