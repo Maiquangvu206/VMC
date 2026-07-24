@@ -183,6 +183,75 @@ async function init() {
     console.log('9️⃣ Khởi tạo các cột mới cho Finances...');
     await queryDatabase('ALTER TABLE Finances ADD COLUMN status VARCHAR(50) DEFAULT "approved"').catch(() => {});
 
+    // 10. Recruitment Module Tables
+    console.log('🔟 Khởi tạo bảng Recruitment_Seasons...');
+    await queryDatabase(`
+      CREATE TABLE IF NOT EXISTS Recruitment_Seasons (
+        id VARCHAR(100) PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        quota INT DEFAULT 0,
+        department VARCHAR(100),
+        scoring_type TEXT,
+        interviewer_ids TEXT,
+        is_active TINYINT DEFAULT 0,
+        created_by VARCHAR(100),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    console.log('🔟.1️⃣ Khởi tạo bảng Recruitment_Criteria...');
+    await queryDatabase(`
+      CREATE TABLE IF NOT EXISTS Recruitment_Criteria (
+        id VARCHAR(100) PRIMARY KEY,
+        season_id VARCHAR(100) NOT NULL,
+        criteria_name VARCHAR(255) NOT NULL,
+        max_score INT DEFAULT 10,
+        sort_order INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    console.log('🔟.2️⃣ Khởi tạo bảng Recruitment_Candidates...');
+    await queryDatabase(`
+      CREATE TABLE IF NOT EXISTS Recruitment_Candidates (
+        id VARCHAR(100) PRIMARY KEY,
+        season_id VARCHAR(100) NOT NULL,
+        full_name VARCHAR(255) NOT NULL,
+        class_name VARCHAR(50),
+        phone VARCHAR(20),
+        email VARCHAR(100),
+        desired_dept VARCHAR(100),
+        interviewer_id VARCHAR(100),
+        interviewer_ids TEXT,
+        teamwork_scorer_ids TEXT,
+        status VARCHAR(50) DEFAULT 'pending',
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    console.log('🔟.3️⃣ Khởi tạo bảng Recruitment_Scores...');
+    await queryDatabase(`
+      CREATE TABLE IF NOT EXISTS Recruitment_Scores (
+        id VARCHAR(100) PRIMARY KEY,
+        season_id VARCHAR(100) NOT NULL,
+        candidate_id VARCHAR(100) NOT NULL,
+        interviewer_id VARCHAR(100) NOT NULL,
+        criteria_id VARCHAR(100) NOT NULL,
+        score DECIMAL(5,2) DEFAULT 0,
+        comments TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    // Add columns if they don't exist (for existing tables)
+    await queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN interviewer_ids TEXT').catch(() => {});
+    await queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN department VARCHAR(100)').catch(() => {});
+    await queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN scoring_type TEXT').catch(() => {});
+    await queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN interviewer_ids TEXT').catch(() => {});
+    await queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN teamwork_scorer_ids TEXT').catch(() => {});
+    await queryDatabase('ALTER TABLE Recruitment_Scores ADD COLUMN comments TEXT').catch(() => {});
+
     // Tạo file SQL Dump trọn bộ để Import trực tiếp vào phpMyAdmin nếu muốn
     const sqlDumpContent = `-- ============================================================
 -- VMC PORTAL - DATABASE SCHEMA FOR PHPMYADMIN / MYSQL
@@ -318,6 +387,54 @@ CREATE TABLE IF NOT EXISTS Meeting_Attendance (
   status VARCHAR(50) DEFAULT 'present',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (meeting_id, member_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS Recruitment_Seasons (
+  id VARCHAR(100) PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  quota INT DEFAULT 0,
+  department VARCHAR(100),
+  scoring_type TEXT,
+  interviewer_ids TEXT,
+  is_active TINYINT DEFAULT 0,
+  created_by VARCHAR(100),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS Recruitment_Criteria (
+  id VARCHAR(100) PRIMARY KEY,
+  season_id VARCHAR(100) NOT NULL,
+  criteria_name VARCHAR(255) NOT NULL,
+  max_score INT DEFAULT 10,
+  sort_order INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS Recruitment_Candidates (
+  id VARCHAR(100) PRIMARY KEY,
+  season_id VARCHAR(100) NOT NULL,
+  full_name VARCHAR(255) NOT NULL,
+  class_name VARCHAR(50),
+  phone VARCHAR(20),
+  email VARCHAR(100),
+  desired_dept VARCHAR(100),
+  interviewer_id VARCHAR(100),
+  interviewer_ids TEXT,
+  teamwork_scorer_ids TEXT,
+  status VARCHAR(50) DEFAULT 'pending',
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS Recruitment_Scores (
+  id VARCHAR(100) PRIMARY KEY,
+  season_id VARCHAR(100) NOT NULL,
+  candidate_id VARCHAR(100) NOT NULL,
+  interviewer_id VARCHAR(100) NOT NULL,
+  criteria_id VARCHAR(100) NOT NULL,
+  score DECIMAL(5,2) DEFAULT 0,
+  comments TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 `;
 
