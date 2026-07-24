@@ -1585,9 +1585,7 @@ router.post('/recruitment/seasons', async (req, res) => {
 router.put('/recruitment/seasons/:id', async (req, res) => {
   try {
     const { name, quota, department, scoring_type, is_active, interviewer_ids } = req.body;
-    if (is_active === 1 || is_active === true) {
-      await queryDatabase('UPDATE Recruitment_Seasons SET is_active = 0');
-    }
+    // Removed the restriction that only one season can be active at a time
     const interviewerIdsVal = interviewer_ids !== undefined
       ? (Array.isArray(interviewer_ids) ? JSON.stringify(interviewer_ids) : interviewer_ids)
       : null;
@@ -1655,18 +1653,19 @@ router.delete('/recruitment/criteria/:id', async (req, res) => {
 router.get('/recruitment/candidates/:seasonId', async (req, res) => {
   try {
     const { interviewer_id } = req.query;
-    let sql = 'SELECT id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, status, notes, created_at FROM Recruitment_Candidates WHERE season_id = ?';
+    let sql = 'SELECT id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, status, notes, created_at FROM Recruitment_Candidates WHERE season_id = ?';
     const params = [req.params.seasonId];
-    // Interviewer chỉ thấy ứng viên được gán cho mình (check both interviewer_id and interviewer_ids)
+    // Interviewer chỉ thấy ứng viên được gán cho mình (check both interviewer_id, interviewer_ids, and teamwork_scorer_ids)
     if (interviewer_id) { 
-      sql += ' AND (interviewer_id = ? OR interviewer_ids LIKE ?)'; 
-      params.push(interviewer_id, `%"${interviewer_id}"%`);
+      sql += ' AND (interviewer_id = ? OR interviewer_ids LIKE ? OR teamwork_scorer_ids LIKE ?)'; 
+      params.push(interviewer_id, `%"${interviewer_id}"%`, `%"${interviewer_id}"%`);
     }
     sql += ' ORDER BY created_at ASC';
     const rows = await queryDatabase(sql, params);
     const data = rows.map(r => ({
       ...r,
-      interviewer_ids: (() => { try { return r.interviewer_ids ? JSON.parse(r.interviewer_ids) : []; } catch { return []; } })()
+      interviewer_ids: (() => { try { return r.interviewer_ids ? JSON.parse(r.interviewer_ids) : []; } catch { return []; } })(),
+      teamwork_scorer_ids: (() => { try { return r.teamwork_scorer_ids ? JSON.parse(r.teamwork_scorer_ids) : []; } catch { return []; } })()
     }));
     res.json({ success: true, data });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
@@ -1674,24 +1673,30 @@ router.get('/recruitment/candidates/:seasonId', async (req, res) => {
 
 router.post('/recruitment/candidates', async (req, res) => {
   try {
-    const { id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, notes } = req.body;
+    const { id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, notes } = req.body;
     const cid = id || ('cand-' + Date.now());
     const interviewerIdsVal = interviewer_ids !== undefined
       ? (Array.isArray(interviewer_ids) ? JSON.stringify(interviewer_ids) : interviewer_ids)
       : null;
+    const teamworkScorerIdsVal = teamwork_scorer_ids !== undefined
+      ? (Array.isArray(teamwork_scorer_ids) ? JSON.stringify(teamwork_scorer_ids) : teamwork_scorer_ids)
+      : null;
     await queryDatabase(
-      'INSERT INTO Recruitment_Candidates (id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [cid, season_id, full_name, class_name || null, phone || null, email || null, desired_dept || null, interviewer_id || null, interviewerIdsVal, notes || null]
+      'INSERT INTO Recruitment_Candidates (id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [cid, season_id, full_name, class_name || null, phone || null, email || null, desired_dept || null, interviewer_id || null, interviewerIdsVal, teamworkScorerIdsVal, notes || null]
     );
-    res.json({ success: true, data: { id: cid, season_id, full_name, interviewer_id, interviewer_ids, status: 'pending' } });
+    res.json({ success: true, data: { id: cid, season_id, full_name, interviewer_id, interviewer_ids, teamwork_scorer_ids, status: 'pending' } });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
 router.put('/recruitment/candidates/:id', async (req, res) => {
   try {
-    const { full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, status, notes } = req.body;
+    const { full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, status, notes } = req.body;
     const interviewerIdsVal = interviewer_ids !== undefined
       ? (Array.isArray(interviewer_ids) ? JSON.stringify(interviewer_ids) : interviewer_ids)
+      : null;
+    const teamworkScorerIdsVal = teamwork_scorer_ids !== undefined
+      ? (Array.isArray(teamwork_scorer_ids) ? JSON.stringify(teamwork_scorer_ids) : teamwork_scorer_ids)
       : null;
     await queryDatabase(
       `UPDATE Recruitment_Candidates SET
@@ -1699,9 +1704,10 @@ router.put('/recruitment/candidates/:id', async (req, res) => {
         phone = COALESCE(?, phone), email = COALESCE(?, email),
         desired_dept = COALESCE(?, desired_dept), interviewer_id = COALESCE(?, interviewer_id),
         interviewer_ids = COALESCE(?, interviewer_ids),
+        teamwork_scorer_ids = COALESCE(?, teamwork_scorer_ids),
         status = COALESCE(?, status), notes = COALESCE(?, notes)
        WHERE id = ?`,
-      [full_name??null, class_name??null, phone??null, email??null, desired_dept??null, interviewer_id??null, interviewerIdsVal, status??null, notes??null, req.params.id]
+      [full_name??null, class_name??null, phone??null, email??null, desired_dept??null, interviewer_id??null, interviewerIdsVal, teamworkScorerIdsVal, status??null, notes??null, req.params.id]
     );
     res.json({ success: true });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
