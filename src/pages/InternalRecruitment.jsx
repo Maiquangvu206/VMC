@@ -19,33 +19,6 @@ export const InternalRecruitment = () => {
     currentUserRoleTitle.includes('trưởng ban')
   );
 
-  // Check if current user can score based on scoring type
-  const canScore = React.useMemo(() => {
-    if (!currentSeason) return false;
-    
-    const scoringType = currentSeason.scoring_type || 'teamwork';
-    const seasonDept = currentSeason.department?.toLowerCase() || '';
-    const userDept = (currentUser?.deptName || currentUser?.department || '').toLowerCase();
-    const userRoleTitle = (currentUser?.roleTitle || '').toLowerCase();
-    
-    // BCN (Chủ Nhiệm, Phó Chủ Nhiệm) - always can score
-    const isBCN = userRoleTitle.includes('chủ nhiệm') || userRoleTitle.includes('phó chủ nhiệm');
-    
-    // Cố vấn (Advisor)
-    const isAdvisor = userRoleTitle.includes('cố vấn') || userRoleTitle.includes('advisor');
-    
-    // Department member
-    const isDeptMember = seasonDept && userDept.includes(seasonDept);
-    
-    if (scoringType === 'don') {
-      // Đơn: toàn bộ ban + BCN + cố vấn có thể chấm
-      return isBCN || isAdvisor || isDeptMember;
-    } else {
-      // Teamwork: chỉ người được phân công có thể chấm
-      return currentSeason?.interviewer_ids?.includes(currentUser?.id);
-    }
-  }, [currentSeason, currentUser]);
-
   const [activeTab, setActiveTab] = useState('seasons');
   const [seasons, setSeasons] = useState([]);
   const [currentSeason, setCurrentSeason] = useState(null);
@@ -62,9 +35,35 @@ export const InternalRecruitment = () => {
   const [submittedCandidates, setSubmittedCandidates] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedInterviewers, setSelectedInterviewers] = useState([]);
+  const [selectedCandidateInterviewers, setSelectedCandidateInterviewers] = useState([]);
+
+  // Check if current user can score based on scoring type
+  const canScore = React.useMemo(() => {
+    if (!currentSeason) return false;
+    
+    const scoringTypes = Array.isArray(currentSeason.scoring_type) ? currentSeason.scoring_type : [currentSeason.scoring_type || 'teamwork'];
+    const seasonDept = currentSeason.department?.toLowerCase() || '';
+    const userDept = (currentUser?.deptName || currentUser?.department || '').toLowerCase();
+    const userRoleTitle = (currentUser?.roleTitle || '').toLowerCase();
+    
+    // BCN (Chủ Nhiệm, Phó Chủ Nhiệm) - always can score
+    const isBCN = userRoleTitle.includes('chủ nhiệm') || userRoleTitle.includes('phó chủ nhiệm');
+    
+    // Cố vấn (Advisor)
+    const isAdvisor = userRoleTitle.includes('cố vấn') || userRoleTitle.includes('advisor');
+    
+    // Department member
+    const isDeptMember = seasonDept && userDept.includes(seasonDept);
+    
+    // Check if user can score based on any enabled scoring type
+    const canScoreDon = scoringTypes.includes('don') && (isBCN || isAdvisor || isDeptMember);
+    const canScoreTeamwork = scoringTypes.includes('teamwork') && currentSeason?.interviewer_ids?.includes(currentUser?.id);
+    
+    return canScoreDon || canScoreTeamwork;
+  }, [currentSeason, currentUser]);
 
   // Form states
-  const [seasonForm, setSeasonForm] = useState({ name: '', quota: 0, department: '', scoring_type: 'teamwork' });
+  const [seasonForm, setSeasonForm] = useState({ name: '', quota: 0, department: '', scoring_type: [] });
   const [criteriaForm, setCriteriaForm] = useState({ criteria_name: '', max_score: 10, sort_order: 0 });
   const [candidateForm, setCandidateForm] = useState({
     full_name: '', class_name: '', phone: '', email: '', desired_dept: '', notes: ''
@@ -172,7 +171,7 @@ export const InternalRecruitment = () => {
       if (data.success) {
         showToast('✅ Đã tạo mùa tuyển mới!', 'success');
         setShowSeasonModal(false);
-        setSeasonForm({ name: '', quota: 0, department: '', scoring_type: 'teamwork' });
+        setSeasonForm({ name: '', quota: 0, department: '', scoring_type: [] });
         fetchSeasons();
       } else {
         showToast('❌ Lỗi tạo mùa tuyển!', 'error');
@@ -294,16 +293,17 @@ export const InternalRecruitment = () => {
     setLoading(false);
   };
 
-  const assignCandidateToInterviewer = async (candidateId, interviewerId) => {
+  const assignCandidateToInterviewer = async (candidateId, interviewerIds) => {
     try {
       const res = await fetch(`/api/recruitment/candidates/${candidateId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
-        body: JSON.stringify({ interviewer_id: interviewerId })
+        body: JSON.stringify({ interviewer_ids: interviewerIds })
       });
       if (res.ok) {
         showToast('✅ Đã phân công Phỏng vấn!', 'success');
         fetchCandidates(currentSeason.id);
+        setSelectedCandidateInterviewers([]);
       }
     } catch (e) {
       showToast('❌ Lỗi phân công!', 'error');
@@ -653,16 +653,15 @@ export const InternalRecruitment = () => {
                       </button>
                     )}
                     {(isAdmin || isHRHead) && (
-                      <select
-                        value={c.interviewer_id || ''}
-                        onChange={(e) => assignCandidateToInterviewer(c.id, e.target.value)}
-                        className="bg-slate-800 text-white text-xs rounded-lg px-2 py-1 border border-slate-700"
+                      <button
+                        onClick={() => {
+                          setSelectedCandidate(c);
+                          setSelectedCandidateInterviewers(c.interviewer_ids || []);
+                        }}
+                        className="bg-blue-500/20 text-blue-300 text-xs rounded-lg px-2 py-1 border border-blue-500/30 hover:bg-blue-500/30"
                       >
-                        <option value="">Chọn Phỏng vấn</option>
-                        {availableInterviewers.map(i => (
-                          <option key={i.id} value={i.id}>{i.name}</option>
-                        ))}
-                      </select>
+                        Phân công ({(c.interviewer_ids || []).length})
+                      </button>
                     )}
                   </div>
                 </div>
@@ -678,7 +677,7 @@ export const InternalRecruitment = () => {
           <h2 className="text-xl font-bold text-white">
             Chấm Điểm Ứng Viên - {currentSeason.name}
             <span className="text-sm font-normal text-slate-400 ml-2">
-              ({currentSeason.scoring_type === 'don' ? 'Hình thức: Đơn' : 'Hình thức: Teamwork'})
+              ({Array.isArray(currentSeason.scoring_type) ? currentSeason.scoring_type.join(', ') : currentSeason.scoring_type})
             </span>
           </h2>
           <div className="grid gap-3">
@@ -804,14 +803,38 @@ export const InternalRecruitment = () => {
               </div>
               <div>
                 <label className="text-slate-300 text-sm block mb-1">Hình thức chấm điểm</label>
-                <select
-                  value={seasonForm.scoring_type}
-                  onChange={(e) => setSeasonForm({ ...seasonForm, scoring_type: e.target.value })}
-                  className="w-full bg-slate-800 text-white rounded-lg px-4 py-2 border border-slate-700"
-                >
-                  <option value="teamwork">Teamwork (chỉ người được phân công)</option>
-                  <option value="don">Đơn (toàn bộ ban + BCN + cố vấn)</option>
-                </select>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={seasonForm.scoring_type.includes('teamwork')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSeasonForm({ ...seasonForm, scoring_type: [...seasonForm.scoring_type, 'teamwork'] });
+                        } else {
+                          setSeasonForm({ ...seasonForm, scoring_type: seasonForm.scoring_type.filter(t => t !== 'teamwork') });
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-violet-500 focus:ring-violet-500"
+                    />
+                    <span className="text-slate-300 text-sm">Teamwork (chỉ người được phân công)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={seasonForm.scoring_type.includes('don')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSeasonForm({ ...seasonForm, scoring_type: [...seasonForm.scoring_type, 'don'] });
+                        } else {
+                          setSeasonForm({ ...seasonForm, scoring_type: seasonForm.scoring_type.filter(t => t !== 'don') });
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-violet-500 focus:ring-violet-500"
+                    />
+                    <span className="text-slate-300 text-sm">Đơn (toàn bộ ban + BCN + cố vấn)</span>
+                  </label>
+                </div>
               </div>
             </div>
             <div className="flex gap-3 mt-6">
@@ -1070,6 +1093,65 @@ export const InternalRecruitment = () => {
                 className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
               >
                 {loading ? 'Đang lưu...' : 'Lưu Phân Công Phỏng vấn'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Candidate Interviewer Assignment Modal */}
+      {selectedCandidate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-bold text-white mb-4">Phân công Phỏng vấn - {selectedCandidate.full_name}</h3>
+            <div className="space-y-3">
+              {availableInterviewers.map(m => (
+                <div key={m.id} className="flex items-center justify-between bg-slate-800/50 rounded-lg p-3">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={m.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=100'}
+                      alt={m.name}
+                      className="w-10 h-10 rounded-full object-cover border border-slate-600"
+                    />
+                    <div>
+                      <div className="font-bold text-white text-sm">{m.name}</div>
+                      <div className="text-slate-400 text-xs">{m.roleTitle}</div>
+                    </div>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={selectedCandidateInterviewers.includes(m.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedCandidateInterviewers([...selectedCandidateInterviewers, m.id]);
+                        } else {
+                          setSelectedCandidateInterviewers(selectedCandidateInterviewers.filter(id => id !== m.id));
+                        }
+                      }}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-violet-500"></div>
+                  </label>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setSelectedCandidate(null);
+                  setSelectedCandidateInterviewers([]);
+                }}
+                className="flex-1 px-4 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={() => assignCandidateToInterviewer(selectedCandidate.id, selectedCandidateInterviewers)}
+                disabled={loading}
+                className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+              >
+                {loading ? 'Đang lưu...' : 'Lưu Phân Công'}
               </button>
             </div>
           </div>
