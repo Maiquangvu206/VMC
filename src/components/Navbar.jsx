@@ -65,12 +65,8 @@ export const Navbar = () => {
     ))
   );
 
-  // Tuyển Gen visible: Admin luôn thấy, các role khác chỉ thấy khi mùa tuyển đang bật
-  const canSeeRecruitment = isAdmin || isHRHead || (isRecruitmentSeasonActive && (
-    currentUserRoleTitle.includes('ch\u1ee7 nhi\u1ec7m') ||
-    currentUserRoleTitle.includes('ph\u00f3 ch\u1ee7 nhi\u1ec7m') ||
-    currentUserRoleTitle.includes('tr\u01b0\u1edfng ban')
-  ));
+  // Tuyển Gen visible: Super Admin luôn thấy, tất cả thành viên khác chỉ thấy khi mùa tuyển đang bật
+  const canSeeRecruitment = isSuperAdmin || isRecruitmentSeasonActive;
 
   const navItems = [
     { id: 'dashboard', label: 'Tổng Quan', icon: LayoutDashboard },
