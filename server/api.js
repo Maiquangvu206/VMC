@@ -1761,6 +1761,10 @@ router.post('/recruitment/scores', async (req, res) => {
 router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
   try {
     const threshold = parseFloat(req.query.threshold) || 0;
+    // Get season quota
+    const seasonRow = await queryDatabase('SELECT quota FROM Recruitment_Seasons WHERE id = ?', [req.params.seasonId]);
+    const quota = seasonRow[0]?.quota || 0;
+    
     const rows = await queryDatabase(`
       SELECT
         c.id AS candidate_id,
@@ -1776,11 +1780,12 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
       LEFT JOIN Recruitment_Scores s ON s.candidate_id = c.id
       WHERE c.season_id = ?
       GROUP BY c.id, c.full_name, c.class_name, c.desired_dept, c.status, c.notes
-      ORDER BY avg_score DESC, total_score DESC
+      ORDER BY total_score DESC
     `, [req.params.seasonId]);
 
     const data = rows.map((r, idx) => {
       const avg = parseFloat(r.avg_score) || 0;
+      const total = parseFloat(r.total_score) || 0;
       let result_status = 'pending';
       if (r.status === 'passed') result_status = 'passed';
       else if (r.status === 'failed') result_status = 'failed';
@@ -1802,7 +1807,8 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
         avg_score: avg,
         total_score: parseFloat(r.total_score) || 0,
         result_status,
-        rank: idx + 1
+        rank: idx + 1,
+        quota: quota
       };
     });
     res.json({ success: true, data });

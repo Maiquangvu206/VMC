@@ -39,6 +39,11 @@ export const InternalRecruitment = () => {
   const [selectedCandidateTeamworkScorers, setSelectedCandidateTeamworkScorers] = useState([]);
   const [showCandidateInterviewerModal, setShowCandidateInterviewerModal] = useState(false);
   const [showCandidateTeamworkModal, setShowCandidateTeamworkModal] = useState(false);
+  const [scoringTypeFilter, setScoringTypeFilter] = useState(null);
+  const [candidateSearchQuery, setCandidateSearchQuery] = useState('');
+  const [filteredCandidates, setFilteredCandidates] = useState([]);
+  const [currentScoringCandidateIndex, setCurrentScoringCandidateIndex] = useState(0);
+  const [scoringComments, setScoringComments] = useState('');
 
   // Check if current user can score based on scoring type
   const canScore = React.useMemo(() => {
@@ -354,7 +359,7 @@ export const InternalRecruitment = () => {
           candidate_id: selectedCandidate.id,
           interviewer_id: currentUser.id,
           scores: scoresArray,
-          comments: scoringData.comments || ''
+          comments: scoringComments || ''
         })
       });
       const data = await res.json();
@@ -362,9 +367,22 @@ export const InternalRecruitment = () => {
         showToast('✅ Đã gửi điểm thành công!', 'success');
         setShowScoringModal(false);
         setScoringData({});
-        setSelectedCandidate(null);
+        setScoringComments('');
+        setSubmittedCandidates([...submittedCandidates, selectedCandidate.id]);
         fetchSubmittedCandidates(currentSeason.id);
         fetchCandidates(currentSeason.id);
+        
+        // Navigate to next candidate in filtered list
+        if (filteredCandidates.length > 0 && currentScoringCandidateIndex < filteredCandidates.length - 1) {
+          const newIndex = currentScoringCandidateIndex + 1;
+          setCurrentScoringCandidateIndex(newIndex);
+          setSelectedCandidate(filteredCandidates[newIndex]);
+        } else {
+          // No more candidates, clear selection
+          setSelectedCandidate(null);
+          setFilteredCandidates([]);
+          setCandidateSearchQuery('');
+        }
       } else {
         showToast('❌ Lỗi gửi điểm!', 'error');
       }
@@ -395,11 +413,11 @@ export const InternalRecruitment = () => {
     const targetSeason = selectedSeasonForInterviewers || currentSeason;
     if (!targetSeason) return [];
     
-    const seasonDept = targetSeason.department?.toLowerCase() || '';
+    const seasonDept = (targetSeason.department || '').toLowerCase().trim();
     
     return members.filter(m => {
       const roleTitle = (m.roleTitle || '').toLowerCase();
-      const memberDept = (m.deptName || m.department || '').toLowerCase();
+      const memberDept = (m.deptName || m.department || '').toLowerCase().trim();
       
       // BCN (Chủ Nhiệm, Phó Chủ Nhiệm) - always included
       const isBCN = roleTitle.includes('chủ nhiệm') || roleTitle.includes('phó chủ nhiệm');
@@ -408,7 +426,13 @@ export const InternalRecruitment = () => {
       const isAdvisor = roleTitle.includes('cố vấn') || roleTitle.includes('advisor');
       
       // Department members - check if department matches season's department
-      const isDeptMember = seasonDept && (memberDept === seasonDept || memberDept.includes(seasonDept));
+      // Handle exact match and partial match (e.g., "đối ngoại" matches "đối ngoại - nhân sự")
+      let isDeptMember = false;
+      if (seasonDept && memberDept) {
+        isDeptMember = memberDept === seasonDept || 
+                      memberDept.includes(seasonDept) || 
+                      seasonDept.includes(memberDept);
+      }
       
       return isBCN || isAdvisor || isDeptMember;
     });
@@ -667,8 +691,30 @@ export const InternalRecruitment = () => {
                       {c.status === 'pending' && <span className="text-slate-400 text-xs">⏳ Chờ chấm</span>}
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    {!isAdmin && !isHRHead && !submittedCandidates.includes(c.id) && (
+                  <div className="flex gap-2 flex-wrap">
+                    {!isAdmin && !isHRHead && !submittedCandidates.includes(c.id) && (() => {
+                      // Check if user is assigned to score this candidate
+                      const scoringTypes = Array.isArray(currentSeason.scoring_type) ? currentSeason.scoring_type : [currentSeason.scoring_type || 'teamwork'];
+                      const canScoreThisCandidate = scoringTypes.some(type => {
+                        if (type === 'don') {
+                          // Đơn: all dept members + BCN + advisors can score
+                          const seasonDept = currentSeason.department?.toLowerCase() || '';
+                          const userDept = (currentUser?.deptName || currentUser?.department || '').toLowerCase();
+                          const userRoleTitle = (currentUser?.roleTitle || '').toLowerCase();
+                          const isBCN = userRoleTitle.includes('chủ nhiệm') || userRoleTitle.includes('phó chủ nhiệm');
+                          const isAdvisor = userRoleTitle.includes('cố vấn') || userRoleTitle.includes('advisor');
+                          const isDeptMember = seasonDept && userDept.includes(seasonDept);
+                          return isBCN || isAdvisor || isDeptMember;
+                        } else if (type === 'teamwork') {
+                          // Teamwork: only assigned scorers can score
+                          return (c.teamwork_scorer_ids || []).includes(currentUser?.id) || 
+                                 (c.interviewer_ids || []).includes(currentUser?.id) ||
+                                 (currentSeason?.interviewer_ids || []).includes(currentUser?.id);
+                        }
+                        return false;
+                      });
+                      return canScoreThisCandidate;
+                    })() && (
                       <button
                         onClick={() => {
                           setSelectedCandidate(c);
@@ -681,7 +727,7 @@ export const InternalRecruitment = () => {
                       </button>
                     )}
                     {(isAdmin || isHRHead) && (
-                      <div className="flex gap-1">
+                      <div className="flex gap-1 flex-wrap">
                         <button
                           onClick={() => {
                             setSelectedCandidate(c);
@@ -689,7 +735,7 @@ export const InternalRecruitment = () => {
                             setShowCandidateInterviewerModal(true);
                             setShowCandidateTeamworkModal(false);
                           }}
-                          className="bg-blue-500/20 text-blue-300 text-xs rounded-lg px-2 py-1 border border-blue-500/30 hover:bg-blue-500/30"
+                          className="bg-blue-500/20 text-blue-300 text-xs rounded-lg px-2 py-1 border border-blue-500/30 hover:bg-blue-500/30 whitespace-nowrap"
                         >
                           Phỏng vấn ({(c.interviewer_ids || []).length})
                         </button>
@@ -700,7 +746,7 @@ export const InternalRecruitment = () => {
                             setShowCandidateTeamworkModal(true);
                             setShowCandidateInterviewerModal(false);
                           }}
-                          className="bg-purple-500/20 text-purple-300 text-xs rounded-lg px-2 py-1 border border-purple-500/30 hover:bg-purple-500/30"
+                          className="bg-purple-500/20 text-purple-300 text-xs rounded-lg px-2 py-1 border border-purple-500/30 hover:bg-purple-500/30 whitespace-nowrap"
                         >
                           Teamwork ({(c.teamwork_scorer_ids || []).length})
                         </button>
@@ -714,8 +760,8 @@ export const InternalRecruitment = () => {
         </div>
       )}
 
-      {/* Scoring Tab - based on scoring type, not for regular Admin */}
-      {activeTab === 'scoring' && canScore && !isAdmin && currentSeason && (
+      {/* Scoring Tab - redesigned with candidate search and single candidate form */}
+      {activeTab === 'scoring' && (canScore || isSuperAdmin) && currentSeason && (
         <div className="space-y-4">
           <h2 className="text-xl font-bold text-white">
             Chấm Điểm Ứng Viên - {currentSeason.name}
@@ -723,27 +769,189 @@ export const InternalRecruitment = () => {
               ({Array.isArray(currentSeason.scoring_type) ? currentSeason.scoring_type.join(', ') : currentSeason.scoring_type})
             </span>
           </h2>
-          <div className="grid gap-3">
-            {candidates.filter(c => !submittedCandidates.includes(c.id)).map(c => (
-              <div key={c.id} className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="font-bold text-white">{c.full_name}</h3>
-                    <p className="text-slate-400 text-sm">Lớp: {c.class_name}</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setSelectedCandidate(c);
-                      setShowScoringModal(true);
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-500/20 text-blue-300 rounded-lg hover:bg-blue-500/30"
-                  >
-                    <Star className="w-4 h-4" /> Chấm Điểm
-                  </button>
-                </div>
+          
+          {/* Filter by scoring type if both are enabled */}
+          {Array.isArray(currentSeason.scoring_type) && currentSeason.scoring_type.length > 1 && (
+            <div className="flex gap-2">
+              {currentSeason.scoring_type.map(type => (
+                <button
+                  key={type}
+                  onClick={() => setScoringTypeFilter(type)}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold ${
+                    scoringTypeFilter === type
+                      ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
+                      : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
+                  }`}
+                >
+                  {type === 'don' ? 'Đơn' : 'Teamwork'}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Candidate search/filter */}
+          <div className="flex gap-3">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Tìm kiếm theo mã ứng viên, tên, hoặc lớp..."
+                value={candidateSearchQuery}
+                onChange={(e) => {
+                  setCandidateSearchQuery(e.target.value);
+                  const query = e.target.value.toLowerCase();
+                  const filtered = candidates.filter(c => 
+                    (c.id || '').toLowerCase().includes(query) ||
+                    (c.full_name || '').toLowerCase().includes(query) ||
+                    (c.class_name || '').toLowerCase().includes(query)
+                  );
+                  setFilteredCandidates(filtered);
+                  setCurrentScoringCandidateIndex(0);
+                  if (filtered.length > 0) {
+                    setSelectedCandidate(filtered[0]);
+                    setScoringComments('');
+                    setScoringData({});
+                  }
+                }}
+                className="w-full bg-slate-800 text-white rounded-lg pl-10 pr-4 py-2 border border-slate-700 focus:border-violet-500 focus:outline-none"
+              />
+            </div>
+            {filteredCandidates.length > 0 && (
+              <div className="text-slate-400 text-sm flex items-center">
+                {currentScoringCandidateIndex + 1} / {filteredCandidates.length}
               </div>
-            ))}
+            )}
           </div>
+
+          {/* Single candidate scoring form */}
+          {selectedCandidate && filteredCandidates.length > 0 && (() => {
+            const c = selectedCandidate;
+            const isAssignedToScore = (() => {
+              const scoringTypes = Array.isArray(currentSeason.scoring_type) ? currentSeason.scoring_type : [currentSeason.scoring_type || 'teamwork'];
+              const filterType = scoringTypeFilter || scoringTypes[0];
+              if (filterType === 'don') {
+                const seasonDept = currentSeason.department?.toLowerCase() || '';
+                const userDept = (currentUser?.deptName || currentUser?.department || '').toLowerCase();
+                const userRoleTitle = (currentUser?.roleTitle || '').toLowerCase();
+                const isBCN = userRoleTitle.includes('chủ nhiệm') || userRoleTitle.includes('phó chủ nhiệm');
+                const isAdvisor = userRoleTitle.includes('cố vấn') || userRoleTitle.includes('advisor');
+                const isDeptMember = seasonDept && userDept.includes(seasonDept);
+                return isBCN || isAdvisor || isDeptMember;
+              } else {
+                return (c.teamwork_scorer_ids || []).includes(currentUser?.id) || 
+                       (c.interviewer_ids || []).includes(currentUser?.id) ||
+                       (currentSeason?.interviewer_ids || []).includes(currentUser?.id);
+              }
+            })();
+            
+            const isSubmitted = submittedCandidates.includes(c.id);
+            
+            return (
+              <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
+                {/* Candidate info */}
+                <div className="flex justify-between items-start mb-6 pb-4 border-b border-slate-800">
+                  <div>
+                    <h3 className="text-2xl font-bold text-white">{c.full_name}</h3>
+                    <p className="text-slate-400">Mã: {c.id} | Lớp: {c.class_name}</p>
+                    <p className="text-slate-400">Ban mong muốn: {c.desired_dept}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        if (currentScoringCandidateIndex > 0) {
+                          const newIndex = currentScoringCandidateIndex - 1;
+                          setCurrentScoringCandidateIndex(newIndex);
+                          setSelectedCandidate(filteredCandidates[newIndex]);
+                          setScoringComments('');
+                          setScoringData({});
+                        }
+                      }}
+                      disabled={currentScoringCandidateIndex === 0}
+                      className="px-3 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      ← Trước
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (currentScoringCandidateIndex < filteredCandidates.length - 1) {
+                          const newIndex = currentScoringCandidateIndex + 1;
+                          setCurrentScoringCandidateIndex(newIndex);
+                          setSelectedCandidate(filteredCandidates[newIndex]);
+                          setScoringComments('');
+                          setScoringData({});
+                        }
+                      }}
+                      disabled={currentScoringCandidateIndex === filteredCandidates.length - 1}
+                      className="px-3 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Sau →
+                    </button>
+                  </div>
+                </div>
+
+                {/* Scoring form */}
+                {isAssignedToScore && !isSubmitted ? (
+                  <div className="space-y-4">
+                    {criteria.map(crit => (
+                      <div key={crit.id} className="flex items-center gap-4">
+                        <div className="flex-1">
+                          <label className="text-white font-medium block mb-1">{crit.criteria_name}</label>
+                          <p className="text-slate-400 text-xs">Thang điểm: 0 - {crit.max_score}</p>
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          max={crit.max_score}
+                          value={scoringData[crit.id] || ''}
+                          onChange={(e) => setScoringData(prev => ({
+                            ...prev,
+                            [crit.id]: parseFloat(e.target.value) || 0
+                          }))}
+                          className="w-24 bg-slate-800 text-white text-center rounded px-3 py-2 border border-slate-700 focus:border-violet-500 focus:outline-none"
+                        />
+                      </div>
+                    ))}
+                    
+                    {/* Comments field */}
+                    <div>
+                      <label className="text-white font-medium block mb-1">Nhận xét</label>
+                      <textarea
+                        value={scoringComments}
+                        onChange={(e) => setScoringComments(e.target.value)}
+                        placeholder="Nhập nhận xét về ứng viên..."
+                        rows={3}
+                        className="w-full bg-slate-800 text-white rounded-lg px-4 py-2 border border-slate-700 focus:border-violet-500 focus:outline-none resize-none"
+                      />
+                    </div>
+
+                    {/* Total score */}
+                    <div className="flex justify-between items-center pt-4 border-t border-slate-800">
+                      <div className="text-white font-bold text-lg">
+                        Tổng điểm: {criteria.reduce((sum, crit) => sum + (scoringData[crit.id] || 0), 0)}
+                      </div>
+                      <button
+                        onClick={() => {
+                          setSelectedCandidate(c);
+                          setShowScoringModal(true);
+                        }}
+                        className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-bold"
+                      >
+                        Lưu Điểm
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    {isSubmitted ? (
+                      <p className="text-emerald-400 text-lg font-bold">✅ Đã chấm điểm ứng viên này</p>
+                    ) : (
+                      <p className="text-slate-400 text-lg">❌ Bạn không được phân công chấm ứng viên này</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -763,7 +971,6 @@ export const InternalRecruitment = () => {
                   <th className="px-4 py-3 text-left text-slate-300 font-bold">Điểm TB</th>
                   <th className="px-4 py-3 text-left text-slate-300 font-bold">Tổng Điểm</th>
                   <th className="px-4 py-3 text-left text-slate-300 font-bold">Kết Quả</th>
-                  <th className="px-4 py-3 text-left text-slate-300 font-bold">Hành Động</th>
                 </tr>
               </thead>
               <tbody>
@@ -781,18 +988,6 @@ export const InternalRecruitment = () => {
                       {s.result_status === 'failed' && <span className="text-red-400 font-bold">Rớt</span>}
                       {s.result_status === 'reserve' && <span className="text-amber-400 font-bold">Dự bị</span>}
                       {s.result_status === 'pending' && <span className="text-slate-400">Chờ</span>}
-                    </td>
-                    <td className="px-4 py-3">
-                      <select
-                        value={s.status}
-                        onChange={(e) => updateCandidateResult(s.candidate_id, e.target.value, s.notes)}
-                        className="bg-slate-800 text-white text-xs rounded-lg px-2 py-1 border border-slate-700"
-                      >
-                        <option value="pending">Chờ</option>
-                        <option value="passed">Đậu</option>
-                        <option value="failed">Rớt</option>
-                        <option value="reserve">Dự bị</option>
-                      </select>
                     </td>
                   </tr>
                 ))}
@@ -1268,15 +1463,6 @@ export const InternalRecruitment = () => {
         </div>
       )}
 
-      {!currentSeason && (
-        <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-10 flex flex-col items-center justify-center gap-4 text-center min-h-[300px]">
-          <AlertCircle className="w-16 h-16 text-amber-500/40" />
-          <div className="text-slate-400 text-sm max-w-md">
-            <p className="font-bold text-slate-300 text-base mb-2">Chưa chọn mùa tuyển</p>
-            <p>Vui lòng tạo hoặc chọn một mùa tuyển để bắt đầu quản lý tuyển gen.</p>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
