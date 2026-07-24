@@ -1026,14 +1026,8 @@ export const ClubProvider = ({ children }) => {
 
     const newStatus = member.status === 'Active' ? 'Suspended' : 'Active';
 
-    // Optimistic update ngay lập tức — trước khi API trả về
-    updateDb(prev => ({
-      ...prev,
-      members: prev.members.map(m => m.id === id ? { ...m, status: newStatus } : m)
-    }));
-
     try {
-      // Gọi API cập nhật status vào DB
+      // Gọi API cập nhật status vào DB trước (không optimistic update)
       console.log('🔒 Đang gọi API cập nhật status:', member.memberCode, '->', newStatus);
       const res = await updateMemberAPI(member.memberCode || member.member_code || member.id, {
         status: newStatus,
@@ -1043,21 +1037,20 @@ export const ClubProvider = ({ children }) => {
       console.log('🔒 API Response:', res);
 
       if (!res || !res.success) {
-        // Rollback nếu API thất bại
-        updateDb(prev => ({
-          ...prev,
-          members: prev.members.map(m => m.id === id ? { ...m, status: member.status } : m)
-        }));
         showToast(`❌ Lỗi cập nhật trạng thái tài khoản! ${res?.message || 'Unknown error'}`, 'error');
         return;
       }
-    } catch (err) {
-      // Rollback nếu lỗi kết nối
-      console.error('❌ Lỗi toggleAccountStatus:', err);
+
+      // API thành công, cập nhật local state
       updateDb(prev => ({
         ...prev,
-        members: prev.members.map(m => m.id === id ? { ...m, status: member.status } : m)
+        members: prev.members.map(m => m.id === id ? { ...m, status: newStatus } : m)
       }));
+
+      showToast(`✅ Đã ${newStatus === 'Suspended' ? 'khóa' : 'mở khóa'} tài khoản thành công!`, 'success');
+    } catch (err) {
+      // Lỗi kết nối
+      console.error('❌ Lỗi toggleAccountStatus:', err);
       showToast(`❌ Lỗi kết nối server! ${err.message}`, 'error');
       return;
     }

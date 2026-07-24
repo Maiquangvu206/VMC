@@ -118,10 +118,13 @@ export const InternalRecruitment = () => {
       const data = await res.json();
       if (data.success) {
         // Filter seasons by user's department (Super Admin sees all)
-        const userDept = currentUser?.deptName || currentUser?.department || '';
+        const userDept = (currentUser?.deptName || currentUser?.department || '').toLowerCase().trim();
         const filteredSeasons = isSuperAdmin 
           ? data.data 
-          : data.data.filter(s => !s.department || s.department === userDept);
+          : data.data.filter(s => {
+              const seasonDept = (s.department || '').toLowerCase().trim();
+              return !seasonDept || seasonDept === userDept;
+            });
         
         setSeasons(filteredSeasons);
         const active = filteredSeasons.find(s => s.is_active === 1);
@@ -210,6 +213,22 @@ export const InternalRecruitment = () => {
       }
     } catch (e) {
       showToast('❌ Lỗi kích hoạt mùa tuyển!', 'error');
+    }
+  };
+
+  const deactivateSeason = async (seasonId) => {
+    try {
+      const res = await fetch(`/api/recruitment/seasons/${seasonId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+        body: JSON.stringify({ is_active: false })
+      });
+      if (res.ok) {
+        showToast('✅ Đã tắt mùa tuyển!', 'success');
+        fetchSeasons();
+      }
+    } catch (e) {
+      showToast('❌ Lỗi tắt mùa tuyển!', 'error');
     }
   };
 
@@ -425,14 +444,8 @@ export const InternalRecruitment = () => {
       // Cố vấn (Advisor)
       const isAdvisor = roleTitle.includes('cố vấn') || roleTitle.includes('advisor');
       
-      // Department members - check if department matches season's department
-      // Handle exact match and partial match (e.g., "đối ngoại" matches "đối ngoại - nhân sự")
-      let isDeptMember = false;
-      if (seasonDept && memberDept) {
-        isDeptMember = memberDept === seasonDept || 
-                      memberDept.includes(seasonDept) || 
-                      seasonDept.includes(memberDept);
-      }
+      // Department members - exact match only for reliability
+      const isDeptMember = seasonDept && memberDept === seasonDept;
       
       return isBCN || isAdvisor || isDeptMember;
     });
@@ -481,57 +494,65 @@ export const InternalRecruitment = () => {
           Mùa Tuyển
         </button>
         
-        {/* Criteria tab - only for Trưởng Ban */}
-        {(isSuperAdmin || isAdmin || isHRHead || isDeptHead) && (
-          <button
-            onClick={() => setActiveTab('criteria')}
-            className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
-              activeTab === 'criteria'
-                ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
-                : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
-            }`}
-          >
-            Tiêu Chí
-          </button>
-        )}
-        
-        <button
-          onClick={() => setActiveTab('candidates')}
-          className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
-            activeTab === 'candidates'
-              ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
-              : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
-          }`}
-        >
-          Ứng Viên
-        </button>
-        
-        {/* Scoring tab - based on scoring type */}
-        {canScore && (
-          <button
-            onClick={() => setActiveTab('scoring')}
-            className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
-              activeTab === 'scoring'
-                ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
-                : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
-            }`}
-          >
-            Chấm Điểm
-          </button>
-        )}
-        
-        {/* Results tab - for all department members */}
-        {currentSeason && (
-          <button
-            onClick={() => setActiveTab('results')}
-            className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
-              activeTab === 'results'
-                ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
-                : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
-            }`}
-          >
-            Kết Quả
-          </button>
+        {/* Other tabs only show when season is selected and user belongs to season's department */}
+        {currentSeason && (() => {
+          const seasonDept = (currentSeason.department || '').toLowerCase().trim();
+          const userDept = (currentUser?.deptName || currentUser?.department || '').toLowerCase().trim();
+          const belongsToSeason = isSuperAdmin || !seasonDept || seasonDept === userDept;
+          return belongsToSeason;
+        })() && (
+          <>
+            {/* Criteria tab - only for Trưởng Ban */}
+            {(isSuperAdmin || isAdmin || isHRHead || isDeptHead) && (
+              <button
+                onClick={() => setActiveTab('criteria')}
+                className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
+                  activeTab === 'criteria'
+                    ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
+                    : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
+                }`}
+              >
+                Tiêu Chí
+              </button>
+            )}
+            
+            <button
+              onClick={() => setActiveTab('candidates')}
+              className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
+                activeTab === 'candidates'
+                  ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
+                  : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
+              }`}
+            >
+              Ứng Viên
+            </button>
+            
+            {/* Scoring tab - based on scoring type, Super Admin can see all */}
+            {(canScore || isSuperAdmin) && (
+              <button
+                onClick={() => setActiveTab('scoring')}
+                className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
+                  activeTab === 'scoring'
+                    ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
+                    : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
+                }`}
+              >
+                Chấm Điểm
+              </button>
+            )}
+            
+            {/* Results tab - for all department members */}
+            <button
+              onClick={() => setActiveTab('results')}
+              className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
+                activeTab === 'results'
+                  ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
+                  : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
+              }`}
+            >
+              Kết Quả
+            </button>
+          </>
         )}
       </div>
 
@@ -569,7 +590,15 @@ export const InternalRecruitment = () => {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        {season.is_active !== 1 && (
+                        {season.is_active === 1 ? (
+                          <button
+                            onClick={() => deactivateSeason(season.id)}
+                            className="p-2 bg-amber-500/20 text-amber-300 rounded-lg hover:bg-amber-500/30"
+                            title="Tắt mùa tuyển"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        ) : (
                           <button
                             onClick={() => activateSeason(season.id)}
                             className="p-2 bg-emerald-500/20 text-emerald-300 rounded-lg hover:bg-emerald-500/30"
