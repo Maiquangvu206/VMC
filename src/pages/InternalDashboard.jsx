@@ -30,6 +30,7 @@ export const InternalDashboard = () => {
     deleteAnnouncement,
     isAdmin,
     setActiveTab, 
+    setMembersFilterDept,
     setIsNewTaskModalOpen,
     setIsNewDraftModalOpen,
     setIsBorrowModalOpen,
@@ -278,7 +279,10 @@ export const InternalDashboard = () => {
             return (
               <div
                 key={dept.id}
-                onClick={() => setActiveTab('tasks')}
+                onClick={() => {
+                  setMembersFilterDept(dept.name);
+                  setActiveTab('members');
+                }}
                 className="glass-card p-5 rounded-2xl border border-white/10 space-y-3 hover:border-blue-500/40 cursor-pointer group flex flex-col justify-between"
               >
                 <div className="space-y-3">

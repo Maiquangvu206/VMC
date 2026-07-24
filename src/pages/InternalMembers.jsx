@@ -61,7 +61,9 @@ export const InternalMembers = () => {
     isNewAccountModalOpen,
     setIsNewAccountModalOpen,
     showToast,
-    generations = []
+    generations = [],
+    membersFilterDept,
+    setMembersFilterDept
   } = useClub();
 
   // STRICT PERMISSION: ONLY Admin & Kỹ Thuật Ban Đối Ngoại - Nhân Sự (Chủ Nhiệm, Trưởng/Phó Ban KHÔNG có quyền)
@@ -127,6 +129,20 @@ export const InternalMembers = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTerm, setSelectedTerm] = useState('ALL');
   const [selectedDept, setSelectedDept] = useState('ALL');
+
+  React.useEffect(() => {
+    if (!membersFilterDept) return;
+    if (membersFilterDept === 'ALL') {
+      setSelectedDept('ALL');
+      return;
+    }
+    setSelectedDept(membersFilterDept);
+  }, [membersFilterDept]);
+
+  React.useEffect(() => {
+    if (!membersFilterDept || membersFilterDept === selectedDept) return;
+    setMembersFilterDept(selectedDept);
+  }, [selectedDept, membersFilterDept, setMembersFilterDept]);
 
   const hasSuperAdmin = members.some(m => m.roleTitle?.includes('Super Admin'));
 

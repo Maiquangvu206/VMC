@@ -54,50 +54,58 @@ router.get('/tasks', async (req, res) => {
 
 router.post('/tasks', async (req, res) => {
   try {
-    const { id, title, description, assignee_id, assigneeId, created_by, deadline, status, points_reward } = req.body;
-    const taskId = id || generateId();
-    const assId = toId(assignee_id || assigneeId);
-    const creatorId = toId(created_by);
+    const taskItems = Array.isArray(req.body.tasks) ? req.body.tasks : [req.body];
+    const createdTasks = [];
 
-    await queryDatabase(
-      'INSERT INTO Tasks (id, title, description, assignee_id, created_by, deadline, status, points_reward) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [taskId, title, description || '', assId, creatorId, deadline || null, status || 'todo', points_reward || 10]
-    );
+    const rootCreatorId = toId(req.body.created_by || req.body.createdBy);
+    for (const taskInput of taskItems) {
+      const { id, title, description, assignee_id, assigneeId, created_by, deadline, status, points_reward } = taskInput;
+      const taskId = id || generateId();
+      const assId = toId(assignee_id || assigneeId);
+      const creatorId = toId(created_by || rootCreatorId);
 
-    // Gửi email thông báo cho người được giao nhiệm vụ
-    if (assId) {
-      try {
-        const assignees = await queryDatabase(
-          'SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? OR full_name = ? OR username = ? LIMIT 1',
-          [assId, assId, assId, assId]
-        );
-        if (assignees && assignees.length > 0 && assignees[0].email) {
-          const assignee = assignees[0];
-          await sendMailHelper(
-            assignee.email,
-            '🔔 [VMC Task] Bạn được giao nhiệm vụ mới!',
-            `
-              <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; max-w-lg;">
-                <h3 style="color: #2563eb;">🔔 Nhiệm vụ mới được phân công</h3>
-                <p>Xin chào <strong>${assignee.full_name}</strong>,</p>
-                <p>Bạn vừa được giao một nhiệm vụ mới trên hệ thống VMC Portal.</p>
-                <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
-                <p><strong>Nhiệm vụ:</strong> <strong style="font-size: 15px; color: #1e293b;">${title}</strong></p>
-                <p><strong>Mô tả:</strong> ${description || 'Không có mô tả chi tiết.'}</p>
-                <p><strong>Hạn chót:</strong> ${deadline || 'Không giới hạn'}</p>
-                ${(points_reward && Number(points_reward) > 0) ? `<p><strong>Điểm thưởng:</strong> ${points_reward} points</p>` : ''}
-                <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
-                <p style="font-size: 12px; color: #64748b;">Vui lòng truy cập hệ thống để cập nhật tiến độ công việc.</p>
-              </div>
-            `
+      await queryDatabase(
+        'INSERT INTO Tasks (id, title, description, assignee_id, created_by, deadline, status, points_reward) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [taskId, title, description || '', assId, creatorId, deadline || null, status || 'todo', points_reward || 10]
+      );
+
+      // Gửi email thông báo cho từng nhiệm vụ được tạo
+      if (assId) {
+        try {
+          const assignees = await queryDatabase(
+            'SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? OR full_name = ? OR username = ? LIMIT 1',
+            [assId, assId, assId, assId]
           );
+          if (assignees && assignees.length > 0 && assignees[0].email) {
+            const assignee = assignees[0];
+            await sendMailHelper(
+              assignee.email,
+              '🔔 [VMC Task] Bạn được giao nhiệm vụ mới!',
+              `
+                <div style="font-family: Arial, sans-serif; padding: 20px; color: #1e293b; background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; max-w-lg;">
+                  <h3 style="color: #2563eb;">🔔 Nhiệm vụ mới được phân công</h3>
+                  <p>Xin chào <strong>${assignee.full_name}</strong>,</p>
+                  <p>Bạn vừa được giao một nhiệm vụ mới trên hệ thống VMC Portal.</p>
+                  <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
+                  <p><strong>Nhiệm vụ:</strong> <strong style="font-size: 15px; color: #1e293b;">${title}</strong></p>
+                  <p><strong>Mô tả:</strong> ${description || 'Không có mô tả chi tiết.'}</p>
+                  <p><strong>Hạn chót:</strong> ${deadline || 'Không giới hạn'}</p>
+                  ${(points_reward && Number(points_reward) > 0) ? `<p><strong>Điểm thưởng:</strong> ${points_reward} points</p>` : ''}
+                  <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
+                  <p style="font-size: 12px; color: #64748b;">Vui lòng truy cập hệ thống để cập nhật tiến độ công việc.</p>
+                </div>
+              `
+            );
+          }
+        } catch (mailErr) {
+          console.warn('⚠️ Lỗi gửi mail thông báo giao nhiệm vụ:', mailErr.message);
         }
-      } catch (mailErr) {
-        console.warn('⚠️ Lỗi gửi mail thông báo giao nhiệm vụ:', mailErr.message);
       }
+
+      createdTasks.push({ id: taskId, title, description, assigneeId: assId, deadline, status });
     }
 
-    res.json({ success: true, data: { id: taskId, title, description, assigneeId: assId, deadline, status } });
+    res.json({ success: true, data: Array.isArray(req.body.tasks) ? createdTasks : createdTasks[0] });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -231,8 +239,11 @@ router.post('/drafts', async (req, res) => {
 
 router.put('/drafts/:id', async (req, res) => {
   try {
-    const { status, publishDate, graderId, gradingStatus, title, content, content_link, author, likesCount, sharesCount, commentsCount, contentScore, finalScore } = req.body;
+    const { status, publishDate, graderId, gradingStatus, title, content, content_link, author, likesCount, sharesCount, commentsCount, contentScore, finalScore, gradingDeadline, grading_deadline } = req.body;
     const grId = graderId !== undefined ? toId(graderId) : undefined;
+    const oldDrafts = await queryDatabase('SELECT * FROM Fanpage_Drafts WHERE id = ?', [req.params.id]);
+    const oldDraft = oldDrafts && oldDrafts.length > 0 ? oldDrafts[0] : {};
+
     await queryDatabase(
       'UPDATE Fanpage_Drafts SET status = COALESCE(?, status), publishDate = COALESCE(?, publishDate), graderId = COALESCE(?, graderId), gradingStatus = COALESCE(?, gradingStatus), title = COALESCE(?, title), content = COALESCE(?, content), content_link = COALESCE(?, content_link), author = COALESCE(?, author), likes_count = COALESCE(?, likes_count), shares_count = COALESCE(?, shares_count), comments_count = COALESCE(?, comments_count), content_score = COALESCE(?, content_score), final_score = COALESCE(?, final_score) WHERE id = ?',
       [
@@ -252,6 +263,16 @@ router.put('/drafts/:id', async (req, res) => {
         req.params.id
       ]
     );
+
+    const draftTitle = title !== undefined ? title : oldDraft.title || 'Bài viết Fanpage VMC';
+    const draftPublishDate = publishDate !== undefined ? publishDate : oldDraft.publishDate || null;
+    const draftGradingDeadline = gradingDeadline !== undefined ? gradingDeadline : (grading_deadline !== undefined ? grading_deadline : (oldDraft.gradingDeadline || oldDraft.grading_deadline || null));
+    const formatDateValue = (value) => {
+      if (!value) return 'Chưa có thông tin';
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? String(value) : date.toISOString().slice(0, 10);
+    };
+
     if (grId) {
       try {
         const graders = await queryDatabase(
@@ -269,7 +290,9 @@ router.put('/drafts/:id', async (req, res) => {
                 <p>Xin chào <strong>${grader.full_name}</strong>,</p>
                 <p>Bạn vừa được phân công làm người chấm tương tác cho một bài viết trên VMC Portal.</p>
                 <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
-                <p><strong>Tiêu đề bài viết:</strong> <strong style="font-size: 15px; color: #1e293b;">${title || 'Bài viết Fanpage VMC'}</strong></p>
+                <p><strong>Tiêu đề bài viết:</strong> <strong style="font-size: 15px; color: #1e293b;">${draftTitle}</strong></p>
+                <p><strong>Thời gian đăng bài:</strong> <strong style="font-size: 15px; color: #1e293b;">${formatDateValue(draftPublishDate)}</strong></p>
+                <p><strong>Hạn chấm điểm:</strong> <strong style="font-size: 15px; color: #1e293b;">${formatDateValue(draftGradingDeadline)}</strong></p>
                 <p><strong>Nhiệm vụ:</strong> Kiểm tra số lượng Like/Share/Comment và chấm điểm tương tác cho bài viết.</p>
                 <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
                 <p style="font-size: 12px; color: #64748b;">Trân trọng,<br/><strong>Ban Đối Ngoại - Nhân Sự | CLB Truyền Thông THPT Vĩnh Bảo (VMC)</strong></p>
@@ -1021,13 +1044,13 @@ router.get('/sessions', async (req, res) => {
     const sql = `
       SELECT 
         s.*,
-        COALESCE(NULLIF(m.full_name, ''), s.name) as real_name,
-        COALESCE(NULLIF(m.role_title, ''), s.role_title) as real_role_title
+        COALESCE(NULLIF(m.full_name, ''), s.name) AS real_name,
+        COALESCE(NULLIF(m.role_title, ''), s.role_title) AS real_role_title
       FROM User_Sessions s
       LEFT JOIN Members m ON (
-        CAST(s.member_id AS CHAR) = CAST(m.id AS CHAR) 
-        OR UPPER(s.member_id) = UPPER(m.member_code) 
-        OR LOWER(s.username) = LOWER(m.username)
+        s.member_id = m.id
+        OR s.username = m.username
+        OR s.member_id = m.member_code
       )
       ORDER BY s.login_time DESC, s.last_active DESC
     `;
@@ -1036,9 +1059,7 @@ router.get('/sessions', async (req, res) => {
       success: true,
       data: sessions.map(s => ({
         ...s,
-        name: (s.real_name && s.real_name !== 'Quản Trị Viên')
-          ? s.real_name
-          : ((s.username === 'admin' || s.member_id === 'ADMIN' || s.name === 'Quản Trị Viên') ? 'Vũ Mai Quang' : (s.name || 'Thành Viên VMC')),
+        name: s.real_name || s.name,
         role_title: s.real_role_title || s.role_title || 'Thành Viên VMC'
       }))
     });
@@ -1106,9 +1127,28 @@ router.post('/sessions/heartbeat', async (req, res) => {
     const { sessionId } = req.body;
     if (!sessionId) return res.json({ success: true, isActive: true });
 
-    const rows = await queryDatabase('SELECT is_active FROM User_Sessions WHERE id = ?', [sessionId]);
-    if (rows && rows.length > 0 && Number(rows[0].is_active) === 0) {
-      return res.json({ success: true, isActive: false, message: 'Phiên đăng nhập đã bị Super Admin hủy bỏ.' });
+    const rows = await queryDatabase(
+      `SELECT s.is_active, m.status
+       FROM User_Sessions s
+       LEFT JOIN Members m ON (
+         s.member_id = m.id
+         OR s.username = m.username
+         OR s.member_id = m.member_code
+       )
+       WHERE s.id = ?`,
+      [sessionId]
+    );
+
+    if (rows && rows.length > 0) {
+      const sessionRow = rows[0];
+      if (Number(sessionRow.is_active) === 0) {
+        return res.json({ success: true, isActive: false, message: 'Phiên đăng nhập đã bị Super Admin hủy bỏ.' });
+      }
+
+      if (String(sessionRow.status).toLowerCase() === 'suspended') {
+        await queryDatabase("UPDATE User_Sessions SET is_active = 0, logout_reason = 'suspended' WHERE id = ?", [sessionId]);
+        return res.json({ success: true, isActive: false, message: 'Tài khoản đã bị tạm khóa. Phiên đăng nhập sẽ bị ngắt.' });
+      }
     }
 
     await queryDatabase('UPDATE User_Sessions SET last_active = NOW() WHERE id = ?', [sessionId]);

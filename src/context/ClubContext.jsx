@@ -89,6 +89,7 @@ export const ClubProvider = ({ children }) => {
   const [isNewDraftModalOpen, setIsNewDraftModalOpen] = useState(false);
   const [isNewAccountModalOpen, setIsNewAccountModalOpen] = useState(false);
   const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
+  const [membersFilterDept, setMembersFilterDept] = useState('ALL');
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -305,6 +306,25 @@ export const ClubProvider = ({ children }) => {
   const getFirstLine = (text) => {
     if (typeof text !== 'string') return text;
     return text.split(/\r?\n/)[0] || text;
+  };
+
+  const normalizeYearMonth = (year, month) => {
+    const y = parseInt(year, 10);
+    const m = parseInt(month, 10);
+    if (Number.isNaN(y) || Number.isNaN(m) || m < 1 || m > 12) return null;
+    return { y, m };
+  };
+
+  const getPhotoAndDataDeadline = (year, month) => {
+    const normalized = normalizeYearMonth(year, month);
+    if (!normalized) return null;
+    return new Date(normalized.y, normalized.m - 2, 28);
+  };
+
+  const getMonitoringDeadline = (year, month) => {
+    const normalized = normalizeYearMonth(year, month);
+    if (!normalized) return null;
+    return new Date(normalized.y, normalized.m, 0);
   };
 
   const findMemberById = (memberId, membersList) => {
@@ -996,6 +1016,21 @@ export const ClubProvider = ({ children }) => {
       name: member.name
     });
 
+    if (newStatus === 'Suspended') {
+      try {
+        await fetch('/api/sessions/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            memberId: member.id,
+            username: member.username || member.memberCode || member.member_code || member.id
+          })
+        });
+      } catch (e) {
+        console.warn('Lỗi khi đăng xuất tất cả phiên của tài khoản bị khóa:', e.message || e);
+      }
+    }
+
     const newMilestone = {
       id: 'm-' + Date.now(),
       memberId: member.id,
@@ -1018,6 +1053,21 @@ export const ClubProvider = ({ children }) => {
         return m;
       })
     }));
+
+    if (newStatus === 'Suspended') {
+      const normalizedIdentifiers = [member.id, member.memberCode, member.member_code, member.username]
+        .filter(Boolean)
+        .map(String);
+
+      setSessions(prev => prev.map(s => {
+        const sessionIdentifiers = [s.member_id, s.username].filter(Boolean).map(String);
+        if (sessionIdentifiers.some(id => normalizedIdentifiers.includes(id))) {
+          return { ...s, is_active: 0, logout_reason: 'logout' };
+        }
+        return s;
+      }));
+      loadSqlSessions().catch(() => {});
+    }
   };
 
   // Update Task Status
@@ -1410,6 +1460,8 @@ export const ClubProvider = ({ children }) => {
       return false;
     }
 
+    const assignedMember = (db.members || []).find(m => String(m.id) === String(memberId) || String(m.memberCode) === String(memberId));
+
     const bdayObj = {
       id: 'bday-' + Date.now(),
       assign_month: month,
@@ -1429,10 +1481,8 @@ export const ClubProvider = ({ children }) => {
       return { ...prev, birthdayAssignments: [...assignments, bdayObj] };
     });
  
-    const monthVal = parseInt(month, 10);
-    const yearVal = parseInt(year, 10);
-    const lastDay = new Date(yearVal, monthVal, 0).getDate();
-    const bdayDeadline = `${yearVal}-${String(monthVal).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+    const deadlineDate = getMonitoringDeadline(year, month) || new Date();
+    const bdayDeadline = `${deadlineDate.getFullYear()}-${String(deadlineDate.getMonth() + 1).padStart(2, '0')}-${String(deadlineDate.getDate()).padStart(2, '0')}`;
 
     await createTaskRecord({
       id: `task-bday-${bdayObj.id}`,
@@ -1692,8 +1742,8 @@ export const ClubProvider = ({ children }) => {
             const assigneeName = assigneeObj ? assigneeObj.name : 'Chưa phân công';
             
             const status = b.status === 'completed' ? 'done' : 'doing';
-            const pad = (num) => String(num).padStart(2, '0');
-            const deadline = `${b.year}-${pad(b.month)}-28`;
+            const deadlineDate = getMonitoringDeadline(b.year, b.month) || new Date();
+            const deadline = `${deadlineDate.getFullYear()}-${String(deadlineDate.getMonth() + 1).padStart(2, '0')}-${String(deadlineDate.getDate()).padStart(2, '0')}`;
 
             virtuals.push({
               id: `virtual-bday-${b.id}`,
@@ -1812,6 +1862,8 @@ export const ClubProvider = ({ children }) => {
       setIsNewDraftModalOpen,
       isNewAccountModalOpen,
       setIsNewAccountModalOpen,
+      membersFilterDept,
+      setMembersFilterDept,
       meetings: db.meetings || [],
       createMeeting,
       cancelMeeting,
@@ -1826,6 +1878,8 @@ export const ClubProvider = ({ children }) => {
       submitMemberBirthdayData,
       submitBirthdayExcuse,
       reviewBirthdayExcuse,
+      getPhotoAndDataDeadline,
+      getMonitoringDeadline,
       sessions,
       currentSessionId,
       loadSqlSessions,

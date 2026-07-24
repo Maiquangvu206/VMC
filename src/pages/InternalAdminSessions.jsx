@@ -252,9 +252,7 @@ export const InternalAdminSessions = () => {
 
                   const displayCode = memberObj?.memberCode || memberObj?.member_code || ((s.username === 'admin' || s.member_id === 'ADMIN') ? 'VMC-8350' : (s.member_id || s.username || 'VMC-0000'));
                   const displayRole = memberObj?.roleTitle || memberObj?.role_title || ((s.username === 'admin' || s.member_id === 'ADMIN') ? 'Cố Vấn CLB' : (s.role_title || 'Thành Viên VMC'));
-                  const displayName = (memberObj?.name && memberObj.name !== 'Quản Trị Viên') 
-                    ? memberObj.name 
-                    : (s.name && s.name !== 'Quản Trị Viên' ? s.name : 'Vũ Mai Quang');
+                  const displayName = s.name || memberObj?.name || 'Thành Viên VMC';
 
                   const lastActiveDate = s.last_active ? new Date(s.last_active) : null;
                   const isRecent = lastActiveDate && ((now - lastActiveDate) / (1000 * 60)) <= 5;

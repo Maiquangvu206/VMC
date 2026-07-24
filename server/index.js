@@ -242,23 +242,80 @@ const transporter = nodemailer.createTransport({
 
 // API Gửi Email Tự Động
 app.post('/api/send-email', async (req, res) => {
-  const { to, subject, text, html } = req.body;
+  const { to, subject, text, html, greeting, messageBody, attachments } = req.body;
 
   if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
     return res.status(500).json({ success: false, message: 'Server chưa được cấu hình tài khoản Email (SMTP_EMAIL & SMTP_PASSWORD)' });
   }
 
-  if (!to || !subject || (!text && !html)) {
+  const hasBody = Boolean(text || html || greeting || messageBody);
+  if (!to || !subject || !hasBody) {
     return res.status(400).json({ success: false, message: 'Thiếu thông tin người nhận, tiêu đề hoặc nội dung!' });
   }
+
+  const textBody = text || [greeting, messageBody].filter(Boolean).join('\n\n');
+  const htmlBody = html || [
+    greeting ? `<p style="font-size: 16px; line-height: 1.6; margin: 0 0 12px 0;">${greeting}</p>` : '',
+    messageBody ? `<div style="font-size: 14px; line-height: 1.7; color: #1f2937;">${String(messageBody).replace(/\n/g, '<br/>')}</div>` : ''
+  ].filter(Boolean).join('');
+
+  const normalizedAttachments = Array.isArray(attachments)
+    ? attachments.map((att) => {
+        if (!att || typeof att !== 'object') return null;
+        const attachment = {};
+        if (att.filename) attachment.filename = att.filename;
+        if (att.name && !attachment.filename) attachment.filename = att.name;
+        if (att.path) attachment.path = att.path;
+        if (att.href) attachment.href = att.href;
+        if (att.cid) attachment.cid = att.cid;
+        if (att.contentType) attachment.contentType = att.contentType;
+
+        const normalizeContent = (value) => {
+          if (typeof value !== 'string' || value.trim() === '') return null;
+          const dataUriMatch = value.match(/^data:(.+);base64,(.+)$/i);
+          if (dataUriMatch) {
+            attachment.content = Buffer.from(dataUriMatch[2], 'base64');
+            attachment.contentType = attachment.contentType || dataUriMatch[1];
+            return;
+          }
+
+          const base64String = value.replace(/\s+/g, '');
+          if (/^[A-Za-z0-9+/]+={0,2}$/.test(base64String) && base64String.length % 4 === 0) {
+            attachment.content = Buffer.from(base64String, 'base64');
+            return;
+          }
+
+          attachment.content = value;
+        };
+
+        if (att.content) {
+          normalizeContent(att.content);
+        } else if (att.base64) {
+          normalizeContent(att.base64);
+        } else if (att.dataUrl) {
+          normalizeContent(att.dataUrl);
+        }
+
+        if (!attachment.filename) {
+          attachment.filename = 'attachment';
+        }
+
+        if (!attachment.path && !attachment.href && attachment.content === undefined) {
+          return null;
+        }
+
+        return attachment;
+      }).filter(Boolean)
+    : undefined;
 
   try {
     const info = await transporter.sendMail({
       from: `"CLB TRUYỀN THÔNG TRƯỜNG THPT VĨNH BẢO (VMC)" <${process.env.SMTP_EMAIL}>`,
       to,
       subject,
-      text,
-      html: html || text
+      text: textBody,
+      html: htmlBody || textBody,
+      attachments: normalizedAttachments
     });
     res.json({ success: true, message: 'Đã gửi email thành công!', messageId: info.messageId });
   } catch (error) {

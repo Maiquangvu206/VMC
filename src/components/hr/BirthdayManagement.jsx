@@ -23,6 +23,8 @@ export const BirthdayManagement = () => {
     submitMemberBirthdayData,
     submitBirthdayExcuse,
     reviewBirthdayExcuse,
+    getPhotoAndDataDeadline,
+    getMonitoringDeadline,
     members, 
     currentUser, 
     isHRHead,
@@ -105,11 +107,12 @@ export const BirthdayManagement = () => {
     } else if (submissionMethod === 'no_photo') {
       const assignment = (birthdayAssignments || []).find(a => String(a.id) === String(activeAssignmentId));
       if (assignment) {
+        const deadlineDate = getPhotoAndDataDeadline(assignment.year, assignment.month);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const deadlineDate = new Date(parseInt(assignment.year, 10), parseInt(assignment.month, 10) - 1, 28);
-        if (today < deadlineDate) {
-          if (showToast) showToast(`⚠️ Lý do không có ảnh chỉ được phép dùng kể từ ngày hạn chót (28/${assignment.month}/${assignment.year})!`, 'error');
+        if (deadlineDate && today < deadlineDate) {
+          const deadlineString = `${String(deadlineDate.getDate()).padStart(2, '0')}/${String(deadlineDate.getMonth() + 1).padStart(2, '0')}/${deadlineDate.getFullYear()}`;
+          if (showToast) showToast(`⚠️ Lý do không có ảnh chỉ được phép dùng kể từ ngày hạn chót (${deadlineString})!`, 'error');
           return;
         }
       }
@@ -146,7 +149,7 @@ export const BirthdayManagement = () => {
             <Gift className="text-pink-400" /> Phân Công & Quản Lý Dữ Liệu Sinh Nhật
           </h3>
           <p className="text-xs text-slate-400 mt-1">
-            Nộp ảnh/bài đăng cho từng cá nhân sinh nhật trong tháng. Hạn chót đến 28 hàng tháng.
+            Nộp ảnh/bài đăng cho từng cá nhân sinh nhật trong tháng. Hạn chót nộp tư liệu đến ngày 28 của tháng trước, hạn trực kết thúc cuối tháng.
           </p>
         </div>
 
@@ -155,7 +158,7 @@ export const BirthdayManagement = () => {
             <Calendar className="w-3.5 h-3.5 text-pink-400" /> Ngày 15: Gửi DS tháng sau
           </span>
           <span className="bg-amber-500/10 text-amber-300 border border-amber-500/30 px-2.5 py-1 rounded-lg flex items-center gap-1.5 font-semibold">
-            <Clock className="w-3.5 h-3.5 text-amber-400" /> Hạn chót: Ngày 28 (-10 PTS)
+            <Clock className="w-3.5 h-3.5 text-amber-400" /> Hạn chót nộp tư liệu: Ngày 28 tháng trước (-10 PTS)
           </span>
         </div>
       </div>
@@ -217,10 +220,8 @@ export const BirthdayManagement = () => {
           const assignee = members.find(mem => String(mem.id) === String(a.memberId) || String(mem.memberCode) === String(a.memberId));
           const isAssignee = String(currentUser?.id) === String(a.memberId) || String(currentUser?.memberCode) === String(a.memberId);
 
-          const monthVal = parseInt(a.month, 10);
-          const yearVal = parseInt(a.year, 10);
-          const lastDay = new Date(yearVal, monthVal, 0).getDate();
-          const formattedDeadline = `${String(lastDay).padStart(2, '0')}/${String(monthVal).padStart(2, '0')}/${yearVal}`;
+          const monitoringDeadlineDate = getMonitoringDeadline(a.year, a.month) || new Date(parseInt(a.year, 10), parseInt(a.month, 10), 0);
+          const formattedDeadline = `${String(monitoringDeadlineDate.getDate()).padStart(2, '0')}/${String(monitoringDeadlineDate.getMonth() + 1).padStart(2, '0')}/${monitoringDeadlineDate.getFullYear()}`;
 
           // Get members having birthday in this month
           const birthdayMembersInMonth = members.filter(m => {
@@ -423,11 +424,12 @@ export const BirthdayManagement = () => {
                   onClick={() => {
                     const assignment = (birthdayAssignments || []).find(a => String(a.id) === String(activeAssignmentId));
                     if (assignment) {
+                      const deadlineDate = getPhotoAndDataDeadline(assignment.year, assignment.month);
                       const today = new Date();
                       today.setHours(0, 0, 0, 0);
-                      const deadlineDate = new Date(parseInt(assignment.year, 10), parseInt(assignment.month, 10) - 1, 28);
-                      if (today < deadlineDate) {
-                        if (showToast) showToast(`⚠️ Lý do không có ảnh chỉ được phép dùng kể từ ngày hạn chót (28/${assignment.month}/${assignment.year})!`, 'warning');
+                      if (deadlineDate && today < deadlineDate) {
+                        const deadlineString = `${String(deadlineDate.getDate()).padStart(2, '0')}/${String(deadlineDate.getMonth() + 1).padStart(2, '0')}/${deadlineDate.getFullYear()}`;
+                        if (showToast) showToast(`⚠️ Lý do không có ảnh chỉ được phép dùng kể từ ngày hạn chót (${deadlineString})!`, 'warning');
                         return;
                       }
                     }
