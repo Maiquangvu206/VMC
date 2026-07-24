@@ -266,12 +266,25 @@ router.put('/drafts/:id', async (req, res) => {
 
     const draftTitle = title !== undefined ? title : oldDraft.title || 'Bài viết Fanpage VMC';
     const draftPublishDate = publishDate !== undefined ? publishDate : oldDraft.publishDate || null;
-    const draftGradingDeadline = gradingDeadline !== undefined ? gradingDeadline : (grading_deadline !== undefined ? grading_deadline : (oldDraft.gradingDeadline || oldDraft.grading_deadline || null));
-    const formatDateValue = (value) => {
+
+    // Format HH:mm DD/MM/YYYY
+    const formatDateTime = (value) => {
       if (!value) return 'Chưa có thông tin';
-      const date = new Date(value);
-      return Number.isNaN(date.getTime()) ? String(value) : date.toISOString().slice(0, 10);
+      const d = new Date(value);
+      if (isNaN(d.getTime())) return String(value);
+      const hh = String(d.getHours()).padStart(2, '0');
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mo = String(d.getMonth() + 1).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      return `${hh}:${mm} ${dd}/${mo}/${yyyy}`;
     };
+
+    const formattedPostDate = formatDateTime(draftPublishDate);
+    const gradingDeadlineDate = draftPublishDate
+      ? new Date(new Date(draftPublishDate).getTime() + 24 * 60 * 60 * 1000)
+      : null;
+    const formattedGradingDeadline = gradingDeadlineDate ? formatDateTime(gradingDeadlineDate) : 'Chưa có thông tin';
 
     if (grId) {
       try {
@@ -291,8 +304,8 @@ router.put('/drafts/:id', async (req, res) => {
                 <p>Bạn vừa được phân công làm người chấm tương tác cho một bài viết trên VMC Portal.</p>
                 <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
                 <p><strong>Tiêu đề bài viết:</strong> <strong style="font-size: 15px; color: #1e293b;">${draftTitle}</strong></p>
-                <p><strong>Thời gian đăng bài:</strong> <strong style="font-size: 15px; color: #1e293b;">${formatDateValue(draftPublishDate)}</strong></p>
-                <p><strong>Hạn chấm điểm:</strong> <strong style="font-size: 15px; color: #1e293b;">${formatDateValue(draftGradingDeadline)}</strong></p>
+                <p><strong>Thời gian đăng bài:</strong> <strong style="font-size: 15px; color: #1e293b;">${formattedPostDate}</strong></p>
+                <p><strong>Hạn chấm điểm:</strong> <strong style="font-size: 15px; color: #dc2626;">${formattedGradingDeadline}</strong></p>
                 <p><strong>Nhiệm vụ:</strong> Kiểm tra số lượng Like/Share/Comment và chấm điểm tương tác cho bài viết.</p>
                 <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
                 <p style="font-size: 12px; color: #64748b;">Trân trọng,<br/><strong>Ban Đối Ngoại - Nhân Sự | CLB Truyền Thông THPT Vĩnh Bảo (VMC)</strong></p>

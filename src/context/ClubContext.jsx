@@ -1005,18 +1005,46 @@ export const ClubProvider = ({ children }) => {
     return true;
   };
 
-  // Toggle account status
   const toggleAccountStatus = async (id) => {
     const member = db.members.find(m => m.id === id);
     if (!member) return;
 
     const newStatus = member.status === 'Active' ? 'Suspended' : 'Active';
-    await updateMemberAPI(member.memberCode || member.id, {
-      status: newStatus,
-      name: member.name
-    });
+
+    // Optimistic update ngay lập tức — trước khi API trả về
+    updateDb(prev => ({
+      ...prev,
+      members: prev.members.map(m => m.id === id ? { ...m, status: newStatus } : m)
+    }));
+
+    try {
+      // Gọi API cập nhật status vào DB
+      const res = await updateMemberAPI(member.memberCode || member.member_code || member.id, {
+        status: newStatus,
+        name: member.name
+      });
+
+      if (!res || !res.success) {
+        // Rollback nếu API thất bại
+        updateDb(prev => ({
+          ...prev,
+          members: prev.members.map(m => m.id === id ? { ...m, status: member.status } : m)
+        }));
+        showToast('❌ Lỗi cập nhật trạng thái tài khoản!', 'error');
+        return;
+      }
+    } catch (err) {
+      // Rollback nếu lỗi kết nối
+      updateDb(prev => ({
+        ...prev,
+        members: prev.members.map(m => m.id === id ? { ...m, status: member.status } : m)
+      }));
+      showToast('❌ Lỗi kết nối server!', 'error');
+      return;
+    }
 
     if (newStatus === 'Suspended') {
+      // Ép đăng xuất tất cả phiên của tài khoản bị khóa
       try {
         await fetch('/api/sessions/logout', {
           method: 'POST',
@@ -1027,8 +1055,20 @@ export const ClubProvider = ({ children }) => {
           })
         });
       } catch (e) {
-        console.warn('Lỗi khi đăng xuất tất cả phiên của tài khoản bị khóa:', e.message || e);
+        console.warn('Lỗi khi đăng xuất phiên của tài khoản bị khóa:', e.message);
       }
+
+      const normalizedIdentifiers = [member.id, member.memberCode, member.member_code, member.username]
+        .filter(Boolean)
+        .map(String);
+
+      setSessions(prev => prev.map(s => {
+        const sessionIdentifiers = [s.member_id, s.username].filter(Boolean).map(String);
+        if (sessionIdentifiers.some(sid => normalizedIdentifiers.includes(sid))) {
+          return { ...s, is_active: 0, logout_reason: 'suspended' };
+        }
+        return s;
+      }));
     }
 
     const newMilestone = {
@@ -1044,30 +1084,18 @@ export const ClubProvider = ({ children }) => {
       ...prev,
       members: prev.members.map(m => {
         if (m.id === id) {
-          return {
-            ...m,
-            status: newStatus,
-            milestones: [...(m.milestones || []), newMilestone]
-          };
+          return { ...m, status: newStatus, milestones: [...(m.milestones || []), newMilestone] };
         }
         return m;
       })
     }));
 
-    if (newStatus === 'Suspended') {
-      const normalizedIdentifiers = [member.id, member.memberCode, member.member_code, member.username]
-        .filter(Boolean)
-        .map(String);
-
-      setSessions(prev => prev.map(s => {
-        const sessionIdentifiers = [s.member_id, s.username].filter(Boolean).map(String);
-        if (sessionIdentifiers.some(id => normalizedIdentifiers.includes(id))) {
-          return { ...s, is_active: 0, logout_reason: 'logout' };
-        }
-        return s;
-      }));
-      loadSqlSessions().catch(() => {});
-    }
+    showToast(
+      newStatus === 'Suspended'
+        ? `🔒 Đã khóa tài khoản ${member.name} thành công!`
+        : `🔓 Đã mở khóa tài khoản ${member.name} thành công!`,
+      newStatus === 'Suspended' ? 'warning' : 'success'
+    );
   };
 
   // Update Task Status
