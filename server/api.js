@@ -1562,19 +1562,19 @@ router.get('/recruitment/seasons', async (req, res) => {
 
 router.post('/recruitment/seasons', async (req, res) => {
   try {
-    const { id, name, quota, created_by } = req.body;
+    const { id, name, quota, department, scoring_type, created_by } = req.body;
     const sid = id || ('season-' + Date.now());
     await queryDatabase(
-      'INSERT INTO Recruitment_Seasons (id, name, quota, created_by) VALUES (?, ?, ?, ?)',
-      [sid, name, quota || 0, created_by || null]
+      'INSERT INTO Recruitment_Seasons (id, name, quota, department, scoring_type, created_by) VALUES (?, ?, ?, ?, ?, ?)',
+      [sid, name, quota || 0, department || null, scoring_type || 'teamwork', created_by || null]
     );
-    res.json({ success: true, data: { id: sid, name, quota, is_active: 0 } });
+    res.json({ success: true, data: { id: sid, name, quota, department, scoring_type, is_active: 0 } });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
 router.put('/recruitment/seasons/:id', async (req, res) => {
   try {
-    const { name, quota, is_active, interviewer_ids } = req.body;
+    const { name, quota, department, scoring_type, is_active, interviewer_ids } = req.body;
     if (is_active === 1 || is_active === true) {
       await queryDatabase('UPDATE Recruitment_Seasons SET is_active = 0');
     }
@@ -1582,8 +1582,8 @@ router.put('/recruitment/seasons/:id', async (req, res) => {
       ? (Array.isArray(interviewer_ids) ? JSON.stringify(interviewer_ids) : interviewer_ids)
       : null;
     await queryDatabase(
-      'UPDATE Recruitment_Seasons SET name = COALESCE(?, name), quota = COALESCE(?, quota), is_active = COALESCE(?, is_active), interviewer_ids = COALESCE(?, interviewer_ids) WHERE id = ?',
-      [name ?? null, quota ?? null, is_active !== undefined ? (is_active ? 1 : 0) : null, interviewerIdsVal, req.params.id]
+      'UPDATE Recruitment_Seasons SET name = COALESCE(?, name), quota = COALESCE(?, quota), department = COALESCE(?, department), scoring_type = COALESCE(?, scoring_type), is_active = COALESCE(?, is_active), interviewer_ids = COALESCE(?, interviewer_ids) WHERE id = ?',
+      [name ?? null, quota ?? null, department ?? null, scoring_type ?? null, is_active !== undefined ? (is_active ? 1 : 0) : null, interviewerIdsVal, req.params.id]
     );
     res.json({ success: true });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }

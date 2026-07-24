@@ -223,8 +223,10 @@ queryDatabase(`
   )
 `).catch(err => console.log('ℹ️ CSDL status Attendance_Records table:', err.message));
 
-// Recruitment module — thêm cột interviewer_ids vào Recruitment_Seasons nếu chưa có
+// Recruitment module — thêm cột interviewer_ids, department và scoring_type vào Recruitment_Seasons nếu chưa có
 queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN interviewer_ids TEXT').catch(() => {});
+queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN department VARCHAR(100)').catch(() => {});
+queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN scoring_type VARCHAR(20) DEFAULT "teamwork"').catch(() => {});
 queryDatabase('ALTER TABLE Recruitment_Scores ADD COLUMN comments TEXT').catch(() => {});
 
 // Tự động khởi tạo bảng System_Settings

@@ -12,6 +12,40 @@ export const InternalRecruitment = () => {
     members, showToast 
   } = useClub();
 
+  const currentUserRoleTitle = String(currentUser?.roleTitle || '').toLowerCase();
+  const currentUserDeptName = String(currentUser?.deptName || currentUser?.department || '').toLowerCase();
+
+  const isDeptHead = Boolean(
+    currentUserRoleTitle.includes('trưởng ban')
+  );
+
+  // Check if current user can score based on scoring type
+  const canScore = React.useMemo(() => {
+    if (!currentSeason) return false;
+    
+    const scoringType = currentSeason.scoring_type || 'teamwork';
+    const seasonDept = currentSeason.department?.toLowerCase() || '';
+    const userDept = (currentUser?.deptName || currentUser?.department || '').toLowerCase();
+    const userRoleTitle = (currentUser?.roleTitle || '').toLowerCase();
+    
+    // BCN (Chủ Nhiệm, Phó Chủ Nhiệm) - always can score
+    const isBCN = userRoleTitle.includes('chủ nhiệm') || userRoleTitle.includes('phó chủ nhiệm');
+    
+    // Cố vấn (Advisor)
+    const isAdvisor = userRoleTitle.includes('cố vấn') || userRoleTitle.includes('advisor');
+    
+    // Department member
+    const isDeptMember = seasonDept && userDept.includes(seasonDept);
+    
+    if (scoringType === 'don') {
+      // Đơn: toàn bộ ban + BCN + cố vấn có thể chấm
+      return isBCN || isAdvisor || isDeptMember;
+    } else {
+      // Teamwork: chỉ người được phân công có thể chấm
+      return currentSeason?.interviewer_ids?.includes(currentUser?.id);
+    }
+  }, [currentSeason, currentUser]);
+
   const [activeTab, setActiveTab] = useState('seasons');
   const [seasons, setSeasons] = useState([]);
   const [currentSeason, setCurrentSeason] = useState(null);
@@ -30,11 +64,18 @@ export const InternalRecruitment = () => {
   const [selectedInterviewers, setSelectedInterviewers] = useState([]);
 
   // Form states
-  const [seasonForm, setSeasonForm] = useState({ name: '', quota: 0 });
+  const [seasonForm, setSeasonForm] = useState({ name: '', quota: 0, department: '', scoring_type: 'teamwork' });
   const [criteriaForm, setCriteriaForm] = useState({ criteria_name: '', max_score: 10, sort_order: 0 });
   const [candidateForm, setCandidateForm] = useState({
     full_name: '', class_name: '', phone: '', email: '', desired_dept: '', notes: ''
   });
+
+  // Auto-fill candidate desired_dept when season changes
+  useEffect(() => {
+    if (currentSeason && currentSeason.department) {
+      setCandidateForm(prev => ({ ...prev, desired_dept: prev.desired_dept || currentSeason.department }));
+    }
+  }, [currentSeason?.department]);
   const [scoringData, setScoringData] = useState({});
 
   // Fetch data
@@ -62,8 +103,14 @@ export const InternalRecruitment = () => {
       const res = await fetch('/api/recruitment/seasons', { headers: { 'ngrok-skip-browser-warning': 'true' } });
       const data = await res.json();
       if (data.success) {
-        setSeasons(data.data);
-        const active = data.data.find(s => s.is_active === 1);
+        // Filter seasons by user's department (Super Admin sees all)
+        const userDept = currentUser?.deptName || currentUser?.department || '';
+        const filteredSeasons = isSuperAdmin 
+          ? data.data 
+          : data.data.filter(s => !s.department || s.department === userDept);
+        
+        setSeasons(filteredSeasons);
+        const active = filteredSeasons.find(s => s.is_active === 1);
         if (active) setCurrentSeason(active);
       }
     } catch (e) {
@@ -125,7 +172,7 @@ export const InternalRecruitment = () => {
       if (data.success) {
         showToast('✅ Đã tạo mùa tuyển mới!', 'success');
         setShowSeasonModal(false);
-        setSeasonForm({ name: '', quota: 0 });
+        setSeasonForm({ name: '', quota: 0, department: '', scoring_type: 'teamwork' });
         fetchSeasons();
       } else {
         showToast('❌ Lỗi tạo mùa tuyển!', 'error');
@@ -160,13 +207,13 @@ export const InternalRecruitment = () => {
         body: JSON.stringify({ interviewer_ids: interviewerIds })
       });
       if (res.ok) {
-        showToast('✅ Đã phân công Interviewer!', 'success');
+        showToast('✅ Đã phân công Phỏng vấn!', 'success');
         fetchSeasons();
         setShowInterviewerModal(false);
         setSelectedInterviewers([]);
       }
     } catch (e) {
-      showToast('❌ Lỗi phân công Interviewer!', 'error');
+      showToast('❌ Lỗi phân công Phỏng vấn!', 'error');
     }
   };
 
@@ -221,10 +268,16 @@ export const InternalRecruitment = () => {
     if (!currentSeason) return;
     setLoading(true);
     try {
+      // Auto-set desired_dept based on season's department if not specified
+      const candidateData = {
+        ...candidateForm,
+        season_id: currentSeason.id,
+        desired_dept: candidateForm.desired_dept || currentSeason.department || ''
+      };
       const res = await fetch('/api/recruitment/candidates', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
-        body: JSON.stringify({ ...candidateForm, season_id: currentSeason.id })
+        body: JSON.stringify(candidateData)
       });
       const data = await res.json();
       if (data.success) {
@@ -249,7 +302,7 @@ export const InternalRecruitment = () => {
         body: JSON.stringify({ interviewer_id: interviewerId })
       });
       if (res.ok) {
-        showToast('✅ Đã phân công Interviewer!', 'success');
+        showToast('✅ Đã phân công Phỏng vấn!', 'success');
         fetchCandidates(currentSeason.id);
       }
     } catch (e) {
@@ -310,11 +363,28 @@ export const InternalRecruitment = () => {
     }
   };
 
-  // Get available interviewers (members with appropriate roles)
-  const availableInterviewers = members.filter(m => {
-    const roleTitle = (m.roleTitle || '').toLowerCase();
-    return roleTitle.includes('trưởng ban') || roleTitle.includes('chủ nhiệm') || roleTitle.includes('kỹ thuật');
-  });
+  // Get available interviewers based on season's department + BCN + advisors
+  const availableInterviewers = React.useMemo(() => {
+    if (!selectedSeasonForInterviewers) return [];
+    
+    const seasonDept = selectedSeasonForInterviewers.department?.toLowerCase() || '';
+    
+    return members.filter(m => {
+      const roleTitle = (m.roleTitle || '').toLowerCase();
+      const memberDept = (m.deptName || m.department || '').toLowerCase();
+      
+      // BCN (Chủ Nhiệm, Phó Chủ Nhiệm) - always included
+      const isBCN = roleTitle.includes('chủ nhiệm') || roleTitle.includes('phó chủ nhiệm');
+      
+      // Cố vấn (Advisor)
+      const isAdvisor = roleTitle.includes('cố vấn') || roleTitle.includes('advisor');
+      
+      // Department members
+      const isDeptMember = seasonDept && memberDept.includes(seasonDept);
+      
+      return isBCN || isAdvisor || isDeptMember;
+    });
+  }, [selectedSeasonForInterviewers, members]);
 
   return (
     <div className="container py-8 space-y-6 pb-20">
@@ -348,23 +418,69 @@ export const InternalRecruitment = () => {
 
       {/* Tabs */}
       <div className="flex flex-wrap gap-2 border-b border-white/10 pb-4">
-        {['seasons', 'criteria', 'candidates', 'scoring', 'results'].map(tab => (
+        <button
+          onClick={() => setActiveTab('seasons')}
+          className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
+            activeTab === 'seasons'
+              ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
+              : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
+          }`}
+        >
+          Mùa Tuyển
+        </button>
+        
+        {/* Criteria tab - only for Trưởng Ban */}
+        {(isSuperAdmin || isAdmin || isHRHead || isDeptHead) && (
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => setActiveTab('criteria')}
             className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
-              activeTab === tab
+              activeTab === 'criteria'
                 ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
                 : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
             }`}
           >
-            {tab === 'seasons' && 'Mùa Tuyển'}
-            {tab === 'criteria' && 'Tiêu Chí'}
-            {tab === 'candidates' && 'Ứng Viên'}
-            {tab === 'scoring' && 'Chấm Điểm'}
-            {tab === 'results' && 'Kết Quả'}
+            Tiêu Chí
           </button>
-        ))}
+        )}
+        
+        <button
+          onClick={() => setActiveTab('candidates')}
+          className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
+            activeTab === 'candidates'
+              ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
+              : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
+          }`}
+        >
+          Ứng Viên
+        </button>
+        
+        {/* Scoring tab - based on scoring type */}
+        {canScore && (
+          <button
+            onClick={() => setActiveTab('scoring')}
+            className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
+              activeTab === 'scoring'
+                ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
+                : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
+            }`}
+          >
+            Chấm Điểm
+          </button>
+        )}
+        
+        {/* Results tab - only for Admin/HR Head */}
+        {(isSuperAdmin || isAdmin || isHRHead) && (
+          <button
+            onClick={() => setActiveTab('results')}
+            className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
+              activeTab === 'results'
+                ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
+                : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
+            }`}
+          >
+            Kết Quả
+          </button>
+        )}
       </div>
 
       {/* Seasons Tab */}
@@ -387,7 +503,7 @@ export const InternalRecruitment = () => {
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="font-bold text-white text-lg">{season.name}</h3>
-                        <p className="text-slate-400 text-sm">Hạn ngạch: {season.quota} thành viên</p>
+                        <p className="text-slate-400 text-sm">Ban: {season.department || 'Tất cả'} | Chỉ tiêu: {season.quota} thành viên</p>
                         <div className="flex items-center gap-2 mt-2">
                           {season.is_active === 1 ? (
                             <span className="flex items-center gap-1 text-emerald-400 text-xs">
@@ -413,7 +529,7 @@ export const InternalRecruitment = () => {
                         <button
                           onClick={() => openInterviewerModal(season)}
                           className="p-2 bg-blue-500/20 text-blue-300 rounded-lg hover:bg-blue-500/30"
-                          title="Phân công Interviewer"
+                          title="Phân công Phỏng vấn"
                         >
                           <Users className="w-4 h-4" />
                         </button>
@@ -442,7 +558,7 @@ export const InternalRecruitment = () => {
                     </div>
                     <div className="flex-1">
                       <h3 className="font-bold text-white text-xl">{currentSeason.name}</h3>
-                      <p className="text-slate-400 text-sm mt-1">Hạn ngạch: {currentSeason.quota} thành viên</p>
+                      <p className="text-slate-400 text-sm mt-1">Ban: {currentSeason.department || 'Tất cả'} | Chỉ tiêu: {currentSeason.quota} thành viên</p>
                       <div className="flex items-center gap-2 mt-2">
                         <span className="flex items-center gap-1 text-emerald-400 text-sm">
                           <CheckCircle className="w-4 h-4" /> Đang hoạt động
@@ -462,8 +578,8 @@ export const InternalRecruitment = () => {
         </div>
       )}
 
-      {/* Criteria Tab */}
-      {activeTab === 'criteria' && currentSeason && (isAdmin || isHRHead) && (
+      {/* Criteria Tab - only for Trưởng Ban */}
+      {activeTab === 'criteria' && currentSeason && (isSuperAdmin || isAdmin || isHRHead || isDeptHead) && (
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-bold text-white">Tiêu Chí Chấm Điểm - {currentSeason.name}</h2>
@@ -542,7 +658,7 @@ export const InternalRecruitment = () => {
                         onChange={(e) => assignCandidateToInterviewer(c.id, e.target.value)}
                         className="bg-slate-800 text-white text-xs rounded-lg px-2 py-1 border border-slate-700"
                       >
-                        <option value="">Chọn Interviewer</option>
+                        <option value="">Chọn Phỏng vấn</option>
                         {availableInterviewers.map(i => (
                           <option key={i.id} value={i.id}>{i.name}</option>
                         ))}
@@ -556,10 +672,15 @@ export const InternalRecruitment = () => {
         </div>
       )}
 
-      {/* Scoring Tab (Interviewer only) */}
-      {activeTab === 'scoring' && !isAdmin && !isHRHead && currentSeason && (
+      {/* Scoring Tab - based on scoring type */}
+      {activeTab === 'scoring' && canScore && currentSeason && (
         <div className="space-y-4">
-          <h2 className="text-xl font-bold text-white">Chấm Điểm Ứng Viên - {currentSeason.name}</h2>
+          <h2 className="text-xl font-bold text-white">
+            Chấm Điểm Ứng Viên - {currentSeason.name}
+            <span className="text-sm font-normal text-slate-400 ml-2">
+              ({currentSeason.scoring_type === 'don' ? 'Hình thức: Đơn' : 'Hình thức: Teamwork'})
+            </span>
+          </h2>
           <div className="grid gap-3">
             {candidates.filter(c => !submittedCandidates.includes(c.id)).map(c => (
               <div key={c.id} className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
@@ -596,7 +717,7 @@ export const InternalRecruitment = () => {
                   <th className="px-4 py-3 text-left text-slate-300 font-bold">Họ Tên</th>
                   <th className="px-4 py-3 text-left text-slate-300 font-bold">Lớp</th>
                   <th className="px-4 py-3 text-left text-slate-300 font-bold">Ban Mong Muốn</th>
-                  <th className="px-4 py-3 text-left text-slate-300 font-bold">Số Interviewer</th>
+                  <th className="px-4 py-3 text-left text-slate-300 font-bold">Số Phỏng vấn</th>
                   <th className="px-4 py-3 text-left text-slate-300 font-bold">Điểm TB</th>
                   <th className="px-4 py-3 text-left text-slate-300 font-bold">Tổng Điểm</th>
                   <th className="px-4 py-3 text-left text-slate-300 font-bold">Kết Quả</th>
@@ -656,7 +777,7 @@ export const InternalRecruitment = () => {
                 />
               </div>
               <div>
-                <label className="text-slate-300 text-sm block mb-1">Hạn ngạch</label>
+                <label className="text-slate-300 text-sm block mb-1">Chỉ tiêu</label>
                 <input
                   type="number"
                   value={seasonForm.quota}
@@ -664,6 +785,33 @@ export const InternalRecruitment = () => {
                   className="w-full bg-slate-800 text-white rounded-lg px-4 py-2 border border-slate-700"
                   placeholder="Số lượng thành viên cần tuyển"
                 />
+              </div>
+              <div>
+                <label className="text-slate-300 text-sm block mb-1">Ban</label>
+                <select
+                  value={seasonForm.department}
+                  onChange={(e) => setSeasonForm({ ...seasonForm, department: e.target.value })}
+                  className="w-full bg-slate-800 text-white rounded-lg px-4 py-2 border border-slate-700"
+                >
+                  <option value="">Tất cả các ban</option>
+                  <option value="Đối Ngoại">Đối Ngoại</option>
+                  <option value="Nhân Sự">Nhân Sự</option>
+                  <option value="ĐN-NS">Đối Ngoại - Nhân Sự</option>
+                  <option value="Hậu Cần">Hậu Cần</option>
+                  <option value="Truyền Thông">Truyền Thông</option>
+                  <option value="Nghiên Cứu & Phát Triển">Nghiên Cứu & Phát Triển</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-slate-300 text-sm block mb-1">Hình thức chấm điểm</label>
+                <select
+                  value={seasonForm.scoring_type}
+                  onChange={(e) => setSeasonForm({ ...seasonForm, scoring_type: e.target.value })}
+                  className="w-full bg-slate-800 text-white rounded-lg px-4 py-2 border border-slate-700"
+                >
+                  <option value="teamwork">Teamwork (chỉ người được phân công)</option>
+                  <option value="don">Đơn (toàn bộ ban + BCN + cố vấn)</option>
+                </select>
               </div>
             </div>
             <div className="flex gap-3 mt-6">
@@ -872,7 +1020,7 @@ export const InternalRecruitment = () => {
       {showInterviewerModal && selectedSeasonForInterviewers && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-white mb-4">Phân công Interviewer - {selectedSeasonForInterviewers.name}</h3>
+            <h3 className="text-xl font-bold text-white mb-4">Phân công Phỏng vấn - {selectedSeasonForInterviewers.name}</h3>
             <div className="space-y-3">
               {availableInterviewers.map(m => (
                 <div key={m.id} className="flex items-center justify-between bg-slate-800/50 rounded-lg p-3">
@@ -921,7 +1069,7 @@ export const InternalRecruitment = () => {
                 disabled={loading}
                 className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
               >
-                {loading ? 'Đang lưu...' : 'Lưu Phân Công'}
+                {loading ? 'Đang lưu...' : 'Lưu Phân Công Phỏng vấn'}
               </button>
             </div>
           </div>
