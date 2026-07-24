@@ -90,6 +90,7 @@ export const ClubProvider = ({ children }) => {
   const [isNewAccountModalOpen, setIsNewAccountModalOpen] = useState(false);
   const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
   const [membersFilterDept, setMembersFilterDept] = useState('ALL');
+  const [isRecruitmentSeasonActive, setIsRecruitmentSeasonActive] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -261,6 +262,13 @@ export const ClubProvider = ({ children }) => {
           fetchEntityAPI('sessions').then(serverSessions => {
             if (Array.isArray(serverSessions)) setSessions(serverSessions);
           }).catch(() => {});
+
+          // Sync System Settings
+          fetch('/api/admin/system-settings', { headers: { 'ngrok-skip-browser-warning': 'true' } })
+            .then(r => r.json())
+            .then(d => {
+              if (d.success) setIsRecruitmentSeasonActive(d.data.recruitment_season_active === '1');
+            }).catch(() => {});
         }
       } catch (err) {
         console.warn('ℹ️ Real-time MySQL sync status:', err.message);
@@ -1716,6 +1724,25 @@ export const ClubProvider = ({ children }) => {
     }
   };
 
+  const toggleRecruitmentSeason = async () => {
+    try {
+      const res = await fetch('/api/admin/recruitment-season/toggle', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setIsRecruitmentSeasonActive(data.isActive);
+        showToast(
+          data.isActive ? '🟢 Đã BẬT mùa tuyển gen! Menu "Tuyển Gen" hiện đã hiển thị.' : '🔴 Đã TẮT mùa tuyển gen.',
+          data.isActive ? 'success' : 'info'
+        );
+      }
+    } catch (e) {
+      showToast('❌ Lỗi khi thay đổi trạng thái mùa tuyển!', 'error');
+    }
+  };
+
   // Add BCN Announcement
   const addAnnouncement = async (annData) => {
     const annObj = {
@@ -1929,6 +1956,8 @@ export const ClubProvider = ({ children }) => {
       setIsNewAccountModalOpen,
       membersFilterDept,
       setMembersFilterDept,
+      isRecruitmentSeasonActive,
+      toggleRecruitmentSeason,
       meetings: db.meetings || [],
       createMeeting,
       cancelMeeting,

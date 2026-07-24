@@ -95,34 +95,45 @@ export const createMemberAPI = async (newAcc) => {
 // Secure Update Member API
 export const updateMemberAPI = async (memberId, updatedFields) => {
   try {
+    // Chỉ gửi các field có giá trị thực sự (không gửi undefined) để tránh ghi đè dữ liệu không cần thiết
+    const payload = {};
+    const fn = updatedFields.name !== undefined ? updatedFields.name : updatedFields.full_name;
+    if (fn !== undefined) payload.full_name = fn;
+    if (updatedFields.role !== undefined) payload.role = updatedFields.role;
+    const rt = updatedFields.roleTitle !== undefined ? updatedFields.roleTitle : updatedFields.role_title;
+    if (rt !== undefined) payload.role_title = rt;
+    const mc = updatedFields.memberCode !== undefined ? updatedFields.memberCode : updatedFields.member_code;
+    if (mc !== undefined) payload.member_code = mc;
+    const cn = updatedFields.class !== undefined ? updatedFields.class : updatedFields.class_name;
+    if (cn !== undefined) payload.class_name = cn;
+    const dept = updatedFields.deptName !== undefined ? updatedFields.deptName : updatedFields.department;
+    if (dept !== undefined) payload.department = dept;
+    const term = updatedFields.term !== undefined ? updatedFields.term : updatedFields.termName;
+    if (term !== undefined) payload.term = term;
+    if (updatedFields.phone !== undefined) payload.phone = updatedFields.phone;
+    if (updatedFields.dob !== undefined) payload.dob = updatedFields.dob;
+    if (updatedFields.email !== undefined) payload.email = updatedFields.email;
+    if (updatedFields.points !== undefined) payload.points = updatedFields.points;
+    if (updatedFields.address !== undefined) payload.address = updatedFields.address;
+    if (updatedFields.facebook !== undefined) payload.facebook = updatedFields.facebook;
+    const av = updatedFields.avatar || updatedFields.avatar_url;
+    if (av !== undefined) { payload.avatar_url = av; payload.avatar = av; }
+    if (updatedFields.status !== undefined) payload.status = updatedFields.status;
+    // Chỉ gửi password khi là string không rỗng
+    if (typeof updatedFields.password === 'string' && updatedFields.password.length > 0) {
+      payload.password = updatedFields.password;
+    }
+    const ifl = updatedFields.isFirstLogin !== undefined ? updatedFields.isFirstLogin : updatedFields.is_first_login;
+    if (ifl !== undefined) { payload.is_first_login = ifl; payload.isFirstLogin = ifl; }
+    if (updatedFields.milestones !== undefined) payload.milestones = updatedFields.milestones;
+
     const response = await fetch(`/api/members/${memberId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         'ngrok-skip-browser-warning': 'true'
       },
-      body: JSON.stringify({
-        full_name: updatedFields.name !== undefined ? updatedFields.name : updatedFields.full_name,
-        role: updatedFields.role,
-        role_title: updatedFields.roleTitle !== undefined ? updatedFields.roleTitle : updatedFields.role_title,
-        member_code: updatedFields.memberCode !== undefined ? updatedFields.memberCode : updatedFields.member_code,
-        class_name: updatedFields.class !== undefined ? updatedFields.class : updatedFields.class_name,
-        department: updatedFields.deptName !== undefined ? updatedFields.deptName : updatedFields.department,
-        term: updatedFields.term !== undefined ? updatedFields.term : updatedFields.termName,
-        phone: updatedFields.phone,
-        dob: updatedFields.dob,
-        email: updatedFields.email,
-        points: updatedFields.points,
-        address: updatedFields.address,
-        facebook: updatedFields.facebook,
-        avatar_url: updatedFields.avatar || updatedFields.avatar_url,
-        avatar: updatedFields.avatar || updatedFields.avatar_url,
-        status: updatedFields.status,
-        password: updatedFields.password,
-        is_first_login: updatedFields.isFirstLogin !== undefined ? updatedFields.isFirstLogin : updatedFields.is_first_login,
-        isFirstLogin: updatedFields.isFirstLogin,
-        milestones: updatedFields.milestones
-      })
+      body: JSON.stringify(payload)
     });
     return await response.json();
   } catch (error) {

@@ -28,9 +28,10 @@ const toId = (val) => (val !== undefined && val !== null && val !== '') ? String
 router.get('/tasks', async (req, res) => {
   try {
     const tasks = await queryDatabase(`
-      SELECT t.*, m.full_name AS assignee_name, m.name AS m_name 
+            SELECT t.*,
+        (SELECT m2.full_name FROM Members m2 WHERE m2.id = t.assignee_id LIMIT 1) AS assignee_name_by_id,
+        (SELECT m3.full_name FROM Members m3 WHERE m3.member_code = t.assignee_id LIMIT 1) AS assignee_name_by_code
       FROM Tasks t 
-      LEFT JOIN Members m ON (t.assignee_id = m.id OR t.assignee_id = m.member_code) 
       ORDER BY t.created_at DESC
     `);
     const data = tasks.map(t => ({
@@ -39,11 +40,10 @@ router.get('/tasks', async (req, res) => {
       description: t.description,
       department: t.department || 'hr_external',
       assigneeId: t.assignee_id,
-      assignee: t.assignee_name || t.m_name || 'Chưa phân công',
+      assignee: t.assignee_name_by_id || t.assignee_name_by_code || 'Chưa phân công',
       createdById: t.created_by,
       deadline: t.deadline ? new Date(t.deadline).toISOString().slice(0, 10) : null,
       status: t.status || 'todo',
-      pointsReward: t.points_reward || 10,
       createdAt: t.created_at
     }));
     res.json({ success: true, data });
@@ -59,14 +59,14 @@ router.post('/tasks', async (req, res) => {
 
     const rootCreatorId = toId(req.body.created_by || req.body.createdBy);
     for (const taskInput of taskItems) {
-      const { id, title, description, assignee_id, assigneeId, created_by, deadline, status, points_reward } = taskInput;
+      const { id, title, description, assignee_id, assigneeId, created_by, deadline, status } = taskInput;
       const taskId = id || generateId();
       const assId = toId(assignee_id || assigneeId);
       const creatorId = toId(created_by || rootCreatorId);
 
       await queryDatabase(
-        'INSERT INTO Tasks (id, title, description, assignee_id, created_by, deadline, status, points_reward) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-        [taskId, title, description || '', assId, creatorId, deadline || null, status || 'todo', points_reward || 10]
+        'INSERT INTO Tasks (id, title, description, assignee_id, created_by, deadline, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [taskId, title, description || '', assId, creatorId, deadline || null, status || 'todo']
       );
 
       // Gửi email thông báo cho từng nhiệm vụ được tạo
@@ -90,7 +90,6 @@ router.post('/tasks', async (req, res) => {
                   <p><strong>Nhiệm vụ:</strong> <strong style="font-size: 15px; color: #1e293b;">${title}</strong></p>
                   <p><strong>Mô tả:</strong> ${description || 'Không có mô tả chi tiết.'}</p>
                   <p><strong>Hạn chót:</strong> ${deadline || 'Không giới hạn'}</p>
-                  ${(points_reward && Number(points_reward) > 0) ? `<p><strong>Điểm thưởng:</strong> ${points_reward} points</p>` : ''}
                   <hr style="border:0; border-top:1px solid #e2e8f0; margin: 15px 0;"/>
                   <p style="font-size: 12px; color: #64748b;">Vui lòng truy cập hệ thống để cập nhật tiến độ công việc.</p>
                 </div>
@@ -113,7 +112,7 @@ router.post('/tasks', async (req, res) => {
 
 router.put('/tasks/:id', async (req, res) => {
   try {
-    const { status, title, description, deadline, assignee_id, assigneeId, points_reward } = req.body;
+    const { status, title, description, deadline, assignee_id, assigneeId } = req.body;
     const assId = (assignee_id !== undefined || assigneeId !== undefined) ? toId(assignee_id || assigneeId) : undefined;
 
     // Lấy thông tin task trước khi cập nhật để kiểm tra chuyển sang trạng thái hoàn thành (done)
@@ -121,14 +120,13 @@ router.put('/tasks/:id', async (req, res) => {
     const oldTask = oldTasks && oldTasks.length > 0 ? oldTasks[0] : null;
 
     await queryDatabase(
-      'UPDATE Tasks SET status = COALESCE(?, status), title = COALESCE(?, title), description = COALESCE(?, description), deadline = COALESCE(?, deadline), assignee_id = COALESCE(?, assignee_id), points_reward = COALESCE(?, points_reward) WHERE id = ?',
+      'UPDATE Tasks SET status = COALESCE(?, status), title = COALESCE(?, title), description = COALESCE(?, description), deadline = COALESCE(?, deadline), assignee_id = COALESCE(?, assignee_id) WHERE id = ?',
       [
         status !== undefined ? status : null,
         title !== undefined ? title : null,
         description !== undefined ? description : null,
         deadline !== undefined ? deadline : null,
         assId !== undefined ? assId : null,
-        points_reward !== undefined ? points_reward : null,
         req.params.id
       ]
     );
@@ -1546,6 +1544,273 @@ router.delete('/generations/:id', async (req, res) => {
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
+});
+
+// ======================= RECRUITMENT MODULE =======================
+
+// --- Seasons ---
+router.get('/recruitment/seasons', async (req, res) => {
+  try {
+    const rows = await queryDatabase('SELECT * FROM Recruitment_Seasons ORDER BY created_at DESC');
+    const data = rows.map(r => ({
+      ...r,
+      interviewer_ids: (() => { try { return r.interviewer_ids ? JSON.parse(r.interviewer_ids) : []; } catch { return []; } })()
+    }));
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.post('/recruitment/seasons', async (req, res) => {
+  try {
+    const { id, name, quota, created_by } = req.body;
+    const sid = id || ('season-' + Date.now());
+    await queryDatabase(
+      'INSERT INTO Recruitment_Seasons (id, name, quota, created_by) VALUES (?, ?, ?, ?)',
+      [sid, name, quota || 0, created_by || null]
+    );
+    res.json({ success: true, data: { id: sid, name, quota, is_active: 0 } });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.put('/recruitment/seasons/:id', async (req, res) => {
+  try {
+    const { name, quota, is_active, interviewer_ids } = req.body;
+    if (is_active === 1 || is_active === true) {
+      await queryDatabase('UPDATE Recruitment_Seasons SET is_active = 0');
+    }
+    const interviewerIdsVal = interviewer_ids !== undefined
+      ? (Array.isArray(interviewer_ids) ? JSON.stringify(interviewer_ids) : interviewer_ids)
+      : null;
+    await queryDatabase(
+      'UPDATE Recruitment_Seasons SET name = COALESCE(?, name), quota = COALESCE(?, quota), is_active = COALESCE(?, is_active), interviewer_ids = COALESCE(?, interviewer_ids) WHERE id = ?',
+      [name ?? null, quota ?? null, is_active !== undefined ? (is_active ? 1 : 0) : null, interviewerIdsVal, req.params.id]
+    );
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.delete('/recruitment/seasons/:id', async (req, res) => {
+  try {
+    await queryDatabase('DELETE FROM Recruitment_Seasons WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// --- Criteria ---
+router.get('/recruitment/criteria/:seasonId', async (req, res) => {
+  try {
+    const rows = await queryDatabase(
+      'SELECT * FROM Recruitment_Criteria WHERE season_id = ? ORDER BY sort_order ASC',
+      [req.params.seasonId]
+    );
+    res.json({ success: true, data: rows });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.post('/recruitment/criteria', async (req, res) => {
+  try {
+    const { id, season_id, criteria_name, max_score, sort_order } = req.body;
+    const cid = id || ('crit-' + Date.now());
+    await queryDatabase(
+      'INSERT INTO Recruitment_Criteria (id, season_id, criteria_name, max_score, sort_order) VALUES (?, ?, ?, ?, ?)',
+      [cid, season_id, criteria_name, max_score || 10, sort_order || 0]
+    );
+    res.json({ success: true, data: { id: cid, season_id, criteria_name, max_score: max_score || 10 } });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.put('/recruitment/criteria/:id', async (req, res) => {
+  try {
+    const { criteria_name, max_score } = req.body;
+    await queryDatabase(
+      'UPDATE Recruitment_Criteria SET criteria_name = COALESCE(?, criteria_name), max_score = COALESCE(?, max_score) WHERE id = ?',
+      [criteria_name ?? null, max_score ?? null, req.params.id]
+    );
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.delete('/recruitment/criteria/:id', async (req, res) => {
+  try {
+    await queryDatabase('DELETE FROM Recruitment_Criteria WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// --- Candidates ---
+router.get('/recruitment/candidates/:seasonId', async (req, res) => {
+  try {
+    const { interviewer_id } = req.query;
+    let sql = 'SELECT id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, status, notes, created_at FROM Recruitment_Candidates WHERE season_id = ?';
+    const params = [req.params.seasonId];
+    // Interviewer chỉ thấy ứng viên được gán cho mình
+    if (interviewer_id) { sql += ' AND interviewer_id = ?'; params.push(interviewer_id); }
+    sql += ' ORDER BY created_at ASC';
+    const rows = await queryDatabase(sql, params);
+    res.json({ success: true, data: rows });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.post('/recruitment/candidates', async (req, res) => {
+  try {
+    const { id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, notes } = req.body;
+    const cid = id || ('cand-' + Date.now());
+    await queryDatabase(
+      'INSERT INTO Recruitment_Candidates (id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [cid, season_id, full_name, class_name || null, phone || null, email || null, desired_dept || null, interviewer_id || null, notes || null]
+    );
+    res.json({ success: true, data: { id: cid, season_id, full_name, interviewer_id, status: 'pending' } });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.put('/recruitment/candidates/:id', async (req, res) => {
+  try {
+    const { full_name, class_name, phone, email, desired_dept, interviewer_id, status, notes } = req.body;
+    await queryDatabase(
+      `UPDATE Recruitment_Candidates SET
+        full_name = COALESCE(?, full_name), class_name = COALESCE(?, class_name),
+        phone = COALESCE(?, phone), email = COALESCE(?, email),
+        desired_dept = COALESCE(?, desired_dept), interviewer_id = COALESCE(?, interviewer_id),
+        status = COALESCE(?, status), notes = COALESCE(?, notes)
+       WHERE id = ?`,
+      [full_name??null, class_name??null, phone??null, email??null, desired_dept??null, interviewer_id??null, status??null, notes??null, req.params.id]
+    );
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.delete('/recruitment/candidates/:id', async (req, res) => {
+  try {
+    await queryDatabase('DELETE FROM Recruitment_Candidates WHERE id = ?', [req.params.id]);
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// HR Head xác nhận kết quả cuối cùng cho ứng viên (passed/failed/reserve)
+router.put('/recruitment/candidates/:id/result', async (req, res) => {
+  try {
+    const { status, notes } = req.body;
+    const allowed = ['passed', 'failed', 'reserve', 'pending', 'scored'];
+    if (!allowed.includes(status)) return res.status(400).json({ success: false, error: 'Trạng thái không hợp lệ' });
+    await queryDatabase(
+      'UPDATE Recruitment_Candidates SET status = ?, notes = COALESCE(?, notes) WHERE id = ?',
+      [status, notes ?? null, req.params.id]
+    );
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// --- Scores: Submit (Interviewer) ---
+router.post('/recruitment/scores', async (req, res) => {
+  try {
+    const { season_id, candidate_id, interviewer_id, scores, comments } = req.body;
+    if (!Array.isArray(scores) || scores.length === 0)
+      return res.status(400).json({ success: false, error: 'Thiếu dữ liệu điểm' });
+    for (const s of scores) {
+      const sid = 'score-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+      await queryDatabase(
+        `INSERT INTO Recruitment_Scores (id, season_id, candidate_id, interviewer_id, criteria_id, score, comments)
+         VALUES (?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE score = VALUES(score), comments = VALUES(comments), submitted_at = NOW()`,
+        [sid, season_id, candidate_id, interviewer_id, s.criteria_id, s.score, comments || null]
+      );
+    }
+    await queryDatabase(
+      "UPDATE Recruitment_Candidates SET status = 'scored' WHERE id = ?",
+      [candidate_id]
+    );
+    res.json({ success: true });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// --- Scores: Aggregated summary (HR Head only — chỉ trả điểm TB tổng hợp, KHÔNG trả chi tiết từng interviewer) ---
+router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
+  try {
+    const threshold = parseFloat(req.query.threshold) || 0;
+    const rows = await queryDatabase(`
+      SELECT
+        c.id AS candidate_id,
+        c.full_name,
+        c.class_name,
+        c.desired_dept,
+        c.status,
+        c.notes,
+        COUNT(DISTINCT s.interviewer_id) AS interviewer_count,
+        ROUND(AVG(s.score), 2) AS avg_score,
+        ROUND(SUM(s.score), 2) AS total_score
+      FROM Recruitment_Candidates c
+      LEFT JOIN Recruitment_Scores s ON s.candidate_id = c.id
+      WHERE c.season_id = ?
+      GROUP BY c.id, c.full_name, c.class_name, c.desired_dept, c.status, c.notes
+      ORDER BY avg_score DESC, total_score DESC
+    `, [req.params.seasonId]);
+
+    const data = rows.map((r, idx) => {
+      const avg = parseFloat(r.avg_score) || 0;
+      let result_status = 'pending';
+      if (r.status === 'passed') result_status = 'passed';
+      else if (r.status === 'failed') result_status = 'failed';
+      else if (r.status === 'reserve') result_status = 'reserve';
+      else if (threshold > 0) {
+        if (avg >= threshold) result_status = 'passed';
+        else if (avg >= threshold * 0.8) result_status = 'reserve';
+        else result_status = 'failed';
+      }
+      // Blind: chỉ trả avg/total — không trả điểm từng tiêu chí hay từng interviewer
+      return {
+        candidate_id: r.candidate_id,
+        full_name: r.full_name,
+        class_name: r.class_name,
+        desired_dept: r.desired_dept,
+        status: r.status,
+        notes: r.notes,
+        interviewer_count: Number(r.interviewer_count) || 0,
+        avg_score: avg,
+        total_score: parseFloat(r.total_score) || 0,
+        result_status,
+        rank: idx + 1
+      };
+    });
+    res.json({ success: true, data });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// Kiểm tra interviewer đã chấm ứng viên nào chưa (trả về list candidate_id đã chấm)
+router.get('/recruitment/scores/submitted', async (req, res) => {
+  try {
+    const { season_id, interviewer_id } = req.query;
+    const rows = await queryDatabase(
+      'SELECT DISTINCT candidate_id FROM Recruitment_Scores WHERE season_id = ? AND interviewer_id = ?',
+      [season_id, interviewer_id]
+    );
+    res.json({ success: true, data: rows.map(r => r.candidate_id) });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+// ======================= SYSTEM SETTINGS =======================
+router.get('/admin/system-settings', async (req, res) => {
+  try {
+    const rows = await queryDatabase('SELECT setting_key, setting_value FROM System_Settings');
+    const settings = {};
+    rows.forEach(r => { settings[r.setting_key] = r.setting_value; });
+    res.json({ success: true, data: settings });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+});
+
+router.put('/admin/recruitment-season/toggle', async (req, res) => {
+  try {
+    const current = await queryDatabase(
+      `SELECT setting_value FROM System_Settings WHERE setting_key = 'recruitment_season_active'`
+    );
+    const currentVal = current && current.length > 0 ? current[0].setting_value : '0';
+    const newVal = currentVal === '1' ? '0' : '1';
+    await queryDatabase(
+      `INSERT INTO System_Settings (setting_key, setting_value) VALUES ('recruitment_season_active', ?)
+       ON DUPLICATE KEY UPDATE setting_value = ?`,
+      [newVal, newVal]
+    );
+    res.json({ success: true, isActive: newVal === '1' });
+  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
 export default router;

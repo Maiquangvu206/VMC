@@ -15,7 +15,8 @@ import {
   User,
   LogOut,
   UserCheck,
-  ShieldCheck
+  ShieldCheck,
+  UserPlus
 } from 'lucide-react';
 
 export const Navbar = () => {
@@ -31,7 +32,8 @@ export const Navbar = () => {
     drafts,
     isHRMember,
     isAdmin,
-    isSuperAdmin
+    isSuperAdmin,
+    isRecruitmentSeasonActive
   } = useClub();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -48,6 +50,30 @@ export const Navbar = () => {
   const pendingTasksCount = tasks.filter(t => t.status !== 'done').length;
   const pendingDraftsCount = drafts.filter(d => d.status === 'pending').length;
 
+  const currentUserRoleTitle = String(currentUser?.roleTitle || '').toLowerCase();
+  const currentUserDeptName = String(currentUser?.deptName || currentUser?.department || '').toLowerCase();
+
+  const isHRHead = Boolean(
+    currentUser?.role === 'admin' ||
+    currentUser?.memberCode === 'ADMIN' ||
+    currentUserRoleTitle.includes('super admin') ||
+    (currentUserRoleTitle.includes('tr\u01b0\u1edfng ban') && (
+      currentUserDeptName.includes('\u0111\u1ed1i ngo\u1ea1i') ||
+      currentUserDeptName.includes('nh\u00e2n s\u1ef1') ||
+      currentUserDeptName.includes('\u0111n-ns') ||
+      currentUserDeptName.includes('dn-ns')
+    ))
+  );
+
+  // Tuyển Gen visible: mùa tuyển đang bật + (Admin/HR Head/BCN hoặc bất kỳ thành viên được phân công interviewer)
+  const canSeeRecruitment = isRecruitmentSeasonActive && (
+    isAdmin ||
+    isHRHead ||
+    currentUserRoleTitle.includes('ch\u1ee7 nhi\u1ec7m') ||
+    currentUserRoleTitle.includes('ph\u00f3 ch\u1ee7 nhi\u1ec7m') ||
+    currentUserRoleTitle.includes('tr\u01b0\u1edfng ban')
+  );
+
   const navItems = [
     { id: 'dashboard', label: 'Tổng Quan', icon: LayoutDashboard },
     { id: 'tasks', label: 'Phân Công', icon: CheckSquare, badge: pendingTasksCount },
@@ -56,6 +82,7 @@ export const Navbar = () => {
     { id: 'members', label: 'Thành Viên', icon: Users },
     { id: 'profile', label: 'Hồ Sơ', icon: User, badge: 0 },
     { id: 'hr_dashboard', label: 'Thi Đua & Sinh Nhật', icon: Users, badge: 0 },
+    ...(canSeeRecruitment ? [{ id: 'recruitment', label: 'Tuyển Gen', icon: UserPlus, badge: 0 }] : []),
     ...(isSuperAdmin ? [{ id: 'admin_sessions', label: 'Quản Lý Phiên', icon: ShieldCheck, badge: 0 }] : [])
   ];
 

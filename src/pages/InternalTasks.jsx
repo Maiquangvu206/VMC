@@ -32,8 +32,7 @@ export const InternalTasks = () => {
     department: 'production',
     assignee: '',
     deadline: '',
-    priority: 'Medium',
-    points: 10
+    priority: 'Medium'
   });
 
   const filteredTasks = tasks.filter(t => deptFilter === 'all' || t.department === deptFilter);

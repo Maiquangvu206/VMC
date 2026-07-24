@@ -51,12 +51,15 @@ export const InternalHRDashboard = () => {
 
   const normalizeText = (text) => text ? text.toString().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : '';
 
-  // All members including Ban Cố Vấn (excluding only System Admin)
+  // All members including Ban Cố Vấn (excluding only System Admin) — deduplicated by id
   const allHumanMembers = useMemo(() => {
+    const seen = new Set();
     return members.filter(m => {
       const roleTitle = (m.roleTitle || m.role_title || '').toLowerCase();
       const code = (m.memberCode || m.member_code || '').toUpperCase();
       if (roleTitle.includes('super admin') || code === 'ADMIN') return false;
+      if (seen.has(m.id)) return false;
+      seen.add(m.id);
 
       const q = normalizeText(searchQuery);
       return !q || normalizeText(m.name).includes(q) || normalizeText(m.memberCode).includes(q);
@@ -160,15 +163,13 @@ export const InternalHRDashboard = () => {
   // Deadlines (Tasks mapped to members)
   const getMemberTasks = (m) => {
     if (!tasks || !Array.isArray(tasks)) return [];
-    const name = typeof m === 'string' ? m : (m?.name || '');
-    const id = typeof m === 'object' ? m?.id : null;
-    return tasks.filter(t => 
-      (id && String(t.assigneeId) === String(id)) ||
-      t.assignee === name || 
-      t.assigneeName === name || 
-      (Array.isArray(t.assignees) && t.assignees.includes(name)) ||
-      t.assignee === 'Cả Ban'
-    );
+    const id = m?.id;
+    const memberCode = m?.memberCode || m?.member_code;
+    return tasks.filter(t => {
+      const assId = t.assigneeId || t.assignee_id;
+      if (!assId) return t.assignee === 'Cả Ban';
+      return String(assId) === String(id) || (memberCode && String(assId) === String(memberCode));
+    });
   };
 
   const handleAddFinance = (e) => {

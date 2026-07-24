@@ -223,6 +223,24 @@ queryDatabase(`
   )
 `).catch(err => console.log('ℹ️ CSDL status Attendance_Records table:', err.message));
 
+// Recruitment module — thêm cột interviewer_ids vào Recruitment_Seasons nếu chưa có
+queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN interviewer_ids TEXT').catch(() => {});
+queryDatabase('ALTER TABLE Recruitment_Scores ADD COLUMN comments TEXT').catch(() => {});
+
+// Tự động khởi tạo bảng System_Settings
+queryDatabase(`
+  CREATE TABLE IF NOT EXISTS System_Settings (
+    setting_key VARCHAR(100) PRIMARY KEY,
+    setting_value TEXT,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  )
+`).then(async () => {
+  await queryDatabase(
+    `INSERT IGNORE INTO System_Settings (setting_key, setting_value) VALUES ('recruitment_season_active', '0')`,
+    []
+  ).catch(() => {});
+}).catch(err => console.log('ℹ️ CSDL status System_Settings table:', err.message));
+
 // ── Sub-router cho tasks, drafts, equipment, announcements ──
 app.use('/api', apiRouter);
 
@@ -617,6 +635,9 @@ app.put('/api/members/:id', async (req, res) => {
       WHERE (id = ? OR UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?))
     `;
 
+    // Chỉ hash password khi được cung cấp dưới dạng string không rỗng
+    const hashedPasswordVal = (typeof password === 'string' && password.length > 0) ? hashPassword(password) : null;
+
     await queryDatabase(sql, [
       full_name !== undefined ? full_name : null,
       role !== undefined ? role : null,
@@ -634,7 +655,7 @@ app.put('/api/members/:id', async (req, res) => {
       avatar_url !== undefined ? avatar_url : null,
       avatar !== undefined ? avatar : null,
       status !== undefined ? status : null,
-      password !== undefined ? hashPassword(password) : null,
+      hashedPasswordVal,
       isFirstLoginVal,
       milestonesVal,
       id, id, id
