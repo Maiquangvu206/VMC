@@ -579,12 +579,12 @@ export const InternalMembers = () => {
               </div>
 
               <div className="flex items-center gap-1.5">
-                {isHRHead && (
+                {isAdmin && (
                   <>
                     <button
                       onClick={() => resetAccountPassword(m.username)}
                       className="p-2 rounded-lg text-xs transition-all bg-slate-950 hover:bg-slate-800 text-blue-400 border border-blue-500/30"
-                      title="Reset mật khẩu mặc định (Trưởng Ban ĐN-NS)"
+                      title="Reset mật khẩu mặc định (Kỹ Thuật / Trưởng Ban ĐN-NS)"
                     >
                       <RefreshCw className="w-3.5 h-3.5" />
                     </button>
@@ -595,7 +595,7 @@ export const InternalMembers = () => {
                           ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30'
                           : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30'
                         }`}
-                      title={m.status === 'Active' ? 'Tạm khóa tài khoản' : 'Mở khóa'}
+                      title={m.status === 'Active' ? 'Tạm khóa tài khoản (Kỹ Thuật / Trưởng Ban ĐN-NS)' : 'Mở khóa (Kỹ Thuật / Trưởng Ban ĐN-NS)'}
                     >
                       <Lock className="w-3.5 h-3.5" />
                     </button>
