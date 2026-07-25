@@ -5,12 +5,22 @@ import { MeetingManagement } from '../components/hr/MeetingManagement';
 import { BirthdayManagement } from '../components/hr/BirthdayManagement';
 import { PointManagement } from '../components/hr/PointManagement';
 
+const Loading = () => (
+  <div className="container py-8 flex items-center justify-center min-h-screen">
+    <div className="text-slate-400 text-sm font-mono animate-pulse">Đang tải...</div>
+  </div>
+);
+
 export const InternalHRDashboard = () => {
   const { 
     members, tasks, currentUser, isHRMember, isHRHead, isAdmin, finances, addFinanceRecord, updateFinanceStatus,
     meetings, createMeeting, submitMeetingAttendance, submitMeetingMinutes, penalizeMember, updateMemberPoints,
     birthdayAssignments, assignBirthdayDuty, submitBirthdayImage
   } = useClub();
+
+  if (!currentUser) {
+    return <Loading />;
+  }
   
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('points'); // 'points', 'birthdays', 'deadlines', 'finance'

@@ -15,8 +15,14 @@ import {
   Handshake,
   Users,
   Award,
-  UserPlus
+  UserPlus 
 } from 'lucide-react';
+
+const Loading = () => (
+  <div className="container py-8 flex items-center justify-center min-h-screen">
+    <div className="text-slate-400 text-sm font-mono animate-pulse">Đang tải...</div>
+  </div>
+);
 
 export const InternalDashboard = () => {
   const { 
@@ -25,7 +31,7 @@ export const InternalDashboard = () => {
     tasks, 
     equipment, 
     drafts, 
-    announcements, 
+    announcements,
     addAnnouncement,
     deleteAnnouncement,
     isAdmin,
@@ -36,6 +42,10 @@ export const InternalDashboard = () => {
     setIsBorrowModalOpen,
     setIsNewAccountModalOpen
   } = useClub();
+
+  if (!currentUser) {
+    return <Loading />;
+  }
 
   const [isAnnModalOpen, setIsAnnModalOpen] = React.useState(false);
   const [annTitle, setAnnTitle] = React.useState('');
@@ -154,14 +164,15 @@ export const InternalDashboard = () => {
     );
   };
 
-  const safeUser = currentUser || {
-    name: 'Thành Viên VMC',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
-    roleTitle: 'Thành Viên VMC',
-    memberCode: 'VMC-MEMBER',
-    class: '12A1',
-    deptName: 'Ban Chủ Nhiệm',
-    points: 100
+  const safeUser = {
+    name: currentUser?.name || 'Thành Viên VMC',
+    avatar: currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
+    roleTitle: currentUser?.roleTitle || 'Thành Viên VMC',
+    memberCode: currentUser?.memberCode || 'VMC-MEMBER',
+    class: currentUser?.class || '12A1',
+    deptName: currentUser?.deptName || 'Ban Chủ Nhiệm',
+    points: currentUser?.points ?? 100,
+    role: currentUser?.role || 'member'
   };
 
   const doingTasks = (tasks || []).filter(t => t?.status === 'doing');

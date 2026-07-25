@@ -13,8 +13,18 @@ import {
   FileText 
 } from 'lucide-react';
 
+const Loading = () => (
+  <div className="container py-10 flex items-center justify-center min-h-screen">
+    <div className="text-slate-400 text-sm font-mono animate-pulse">Đang tải...</div>
+  </div>
+);
+
 export const DashboardPage = () => {
   const { user, checkinAttendance, resources = [], isHRMember } = useClub();
+
+  if (!user) {
+    return <Loading />;
+  }
 
   const handleDownloadResource = (resource) => {
     if (resource.driveUrl) {
@@ -37,14 +47,14 @@ export const DashboardPage = () => {
           
           <div className="flex items-center gap-5 text-center sm:text-left">
             <div className="relative w-20 h-20 rounded-2xl overflow-hidden p-0.5 bg-gradient-to-tr from-purple-500 to-pink-500 shrink-0">
-              <img src={user.avatar} alt={user.name} className="w-full h-full object-cover rounded-[14px]" />
+              <img src={user?.avatar} alt={user?.name} className="w-full h-full object-cover rounded-[14px]" />
             </div>
 
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
-                <h1 className="font-heading text-2xl font-bold text-white">{user.name}</h1>
+                <h1 className="font-heading text-2xl font-bold text-white">{user?.name}</h1>
                 <span className="badge badge-emerald flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5" /> {user.role}
+                  <ShieldCheck className="w-3.5 h-3.5" /> {user?.role}
                 </span>
               </div>
               <p className="text-xs text-slate-400">
@@ -65,7 +75,7 @@ export const DashboardPage = () => {
               </button>
             )}
             <span className="text-[11px] text-slate-400">
-              Đã tham gia: <strong className="text-white font-mono">{user.checkins} buổi</strong>
+              Đã tham gia: <strong className="text-white font-mono">{user?.checkins} buổi</strong>
             </span>
           </div>
 
@@ -76,7 +86,7 @@ export const DashboardPage = () => {
           <div className="bg-slate-900/60 p-4 rounded-xl border border-white/5">
             <div className="text-xs text-slate-400">Điểm Đóng Góp (Points)</div>
             <div className="font-heading font-extrabold text-2xl text-purple-400 font-mono mt-1">
-              {user.points} PTS
+              {user?.points} PTS
             </div>
           </div>
 
@@ -90,7 +100,7 @@ export const DashboardPage = () => {
           <div className="bg-slate-900/60 p-4 rounded-xl border border-white/5">
             <div className="text-xs text-slate-400">Số Huy Hiệu Đạt Được</div>
             <div className="font-heading font-extrabold text-2xl text-cyan-400 font-mono mt-1">
-              {user.badges.length} Badges
+              {user?.badges?.length ?? 0} Badges
             </div>
           </div>
         </div>
@@ -105,7 +115,7 @@ export const DashboardPage = () => {
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {user.badges.map((badge, idx) => (
+          {(user?.badges || []).map((badge, idx) => (
             <div
               key={idx}
               className="glass-card p-4 rounded-xl border border-white/10 flex items-center gap-3"

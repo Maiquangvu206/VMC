@@ -96,6 +96,8 @@ export const useAuth = (db, setDb) => {
       console.warn('⚠️ Không thể cập nhật trạng thái phiên khi đăng xuất:', e.message);
     }
     sessionStorage.removeItem('VMC_SESSION_ID');
+    sessionStorage.removeItem('VMC_CURRENT_USER');
+    sessionStorage.removeItem('VMC_IS_AUTH');
     setIsAuthenticated(false);
     setRequirePasswordChange(false);
     setCurrentUser(null);

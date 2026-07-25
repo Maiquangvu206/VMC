@@ -12,24 +12,55 @@ import {
   GraduationCap,
   Briefcase,
   Hash,
-  Save,
-  CheckCircle,
-  Laptop,
-  Sparkles,
-  Edit3,
-  History,
-  Award,
-  UserPlus,
-  Clock,
-  Lock,
-  Check,
-  Camera,
-  Upload,
-  X
+  Save, 
+  CheckCircle, 
+  Laptop, 
+  Sparkles, 
+  Edit3, 
+  History, 
+  Award, 
+  UserPlus, 
+  Clock, 
+  Lock, 
+  Check, 
+  Camera, 
+  Upload, 
+  X 
 } from 'lucide-react';
+
+const Loading = () => (
+  <div className="w-full min-h-screen bg-[var(--bg-primary)] flex items-center justify-center">
+    <div className="text-slate-400 text-sm font-mono animate-pulse">Đang tải...</div>
+  </div>
+);
+
+const safeCurrentUser = (currentUser) => {
+  if (!currentUser) return {
+    name: 'Thành Viên VMC',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
+    roleTitle: 'Thành Viên VMC',
+    memberCode: 'VMC-MEMBER',
+    class: 'N/A',
+    deptName: 'Chưa cập nhật',
+    phone: '',
+    email: '',
+    dob: '',
+    address: '',
+    facebook: '',
+    status: 'Active',
+    milestones: []
+  };
+  return currentUser;
+};
 
 export const InternalProfile = () => {
   const { currentUser, isHRMember, logout, updateSelfProfile, addMemberMilestone, showToast } = useClub();
+
+  if (!currentUser) {
+    return <Loading />;
+  }
+
+  const cu = safeCurrentUser(currentUser);
 
   // Avatar Modal State & Handlers
   const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
@@ -39,7 +70,7 @@ export const InternalProfile = () => {
     title: '',
     badgeText: '[Chức vụ]'
   });
-  const [avatarPreview, setAvatarPreview] = useState(currentUser.avatar || '');
+  const [avatarPreview, setAvatarPreview] = useState(cu.avatar || '');
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -68,23 +99,23 @@ export const InternalProfile = () => {
 
   // Self-editable fields state: Phone, Email, DOB, Address, Facebook
   const [selfData, setSelfData] = useState({
-    phone: currentUser.phone || '',
-    email: currentUser.email || '',
-    dob: currentUser.dob || '',
-    address: currentUser.address || '',
-    facebook: currentUser.facebook || ''
+    phone: cu.phone || '',
+    email: cu.email || '',
+    dob: cu.dob || '',
+    address: cu.address || '',
+    facebook: cu.facebook || ''
   });
 
   // Keep selfData in sync ONLY when active logged-in user changes (e.g. account switch)
   React.useEffect(() => {
     setSelfData({
-      phone: currentUser.phone || '',
-      email: currentUser.email || '',
-      dob: currentUser.dob || '',
-      address: currentUser.address || '',
-      facebook: currentUser.facebook || ''
+      phone: cu.phone || '',
+      email: cu.email || '',
+      dob: cu.dob || '',
+      address: cu.address || '',
+      facebook: cu.facebook || ''
     });
-  }, [currentUser?.id, currentUser?.memberCode]);
+  }, [cu.id, cu.memberCode]);
 
   const [savedSuccess, setSavedSuccess] = useState(false);
 
@@ -96,11 +127,11 @@ export const InternalProfile = () => {
   };
 
   const techOnlyFields = [
-    { label: "Mã Thành Viên", value: currentUser.memberCode, icon: Hash, isMono: true, color: "text-cyan-400 font-bold" },
-    { label: "Họ và Tên", value: currentUser.name, icon: User, isMono: false, color: "text-white font-extrabold" },
-    { label: "Lớp Học", value: currentUser.class, icon: GraduationCap, isMono: false, color: "text-slate-200 font-medium" },
-    { label: "Ban Chuyên Môn", value: currentUser.deptName, icon: Briefcase, isMono: false, color: "text-indigo-400 font-semibold" },
-    { label: "Chức Vụ Trong CLB", value: currentUser.roleTitle, icon: ShieldCheck, isMono: false, color: "text-amber-400 font-bold" }
+    { label: "Mã Thành Viên", value: cu.memberCode, icon: Hash, isMono: true, color: "text-cyan-400 font-bold" },
+    { label: "Họ và Tên", value: cu.name, icon: User, isMono: false, color: "text-white font-extrabold" },
+    { label: "Lớp Học", value: cu.class, icon: GraduationCap, isMono: false, color: "text-slate-200 font-medium" },
+    { label: "Ban Chuyên Môn", value: cu.deptName, icon: Briefcase, isMono: false, color: "text-indigo-400 font-semibold" },
+    { label: "Chức Vụ Trong CLB", value: cu.roleTitle, icon: ShieldCheck, isMono: false, color: "text-amber-400 font-bold" }
   ];
 
   // Core Milestones: Lịch Sử Chức Vụ & Trạng Thái Thành Viên
@@ -126,7 +157,7 @@ export const InternalProfile = () => {
     {
       id: 'm3',
       date: '01/06/2026',
-      title: `Nhận nhiệm vụ: ${currentUser.roleTitle || 'Chủ Nhiệm CLB VMC'}`,
+      title: `Nhận nhiệm vụ: ${cu.roleTitle || 'Chủ Nhiệm CLB VMC'}`,
       badgeText: '[Thăng chức]',
       badgeStyle: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
       icon: Sparkles,
@@ -144,7 +175,7 @@ export const InternalProfile = () => {
     {
       id: 'm5',
       date: '21/07/2026 (Hiện Tại)',
-      title: `Trạng Thái Hoạt Động: ${currentUser.status === 'Active' ? 'Đang Hoạt Động' : 'Tạm Nghỉ'}`,
+      title: `Trạng Thái Hoạt Động: ${cu.status === 'Active' ? 'Đang Hoạt Động' : 'Tạm Nghỉ'}`,
       badgeText: '[ĐANG HOẠT ĐỘNG]',
       badgeStyle: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold',
       icon: ShieldCheck,
@@ -197,8 +228,8 @@ export const InternalProfile = () => {
             >
               <div className="w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-cyan-500 via-blue-500 to-indigo-500 shadow-md shrink-0 relative overflow-hidden">
                 <img 
-                  src={currentUser.avatar} 
-                  alt={currentUser.name} 
+                  src={cu.avatar} 
+                  alt={cu.name} 
                   className="w-full h-full object-cover rounded-full group-hover:opacity-75 transition-opacity" 
                 />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white rounded-full">
@@ -214,19 +245,19 @@ export const InternalProfile = () => {
 
             {/* Profile Identity Details */}
             <div className="flex flex-col items-center gap-2 w-full">
-              <h2 className="text-xl font-bold text-white tracking-tight">{currentUser.name}</h2>
+              <h2 className="text-xl font-bold text-white tracking-tight">{cu.name}</h2>
               <span className="px-3.5 py-1 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-xs font-semibold">
-                {currentUser.roleTitle}
+                {cu.roleTitle}
               </span>
               <p className="text-xs text-slate-400 font-medium pt-0.5">
-                Lớp {currentUser.class} • THPT Vĩnh Bảo
+                Lớp {cu.class} • THPT Vĩnh Bảo
               </p>
             </div>
 
             {/* Member Code Block */}
             <div className="w-full p-4 rounded-xl bg-slate-950/50 border border-slate-800 text-center flex flex-col items-center gap-1">
               <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Mã Thành Viên</span>
-              <span className="text-lg font-mono font-bold text-cyan-400 tracking-widest">{currentUser.memberCode}</span>
+              <span className="text-lg font-mono font-bold text-cyan-400 tracking-widest">{cu.memberCode}</span>
             </div>
 
             {/* Current Status Badge */}
@@ -236,7 +267,7 @@ export const InternalProfile = () => {
                 <span>Trạng Thái Hoạt Động</span>
               </div>
               <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-bold text-xs border border-emerald-500/40">
-                {currentUser.status === 'Active' ? 'Đang Hoạt Động' : 'Tạm Nghỉ'}
+                {cu.status === 'Active' ? 'Đang Hoạt Động' : 'Tạm Nghỉ'}
               </span>
             </div>
 
@@ -422,19 +453,19 @@ export const InternalProfile = () => {
             {/* UI Vertical Timeline với Đường Gạch Nối Border */}
             <div className="relative border-l-2 border-slate-700/80 space-y-6 ml-3 pl-6 py-2">
               {(() => {
-                const rawList = (Array.isArray(currentUser.milestones) && currentUser.milestones.length > 0)
-                  ? currentUser.milestones
+                const rawList = (Array.isArray(cu.milestones) && cu.milestones.length > 0)
+                  ? cu.milestones
                   : [
                       {
                         id: 'm1',
                         date: '12/10/2021',
-                        title: `Gia nhập VMC (Thành viên ${currentUser.deptName || 'Ban Chuyên Môn'})`,
+                        title: `Gia nhập VMC (Thành viên ${cu.deptName || 'Ban Chuyên Môn'})`,
                         badgeText: '[Gia Nhập]'
                       },
                       {
                         id: 'm2',
                         date: '01/06/2022',
-                        title: `Cập nhật chức vụ: ${currentUser.roleTitle || 'Thành Viên VMC'}`,
+                        title: `Cập nhật chức vụ: ${cu.roleTitle || 'Thành Viên VMC'}`,
                         badgeText: '[Thăng Chức]'
                       }
                     ];
@@ -446,11 +477,11 @@ export const InternalProfile = () => {
                   return !b.includes('đang hoạt động') && !b.includes('tạm nghỉ') && !b.includes('ngừng') && !t.includes('trạng thái:');
                 });
 
-                const isSuspended = currentUser.status === 'Suspended';
+                const isSuspended = cu.status === 'Suspended';
                 const finalStatusNode = {
                   id: 'final-status-node',
                   date: isSuspended 
-                    ? `Ngừng từ ${currentUser.suspendedAt || new Date().toLocaleDateString('vi-VN')}` 
+                    ? `Ngừng từ ${cu.suspendedAt || new Date().toLocaleDateString('vi-VN')}` 
                     : 'Hiện tại',
                   title: isSuspended 
                     ? 'Trạng Thái: Đã Tạm Nghỉ / Ngừng Hoạt Động tại CLB VMC' 
@@ -554,7 +585,7 @@ export const InternalProfile = () => {
               <div className="flex flex-col items-center gap-2">
                 <div className="w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-cyan-500 to-blue-600 shadow-md overflow-hidden">
                   <img 
-                    src={avatarPreview || currentUser.avatar} 
+                    src={avatarPreview || cu.avatar} 
                     alt="Avatar Preview" 
                     className="w-full h-full object-cover rounded-full"
                   />
@@ -628,7 +659,7 @@ export const InternalProfile = () => {
                 showToast('Vui lòng nhập nội dung cột mốc chức vụ!', 'warning');
                 return;
               }
-              addMemberMilestone(currentUser.id, newMilestone);
+              addMemberMilestone(cu.id, newMilestone);
               setIsMilestoneModalOpen(false);
               setNewMilestone({ date: new Date().toLocaleDateString('vi-VN'), title: '', badgeText: '[Chức vụ]' });
             }} className="space-y-4 text-xs">
