@@ -45,7 +45,9 @@ export const saveDatabaseToStorage = (db) => {
 // Reset Database to Factory Seed
 export const resetDatabaseToDefault = () => {
   const initialDb = getInitialDatabase();
-  localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(initialDb));
+  try {
+    localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(initialDb));
+  } catch (e) {}
   return initialDb;
 };
 
