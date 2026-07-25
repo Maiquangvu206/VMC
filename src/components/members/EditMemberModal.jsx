@@ -25,8 +25,8 @@ export const EditMemberModal = ({ show, onClose, member, formData, setFormData, 
                 <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
-                  value={formData.member_code}
-                  onChange={(e) => setFormData({ ...formData, member_code: e.target.value })}
+                  value={formData.memberCode}
+                  onChange={(e) => setFormData({ ...formData, memberCode: e.target.value })}
                   className="w-full bg-slate-800 text-white pl-10 pr-4 py-2.5 rounded-lg border border-slate-700 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-all"
                 />
               </div>
@@ -64,8 +64,8 @@ export const EditMemberModal = ({ show, onClose, member, formData, setFormData, 
                 <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   type="text"
-                  value={formData.class_name}
-                  onChange={(e) => setFormData({ ...formData, class_name: e.target.value })}
+                  value={formData.class}
+                  onChange={(e) => setFormData({ ...formData, class: e.target.value })}
                   className="w-full bg-slate-800 text-white pl-10 pr-4 py-2.5 rounded-lg border border-slate-700 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-all"
                 />
               </div>
@@ -78,8 +78,8 @@ export const EditMemberModal = ({ show, onClose, member, formData, setFormData, 
               <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
-                value={formData.department}
-                onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                value={formData.deptName}
+                onChange={(e) => setFormData({ ...formData, deptName: e.target.value })}
                 className="w-full bg-slate-800 text-white pl-10 pr-4 py-2.5 rounded-lg border border-slate-700 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition-all"
               />
             </div>
