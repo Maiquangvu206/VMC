@@ -6,6 +6,7 @@ import { useToast } from '../hooks/useToast';
 import { useDatabase } from '../hooks/useDatabase';
 import { fetchMembersFromDatabaseAPI, createMemberAPI, updateMemberAPI, deleteMemberAPI } from '../services/api';
 import { fetchEntityAPI, createEntityAPI, updateEntityAPI, deleteEntityAPI } from '../services/apiClient';
+import { saveDatabaseToStorage } from '../services/dbService';
 
 const ClubContext = createContext();
 
@@ -103,7 +104,11 @@ export const ClubProvider = ({ children }) => {
             });
           }
 
-          saveDatabaseToStorage(nextDb);
+          try {
+            saveDatabaseToStorage(nextDb);
+          } catch (e) {
+            console.warn('Failed to save database to storage:', e);
+          }
           return nextDb;
         });
       }
@@ -182,7 +187,11 @@ export const ClubProvider = ({ children }) => {
               departmentDrives: (Array.isArray(serverDrives) && serverDrives.length > 0) ? serverDrives : prev.departmentDrives,
               attendanceRecords: Array.isArray(serverAttendance) ? serverAttendance : prev.attendanceRecords
             };
-            saveDatabaseToStorage(updated);
+            try {
+              saveDatabaseToStorage(updated);
+            } catch (e) {
+              console.warn('Failed to save database to storage:', e);
+            }
             return updated;
           });
 
@@ -236,7 +245,11 @@ export const ClubProvider = ({ children }) => {
   const updateDb = (updater) => {
     setDb(prev => {
       const nextDb = typeof updater === 'function' ? updater(prev) : { ...prev, ...updater };
-      saveDatabaseToStorage(nextDb);
+      try {
+        saveDatabaseToStorage(nextDb);
+      } catch (e) {
+        console.warn('Failed to save database to storage:', e);
+      }
       return nextDb;
     });
   };
@@ -495,7 +508,11 @@ export const ClubProvider = ({ children }) => {
           return { ...localMem, ...serverMem };
         });
         const updated = { ...prev, members: mergedMembers };
-        saveDatabaseToStorage(updated);
+        try {
+          saveDatabaseToStorage(updated);
+        } catch (e) {
+          console.warn('Failed to save database to storage:', e);
+        }
         return updated;
       });
     }
@@ -606,7 +623,11 @@ export const ClubProvider = ({ children }) => {
           return { ...localMem, ...serverMem };
         });
         const updated = { ...prev, members: mergedMembers };
-        saveDatabaseToStorage(updated);
+        try {
+          saveDatabaseToStorage(updated);
+        } catch (e) {
+          console.warn('Failed to save database to storage:', e);
+        }
         return updated;
       });
     }
