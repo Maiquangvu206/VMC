@@ -20,9 +20,11 @@ export const LoginModal = () => {
       return;
     }
 
-    const success = await login(memberCodeInput.trim(), passwordInput.trim());
-    if (!success) {
-      setErrorMessage('Mã Thành Viên hoặc Mật khẩu không chính xác!');
+    const result = await login(memberCodeInput.trim(), passwordInput.trim());
+    if (!result?.success) {
+      setErrorMessage(result?.message || 'Mã Thành Viên hoặc Mật khẩu không chính xác!');
+    } else {
+      setErrorMessage('');
     }
   };
 

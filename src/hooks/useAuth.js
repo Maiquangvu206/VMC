@@ -41,7 +41,11 @@ export const useAuth = (db, setDb) => {
   }, [currentUser]);
 
   useEffect(() => {
-    sessionStorage.setItem('VMC_IS_AUTH', isAuthenticated);
+    try {
+      sessionStorage.setItem('VMC_IS_AUTH', isAuthenticated);
+    } catch (e) {
+      console.warn('⚠️ Không thể lưu trạng thái đăng nhập vào sessionStorage:', e.message);
+    }
   }, [isAuthenticated]);
 
   const login = async (memberCode, password) => {
