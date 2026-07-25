@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useClub } from '../context/ClubContext';
-import { Camera, CheckCircle, Clock, ShieldCheck, X, AlertTriangle, ArrowRight } from 'lucide-react';
+import { CheckCircle, Clock, ShieldCheck, X, AlertTriangle, ArrowRight } from 'lucide-react';
 
 export const InternalEquipment = () => {
   const { 

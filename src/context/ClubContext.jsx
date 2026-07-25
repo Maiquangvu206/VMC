@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import confetti from 'canvas-confetti';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
@@ -807,7 +807,7 @@ export const ClubProvider = ({ children }) => {
   // Reset password by Admin (SUPER ADMIN & TRƯỞNG BAN ĐỐI NGOẠI - NHÂN SỰ ONLY)
   const resetAccountPassword = async (username) => {
     if (!canManageAccounts) {
-      showToast('⛔ Quyền bị từ chối! Chỉ có Super Admin (Chủ Nhiệm CLB) và Trưởng Ban Đối Ngoại - Nhân Sự mới có quyền đặt lại mật khẩu thành viên!', 'error');
+      showToast('⛔ Quyền bị từ chối! Chỉ Trưởng Ban Đối Ngoại - Nhân Sự mới có quyền đặt lại mật khẩu thành viên!', 'error');
       return false;
     }
 
@@ -849,7 +849,7 @@ export const ClubProvider = ({ children }) => {
   // Delete Member Account (SUPER ADMIN & TRƯỞNG BAN ĐỐI NGOẠI - NHÂN SỰ ONLY)
   const deleteMemberAccount = async (id) => {
     if (!canManageAccounts) {
-      showToast('⛔ Quyền bị từ chối! Chỉ có Super Admin (Chủ Nhiệm CLB) và Kỹ Thuật Ban Đối Ngoại - Nhân Sự mới có quyền xóa tài khoản thành viên khỏi hệ thống!', 'error');
+      showToast('⛔ Quyền bị từ chối! Chỉ có Kỹ Thuật Ban Đối Ngoại - Nhân Sự mới có quyền xóa tài khoản thành viên khỏi hệ thống!', 'error');
       return false;
     }
 
@@ -1656,172 +1656,206 @@ export const ClubProvider = ({ children }) => {
     showToast('Đã xóa thông báo thành công!', 'info');
   };
 
+  const contextValue = useMemo(() => ({
+    theme,
+    toggleTheme,
+    toasts,
+    showToast,
+    removeToast,
+    activeTab,
+    setActiveTab,
+    db,
+    finances: db.finances || [],
+    addFinanceRecord,
+    updateFinanceStatus,
+    deleteFinanceRecord,
+    currentUser,
+    isAdmin,
+    isAuthenticated,
+    requirePasswordChange,
+    login,
+    changePassword,
+    logout,
+    switchUserAccount,
+    updateSelfProfile,
+    updateMemberByTech,
+    addMemberMilestone,
+    user: currentUser,
+    members: db.members || [],
+    tasks: [
+      ...(db.tasks || []),
+      ...(() => {
+        const virtuals = [];
+        const meetings = db.meetings || [];
+        meetings.forEach(m => {
+          if (m.attendanceTakerId || m.attendance_taker_id) {
+            const takerId = m.attendanceTakerId || m.attendance_taker_id;
+            const takerObj = (db.members || []).find(mem => String(mem.id) === String(takerId) || String(mem.memberCode) === String(takerId));
+            const takerName = takerObj ? takerObj.name : 'Chưa phân công';
+            const status = (m.status === 'completed' || m.status === 'pending_minutes') ? 'done' : 'todo';
+            virtuals.push({ id: `virtual-meet-att-${m.id}`, title: `📝 Phụ trách điểm danh họp: ${m.title}`, description: `Tiến hành điểm danh các thành viên có mặt và vắng mặt trong buổi họp diễn ra vào lúc ${m.time} ngày ${m.date}.`, desc: `Tiến hành điểm danh các thành viên có mặt và vắng mặt trong buổi họp diễn ra vào lúc ${m.time} ngày ${m.date}.`, department: 'hr_external', assignee: takerName, assigneeId: takerId, deadline: m.date, status, pointsReward: 10, isVirtual: true, virtualType: 'attendance' });
+          }
+          if (m.minuteTakerId || m.minute_taker_id) {
+            const takerId = m.minuteTakerId || m.minute_taker_id;
+            const takerObj = (db.members || []).find(mem => String(mem.id) === String(takerId) || String(mem.memberCode) === String(takerId));
+            const takerName = takerObj ? takerObj.name : 'Chưa phân công';
+            const status = (m.status === 'completed' || m.minutesLink) ? 'done' : 'todo';
+            virtuals.push({ id: `virtual-meet-min-${m.id}`, title: `✍️ Ghi biên bản cuộc họp: ${m.title}`, description: `Ghi lại biên bản chi tiết các nội dung, biểu quyết và phân công công việc của buổi họp vào Google Docs.`, desc: `Ghi lại biên bản chi tiết các nội dung, biểu quyết và phân công công việc của buổi họp vào Google Docs.`, department: 'hr_external', assignee: takerName, assigneeId: takerId, deadline: m.date, status, pointsReward: 10, isVirtual: true, virtualType: 'minutes' });
+          }
+        });
+        return virtuals;
+      })()
+    ],
+    updateTaskStatus,
+    addTask,
+    equipment: db.equipment || [],
+    addEquipment,
+    borrowEquipment,
+    returnEquipment,
+    drafts: db.drafts || [],
+    completeGrading,
+    approveDraft,
+    addDraft,
+    announcements: db.announcements || [],
+    addAnnouncement,
+    deleteAnnouncement,
+    generations: db.generations || DEFAULT_GENERATIONS,
+    createMemberAccount,
+    deleteMemberAccount,
+    resetAccountPassword,
+    resetMemberPassword,
+    toggleAccountStatus,
+    resources: db.resources || [],
+    addResource,
+    deleteResource,
+    departmentDrives: db.departmentDrives || [],
+    updateDepartmentDrive,
+    attendanceRecords: db.attendanceRecords || [],
+    isHRMember,
+    isHRHead,
+    isAdmin,
+    isSuperAdmin,
+    submitAttendanceCheckin,
+    approveAttendanceCheckin,
+    isAttendanceModalOpen,
+    setIsAttendanceModalOpen,
+    checkinAttendance,
+    triggerConfetti,
+    handleExportDB,
+    handleImportDB,
+    handleResetDB,
+    isBorrowModalOpen,
+    setIsBorrowModalOpen,
+    selectedEquipment,
+    setSelectedEquipment,
+    isNewTaskModalOpen,
+    setIsNewTaskModalOpen,
+    isNewDraftModalOpen,
+    setIsNewDraftModalOpen,
+    isNewAccountModalOpen,
+    setIsNewAccountModalOpen,
+    membersFilterDept,
+    setMembersFilterDept,
+    isRecruitmentSeasonActive,
+    toggleRecruitmentSeason,
+    meetings: db.meetings || [],
+    createMeeting,
+    cancelMeeting,
+    updateMeeting,
+    submitMeetingAttendance,
+    submitMeetingMinutes,
+    penalizeMember,
+    updateMemberPoints,
+    birthdayAssignments: db.birthdayAssignments || [],
+    assignBirthdayDuty,
+    submitBirthdayImage,
+    submitMemberBirthdayData,
+    submitBirthdayExcuse,
+    reviewBirthdayExcuse,
+    getPhotoAndDataDeadline,
+    getMonitoringDeadline,
+    sessions,
+    currentSessionId,
+    loadSqlSessions,
+    revokeSession,
+    revokeAllSessions,
+  }), [
+    theme,
+    toggleTheme,
+    toasts,
+    showToast,
+    removeToast,
+    activeTab,
+    db,
+    currentUser,
+    isAuthenticated,
+    requirePasswordChange,
+    addFinanceRecord,
+    updateFinanceStatus,
+    deleteFinanceRecord,
+    login,
+    changePassword,
+    logout,
+    switchUserAccount,
+    updateSelfProfile,
+    updateMemberByTech,
+    addMemberMilestone,
+    updateTaskStatus,
+    addTask,
+    addEquipment,
+    borrowEquipment,
+    returnEquipment,
+    completeGrading,
+    approveDraft,
+    addDraft,
+    addAnnouncement,
+    deleteAnnouncement,
+    createMemberAccount,
+    deleteMemberAccount,
+    resetAccountPassword,
+    resetMemberPassword,
+    toggleAccountStatus,
+    addResource,
+    deleteResource,
+    updateDepartmentDrive,
+    submitAttendanceCheckin,
+    approveAttendanceCheckin,
+    isAttendanceModalOpen,
+    checkinAttendance,
+    triggerConfetti,
+    handleExportDB,
+    handleImportDB,
+    handleResetDB,
+    isBorrowModalOpen,
+    selectedEquipment,
+    isNewTaskModalOpen,
+    isNewDraftModalOpen,
+    isNewAccountModalOpen,
+    membersFilterDept,
+    isRecruitmentSeasonActive,
+    createMeeting,
+    cancelMeeting,
+    updateMeeting,
+    submitMeetingAttendance,
+    submitMeetingMinutes,
+    penalizeMember,
+    updateMemberPoints,
+    assignBirthdayDuty,
+    submitBirthdayImage,
+    submitMemberBirthdayData,
+    submitBirthdayExcuse,
+    reviewBirthdayExcuse,
+    getPhotoAndDataDeadline,
+    getMonitoringDeadline,
+    sessions,
+    currentSessionId,
+    loadSqlSessions,
+    revokeSession,
+    revokeAllSessions,
+  ]);
+
   return (
-    <ClubContext.Provider value={{
-      theme,
-      toggleTheme,
-      toasts,
-      showToast,
-      removeToast,
-      activeTab,
-      setActiveTab,
-      db,
-      finances: db.finances || [],
-      addFinanceRecord,
-      updateFinanceStatus,
-      deleteFinanceRecord,
-      currentUser,
-      isAdmin,
-      isAuthenticated,
-      requirePasswordChange,
-      login,
-      changePassword,
-      logout,
-      switchUserAccount,
-      updateSelfProfile,
-      updateMemberByTech,
-      addMemberMilestone,
-      user: currentUser,
-      members: db.members || [],
-      tasks: [
-        ...(db.tasks || []),
-        ...((() => {
-          const virtuals = [];
-          
-          // Meeting Attendance & Minutes Takers -> Tasks
-          const meetings = db.meetings || [];
-          meetings.forEach(m => {
-            if (m.attendanceTakerId || m.attendance_taker_id) {
-              const takerId = m.attendanceTakerId || m.attendance_taker_id;
-              const takerObj = (db.members || []).find(mem => String(mem.id) === String(takerId) || String(mem.memberCode) === String(takerId));
-              const takerName = takerObj ? takerObj.name : 'Chưa phân công';
-              
-              const status = (m.status === 'completed' || m.status === 'pending_minutes') ? 'done' : 'todo';
-              
-              virtuals.push({
-                id: `virtual-meet-att-${m.id}`,
-                title: `📝 Phụ trách điểm danh họp: ${m.title}`,
-                description: `Tiến hành điểm danh các thành viên có mặt và vắng mặt trong buổi họp diễn ra vào lúc ${m.time} ngày ${m.date}.`,
-                desc: `Tiến hành điểm danh các thành viên có mặt và vắng mặt trong buổi họp diễn ra vào lúc ${m.time} ngày ${m.date}.`,
-                department: 'hr_external',
-                assignee: takerName,
-                assigneeId: takerId,
-                deadline: m.date,
-                status,
-                pointsReward: 10,
-                isVirtual: true,
-                virtualType: 'attendance'
-              });
-            }
-
-            if (m.minuteTakerId || m.minute_taker_id) {
-              const takerId = m.minuteTakerId || m.minute_taker_id;
-              const takerObj = (db.members || []).find(mem => String(mem.id) === String(takerId) || String(mem.memberCode) === String(takerId));
-              const takerName = takerObj ? takerObj.name : 'Chưa phân công';
-              
-              const status = (m.status === 'completed' || m.minutesLink) ? 'done' : 'todo';
-
-              virtuals.push({
-                id: `virtual-meet-min-${m.id}`,
-                title: `✍️ Ghi biên bản cuộc họp: ${m.title}`,
-                description: `Ghi lại biên bản chi tiết các nội dung, biểu quyết và phân công công việc của buổi họp vào Google Docs.`,
-                desc: `Ghi lại biên bản chi tiết các nội dung, biểu quyết và phân công công việc của buổi họp vào Google Docs.`,
-                department: 'hr_external',
-                assignee: takerName,
-                assigneeId: takerId,
-                deadline: m.date,
-                status,
-                pointsReward: 10,
-                isVirtual: true,
-                virtualType: 'minutes'
-              });
-            }
-          });
-
-          return virtuals;
-        })())
-      ],
-      updateTaskStatus,
-      addTask,
-      equipment: db.equipment || [],
-      addEquipment,
-      borrowEquipment,
-      returnEquipment,
-      drafts: db.drafts || [],
-      completeGrading,
-      approveDraft,
-      addDraft,
-      announcements: db.announcements || [],
-      addAnnouncement,
-      deleteAnnouncement,
-      generations: db.generations || DEFAULT_GENERATIONS,
-      createMemberAccount,
-      deleteMemberAccount,
-      resetAccountPassword,
-      resetMemberPassword,
-      toggleAccountStatus,
-      resources: db.resources || [],
-      addResource,
-      deleteResource,
-      departmentDrives: db.departmentDrives || [],
-      updateDepartmentDrive,
-      attendanceRecords: db.attendanceRecords || [],
-      isHRMember,
-      isHRHead,
-      isAdmin,
-      isSuperAdmin,
-      submitAttendanceCheckin,
-      approveAttendanceCheckin,
-      isAttendanceModalOpen,
-      setIsAttendanceModalOpen,
-      checkinAttendance,
-      triggerConfetti,
-      handleExportDB,
-      handleImportDB,
-      handleResetDB,
-      isBorrowModalOpen,
-      setIsBorrowModalOpen,
-      selectedEquipment,
-      setSelectedEquipment,
-      isNewTaskModalOpen,
-      setIsNewTaskModalOpen,
-      isNewDraftModalOpen,
-      setIsNewDraftModalOpen,
-      isNewAccountModalOpen,
-      setIsNewAccountModalOpen,
-      membersFilterDept,
-      setMembersFilterDept,
-      isRecruitmentSeasonActive,
-      toggleRecruitmentSeason,
-      meetings: db.meetings || [],
-      createMeeting,
-      cancelMeeting,
-      updateMeeting,
-      submitMeetingAttendance,
-      submitMeetingMinutes,
-      penalizeMember,
-      updateMemberPoints,
-      birthdayAssignments: db.birthdayAssignments || [],
-      assignBirthdayDuty,
-      submitBirthdayImage,
-      submitMemberBirthdayData,
-      submitBirthdayExcuse,
-      reviewBirthdayExcuse,
-      getPhotoAndDataDeadline,
-      getMonitoringDeadline,
-      sessions,
-      currentSessionId,
-      loadSqlSessions,
-      revokeSession,
-      revokeAllSessions,
-      works: [],
-      events: [],
-      products: [],
-      cart: [],
-      addToCart: () => {},
-      registerEvent: () => {},
-      likeWork: () => {}
-    }}>
+    <ClubContext.Provider value={contextValue}>
       {children}
     </ClubContext.Provider>
   );

@@ -3,7 +3,6 @@ import { useClub } from '../context/ClubContext';
 import { CLUB_INFO } from '../data/mockData';
 import { 
   CheckSquare, 
-  Camera, 
   FileText, 
   Bell, 
   Plus, 
@@ -14,8 +13,7 @@ import {
   Film,
   Handshake,
   Users,
-  Award,
-  UserPlus 
+  Award
 } from 'lucide-react';
 
 const Loading = () => (

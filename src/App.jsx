@@ -17,7 +17,6 @@ import { InternalDatabase } from './pages/InternalDatabase';
 import { InternalProfile } from './pages/InternalProfile';
 import { InternalHRDashboard } from './pages/InternalHRDashboard';
 import { InternalAdminSessions } from './pages/InternalAdminSessions';
-import { InternalRecruitment } from './pages/InternalRecruitment';
 
 const Loading = () => (
   <div className="min-h-screen w-full flex items-center justify-center bg-[#0f172a] text-slate-200 font-sans">

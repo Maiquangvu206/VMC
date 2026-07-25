@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useClub } from '../context/ClubContext';
 import { 
   CheckSquare, 
@@ -35,11 +35,11 @@ export const InternalTasks = () => {
     priority: 'Medium'
   });
 
-  const filteredTasks = tasks.filter(t => deptFilter === 'all' || t.department === deptFilter);
+  const filteredTasks = useMemo(() => tasks.filter(t => deptFilter === 'all' || t.department === deptFilter), [tasks, deptFilter]);
 
-  const todoTasks = filteredTasks.filter(t => t.status === 'todo');
-  const doingTasks = filteredTasks.filter(t => t.status === 'doing');
-  const doneTasks = filteredTasks.filter(t => t.status === 'done');
+  const todoTasks = useMemo(() => filteredTasks.filter(t => t.status === 'todo'), [filteredTasks]);
+  const doingTasks = useMemo(() => filteredTasks.filter(t => t.status === 'doing'), [filteredTasks]);
+  const doneTasks = useMemo(() => filteredTasks.filter(t => t.status === 'done'), [filteredTasks]);
 
   const handleSubmitNewTask = (e) => {
     e.preventDefault();

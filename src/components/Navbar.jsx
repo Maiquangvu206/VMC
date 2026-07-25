@@ -3,7 +3,6 @@ import { useClub } from '../context/ClubContext';
 import { 
   LayoutDashboard, 
   CheckSquare, 
-  Camera, 
   FileText, 
   FolderGit2, 
   Users, 
@@ -15,8 +14,7 @@ import {
   User,
   LogOut,
   UserCheck,
-  ShieldCheck,
-  UserPlus
+  ShieldCheck
 } from 'lucide-react';
 
 export const Navbar = () => {
@@ -32,8 +30,7 @@ export const Navbar = () => {
     drafts,
     isHRMember,
     isAdmin,
-    isSuperAdmin,
-    isRecruitmentSeasonActive
+    isSuperAdmin
   } = useClub();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -64,9 +61,6 @@ export const Navbar = () => {
       currentUserDeptName.includes('dn-ns')
     ))
   );
-
-  // Tuyển Gen visible: Super Admin luôn thấy, tất cả thành viên khác chỉ thấy khi mùa tuyển đang bật
-  const canSeeRecruitment = isSuperAdmin || isRecruitmentSeasonActive;
 
   const navItems = [
     { id: 'dashboard', label: 'Tổng Quan', icon: LayoutDashboard },
