@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense, useMemo } from 'react';
 import { ClubProvider, useClub } from './context/ClubContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
@@ -7,23 +7,38 @@ import { ForcePasswordChangeModal } from './components/ForcePasswordChangeModal'
 import { AttendanceModal } from './components/AttendanceModal';
 import { ToastContainer } from './components/Toast';
 import ErrorBoundary from './components/ErrorBoundary';
-import { InternalDashboard } from './pages/InternalDashboard';
-import { InternalTasks } from './pages/InternalTasks';
-import { InternalEquipment } from './pages/InternalEquipment';
-import { InternalDrafts } from './pages/InternalDrafts';
-import { InternalResources } from './pages/InternalResources';
-import { InternalMembers } from './pages/InternalMembers';
-import { InternalDatabase } from './pages/InternalDatabase';
-import { InternalProfile } from './pages/InternalProfile';
-import { InternalHRDashboard } from './pages/InternalHRDashboard';
-import { InternalAdminSessions } from './pages/InternalAdminSessions';
-import { InternalRecruitment } from './pages/InternalRecruitment';
 
 const Loading = () => (
-  <div className="min-h-screen w-full flex items-center justify-center bg-[#0f172a] text-slate-200 font-sans">
+  <div className="min-h-screen w-full flex items-center justify-center bg-[#0b0f17] text-slate-200 font-sans">
     <div className="text-slate-400 text-sm font-mono animate-pulse">Đang tải...</div>
   </div>
 );
+
+const InternalDashboard = lazy(() => import('./pages/InternalDashboard'));
+const InternalTasks = lazy(() => import('./pages/InternalTasks'));
+const InternalEquipment = lazy(() => import('./pages/InternalEquipment'));
+const InternalDrafts = lazy(() => import('./pages/InternalDrafts'));
+const InternalResources = lazy(() => import('./pages/InternalResources'));
+const InternalMembers = lazy(() => import('./pages/InternalMembers'));
+const InternalDatabase = lazy(() => import('./pages/InternalDatabase'));
+const InternalProfile = lazy(() => import('./pages/InternalProfile'));
+const InternalHRDashboard = lazy(() => import('./pages/InternalHRDashboard'));
+const InternalAdminSessions = lazy(() => import('./pages/InternalAdminSessions'));
+const InternalRecruitment = lazy(() => import('./pages/InternalRecruitment'));
+
+const pageComponents = {
+  dashboard: InternalDashboard,
+  tasks: InternalTasks,
+  equipment: InternalEquipment,
+  drafts: InternalDrafts,
+  resources: InternalResources,
+  members: InternalMembers,
+  database: InternalDatabase,
+  profile: InternalProfile,
+  hr_dashboard: InternalHRDashboard,
+  admin_sessions: InternalAdminSessions,
+  recruitment: InternalRecruitment
+};
 
 const AppContent = () => {
   const { activeTab, isAuthenticated, requirePasswordChange, isLoading, toasts, removeToast } = useClub();
@@ -39,23 +54,19 @@ const AppContent = () => {
     return <ForcePasswordChangeModal />;
   }
 
+  const ActivePage = pageComponents[activeTab];
+
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-300 flex flex-col font-body selection:bg-blue-600 selection:text-white">
+    <div className="main-layout bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-300 font-body selection:bg-blue-600 selection:text-white">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
       <Navbar />
       <div className="flex-1 pt-6 pb-20">
         <main className="min-h-screen">
-          {activeTab === 'dashboard' && <InternalDashboard />}
-          {activeTab === 'tasks' && <InternalTasks />}
-          {activeTab === 'equipment' && <InternalEquipment />}
-          {activeTab === 'drafts' && <InternalDrafts />}
-          {activeTab === 'resources' && <InternalResources />}
-          {activeTab === 'members' && <InternalMembers />}
-          {activeTab === 'database' && <InternalDatabase />}
-          {activeTab === 'profile' && <InternalProfile />}
-                {activeTab === 'hr_dashboard' && <InternalHRDashboard />}
-                {activeTab === 'admin_sessions' && <InternalAdminSessions />}
-                {activeTab === 'recruitment' && <InternalRecruitment />}
+          <div className="page-wrap">
+            <Suspense fallback={<Loading />}>
+              {ActivePage ? <ActivePage /> : null}
+            </Suspense>
+          </div>
         </main>
       </div>
       <AttendanceModal />

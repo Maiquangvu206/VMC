@@ -47,7 +47,7 @@ export const InternalAdminSessions = () => {
 
   if (!isSuperAdmin) {
     return (
-      <div className="container px-4 py-16 text-center space-y-4">
+      <div className="page-wrap px-4 py-16 text-center space-y-4">
         <div className="w-16 h-16 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center mx-auto border border-red-500/30">
           <AlertTriangle className="w-8 h-8" />
         </div>
@@ -82,10 +82,10 @@ export const InternalAdminSessions = () => {
   });
 
   return (
-    <div className="container px-4 sm:px-6 py-6 space-y-6">
+    <div className="page-wrap px-4 sm:px-6 py-6 space-y-6">
       
       {/* Header Banner */}
-      <div className="glass-panel p-6 rounded-3xl border border-cyan-500/30 relative overflow-hidden bg-gradient-to-r from-slate-900 via-slate-900/90 to-cyan-950/40">
+      <div className="ds-card p-6 rounded-3xl border border-cyan-500/30 relative overflow-hidden bg-gradient-to-r from-slate-900 via-slate-900/90 to-cyan-950/40">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative z-10">
           <div className="flex items-center gap-3.5">
             <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-400 shrink-0 shadow-lg shadow-cyan-500/20">
@@ -122,7 +122,7 @@ export const InternalAdminSessions = () => {
 
       {/* Analytics Metric Cards - 3 Distinct Statuses */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="glass-panel p-4 rounded-2xl border border-emerald-500/30 bg-slate-900/60">
+        <div className="ds-card p-4 rounded-2xl border border-emerald-500/30 bg-[var(--bg-card)]">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
             <span>Đang Hoạt Động</span>
             <Wifi className="w-4 h-4 text-emerald-400 animate-pulse" />
@@ -131,7 +131,7 @@ export const InternalAdminSessions = () => {
           <div className="text-[10px] text-slate-400 mt-1">Phiên đang kết nối thực tế</div>
         </div>
 
-        <div className="glass-panel p-4 rounded-2xl border border-slate-700 bg-slate-900/60">
+        <div className="ds-card p-4 rounded-2xl border border-slate-700 bg-[var(--bg-card)]">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
             <span>Kết Thúc Phiên</span>
             <Clock className="w-4 h-4 text-slate-400" />
@@ -140,7 +140,7 @@ export const InternalAdminSessions = () => {
           <div className="text-[10px] text-slate-400 mt-1">Tự đăng xuất hoặc hết hạn</div>
         </div>
 
-        <div className="glass-panel p-4 rounded-2xl border border-rose-500/30 bg-slate-900/60">
+        <div className="ds-card p-4 rounded-2xl border border-rose-500/30 bg-[var(--bg-card)]">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
             <span>Bị Hủy</span>
             <XCircle className="w-4 h-4 text-rose-400" />
@@ -149,7 +149,7 @@ export const InternalAdminSessions = () => {
           <div className="text-[10px] text-slate-400 mt-1">Admin cưỡng chế thu hồi</div>
         </div>
 
-        <div className="glass-panel p-4 rounded-2xl border border-purple-500/30 bg-slate-900/60">
+        <div className="ds-card p-4 rounded-2xl border border-purple-500/30 bg-[var(--bg-card)]">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
             <span>Thiết Bị</span>
             <Monitor className="w-4 h-4 text-purple-400" />
@@ -167,7 +167,7 @@ export const InternalAdminSessions = () => {
       </div>
 
       {/* Filter & Search Bar - 3 Status Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-900 p-4 rounded-2xl border border-slate-800">
+      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-900 p-4 rounded-2xl border border-[var(--border-default)]">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
           <input
@@ -175,7 +175,7 @@ export const InternalAdminSessions = () => {
             placeholder="Tìm theo tên, mã TV, địa chỉ IP..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-950 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500"
+            className="w-full pl-9 pr-4 py-2 bg-slate-950 border border-[var(--border-default)] rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500"
           />
         </div>
 
@@ -209,10 +209,10 @@ export const InternalAdminSessions = () => {
       </div>
 
       {/* Sessions Table */}
-      <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
+      <div className="bg-slate-900 rounded-2xl border border-[var(--border-default)] overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950/80 text-slate-400 uppercase font-mono text-[10px] border-b border-slate-800">
+            <thead className="bg-slate-950/80 text-slate-400 uppercase font-mono text-[10px] border-b border-[var(--border-default)]">
               <tr>
                 <th className="px-4 py-3.5">Thành Viên</th>
                 <th className="px-4 py-3.5">Thiết Bị & IP</th>

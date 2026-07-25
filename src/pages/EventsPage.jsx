@@ -7,7 +7,7 @@ export const EventsPage = () => {
   const { events, registerEvent, userTickets, setActiveTicketModal } = useClub();
 
   return (
-    <div className="container py-10 space-y-12 pb-20">
+    <div className="page-wrap py-10 space-y-12 pb-20">
       
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto space-y-3">
@@ -31,7 +31,7 @@ export const EventsPage = () => {
           {events.map(ev => (
             <div
               key={ev.id}
-              className="glass-card rounded-2xl overflow-hidden border border-white/10 flex flex-col justify-between"
+              className="ds-card rounded-2xl overflow-hidden border border-white/10 flex flex-col justify-between"
             >
               <div className="relative h-48 overflow-hidden">
                 <img src={ev.image} alt={ev.title} className="w-full h-full object-cover" />
@@ -74,7 +74,7 @@ export const EventsPage = () => {
                   <button
                     onClick={() => registerEvent(ev)}
                     disabled={ev.spotsLeft === 0}
-                    className="btn-primary text-xs px-4 py-2"
+                    className="ds-btn ds-btn-primary text-xs px-4 py-2"
                   >
                     <Ticket className="w-4 h-4" />
                     <span>{ev.spotsLeft === 0 ? 'Hết chỗ' : 'Đăng Ký Vé'}</span>
@@ -88,7 +88,7 @@ export const EventsPage = () => {
 
       {/* Registered Tickets Preview Section */}
       {userTickets.length > 0 && (
-        <div className="glass-panel p-6 rounded-2xl border border-purple-500/30 space-y-4">
+        <div className="ds-card p-6 rounded-2xl border border-purple-500/30 space-y-4">
           <h3 className="font-heading text-lg font-bold text-white flex items-center gap-2">
             <Ticket className="w-5 h-5 text-purple-400" />
             <span>Vé Điện Tử Của Bạn ({userTickets.length})</span>
@@ -123,7 +123,7 @@ export const EventsPage = () => {
           {SCHEDULES.map((sc, idx) => (
             <div
               key={idx}
-              className="glass-card p-5 rounded-2xl border border-white/10 flex items-center justify-between gap-4"
+              className="ds-card p-5 rounded-2xl border border-white/10 flex items-center justify-between gap-4"
             >
               <div className="space-y-1">
                 <span className="badge badge-purple">{sc.day}</span>

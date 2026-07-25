@@ -83,10 +83,10 @@ export const Navbar = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 glass-panel border-b border-white/10 backdrop-blur-xl">
-      <div className="container flex items-center justify-between h-16 px-4 sm:px-6">
+    <header className="sticky top-0 z-50 ds-card border-b border-white/10 backdrop-blur-xl" style={{ borderRadius: 0, borderLeft: 'none', borderRight: 'none', borderTop: 'none' }}>
+      <div className="page-wrap flex items-center justify-between h-16">
         
-        {/* Brand Logo - Compact & Spacious */}
+        {/* Brand Logo */}
         <div 
           onClick={() => handleNavClick('dashboard')}
           className="flex items-center gap-2.5 cursor-pointer group shrink-0"
@@ -105,7 +105,7 @@ export const Navbar = () => {
           </div>
         </div>
 
-        {/* Desktop Navigation Bar */}
+        {/* Desktop Navigation */}
         <nav className="hidden lg:flex items-center gap-1 bg-slate-900/90 px-2 py-1 rounded-full border border-white/10 shrink-0">
           {navItems.map(item => {
             const Icon = item.icon;
@@ -163,9 +163,9 @@ export const Navbar = () => {
               <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             </button>
 
-            {/* Profile Dropdown Menu */}
+            {/* Profile Dropdown */}
             {isUserDropdownOpen && (
-              <div className="absolute right-0 mt-1 w-64 glass-panel border border-white/10 rounded-2xl p-2 shadow-2xl z-50 animate-slide-up space-y-1.5">
+              <div className="absolute right-0 mt-1 w-64 ds-card border border-white/10 p-2 shadow-2xl z-50 animate-slide-up space-y-1.5">
                 {/* Account Info */}
                 <div className="p-2.5 rounded-xl bg-slate-900/90 border border-white/5 space-y-0.5 text-xs">
                   <div className="font-bold text-white truncate">{safeUser.name}</div>
@@ -234,7 +234,7 @@ export const Navbar = () => {
 
       {/* Mobile Drawer */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden glass-panel border-t border-white/10 p-3 space-y-1.5 animate-slide-up">
+        <div className="lg:hidden ds-card border-t border-white/10 p-3 space-y-1.5 animate-slide-up" style={{ borderRadius: 0, borderLeft: 'none', borderRight: 'none' }}>
           {navItems.map(item => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;

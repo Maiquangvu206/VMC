@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 
 const Loading = () => (
-  <div className="container py-10 flex items-center justify-center min-h-screen">
+  <div className="page-wrap py-10 flex items-center justify-center min-h-screen">
     <div className="text-slate-400 text-sm font-mono animate-pulse">Đang tải...</div>
   </div>
 );
@@ -37,10 +37,10 @@ export const DashboardPage = () => {
   const displayResources = resources.length > 0 ? resources : (MEMBER_RESOURCES || []);
 
   return (
-    <div className="container py-10 space-y-10 pb-20">
+    <div className="page-wrap py-10 space-y-10 pb-20">
       
       {/* Header Profile Card */}
-      <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-purple-500/40 relative overflow-hidden">
+      <div className="ds-card p-6 sm:p-8 rounded-3xl border border-purple-500/40 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-72 h-72 bg-purple-600/15 blur-3xl rounded-full pointer-events-none" />
 
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
@@ -68,7 +68,7 @@ export const DashboardPage = () => {
             {isHRMember && (
               <button
                 onClick={checkinAttendance}
-                className="btn-primary px-6 py-3 shadow-lg shadow-purple-600/40 text-sm"
+                className="ds-btn ds-btn-primary px-6 py-3 shadow-lg shadow-purple-600/40 text-sm"
               >
                 <UserCheck className="w-5 h-5" />
                 <span>Điểm Danh Sinh Hoạt (+50 Pts)</span>
@@ -118,7 +118,7 @@ export const DashboardPage = () => {
           {(user?.badges || []).map((badge, idx) => (
             <div
               key={idx}
-              className="glass-card p-4 rounded-xl border border-white/10 flex items-center gap-3"
+              className="ds-card p-4 rounded-xl border border-white/10 flex items-center gap-3"
             >
               <div className="w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
                 <Sparkles className="w-5 h-5" />
@@ -146,7 +146,7 @@ export const DashboardPage = () => {
           {displayResources.map(res => (
             <div
               key={res.id}
-              className="glass-card p-5 rounded-2xl border border-white/10 flex flex-col justify-between space-y-4"
+              className="ds-card p-5 rounded-2xl border border-white/10 flex flex-col justify-between space-y-4"
             >
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
@@ -171,7 +171,7 @@ export const DashboardPage = () => {
       </div>
 
       {/* Thông báo nội bộ */}
-      <div className="glass-card p-6 rounded-2xl border border-white/10 space-y-4">
+      <div className="ds-card p-6 rounded-2xl border border-white/10 space-y-4">
         <h3 className="font-heading font-bold text-lg text-white flex items-center gap-2">
           <Bell className="w-5 h-5 text-pink-400" />
           <span>Thông Báo Nội Bộ Ban Chủ Nhiệm</span>

@@ -33,7 +33,7 @@ export const JoinUsPage = () => {
   };
 
   return (
-    <div className="container py-10 space-y-10 max-w-3xl mx-auto pb-20">
+    <div className="page-wrap py-10 space-y-10 max-w-3xl mx-auto pb-20">
 
       {/* Header */}
       <div className="text-center space-y-3">
@@ -47,7 +47,7 @@ export const JoinUsPage = () => {
       </div>
 
       {!isSubmitted ? (
-        <div className="glass-panel p-6 sm:p-10 rounded-3xl border border-purple-500/30 relative shadow-2xl">
+        <div className="ds-card p-6 sm:p-10 rounded-3xl border border-purple-500/30 relative shadow-2xl">
 
           {/* Step Indicator */}
           <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/10 text-xs font-semibold">
@@ -141,7 +141,7 @@ export const JoinUsPage = () => {
                       }
                       setStep(2);
                     }}
-                    className="btn-primary text-sm px-6 py-2.5"
+                    className="ds-btn ds-btn-primary text-sm px-6 py-2.5"
                   >
                     <span>Tiếp theo</span>
                     <ArrowRight className="w-4 h-4" />
@@ -216,7 +216,7 @@ export const JoinUsPage = () => {
                   <button
                     type="button"
                     onClick={() => setStep(1)}
-                    className="btn-secondary text-sm px-6 py-2.5"
+                    className="ds-btn ds-btn-secondary text-sm px-6 py-2.5"
                   >
                     <ArrowLeft className="w-4 h-4" />
                     <span>Quay lại</span>
@@ -225,7 +225,7 @@ export const JoinUsPage = () => {
                   <button
                     type="button"
                     onClick={() => setStep(3)}
-                    className="btn-primary text-sm px-6 py-2.5"
+                    className="ds-btn ds-btn-primary text-sm px-6 py-2.5"
                   >
                     <span>Tiếp theo</span>
                     <ArrowRight className="w-4 h-4" />
@@ -264,7 +264,7 @@ export const JoinUsPage = () => {
                   <button
                     type="button"
                     onClick={() => setStep(2)}
-                    className="btn-secondary text-sm px-6 py-2.5"
+                    className="ds-btn ds-btn-secondary text-sm px-6 py-2.5"
                   >
                     <ArrowLeft className="w-4 h-4" />
                     <span>Quay lại</span>
@@ -272,7 +272,7 @@ export const JoinUsPage = () => {
 
                   <button
                     type="submit"
-                    className="btn-primary text-sm px-8 py-3 shadow-lg shadow-purple-600/40"
+                    className="ds-btn ds-btn-primary text-sm px-8 py-3 shadow-lg shadow-purple-600/40"
                   >
                     <Sparkles className="w-4 h-4" />
                     <span>Nộp Đơn Đăng Ký</span>
@@ -285,7 +285,7 @@ export const JoinUsPage = () => {
 
         </div>
       ) : (
-        <div className="glass-panel p-8 sm:p-12 rounded-3xl border border-emerald-500/40 text-center space-y-6 animate-slide-up">
+        <div className="ds-card p-8 sm:p-12 rounded-3xl border border-emerald-500/40 text-center space-y-6 animate-slide-up">
           <div className="w-16 h-16 mx-auto rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center animate-bounce">
             <CheckCircle className="w-10 h-10" />
           </div>
@@ -321,7 +321,7 @@ export const JoinUsPage = () => {
                 motivation: ''
               });
             }}
-            className="btn-secondary text-xs px-6 py-2.5"
+            className="ds-btn ds-btn-secondary text-xs px-6 py-2.5"
           >
             Nộp đơn đăng ký khác
           </button>

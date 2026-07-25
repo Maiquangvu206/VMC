@@ -6,7 +6,7 @@ import { BirthdayManagement } from '../components/hr/BirthdayManagement';
 import { PointManagement } from '../components/hr/PointManagement';
 
 const Loading = () => (
-  <div className="container py-8 flex items-center justify-center min-h-screen">
+  <div className="page-wrap flex items-center justify-center min-h-screen">
     <div className="text-slate-400 text-sm font-mono animate-pulse">Đang tải...</div>
   </div>
 );
@@ -206,7 +206,7 @@ export const InternalHRDashboard = () => {
   const totalBalance = (finances || []).filter(f => f.status === 'approved').reduce((acc, curr) => curr.type === 'income' ? acc + curr.amount : acc - curr.amount, 0);
 
   return (
-    <div className="container py-8 space-y-8 pb-20">
+    <div className="page-wrap space-y-8 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="font-heading text-3xl font-extrabold text-white mt-1 flex items-center gap-3">
@@ -276,7 +276,7 @@ export const InternalHRDashboard = () => {
       </div>
 
       {/* Content Area */}
-      <div className="bg-slate-900/60 border border-slate-800/80 rounded-3xl p-6">
+      <div className="bg-[var(--bg-card)] border border-[var(--border-default)]/80 rounded-3xl p-6">
         
         {/* POINTS TAB */}
         {activeTab === 'points' && (
@@ -289,7 +289,7 @@ export const InternalHRDashboard = () => {
                 <div 
                   key={m.id} 
                   onClick={() => setSelectedMember(m)}
-                  className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex items-center gap-4 cursor-pointer hover:border-amber-500/50 hover:scale-[1.01] transition-all group"
+                  className="bg-slate-950 p-4 rounded-2xl border border-[var(--border-default)] flex items-center gap-4 cursor-pointer hover:border-amber-500/50 hover:scale-[1.01] transition-all group"
                   title="Bấm để xem chi tiết thông tin thành viên"
                 >
                   <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-bold text-lg ${
@@ -315,7 +315,7 @@ export const InternalHRDashboard = () => {
               ))}
             </div>
             
-            <div className="mt-8 pt-8 border-t border-slate-800">
+            <div className="mt-8 pt-8 border-t border-[var(--border-default)]">
               <PointManagement />
             </div>
           </div>
@@ -354,7 +354,7 @@ export const InternalHRDashboard = () => {
 
             {/* Phân Công Nhiệm Vụ Sinh Nhật (Chỉ hiển thị cho Ban ĐN-NS & BCN/Admin, ẩn hoàn toàn với Cố Vấn và các ban khác) */}
             {isAllowedBirthdayDuty && (
-              <div className="mt-8 pt-8 border-t border-slate-800">
+              <div className="mt-8 pt-8 border-t border-[var(--border-default)]">
                 <BirthdayManagement />
               </div>
             )}
@@ -377,7 +377,7 @@ export const InternalHRDashboard = () => {
                 const doneTasks = memberTasks.filter(t => t.status === 'done');
                 
                 return (
-                  <div key={m.id} className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
+                  <div key={m.id} className="bg-slate-950 p-4 rounded-2xl border border-[var(--border-default)] space-y-3">
                     <div className="flex justify-between items-center border-b border-white/5 pb-2">
                       <div className="font-bold text-sm text-white">{m.name}</div>
                       <div className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full">{m.deptName || m.department}</div>
@@ -440,7 +440,7 @@ export const InternalHRDashboard = () => {
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <Wallet className="text-emerald-400" /> Quản Lý Quỹ CLB
               </h3>
-              <div className="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-right">
+              <div className="bg-slate-950 border border-[var(--border-default)] rounded-xl px-4 py-2 text-right">
                 <div className="text-xs text-slate-400">Tổng Quỹ Hiện Tại</div>
                 <div className="text-xl font-mono font-bold text-emerald-400">
                   {totalBalance.toLocaleString()} VNĐ
@@ -511,7 +511,7 @@ export const InternalHRDashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Form Add */}
               {isHRMember && (
-                <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5">
+                <div className="bg-slate-950 border border-[var(--border-default)] rounded-2xl p-5">
                   <h4 className="font-bold text-white text-sm mb-4">{isHRHead ? 'Thêm Giao Dịch Mới' : 'Thêm Dự Trù Kinh Phí (Cần Duyệt)'}</h4>
                   <form onSubmit={handleAddFinance} className="space-y-4">
                     <div>
@@ -573,7 +573,7 @@ export const InternalHRDashboard = () => {
                 <h4 className="font-bold text-white text-sm mb-2 flex items-center gap-2">📋 Lịch Sử Giao Dịch Đã Duyệt</h4>
                 <div className="max-h-[400px] overflow-y-auto pr-2 custom-scrollbar space-y-3">
                   {(finances || []).filter(f => f.status === 'approved').map((f) => (
-                    <div key={f.id} className="bg-slate-950 p-4 rounded-xl border border-slate-800 flex justify-between items-center hover:border-slate-600 transition-colors">
+                    <div key={f.id} className="bg-slate-950 p-4 rounded-xl border border-[var(--border-default)] flex justify-between items-center hover:border-slate-600 transition-colors">
                       <div className="flex gap-4 items-center">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${f.type === 'income' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
                           {f.type === 'income' ? <ArrowDownRight className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
@@ -631,7 +631,7 @@ export const InternalHRDashboard = () => {
       {selectedMember && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up overflow-y-auto">
           <div className="relative w-full max-w-xl bg-slate-900 border border-rose-500/40 rounded-3xl p-6 shadow-2xl text-white space-y-5 my-8">
-            <div className="flex justify-between items-center border-b border-white/10 pb-4">
+            <div className="flex justify-between items-center border-b border-[var(--border-default)] pb-4">
               <div className="flex items-center gap-3">
                 <img src={selectedMember.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde'} alt={selectedMember.name} className="w-14 h-14 rounded-full object-cover border-2 border-rose-500/60 shadow-lg" />
                 <div>
@@ -681,7 +681,7 @@ export const InternalHRDashboard = () => {
             </div>
 
             <div className="pt-2 flex justify-end">
-              <button onClick={() => setSelectedMember(null)} className="btn-primary text-xs px-6 py-2">
+              <button onClick={() => setSelectedMember(null)} className="ds-btn ds-btn-primary text-xs">
                 Đóng
               </button>
             </div>

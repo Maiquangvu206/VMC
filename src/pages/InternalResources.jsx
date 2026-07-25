@@ -128,15 +128,15 @@ export const InternalResources = () => {
   };
 
   return (
-    <div className="container py-8 space-y-10 pb-20">
+    <div className="page-wrap space-y-10 pb-20">
       
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-card p-6 sm:p-8 rounded-3xl border border-blue-500/30 relative overflow-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 ds-card p-6 sm:p-8 rounded-3xl border border-blue-500/30 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 blur-3xl rounded-full pointer-events-none" />
         
         <div className="space-y-2 relative z-10">
           <div className="flex items-center gap-2">
-            <span className="badge badge-purple flex items-center gap-1.5">
+            <span className="ds-badge ds-badge-purple flex items-center gap-1.5">
               <Cloud className="w-3.5 h-3.5 text-cyan-400" />
               <span>VMC Department Drive Network</span>
             </span>
@@ -175,18 +175,18 @@ export const InternalResources = () => {
           {departmentDrives.map(dept => (
             <div
               key={dept.id}
-              className="glass-card p-6 rounded-2xl border border-white/10 flex flex-col justify-between space-y-4 hover:border-blue-500/40 transition-all group relative overflow-hidden"
+              className="ds-card p-6 rounded-2xl border border-[var(--border-default)] flex flex-col justify-between space-y-4 hover:border-blue-500/40 transition-all group relative overflow-hidden"
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="p-3 rounded-2xl bg-slate-900 border border-white/10 group-hover:scale-110 transition-transform">
+                  <div className="p-3 rounded-2xl bg-slate-900 border border-[var(--border-default)] group-hover:scale-110 transition-transform">
                     {getDeptIcon(dept.icon)}
                   </div>
                   
                   <button
                     onClick={() => handleOpenEditDeptModal(dept)}
                     title="Chỉnh sửa link Drive của Ban"
-                    className="p-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-white border border-white/5 transition-all text-xs flex items-center gap-1"
+                    className="p-2 rounded-xl bg-[var(--bg-card)] hover:bg-slate-800 text-slate-400 hover:text-white border border-white/5 transition-all text-xs flex items-center gap-1"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
                   </button>
@@ -218,7 +218,7 @@ export const InternalResources = () => {
         </div>
       </div>
 
-      <hr className="border-white/10" />
+      <hr className="border-[var(--border-default)]" />
 
       {/* Section 2: Kho File & Tài Nguyên Chi Tiết */}
       <div className="space-y-6">
@@ -241,7 +241,7 @@ export const InternalResources = () => {
               placeholder="Tìm file, loại định dạng, người đăng..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900/90 border border-white/10 text-white placeholder-slate-500 text-xs focus:outline-none focus:border-blue-500 transition-all"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900/90 border border-[var(--border-default)] text-white placeholder-slate-500 text-xs focus:outline-none focus:border-blue-500 transition-all"
             />
             {searchTerm && (
               <button 
@@ -256,7 +256,7 @@ export const InternalResources = () => {
         </div>
 
         {/* Filter Controls: Department Pills & Category Pills */}
-        <div className="space-y-3 glass-card p-4 rounded-2xl border border-white/10">
+        <div className="space-y-3 ds-card p-4 rounded-2xl border border-[var(--border-default)]">
           
           {/* Department Filter Tabs */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
@@ -309,7 +309,7 @@ export const InternalResources = () => {
 
         {/* Resources Grid */}
         {filteredResources.length === 0 ? (
-          <div className="glass-card p-12 text-center rounded-3xl border border-white/10 space-y-3">
+          <div className="ds-card p-12 text-center rounded-3xl border border-[var(--border-default)] space-y-3">
             <HardDrive className="w-12 h-12 text-slate-500 mx-auto" />
             <h3 className="text-white font-bold text-base">Không tìm thấy tài nguyên nào phù hợp</h3>
             <p className="text-xs text-slate-400">Hãy thử tìm kiếm với từ khóa khác hoặc đổi Ban filter.</p>
@@ -319,11 +319,11 @@ export const InternalResources = () => {
             {filteredResources.map(res => (
               <div
                 key={res.id}
-                className="glass-card p-6 rounded-2xl border border-white/10 flex flex-col justify-between space-y-5 hover:border-blue-500/40 transition-all group"
+                className="ds-card p-6 rounded-2xl border border-[var(--border-default)] flex flex-col justify-between space-y-5 hover:border-blue-500/40 transition-all group"
               >
                 <div className="space-y-3">
                   <div className="flex justify-between items-center gap-2">
-                    <span className="badge badge-purple font-semibold">{res.category}</span>
+                    <span className="ds-badge ds-badge-purple font-semibold">{res.category}</span>
                     <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${getDeptBadgeClass(res.department)}`}>
                       {res.deptName || 'Chưa phân ban'}
                     </span>
@@ -359,7 +359,7 @@ export const InternalResources = () => {
                   <button
                     onClick={() => deleteResource(res.id)}
                     title="Xóa tài nguyên này"
-                    className="p-2.5 rounded-xl bg-slate-900 hover:bg-rose-600/20 text-slate-400 hover:text-rose-400 border border-white/10 hover:border-rose-500/40 transition-all"
+                    className="p-2.5 rounded-xl bg-slate-900 hover:bg-rose-600/20 text-slate-400 hover:text-rose-400 border border-[var(--border-default)] hover:border-rose-500/40 transition-all"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -376,7 +376,7 @@ export const InternalResources = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
           <div className="relative w-full max-w-lg bg-slate-900 border border-blue-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-white animate-slide-up">
             
-            <div className="flex items-center justify-between pb-4 border-b border-white/10">
+            <div className="flex items-center justify-between pb-4 border-b border-[var(--border-default)]">
               <div className="flex items-center gap-2">
                 <Cloud className="w-6 h-6 text-cyan-400" />
                 <h3 className="font-heading font-bold text-lg text-white">Thêm File Vào Kho Drive Của Ban</h3>
@@ -401,7 +401,7 @@ export const InternalResources = () => {
                   placeholder="Ví dụ: Kịch Bản Phát Thanh Số 09 Khóa 60"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-[var(--border-default)] text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                 />
               </div>
 
@@ -419,7 +419,7 @@ export const InternalResources = () => {
                       deptName: deptObj ? deptObj.name : ''
                     });
                   }}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-white/10 text-white focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-[var(--border-default)] text-white focus:outline-none focus:border-blue-500"
                 >
                   <option value="bcn">Ban Chủ Nhiệm</option>
                   <option value="content_radio">Ban Nội Dung - Phát Thanh</option>
@@ -438,7 +438,7 @@ export const InternalResources = () => {
                   placeholder="https://drive.google.com/file/d/..."
                   value={formData.driveUrl}
                   onChange={(e) => setFormData({ ...formData, driveUrl: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono text-[11px]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-[var(--border-default)] text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono text-[11px]"
                 />
               </div>
 
@@ -448,7 +448,7 @@ export const InternalResources = () => {
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-white/10 text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-[var(--border-default)] text-white focus:outline-none focus:border-blue-500"
                   >
                     <option value="Preset">Preset</option>
                     <option value="Template PSD">Template PSD</option>
@@ -466,7 +466,7 @@ export const InternalResources = () => {
                     placeholder="Ví dụ: .DOCX, .PSD, .XMP"
                     value={formData.type}
                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-white/10 text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-[var(--border-default)] text-white focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -478,11 +478,11 @@ export const InternalResources = () => {
                   placeholder="Ví dụ: 45 MB, 1.2 GB, Cloud Folder"
                   value={formData.size}
                   onChange={(e) => setFormData({ ...formData, size: e.target.value })}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-white/10 text-white focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-[var(--border-default)] text-white focus:outline-none focus:border-blue-500"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border-default)]">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
@@ -510,7 +510,7 @@ export const InternalResources = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
           <div className="relative w-full max-w-md bg-slate-900 border border-amber-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-white animate-slide-up">
             
-            <div className="flex items-center justify-between pb-4 border-b border-white/10">
+            <div className="flex items-center justify-between pb-4 border-b border-[var(--border-default)]">
               <div className="flex items-center gap-2">
                 <FolderOpen className="w-6 h-6 text-amber-400" />
                 <h3 className="font-heading font-bold text-base text-white">Sửa Link Drive: {editingDept.name}</h3>
@@ -534,11 +534,11 @@ export const InternalResources = () => {
                   placeholder="https://drive.google.com/drive/folders/..."
                   value={newDeptDriveUrl}
                   onChange={(e) => setNewDeptDriveUrl(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono text-[11px]"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-[var(--border-default)] text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 font-mono text-[11px]"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border-default)]">
                 <button
                   type="button"
                   onClick={() => setEditingDept(null)}

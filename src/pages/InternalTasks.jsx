@@ -82,21 +82,21 @@ export const InternalTasks = () => {
 
   const getDeptBadge = (deptId) => {
     switch(deptId) {
-      case 'bcn': return { label: 'BAN CHỦ NHIỆM', class: 'badge-pink' };
-      case 'content_radio': return { label: 'NỘI DUNG - PHÁT THANH', class: 'badge-cyan' };
-      case 'production': return { label: 'SẢN XUẤT', class: 'badge-purple' };
-      case 'hr_external': return { label: 'ĐỐI NGOẠI - NHÂN SỰ', class: 'badge-amber' };
-      default: return { label: deptId.toUpperCase(), class: 'badge-purple' };
+      case 'bcn': return { label: 'BAN CHỦ NHIỆM', class: 'ds-badge ds-badge-pink' };
+      case 'content_radio': return { label: 'NỘI DUNG - PHÁT THANH', class: 'ds-badge ds-badge-cyan' };
+      case 'production': return { label: 'SẢN XUẤT', class: 'ds-badge ds-badge-purple' };
+      case 'hr_external': return { label: 'ĐỐI NGOẠI - NHÂN SỰ', class: 'ds-badge ds-badge-amber' };
+      default: return { label: deptId.toUpperCase(), class: 'ds-badge ds-badge-purple' };
     }
   };
 
   return (
-    <div className="container py-8 space-y-8 pb-20">
+    <div className="page-wrap space-y-8 pb-20">
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="badge badge-purple">VMC Operations</span>
+          <span className="ds-badge ds-badge-purple">VMC Operations</span>
           <h1 className="font-heading text-3xl font-extrabold text-white mt-1">
             Phân Công & <span className="gradient-text">Nhiệm Vụ 4 Ban</span>
           </h1>
@@ -107,7 +107,7 @@ export const InternalTasks = () => {
 
         <button
           onClick={() => setIsNewTaskModalOpen(true)}
-          className="btn-primary text-xs px-5 py-2.5 shadow-blue-600/40"
+          className="ds-btn ds-btn-primary text-xs px-5 py-2.5 shadow-blue-600/40"
         >
           <Plus className="w-4 h-4" />
           <span>Giao Công Việc Mới</span>
@@ -129,10 +129,10 @@ export const InternalTasks = () => {
           <button
             key={tab.id}
             onClick={() => setDeptFilter(tab.id)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition-all ${
+            className={`ds-btn ds-btn-xs shrink-0 ${
               deptFilter === tab.id
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'bg-slate-900 border border-white/5 text-slate-300 hover:bg-slate-800'
+                ? 'ds-btn ds-btn-primary'
+                : 'ds-btn ds-btn-secondary'
             }`}
           >
             {tab.label}
@@ -144,8 +144,8 @@ export const InternalTasks = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         {/* Column 1: Cần Thực Hiện (To Do) */}
-        <div className="space-y-4 bg-slate-950/60 p-4 rounded-2xl border border-white/10">
-          <div className="flex items-center justify-between pb-2 border-b border-white/10">
+        <div className="space-y-4 bg-[var(--bg-input)] p-4 rounded-2xl border border-[var(--border-default)]">
+          <div className="flex items-center justify-between pb-2 border-b border-[var(--border-default)]">
             <h3 className="font-heading font-bold text-sm text-amber-400 flex items-center gap-2">
               <Clock className="w-4 h-4" />
               <span>CẦN LÀM ({todoTasks.length})</span>
@@ -157,7 +157,7 @@ export const InternalTasks = () => {
               const deptInfo = getDeptBadge(task.department);
               const overdue = isOverdue(task.deadline);
               return (
-                <div key={task.id} className={`glass-card p-4 rounded-xl border space-y-3 ${overdue ? 'border-red-500/50 bg-red-950/20' : 'border-white/10'}`}>
+                <div key={task.id} className={`ds-card p-4 rounded-xl border space-y-3 ${overdue ? 'border-red-500/50 bg-red-950/20' : 'border-[var(--border-default)]'}`}>
                   <div className="flex justify-between items-center text-[11px]">
                     <span className={`badge ${deptInfo.class}`}>{deptInfo.label}</span>
                     <span className={`font-mono flex items-center gap-1 ${overdue ? 'text-red-400 font-bold' : 'text-slate-400'}`}>
@@ -175,7 +175,7 @@ export const InternalTasks = () => {
                   <h4 className="font-heading font-bold text-sm text-white">{task.title}</h4>
                   <p className="text-xs text-slate-400 line-clamp-2">{task.desc}</p>
 
-                  <div className="pt-2 border-t border-white/10 flex items-center justify-between text-xs">
+                  <div className="pt-2 border-t border-[var(--border-default)] flex items-center justify-between text-xs">
                     <span className="text-slate-300 font-semibold">{getTaskAssignee(task)}</span>
                     <button
                       onClick={() => updateTaskStatus(task.id, 'doing')}
@@ -191,8 +191,8 @@ export const InternalTasks = () => {
         </div>
 
         {/* Column 2: Đang Thực Hiện (Doing) */}
-        <div className="space-y-4 bg-slate-950/60 p-4 rounded-2xl border border-white/10">
-          <div className="flex items-center justify-between pb-2 border-b border-white/10">
+        <div className="space-y-4 bg-[var(--bg-input)] p-4 rounded-2xl border border-[var(--border-default)]">
+          <div className="flex items-center justify-between pb-2 border-b border-[var(--border-default)]">
             <h3 className="font-heading font-bold text-sm text-blue-400 flex items-center gap-2">
               <CheckSquare className="w-4 h-4" />
               <span>ĐANG LÀM ({doingTasks.length})</span>
@@ -204,7 +204,7 @@ export const InternalTasks = () => {
               const deptInfo = getDeptBadge(task.department);
               const overdue = isOverdue(task.deadline);
               return (
-                <div key={task.id} className={`glass-card p-4 rounded-xl border space-y-3 ${overdue ? 'border-red-500/50 bg-red-950/20' : 'border-blue-500/30'}`}>
+                <div key={task.id} className={`ds-card p-4 rounded-xl border space-y-3 ${overdue ? 'border-red-500/50 bg-red-950/20' : 'border-blue-500/30'}`}>
                   <div className="flex justify-between items-center text-[11px]">
                     <span className={`badge ${deptInfo.class}`}>{deptInfo.label}</span>
                     <span className={`font-mono flex items-center gap-1 ${overdue ? 'text-red-400 font-bold' : 'text-blue-400'}`}>
@@ -222,7 +222,7 @@ export const InternalTasks = () => {
                   <h4 className="font-heading font-bold text-sm text-white">{task.title}</h4>
                   <p className="text-xs text-slate-400 line-clamp-2">{task.desc}</p>
 
-                  <div className="pt-2 border-t border-white/10 flex items-center justify-between text-xs">
+                  <div className="pt-2 border-t border-[var(--border-default)] flex items-center justify-between text-xs">
                     <span className="text-slate-300 font-semibold">{getTaskAssignee(task)}</span>
                     <button
                       onClick={() => updateTaskStatus(task.id, 'done')}
@@ -238,8 +238,8 @@ export const InternalTasks = () => {
         </div>
 
         {/* Column 3: Hoàn Thành (Done) */}
-        <div className="space-y-4 bg-slate-950/60 p-4 rounded-2xl border border-white/10">
-          <div className="flex items-center justify-between pb-2 border-b border-white/10">
+        <div className="space-y-4 bg-[var(--bg-input)] p-4 rounded-2xl border border-[var(--border-default)]">
+          <div className="flex items-center justify-between pb-2 border-b border-[var(--border-default)]">
             <h3 className="font-heading font-bold text-sm text-emerald-400 flex items-center gap-2">
               <CheckCircle className="w-4 h-4" />
               <span>HOÀN THÀNH ({doneTasks.length})</span>
@@ -250,7 +250,7 @@ export const InternalTasks = () => {
             {doneTasks.map(task => {
               const deptInfo = getDeptBadge(task.department);
               return (
-                <div key={task.id} className="glass-card p-4 rounded-xl border border-emerald-500/20 opacity-85 space-y-3">
+                <div key={task.id} className="ds-card p-4 rounded-xl border border-emerald-500/20 opacity-85 space-y-3">
                   <div className="flex justify-between items-center text-[11px]">
                     <span className={`badge ${deptInfo.class}`}>{deptInfo.label}</span>
                     <span className="text-emerald-400 font-mono">Xong</span>
@@ -259,7 +259,7 @@ export const InternalTasks = () => {
                   <h4 className="font-heading font-bold text-sm text-white line-through opacity-80">{task.title}</h4>
                   <p className="text-xs text-slate-400 line-clamp-1">{task.desc}</p>
 
-                  <div className="pt-2 border-t border-white/10 text-xs text-slate-400">
+                  <div className="pt-2 border-t border-[var(--border-default)] text-xs text-slate-400">
                     Phụ trách: {getTaskAssignee(task)}
                   </div>
                 </div>
@@ -275,7 +275,7 @@ export const InternalTasks = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
           <div className="relative w-full max-w-lg bg-slate-900 border border-blue-500/40 rounded-3xl p-6 shadow-2xl text-white space-y-4">
             
-            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+            <div className="flex justify-between items-center border-b border-[var(--border-default)] pb-3">
               <h3 className="font-heading font-bold text-lg text-white">Giao Nhiệm Vụ Mới</h3>
               <button onClick={() => setIsNewTaskModalOpen(false)} className="text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
@@ -291,7 +291,7 @@ export const InternalTasks = () => {
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="Kịch bản radio số 09 / Dựng clip RECAP Khai giảng..."
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-white/10 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-[var(--border-default)] rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                 />
               </div>
 
@@ -301,7 +301,7 @@ export const InternalTasks = () => {
                   <select
                     value={formData.department}
                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-slate-950 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2.5 bg-slate-950 border border-[var(--border-default)] rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
                   >
                     <option value="bcn">👑 Ban Chủ Nhiệm</option>
                     <option value="content_radio">🎙️ Ban Nội Dung - Phát Thanh</option>
@@ -317,7 +317,7 @@ export const InternalTasks = () => {
                     required
                     value={formData.deadline}
                     onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
+                    className="w-full px-3 py-2 bg-slate-950 border border-[var(--border-default)] rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
                   />
                 </div>
               </div>
@@ -328,7 +328,7 @@ export const InternalTasks = () => {
                   required
                   value={formData.assignee}
                   onChange={(e) => setFormData({ ...formData, assignee: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-white/10 rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-[var(--border-default)] rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
                 >
                   <option value="" disabled hidden>-- Chọn người phụ trách --</option>
                   {members.filter(m => {
@@ -361,7 +361,7 @@ export const InternalTasks = () => {
                   value={formData.desc}
                   onChange={(e) => setFormData({ ...formData, desc: e.target.value })}
                   placeholder="Yêu cầu nộp kịch bản radio trước 17:00 Thứ 2..."
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-white/10 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-[var(--border-default)] rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                 />
               </div>
 
@@ -375,7 +375,7 @@ export const InternalTasks = () => {
                 </button>
                 <button
                   type="submit"
-                  className="btn-primary text-xs px-6 py-2"
+                  className="ds-btn ds-btn-primary text-xs px-6 py-2"
                 >
                   Xác Nhận Giao Việc
                 </button>

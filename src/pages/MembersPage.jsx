@@ -10,7 +10,7 @@ export const MembersPage = () => {
   });
 
   return (
-    <div className="container py-10 space-y-10 pb-20">
+    <div className="page-wrap py-10 space-y-10 pb-20">
       
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto space-y-3">
@@ -51,7 +51,7 @@ export const MembersPage = () => {
         {filteredMembers.map(m => (
           <div
             key={m.id}
-            className="glass-card p-6 rounded-2xl border border-white/10 text-center space-y-4 hover:border-purple-500/40 group"
+            className="ds-card p-6 rounded-2xl border border-white/10 text-center space-y-4 hover:border-purple-500/40 group"
           >
             <div className="relative w-28 h-28 mx-auto rounded-full p-1 bg-gradient-to-tr from-purple-600 via-pink-500 to-cyan-400">
               <img

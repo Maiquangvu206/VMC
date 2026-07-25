@@ -22,7 +22,7 @@ export const InternalRecruitment = () => {
   // Prevent rendering if user data is not loaded
   if (!currentUser) {
     return (
-      <div className="container py-8 flex items-center justify-center">
+      <div className="page-wrap flex items-center justify-center">
         <div className="text-slate-400">Đang tải dữ liệu...</div>
       </div>
     );
@@ -490,7 +490,7 @@ export const InternalRecruitment = () => {
   }, [selectedSeasonForInterviewers, currentSeason, members]);
 
   return (
-    <div className="container py-8 space-y-6 pb-20">
+    <div className="page-wrap space-y-6 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="font-heading text-3xl font-extrabold text-white mt-1 flex items-center gap-3">
@@ -520,7 +520,7 @@ export const InternalRecruitment = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-2 border-b border-white/10 pb-4">
+      <div className="flex flex-wrap gap-2 border-b border-[var(--border-default)] pb-4">
         <button
           onClick={() => setActiveTab('seasons')}
           className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
@@ -610,7 +610,7 @@ export const InternalRecruitment = () => {
               </div>
               <div className="grid gap-4">
                 {seasons.map(season => (
-                  <div key={season.id} className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+                  <div key={season.id} className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-4">
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="font-bold text-white text-lg">{season.name}</h3>
@@ -670,7 +670,7 @@ export const InternalRecruitment = () => {
             <>
               <h2 className="text-xl font-bold text-white">Mùa Tuyển Hiện Tại</h2>
               {currentSeason ? (
-                <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
+                <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-6">
                   <div className="flex items-start gap-4">
                     <div className="p-3 bg-emerald-500/20 rounded-xl">
                       <CheckCircle className="w-8 h-8 text-emerald-400" />
@@ -687,7 +687,7 @@ export const InternalRecruitment = () => {
                   </div>
                 </div>
               ) : (
-                <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-6 text-center">
+                <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-6 text-center">
                   <Clock className="w-12 h-12 text-slate-500 mx-auto mb-3" />
                   <p className="text-slate-400">Hiện tại không có mùa tuyển nào đang hoạt động</p>
                 </div>
@@ -711,7 +711,7 @@ export const InternalRecruitment = () => {
           </div>
           <div className="grid gap-3">
             {criteria.map(c => (
-              <div key={c.id} className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex justify-between items-center">
+              <div key={c.id} className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-4 flex justify-between items-center">
                 <div>
                   <h3 className="font-bold text-white">{c.criteria_name}</h3>
                   <p className="text-slate-400 text-sm">Điểm tối đa: {c.max_score}</p>
@@ -744,7 +744,7 @@ export const InternalRecruitment = () => {
           </div>
           <div className="grid gap-3">
             {candidates.map(c => (
-              <div key={c.id} className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
+              <div key={c.id} className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-4">
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-bold text-white text-lg">{c.full_name}</h3>
@@ -914,9 +914,9 @@ export const InternalRecruitment = () => {
             const isSubmitted = submittedCandidates.includes(c.id);
             
             return (
-              <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-6">
+              <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-6">
                 {/* Candidate info */}
-                <div className="flex justify-between items-start mb-6 pb-4 border-b border-slate-800">
+                <div className="flex justify-between items-start mb-6 pb-4 border-b border-[var(--border-default)]">
                   <div>
                     <h3 className="text-2xl font-bold text-white">{c.full_name}</h3>
                     <p className="text-slate-400">Mã: {c.id} | Lớp: {c.class_name}</p>
@@ -992,7 +992,7 @@ export const InternalRecruitment = () => {
                     </div>
 
                     {/* Total score */}
-                    <div className="flex justify-between items-center pt-4 border-t border-slate-800">
+                    <div className="flex justify-between items-center pt-4 border-t border-[var(--border-default)]">
                       <div className="text-white font-bold text-lg">
                         Tổng điểm: {criteria.reduce((sum, crit) => sum + (scoringData[crit.id] || 0), 0)}
                       </div>
@@ -1026,7 +1026,7 @@ export const InternalRecruitment = () => {
       {activeTab === 'results' && currentSeason && (
         <div className="space-y-4">
           <h2 className="text-xl font-bold text-white">Bảng Tổng Hợp Kết Quả - {currentSeason.name}</h2>
-          <div className="bg-slate-900/60 border border-slate-800 rounded-xl overflow-hidden">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-slate-800/50">
                 <tr>
@@ -1042,7 +1042,7 @@ export const InternalRecruitment = () => {
               </thead>
               <tbody>
                 {scoresSummary.map((s, idx) => (
-                  <tr key={s.candidate_id} className="border-t border-slate-800">
+                  <tr key={s.candidate_id} className="border-t border-[var(--border-default)]">
                     <td className="px-4 py-3 text-white">{s.rank}</td>
                     <td className="px-4 py-3 text-white font-medium">{s.full_name}</td>
                     <td className="px-4 py-3 text-slate-400">{s.class_name}</td>

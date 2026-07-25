@@ -35,7 +35,7 @@ export const InternalDatabase = () => {
   };
 
   return (
-    <div className="container py-8 space-y-8 pb-20">
+    <div className="page-wrap space-y-8 pb-20">
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -81,7 +81,7 @@ export const InternalDatabase = () => {
 
       {/* Database Status Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass-card p-5 rounded-2xl border border-white/10 flex items-center gap-4">
+        <div className="ds-card p-5 rounded-2xl border border-white/10 flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center shrink-0">
             <Users className="w-6 h-6" />
           </div>
@@ -93,7 +93,7 @@ export const InternalDatabase = () => {
           </div>
         </div>
 
-        <div className="glass-card p-5 rounded-2xl border border-white/10 flex items-center gap-4">
+        <div className="ds-card p-5 rounded-2xl border border-white/10 flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-amber-600/20 text-amber-400 flex items-center justify-center shrink-0">
             <CheckSquare className="w-6 h-6" />
           </div>
@@ -105,7 +105,7 @@ export const InternalDatabase = () => {
           </div>
         </div>
 
-        <div className="glass-card p-5 rounded-2xl border border-white/10 flex items-center gap-4">
+        <div className="ds-card p-5 rounded-2xl border border-white/10 flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-cyan-600/20 text-cyan-400 flex items-center justify-center shrink-0">
             <Camera className="w-6 h-6" />
           </div>
@@ -117,7 +117,7 @@ export const InternalDatabase = () => {
           </div>
         </div>
 
-        <div className="glass-card p-5 rounded-2xl border border-white/10 flex items-center gap-4">
+        <div className="ds-card p-5 rounded-2xl border border-white/10 flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center shrink-0">
             <FileText className="w-6 h-6" />
           </div>

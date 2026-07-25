@@ -35,12 +35,12 @@ export const InternalEquipment = () => {
   };
 
   return (
-    <div className="container py-8 space-y-8 pb-20">
+    <div className="page-wrap space-y-8 pb-20">
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="badge badge-cyan">Kho Thiết Bị VMC</span>
+          <span className="ds-badge ds-badge-cyan">Kho Thiết Bị VMC</span>
           <h1 className="font-heading text-3xl font-extrabold text-white mt-1">
             Quản Lý & <span className="gradient-text">Mượn Máy Ảnh CLB</span>
           </h1>
@@ -58,7 +58,7 @@ export const InternalEquipment = () => {
           </div>
           
           {isAdmin && (
-            <button onClick={() => setShowAddForm(true)} className="btn-primary text-xs px-4 py-2 self-start md:self-center shrink-0">
+            <button onClick={() => setShowAddForm(true)} className="ds-btn ds-btn-primary text-xs px-4 py-2 self-start md:self-center shrink-0">
               + Thêm Thiết Bị
             </button>
           )}
@@ -95,7 +95,7 @@ export const InternalEquipment = () => {
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={() => setShowAddForm(false)} className="px-4 py-2 text-sm text-slate-400 hover:text-white">Hủy</button>
-            <button type="submit" className="btn-primary py-2 px-6">Thêm mới</button>
+            <button type="submit" className="ds-btn ds-btn-primary py-2 px-6">Thêm mới</button>
           </div>
         </form>
       )}
@@ -105,11 +105,11 @@ export const InternalEquipment = () => {
         {equipment.map(item => (
           <div
             key={item.id}
-            className="glass-card p-6 rounded-2xl border border-white/10 flex flex-col justify-between space-y-4 h-full"
+            className="ds-card p-6 rounded-2xl border border-[var(--border-default)] flex flex-col justify-between space-y-4 h-full"
           >
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="badge badge-purple">{item.category}</span>
+                <span className="ds-badge ds-badge-purple">{item.category}</span>
                 <span className="font-mono text-xs text-slate-400 bg-slate-950 px-2 py-0.5 rounded border border-white/5">
                   {item.code}
                 </span>
@@ -119,7 +119,7 @@ export const InternalEquipment = () => {
                 {item.name}
               </h3>
 
-              <div className="space-y-1 text-xs text-slate-300 bg-slate-950/60 p-3 rounded-xl border border-white/5">
+              <div className="space-y-1 text-xs text-slate-300 bg-[var(--bg-input)] p-3 rounded-xl border border-white/5">
                 <div>Tình trạng: <span className="text-slate-400">{item.condition}</span></div>
                 {item.status === 'borrowed' && (
                   <div className="text-amber-400 font-medium pt-1 border-t border-white/5">
@@ -129,7 +129,7 @@ export const InternalEquipment = () => {
               </div>
             </div>
 
-            <div className="pt-3 border-t border-white/10 flex items-center justify-between">
+            <div className="pt-3 border-t border-[var(--border-default)] flex items-center justify-between">
               <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
                 item.status === 'available'
                   ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
@@ -141,7 +141,7 @@ export const InternalEquipment = () => {
               {item.status === 'available' ? (
                 <button
                   onClick={() => setSelectedEq(item)}
-                  className="btn-primary text-xs px-4 py-2"
+                  className="ds-btn ds-btn-primary text-xs px-4 py-2"
                 >
                   <span>Mượn Thiết Bị</span>
                 </button>
@@ -163,7 +163,7 @@ export const InternalEquipment = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
           <div className="relative w-full max-w-md bg-slate-900 border border-blue-500/40 rounded-3xl p-6 shadow-2xl text-white space-y-4">
             
-            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+            <div className="flex justify-between items-center border-b border-[var(--border-default)] pb-3">
               <h3 className="font-heading font-bold text-lg text-white">Đăng Ký Mượn Thiết Bị</h3>
               <button onClick={() => setSelectedEq(null)} className="text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
@@ -182,7 +182,7 @@ export const InternalEquipment = () => {
                   type="text"
                   disabled
                   value={`${currentUser?.name || 'Thành viên VMC'} (${currentUser?.class || 'CLB'})`}
-                  className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-slate-400 font-semibold"
+                  className="w-full px-3 py-2 bg-slate-950 border border-[var(--border-default)] rounded-xl text-slate-400 font-semibold"
                 />
               </div>
 
@@ -193,7 +193,7 @@ export const InternalEquipment = () => {
                   required
                   value={returnDate}
                   onChange={(e) => setReturnDate(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-500"
+                  className="w-full px-3 py-2 bg-slate-950 border border-[var(--border-default)] rounded-xl text-white focus:outline-none focus:border-blue-500"
                 />
               </div>
 
@@ -212,7 +212,7 @@ export const InternalEquipment = () => {
                 </button>
                 <button
                   type="submit"
-                  className="btn-primary px-6 py-2"
+                  className="ds-btn ds-btn-primary px-6 py-2"
                 >
                   Xác Nhận Mượn
                 </button>

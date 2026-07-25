@@ -181,7 +181,7 @@ export const AttendanceModal = () => {
               <button
                 type="button"
                 onClick={() => setIsAttendanceModalOpen(false)}
-                className="btn-secondary text-xs px-4 py-2.5"
+                className="ds-btn ds-btn-secondary text-xs"
               >
                 Hủy
               </button>

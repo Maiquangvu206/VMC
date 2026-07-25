@@ -184,13 +184,13 @@ export const InternalProfile = () => {
   ];
 
   return (
-    <div className="w-full min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] p-6 sm:p-8 flex flex-col gap-6 font-sans transition-colors duration-300">
+    <div className="page-wrap space-y-6 pb-20">
       
-      {/* 1. Top Header Banner Card */}
-      <div className="w-full bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* Header Banner */}
+      <div className="ds-card ds-card-elevated p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 text-xs font-semibold flex items-center gap-1.5">
+            <span className="ds-badge ds-badge-cyan flex items-center gap-1.5 text-[11px]">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               HỒ SƠ THÀNH VIÊN VMC
             </span>
@@ -205,20 +205,20 @@ export const InternalProfile = () => {
 
         <button
           onClick={logout}
-          className="px-5 py-2.5 rounded-xl bg-red-500/15 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/30 text-xs font-semibold flex items-center gap-2 transition-all shadow-md shrink-0 cursor-pointer"
+          className="ds-btn ds-btn-danger text-xs shrink-0"
         >
           <LogOut className="w-4 h-4" />
           <span>Đăng Xuất Tài Khoản</span>
         </button>
       </div>
 
-      {/* 2. Main Layout Grid (lg:grid-cols-12 gap-6) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full">
+      {/* Main Layout Grid */}
+      <div className="ds-grid-12">
         
-        {/* Left Column: Avatar & Personal Card (lg:col-span-4) */}
-        <div className="lg:col-span-4 w-full space-y-6">
+        {/* Left Column */}
+        <div className="ds-col-span-4 space-y-6">
           
-          <div className="w-full bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col items-center text-center gap-5">
+          <div className="w-full bg-[var(--bg-card)] backdrop-blur-md border border-[var(--border-default)] rounded-2xl p-6 shadow-xl flex flex-col items-center text-center gap-5">
             
             {/* Avatar Circle with Interactive Edit Trigger */}
             <div 
@@ -255,7 +255,7 @@ export const InternalProfile = () => {
             </div>
 
             {/* Member Code Block */}
-            <div className="w-full p-4 rounded-xl bg-slate-950/50 border border-slate-800 text-center flex flex-col items-center gap-1">
+            <div className="w-full p-4 rounded-xl bg-[var(--bg-input)] border border-[var(--border-default)] text-center flex flex-col items-center gap-1">
               <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Mã Thành Viên</span>
               <span className="text-lg font-mono font-bold text-cyan-400 tracking-widest">{cu.memberCode}</span>
             </div>
@@ -275,23 +275,22 @@ export const InternalProfile = () => {
 
         </div>
 
-        {/* Right Column: Information & Timeline Cards (lg:col-span-8 space-y-6) */}
-        <div className="lg:col-span-8 w-full space-y-6">
+        {/* Right Column: Information & Timeline Cards */}
+        <div className="ds-col-span-8 space-y-6">
           
-          {/* Card 1: Thông tin do kỹ thuật quản lý */}
-          <div className="w-full bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-            <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
-              <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 shrink-0">
+          {/* Card 1: Tech Info */}
+          <div className="ds-card p-6 space-y-4">
+            <div className="ds-card-header">
+              <div className="ds-card-header-icon bg-blue-500/10 text-blue-400 border border-blue-500/20">
                 <Laptop className="w-5 h-5" />
               </div>
-              <div className="flex flex-col">
-                <h3 className="text-lg font-bold text-white">Thông Tin Do Kỹ Thuật Quản Lý</h3>
-                <p className="text-xs text-slate-400">Các trường thông tin cố định do Tổ Kỹ thuật cấp</p>
+              <div className="ds-card-header-content flex-1">
+                <div className="ds-card-title">Thông Tin Do Kỹ Thuật Quản Lý</div>
+                <div className="ds-card-subtitle">Các trường thông tin cố định do Tổ Kỹ thuật cấp</div>
               </div>
             </div>
 
-            {/* Grid 2 Cột (grid grid-cols-1 md:grid-cols-2 gap-4) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="ds-grid-2">
               {techOnlyFields.map((field, idx) => {
                 const Icon = field.icon;
                 return (
@@ -313,19 +312,17 @@ export const InternalProfile = () => {
           </div>
 
           {/* Card 2: Thông tin tự cập nhật */}
-          <div className="w-full bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4 gap-2">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
-                  <Edit3 className="w-5 h-5" />
-                </div>
-                <div className="flex flex-col">
-                  <h3 className="text-lg font-bold text-white">Thông Tin Tự Cập Nhật</h3>
-                  <p className="text-xs text-slate-400">Số Điện Thoại, Email, Địa Chỉ & Facebook cá nhân</p>
-                </div>
+          {/* Card 2: Self-Update Info */}
+          <div className="ds-card p-6 space-y-4">
+            <div className="ds-card-header">
+              <div className="ds-card-header-icon bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <Edit3 className="w-5 h-5" />
               </div>
-
-              <span className="text-xs font-medium px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shrink-0">
+              <div className="ds-card-header-content flex-1">
+                <div className="ds-card-title">Thông Tin Tự Cập Nhật</div>
+                <div className="ds-card-subtitle">Số Điện Thoại, Email, Địa Chỉ & Facebook cá nhân</div>
+              </div>
+              <span className="ds-badge ds-badge-emerald shrink-0">
                 ✏️ Cho phép sửa
               </span>
             </div>
@@ -339,9 +336,9 @@ export const InternalProfile = () => {
 
             <form onSubmit={handleSelfUpdate} className="space-y-4">
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="ds-grid-2">
                 <div>
-                  <label className="text-xs font-medium text-slate-400 mb-1 block flex items-center gap-1.5">
+                  <label className="ds-field-label flex items-center gap-1.5">
                     <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Số Điện Thoại / Zalo *
                   </label>
                   <input
@@ -350,12 +347,12 @@ export const InternalProfile = () => {
                     value={selfData.phone}
                     onChange={(e) => setSelfData({ ...selfData, phone: e.target.value })}
                     placeholder="0981 234 567..."
-                    className="w-full bg-slate-950/50 border border-slate-700/60 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm font-mono"
+                    className="ds-input"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-medium text-slate-400 mb-1 block flex items-center gap-1.5">
+                  <label className="ds-field-label flex items-center gap-1.5">
                     <Mail className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Email Học Sinh *
                   </label>
                   <input
@@ -364,12 +361,12 @@ export const InternalProfile = () => {
                     value={selfData.email}
                     onChange={(e) => setSelfData({ ...selfData, email: e.target.value })}
                     placeholder="hoanglong.vmc@vinhbao.edu.vn..."
-                    className="w-full bg-slate-950/50 border border-slate-700/60 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm"
+                    className="ds-input"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-medium text-slate-400 mb-1 block flex items-center gap-1.5">
+                  <label className="ds-field-label flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-cyan-400 shrink-0" /> Ngày Sinh (DD/MM/YYYY) *
                   </label>
                   <input
@@ -378,43 +375,45 @@ export const InternalProfile = () => {
                     value={selfData.dob}
                     onChange={(e) => setSelfData({ ...selfData, dob: e.target.value })}
                     placeholder="01/01/2009..."
-                    className="w-full bg-slate-950/50 border border-slate-700/60 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm font-mono"
+                    className="ds-input"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="text-xs font-medium text-slate-400 mb-1 block flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Địa Chỉ Thường Trú *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={selfData.address}
-                  onChange={(e) => setSelfData({ ...selfData, address: e.target.value })}
-                  placeholder="Khu 3, Thị trấn Vĩnh Bảo, Vĩnh Bảo, Hải Phòng..."
-                  className="w-full bg-slate-950/50 border border-slate-700/60 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm"
-                />
-              </div>
+              <div className="ds-grid-2">
+                <div>
+                  <label className="ds-field-label flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Địa Chỉ Thường Trú *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={selfData.address}
+                    onChange={(e) => setSelfData({ ...selfData, address: e.target.value })}
+                    placeholder="Khu 3, Thị trấn Vĩnh Bảo, Vĩnh Bảo, Hải Phòng..."
+                    className="ds-input"
+                  />
+                </div>
 
-              <div>
-                <label className="text-xs font-medium text-slate-400 mb-1 block flex items-center gap-1.5">
-                  <Globe className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Liên Hệ Facebook Cá Nhân *
-                </label>
-                <input
-                  type="url"
-                  required
-                  value={selfData.facebook}
-                  onChange={(e) => setSelfData({ ...selfData, facebook: e.target.value })}
-                  placeholder="https://facebook.com/..."
-                  className="w-full bg-slate-950/50 border border-slate-700/60 rounded-xl px-4 py-2.5 text-slate-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all text-sm"
-                />
+                <div>
+                  <label className="ds-field-label flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Liên Hệ Facebook Cá Nhân *
+                  </label>
+                  <input
+                    type="url"
+                    required
+                    value={selfData.facebook}
+                    onChange={(e) => setSelfData({ ...selfData, facebook: e.target.value })}
+                    placeholder="https://facebook.com/..."
+                    className="ds-input"
+                  />
+                </div>
               </div>
 
               <div className="flex justify-end pt-2">
                 <button
                   type="submit"
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold px-6 py-2.5 rounded-xl shadow-lg shadow-blue-500/20 transition-all cursor-pointer text-xs uppercase tracking-wider flex items-center gap-2"
+                  className="ds-btn ds-btn-primary"
                 >
                   <Save className="w-4 h-4" />
                   <span>LƯU CẬP NHẬT THÔNG TIN</span>
@@ -424,10 +423,10 @@ export const InternalProfile = () => {
           </div>
 
           {/* Card 3: Lịch Sử Chức Vụ & Trạng Thái Thành Viên (Vertical Timeline) */}
-          <div className="w-full bg-slate-900/60 backdrop-blur-md border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+          <div className="w-full bg-[var(--bg-card)] backdrop-blur-md border border-[var(--border-default)] rounded-2xl p-6 shadow-xl space-y-6">
             
             {/* Header Khối với Badge Phân Quyền */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-4 gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--border-default)] pb-4 gap-3">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shrink-0">
                   <History className="w-5 h-5" />
@@ -529,7 +528,7 @@ export const InternalProfile = () => {
                       </div>
 
                       {/* Nội dung Mốc Thời Gian */}
-                      <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80 transition-all hover:border-slate-700 space-y-1.5">
+                      <div className="p-4 rounded-xl bg-[var(--bg-input)] border border-[var(--border-default)]/80 transition-all hover:border-slate-700 space-y-1.5">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
                           
                           {/* Thời gian */}
@@ -566,7 +565,7 @@ export const InternalProfile = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
           <div className="relative w-full max-w-md bg-slate-900 border border-blue-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-white animate-slide-up">
             
-            <div className="flex items-center justify-between pb-4 border-b border-white/10">
+            <div className="flex items-center justify-between pb-4 border-b border-[var(--border-default)]">
               <div className="flex items-center gap-2">
                 <Camera className="w-5 h-5 text-cyan-400" />
                 <h3 className="font-heading font-bold text-base text-white">Chỉnh Sửa Ảnh Đại Diện</h3>
@@ -611,7 +610,7 @@ export const InternalProfile = () => {
                 </label>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border-default)]">
                 <button
                   type="button"
                   onClick={() => setIsAvatarModalOpen(false)}
@@ -640,7 +639,7 @@ export const InternalProfile = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
           <div className="relative w-full max-w-md bg-slate-900 border border-cyan-500/40 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5 text-white animate-slide-up">
             
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--border-default)]">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-amber-400" />
                 <h3 className="font-heading font-bold text-base text-white">Thêm Cột Mốc Chức Vụ Mới</h3>
@@ -672,7 +671,7 @@ export const InternalProfile = () => {
                   value={newMilestone.date}
                   onChange={(e) => setNewMilestone({ ...newMilestone, date: e.target.value })}
                   placeholder="vd: 15/08/2025"
-                  className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-mono"
+                  className="w-full px-3 py-2 bg-slate-950 border border-[var(--border-default)] rounded-xl text-white font-mono"
                 />
               </div>
 
@@ -684,7 +683,7 @@ export const InternalProfile = () => {
                   value={newMilestone.title}
                   onChange={(e) => setNewMilestone({ ...newMilestone, title: e.target.value })}
                   placeholder="vd: Thăng chức Trưởng Ban Đối Ngoại - Nhân Sự"
-                  className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white font-semibold"
+                  className="w-full px-3 py-2 bg-slate-950 border border-[var(--border-default)] rounded-xl text-white font-semibold"
                 />
               </div>
 
@@ -696,11 +695,11 @@ export const InternalProfile = () => {
                   value={newMilestone.badgeText}
                   onChange={(e) => setNewMilestone({ ...newMilestone, badgeText: e.target.value })}
                   placeholder="vd: [Thăng chức] / [Gia nhập]"
-                  className="w-full px-3 py-2 bg-slate-950 border border-white/10 rounded-xl text-white"
+                  className="w-full px-3 py-2 bg-slate-950 border border-[var(--border-default)] rounded-xl text-white"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[var(--border-default)]">
                 <button
                   type="button"
                   onClick={() => setIsMilestoneModalOpen(false)}

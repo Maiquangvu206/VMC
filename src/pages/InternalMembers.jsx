@@ -384,7 +384,7 @@ export const InternalMembers = () => {
   }, [nonAdminMembers, searchQuery, selectedTerm, selectedDept]);
 
   return (
-    <div className="container py-8 space-y-8 pb-20">
+    <div className="page-wrap space-y-6 pb-20">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -405,7 +405,7 @@ export const InternalMembers = () => {
             }
             setIsNewAccountModalOpen(true);
           }}
-          className={`btn-primary text-xs px-5 py-2.5 shadow-blue-600/40 shrink-0 ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''
+          className={`ds-btn ds-btn ds-btn-primary text-xs shrink-0 ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''
             }`}
           title={isAdmin ? 'Cấp tài khoản mới (Admin)' : 'Chỉ Chủ Nhiệm CLB (Admin) mới có quyền cấp tài khoản mới'}
         >
@@ -414,8 +414,8 @@ export const InternalMembers = () => {
         </button>
       </div>
 
-      {/* Toolbar: Search Input + Period Select + Department Select */}
-      <div className="glass-card p-4 rounded-2xl border border-white/10 bg-slate-900/80 backdrop-blur-md flex flex-col md:flex-row items-center gap-4 justify-between shadow-xl">
+      {/* Toolbar */}
+      <div className="ds-card p-4 flex flex-col md:flex-row items-center gap-4 justify-between">
 
         {/* Search Input Box */}
         <div className="relative w-full md:w-80 shrink-0">
@@ -427,7 +427,7 @@ export const InternalMembers = () => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Tìm kiếm theo Tên, Mã TV, Lớp, SĐT..."
-            className="w-full bg-slate-950/70 border border-slate-700/60 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+            className="ds-input pl-9"
           />
           {searchQuery && (
             <div className="absolute right-3 inset-y-0 flex items-center">
@@ -449,7 +449,7 @@ export const InternalMembers = () => {
             <select
               value={selectedTerm}
               onChange={(e) => setSelectedTerm(e.target.value)}
-              className="bg-slate-950/80 border border-slate-700/60 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-purple-500 font-medium cursor-pointer"
+              className="ds-input ds-select"
             >
               <option value="ALL">🌐 Tất Cả Thế Hệ (All Gen)</option>
               {generations.map(g => (
@@ -466,7 +466,7 @@ export const InternalMembers = () => {
             <select
               value={selectedDept}
               onChange={(e) => setSelectedDept(e.target.value)}
-              className="bg-slate-950/80 border border-slate-700/60 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-500 font-medium cursor-pointer"
+              className="ds-input ds-select"
             >
               <option value="ALL">Tất Cả Các Ban</option>
               <option value="Ban Chủ Nhiệm">Ban Chủ Nhiệm</option>
@@ -498,7 +498,7 @@ export const InternalMembers = () => {
         {filteredMembers.map(m => (
           <div
             key={m.id}
-            className="glass-card p-6 rounded-2xl border border-slate-800/80 bg-slate-900/60 backdrop-blur-md flex flex-col h-full justify-between hover:border-blue-500/40 transition-all shadow-xl"
+            className="ds-card p-6 rounded-2xl border border-[var(--border-default)]/80 bg-[var(--bg-card)] backdrop-blur-md flex flex-col h-full justify-between hover:border-blue-500/40 transition-all shadow-xl"
           >
             {/* Upper Content Box (flex-1 to fill space evenly) */}
             <div className="flex-1 flex flex-col justify-between space-y-4 mb-4">
@@ -516,7 +516,7 @@ export const InternalMembers = () => {
               </div>
 
               {/* Quick Info Preview Card */}
-              <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/60 space-y-2 text-xs text-slate-300">
+              <div className="p-3.5 rounded-xl bg-slate-950/70 border border-[var(--border-default)]/60 space-y-2 text-xs text-slate-300">
                 <div className="flex justify-between items-center gap-2">
                   <span className="text-slate-400 shrink-0">Thế hệ:</span>
                   <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-500/15 text-purple-300 border border-purple-500/30 truncate">
@@ -539,8 +539,8 @@ export const InternalMembers = () => {
 
             </div>
 
-            {/* Pinned Card Footer (mt-auto pt-4 border-t border-slate-800/60) */}
-            <div className="mt-auto pt-4 border-t border-slate-800/60 flex items-center justify-between gap-2 shrink-0">
+            {/* Pinned Card Footer (mt-auto pt-4 border-t border-[var(--border-default)]/60) */}
+            <div className="mt-auto pt-4 border-t border-[var(--border-default)]/60 flex items-center justify-between gap-2 shrink-0">
               <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => setSelectedMember(m)}

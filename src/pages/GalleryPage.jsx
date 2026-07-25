@@ -27,7 +27,7 @@ export const GalleryPage = () => {
   };
 
   return (
-    <div className="container py-10 space-y-8 pb-20">
+    <div className="page-wrap py-10 space-y-8 pb-20">
       
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto space-y-3">
@@ -41,7 +41,7 @@ export const GalleryPage = () => {
       </div>
 
       {/* Filter & Search Controls */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 glass-panel p-4 rounded-2xl border border-white/10">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 ds-card p-4 rounded-2xl border border-white/10">
         
         {/* Category Tabs */}
         <div className="flex flex-wrap items-center gap-2">
@@ -86,7 +86,7 @@ export const GalleryPage = () => {
           <div
             key={work.id}
             onClick={() => setSelectedWork(work)}
-            className="glass-card rounded-2xl overflow-hidden cursor-pointer group border border-white/10 flex flex-col justify-between"
+            className="ds-card rounded-2xl overflow-hidden cursor-pointer group border border-white/10 flex flex-col justify-between"
           >
             <div className="relative h-64 overflow-hidden">
               <img

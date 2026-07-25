@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 const Loading = () => (
-  <div className="container py-8 flex items-center justify-center min-h-screen">
+  <div className="page-wrap flex items-center justify-center min-h-screen">
     <div className="text-slate-400 text-sm font-mono animate-pulse">Đang tải...</div>
   </div>
 );
@@ -187,10 +187,10 @@ export const InternalDashboard = () => {
   };
 
   return (
-    <div className="container py-8 space-y-8 pb-20">
+    <div className="page-wrap space-y-6 pb-20">
       
-      {/* Welcome Banner Card */}
-      <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-blue-500/30 relative overflow-hidden bg-gradient-to-r from-[#131d33] via-[#162447] to-[#0b1120] shadow-xl">
+      {/* Welcome Banner */}
+      <div className="ds-card ds-card-elevated p-6 sm:p-8 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/10 blur-3xl rounded-full pointer-events-none" />
 
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
@@ -205,7 +205,7 @@ export const InternalDashboard = () => {
                 <h1 className="font-heading text-xl sm:text-2xl font-extrabold text-white">
                   Xin chào, {safeUser.name}!
                 </h1>
-                <span className="badge badge-purple flex items-center gap-1 text-[11px]">
+                <span className="ds-badge ds-badge-blue flex items-center gap-1 text-[11px]">
                   <ShieldCheck className="w-3.5 h-3.5 text-blue-400" /> {safeUser.roleTitle}
                 </span>
               </div>
@@ -222,7 +222,7 @@ export const InternalDashboard = () => {
                 setActiveTab('tasks');
                 setIsNewTaskModalOpen(true);
               }}
-              className="btn-primary text-xs px-4 py-2.5 shadow-md shadow-blue-600/30 font-semibold"
+              className="ds-btn ds-btn-primary text-xs"
             >
               <Plus className="w-4 h-4" />
               <span>Giao Việc Mới</span>
@@ -233,7 +233,7 @@ export const InternalDashboard = () => {
                 setActiveTab('drafts');
                 setIsNewDraftModalOpen(true);
               }}
-              className="btn-secondary text-xs px-4 py-2.5 font-semibold"
+              className="ds-btn ds-btn-secondary text-xs"
             >
               <FileText className="w-4 h-4 text-blue-400" />
               <span>Soạn Kịch Bản / Bài Đăng</span>
@@ -242,30 +242,30 @@ export const InternalDashboard = () => {
 
         </div>
 
-        {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-white/10 text-center">
-          <div className="bg-slate-900/60 p-4 rounded-2xl border border-white/5 shadow-inner">
+        {/* Quick Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-[var(--border-default)]">
+          <div className="bg-[var(--bg-card)] p-4 rounded-2xl border border-white/5 text-center">
             <div className="text-xs text-slate-400 font-medium">Nhiệm Vụ Đang Làm</div>
             <div className="font-heading font-extrabold text-2xl text-blue-400 font-mono mt-1">
               {doingTasks.length}
             </div>
           </div>
 
-          <div className="bg-slate-900/60 p-4 rounded-2xl border border-white/5 shadow-inner">
+          <div className="bg-[var(--bg-card)] p-4 rounded-2xl border border-white/5 text-center">
             <div className="text-xs text-slate-400 font-medium">Kịch Bản Chờ Duyệt</div>
             <div className="font-heading font-extrabold text-2xl text-amber-400 font-mono mt-1">
               {pendingDrafts.length}
             </div>
           </div>
 
-          <div className="bg-slate-900/60 p-4 rounded-2xl border border-white/5 shadow-inner">
+          <div className="bg-[var(--bg-card)] p-4 rounded-2xl border border-white/5 text-center">
             <div className="text-xs text-slate-400 font-medium">Thiết Bị Đang Mượn</div>
             <div className="font-heading font-extrabold text-2xl text-cyan-400 font-mono mt-1">
               {borrowedEquipment.length}
             </div>
           </div>
 
-          <div className="bg-slate-900/60 p-4 rounded-2xl border border-white/5 shadow-inner">
+          <div className="bg-[var(--bg-card)] p-4 rounded-2xl border border-white/5 text-center">
             <div className="text-xs text-slate-400 font-medium">Công Việc Đã Xong</div>
             <div className="font-heading font-extrabold text-2xl text-emerald-400 font-mono mt-1">
               {doneTasks.length}
@@ -275,14 +275,14 @@ export const InternalDashboard = () => {
 
       </div>
 
-      {/* 5 Department Overview */}
+      {/* Department Overview */}
       <div className="space-y-4">
         <h2 className="font-heading font-bold text-lg text-white flex items-center gap-2">
           <Users className="w-5 h-5 text-blue-400" />
           <span>5 Ban Chuyên Môn Trong CLB VMC</span>
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="ds-grid-responsive">
           {CLUB_INFO.departments.map(dept => {
             const Icon = deptIcons[dept.id] || Users;
             return (
@@ -292,14 +292,14 @@ export const InternalDashboard = () => {
                   setMembersFilterDept(dept.name);
                   setActiveTab('members');
                 }}
-                className="glass-card p-5 rounded-2xl border border-white/10 space-y-3 hover:border-blue-500/40 cursor-pointer group flex flex-col justify-between"
+                className="ds-card p-5 cursor-pointer group flex flex-col justify-between"
               >
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
                     <div className="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shrink-0">
                       <Icon className="w-5 h-5" />
                     </div>
-                    <span className="text-xs font-mono text-slate-400 bg-slate-900/80 px-2.5 py-1 rounded-full border border-white/5">
+                    <span className="text-xs font-mono text-slate-400 bg-[var(--bg-card)] px-2.5 py-1 rounded-full border border-white/5">
                       {getDepartmentMemberCount(dept.id)} Thành viên
                     </span>
                   </div>
@@ -321,24 +321,27 @@ export const InternalDashboard = () => {
         </div>
       </div>
 
-      {/* Main Grid Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Main Content Grid */}
+      <div className="ds-grid-12">
         
-        {/* Left Column: Tasks & Drafts */}
-        <div className="lg:col-span-2 space-y-6">
+        {/* Left: Tasks & Drafts */}
+        <div className="ds-col-span-8 space-y-6">
           
           {/* Active Tasks */}
-          <div className="glass-card p-6 rounded-3xl border border-white/10 space-y-4">
-            <div className="flex justify-between items-center border-b border-white/10 pb-3">
-              <h2 className="font-heading text-lg font-bold text-white flex items-center gap-2">
-                <CheckSquare className="w-5 h-5 text-blue-400" />
-                <span>Nhiệm Vụ Đang Phân Công</span>
-              </h2>
+          <div className="ds-card p-6 space-y-4">
+            <div className="ds-card-header">
+              <div className="ds-card-header-icon bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <CheckSquare className="w-5 h-5" />
+              </div>
+              <div className="ds-card-header-content flex-1">
+                <div className="ds-card-title">Nhiệm Vụ Đang Phân Công</div>
+                <div className="ds-card-subtitle">Các nhiệm vụ đang thực hiện</div>
+              </div>
               <button
                 onClick={() => setActiveTab('tasks')}
-                className="text-xs text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1"
+                className="ds-btn ds-btn-ghost text-xs shrink-0"
               >
-                <span>Vào Bảng Nhiệm Vụ ({tasks.length})</span>
+                <span>Xem tất cả ({tasks.length})</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -347,10 +350,10 @@ export const InternalDashboard = () => {
               {tasks.slice(0, 3).map(task => (
                 <div
                   key={task.id}
-                  className="p-4 rounded-2xl bg-slate-900/80 border border-white/5 hover:border-blue-500/30 transition-all space-y-2"
+                  className="p-4 rounded-2xl bg-[var(--bg-card)] border border-white/5 hover:border-blue-500/30 transition-all space-y-2"
                 >
                   <div className="flex items-center justify-between text-xs">
-                    <span className="badge badge-purple">{task.department.toUpperCase()}</span>
+                    <span className="ds-badge ds-badge-blue">{task.department?.toUpperCase?.()}</span>
                     <span className="text-slate-400 font-mono">Hạn: {task.deadline}</span>
                   </div>
                   <h3 className="font-heading font-bold text-sm text-white">{task.title}</h3>
@@ -361,15 +364,18 @@ export const InternalDashboard = () => {
           </div>
 
           {/* Pending Drafts */}
-          <div className="glass-card p-6 rounded-3xl border border-white/10 space-y-4">
-            <div className="flex justify-between items-center border-b border-white/10 pb-3">
-              <h2 className="font-heading text-lg font-bold text-white flex items-center gap-2">
-                <FileText className="w-5 h-5 text-amber-400" />
-                <span>Kịch Bản Radio & Bài Đăng Chờ Duyệt</span>
-              </h2>
+          <div className="ds-card p-6 space-y-4">
+            <div className="ds-card-header">
+              <div className="ds-card-header-icon bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div className="ds-card-header-content flex-1">
+                <div className="ds-card-title">Kịch Bản Radio & Bài Đăng Chờ Duyệt</div>
+                <div className="ds-card-subtitle">Duyệt bài trước khi đăng</div>
+              </div>
               <button
                 onClick={() => setActiveTab('drafts')}
-                className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1"
+                className="ds-btn ds-btn-ghost text-xs shrink-0"
               >
                 <span>Quản Lý Kịch Bản</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -380,16 +386,16 @@ export const InternalDashboard = () => {
               {drafts.map(draft => (
                 <div
                   key={draft.id}
-                  className="p-4 rounded-2xl bg-slate-900/80 border border-white/5 space-y-2"
+                  className="p-4 rounded-2xl bg-[var(--bg-card)] border border-white/5 space-y-2"
                 >
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-slate-400 font-mono">Tác giả: {draft.author}</span>
-                    <span className={`badge ${draft.status === 'approved' ? 'badge-emerald' : 'badge-amber'}`}>
+                    <span className={`ds-badge ${draft.status === 'approved' ? 'ds-badge-emerald' : 'ds-badge-amber'}`}>
                       {draft.status === 'approved' ? 'Đã Duyệt' : 'Chờ Duyệt'}
                     </span>
                   </div>
                   <h3 className="font-heading font-bold text-sm text-white">{draft.title}</h3>
-                  <p className="text-xs text-slate-400 line-clamp-2 italic bg-slate-950/60 p-3 rounded-xl border border-white/5">
+                  <p className="text-xs text-slate-400 line-clamp-2 italic bg-[var(--bg-input)] p-3 rounded-xl border border-white/5">
                     "{draft.content}"
                   </p>
                 </div>
@@ -399,21 +405,23 @@ export const InternalDashboard = () => {
 
         </div>
 
-        {/* Right Column: Notices & Equipment */}
-        <div className="space-y-6">
+        {/* Right Column: Notices */}
+        <div className="ds-col-span-4 space-y-6">
           
           {/* Announcements */}
-          <div className="glass-card p-6 rounded-3xl border border-white/10 space-y-4">
-            <div className="flex justify-between items-center border-b border-white/10 pb-3">
-              <h2 className="font-heading text-base font-bold text-white flex items-center gap-2">
-                <Bell className="w-4 h-4 text-blue-400" />
-                <span>Thông Báo Ban Chủ Nhiệm</span>
-              </h2>
-
+          <div className="ds-card p-6 space-y-4">
+            <div className="ds-card-header">
+              <div className="ds-card-header-icon bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <Bell className="w-5 h-5" />
+              </div>
+              <div className="ds-card-header-content flex-1">
+                <div className="ds-card-title">Thông Báo Ban Chủ Nhiệm</div>
+                <div className="ds-card-subtitle">Thông báo chính thức</div>
+              </div>
               {canManageAnnouncements && (
                 <button
                   onClick={() => setIsAnnModalOpen(true)}
-                  className="bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/30 px-3 py-1 rounded-xl text-xs font-semibold flex items-center gap-1 transition-all"
+                  className="ds-btn ds-btn-primary ds-btn-xs shrink-0"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>Đăng Thông Báo</span>
@@ -421,18 +429,18 @@ export const InternalDashboard = () => {
               )}
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3 scrollbar-thin" style={{ maxHeight: '28rem', overflowY: 'auto' }}>
               {(!announcements || announcements.length === 0) ? (
                 <div className="text-center py-6 text-slate-400 text-xs italic">
                   Chưa có thông báo nào từ Ban Chủ Nhiệm.
                 </div>
               ) : (
                 announcements.map(ann => (
-                  <div key={ann.id} className="p-3.5 rounded-2xl bg-slate-900/80 border border-white/5 space-y-1.5 text-xs relative group">
+                  <div key={ann.id} className="p-3.5 rounded-2xl bg-[var(--bg-card)] border border-white/5 space-y-1.5 text-xs relative group">
                     <div className="flex justify-between items-center">
                       <span className="text-blue-400 font-mono text-[10px]">{ann.date || 'Hôm nay'}</span>
                       <div className="flex items-center gap-2">
-                        <span className={`badge text-[9px] px-2 py-0.2 ${ann.isPinned ? 'badge-pink' : 'badge-purple'}`}>
+                        <span className={`ds-badge text-[9px] px-2 py-0.2 ${ann.isPinned ? 'ds-badge-rose' : 'ds-badge-purple'}`}>
                           {ann.priority || (ann.isPinned ? 'Ghim đầu' : 'Thông báo')}
                         </span>
                         {canManageAnnouncements && (
@@ -457,16 +465,18 @@ export const InternalDashboard = () => {
 
       </div>
 
-      {/* Modal Đăng Thông Báo Mới của Ban Chủ Nhiệm */}
+      {/* Announcement Modal */}
       {isAnnModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-          <div className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5 animate-slide-up text-white">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <Bell className="w-5 h-5 text-blue-400" />
-                <span>ĐĂNG THÔNG BÁO BAN CHỦ NHIỆM</span>
-              </h3>
-              <button onClick={() => setIsAnnModalOpen(false)} className="text-slate-400 hover:text-white">✕</button>
+          <div className="relative w-full max-w-lg ds-card ds-card-elevated border border-blue-500/30 p-6 space-y-5 animate-slide-up">
+            <div className="ds-card-header" style={{ marginBottom: 0, paddingBottom: 0, borderBottom: 'none' }}>
+              <div className="ds-card-header-icon bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <Bell className="w-5 h-5" />
+              </div>
+              <div className="ds-card-header-content flex-1">
+                <div className="ds-card-title">ĐĂNG THÔNG BÁO BAN CHỦ NHIỆM</div>
+              </div>
+              <button onClick={() => setIsAnnModalOpen(false)} className="text-slate-400 hover:text-white text-lg leading-none px-2">✕</button>
             </div>
 
             <form onSubmit={async (e) => {
@@ -477,28 +487,28 @@ export const InternalDashboard = () => {
               setAnnContent('');
               setAnnPinned(false);
               setIsAnnModalOpen(false);
-            }} className="space-y-4 text-xs">
+            }} className="space-y-4">
               <div>
-                <label className="text-xs font-medium text-slate-300 mb-1 block">Tiêu Đề Thông Báo *</label>
+                <label className="ds-field-label">Tiêu Đề Thông Báo *</label>
                 <input
                   type="text"
                   required
                   value={annTitle}
                   onChange={(e) => setAnnTitle(e.target.value)}
                   placeholder="Nhập tiêu đề thông báo..."
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-blue-500"
+                  className="ds-input"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-300 mb-1 block">Nội Dung Thông Báo *</label>
+                <label className="ds-field-label">Nội Dung Thông Báo *</label>
                 <textarea
                   required
                   rows={4}
                   value={annContent}
                   onChange={(e) => setAnnContent(e.target.value)}
                   placeholder="Nhập nội dung thông báo gửi tới toàn thể thành viên CLB..."
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-blue-500"
+                  className="ds-textarea"
                 />
               </div>
 
@@ -519,13 +529,13 @@ export const InternalDashboard = () => {
                 <button
                   type="button"
                   onClick={() => setIsAnnModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 font-medium"
+                  className="ds-btn ds-btn-secondary text-xs"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-lg shadow-blue-600/30"
+                  className="ds-btn ds-btn-primary text-xs"
                 >
                   ĐĂNG THÔNG BÁO
                 </button>

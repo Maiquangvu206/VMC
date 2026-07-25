@@ -144,12 +144,12 @@ export const InternalDrafts = () => {
   };
 
   return (
-    <div className="container py-8 space-y-8 pb-20">
+    <div className="page-wrap space-y-8 pb-20">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="badge badge-amber">Content Studio VMC</span>
+          <span className="ds-badge ds-badge-amber">Content Studio VMC</span>
           <h1 className="font-heading text-3xl font-extrabold text-white mt-1">
             Kho Kịch Bản & <span className="gradient-text">Duyệt Bài Fanpage</span>
           </h1>
@@ -160,7 +160,7 @@ export const InternalDrafts = () => {
 
         <button
           onClick={() => setIsNewDraftModalOpen(true)}
-          className="btn-primary text-xs px-5 py-2.5 shadow-blue-600/40"
+          className="ds-btn ds-btn-primary text-xs"
         >
           <Plus className="w-4 h-4" />
           <span>Soạn Bài Viết Mới</span>
@@ -172,9 +172,9 @@ export const InternalDrafts = () => {
         {drafts.map(draft => (
           <div
             key={draft.id}
-            className="glass-card p-6 rounded-2xl border border-white/10 space-y-4"
+            className="ds-card p-6 rounded-2xl border border-[var(--border-default)] space-y-4"
           >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/10 pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border-default)] pb-3">
               <div className="space-y-1">
                 <div className="flex items-center gap-2 text-xs">
                   <span className="text-blue-400 font-semibold">{draft.author}</span>
@@ -185,14 +185,14 @@ export const InternalDrafts = () => {
               </div>
 
               <div className="flex items-center gap-3 shrink-0">
-                <span className={`badge ${draft.status === 'approved' ? 'badge-emerald' : 'badge-amber'}`}>
+                <span className={`badge ${draft.status === 'approved' ? 'ds-badge ds-badge-emerald' : 'ds-badge ds-badge-amber'}`}>
                   {draft.status === 'approved' ? 'Đã Lên Lịch Đăng' : 'Chờ Phê Duyệt & Lên Lịch'}
                 </span>
 
                 {draft.status === 'pending' && canApproveDraft && (
                   <button
                     onClick={() => setDraftToSchedule(draft.id)}
-                    className="btn-primary text-xs px-4 py-1.5 shadow-emerald-600/30"
+                    className="ds-btn ds-btn-primary text-xs px-4 py-1.5 shadow-emerald-600/30"
                   >
                     <CheckCircle className="w-4 h-4" />
                     <span>Lên Lịch & Giao Chấm Bài</span>
@@ -202,7 +202,7 @@ export const InternalDrafts = () => {
                 {draft.status === 'approved' && draft.gradingStatus === 'pending' && (draft.graderId === currentUser.id || canApproveDraft) && (
                   <button
                     onClick={() => setGradingDraftId(draft.id)}
-                    className="btn-primary text-xs px-4 py-1.5 shadow-blue-600/30 flex items-center gap-1.5 animate-pulse"
+                    className="ds-btn ds-btn-primary text-xs px-4 py-1.5 shadow-blue-600/30 flex items-center gap-1.5 animate-pulse"
                   >
                     <CheckCircle className="w-4 h-4" />
                     <span>Tiến Hành Chấm Điểm</span>
@@ -235,7 +235,7 @@ export const InternalDrafts = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
           <div className="relative w-full max-w-xl bg-slate-900 border border-blue-500/40 rounded-3xl p-6 shadow-2xl text-white space-y-4">
 
-            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+            <div className="flex justify-between items-center border-b border-[var(--border-default)] pb-3">
               <h3 className="font-heading font-bold text-lg text-white">Soạn Bài Viết Nháp Mới</h3>
               <button onClick={() => setIsNewDraftModalOpen(false)} className="text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
@@ -251,7 +251,7 @@ export const InternalDrafts = () => {
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="[RECAP] LỄ KHAI GIẢNG NĂM HỌC MỚI..."
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-white/10 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-[var(--border-default)] rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                 />
               </div>
 
@@ -263,7 +263,7 @@ export const InternalDrafts = () => {
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   placeholder="Soạn thảo nội dung bài đăng Fanpage tại đây..."
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-white/10 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 font-sans"
+                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-[var(--border-default)] rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 font-sans"
                 />
               </div>
 
@@ -277,7 +277,7 @@ export const InternalDrafts = () => {
                 </button>
                 <button
                   type="submit"
-                  className="btn-primary text-xs px-6 py-2"
+                  className="ds-btn ds-btn-primary text-xs px-6 py-2"
                 >
                   Gửi Bài Chờ Duyệt
                 </button>
@@ -292,7 +292,7 @@ export const InternalDrafts = () => {
       {draftToSchedule && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
           <div className="relative w-full max-w-md bg-slate-900 border border-emerald-500/40 rounded-3xl p-6 shadow-2xl text-white space-y-4">
-            <div className="flex justify-between items-center border-b border-white/10 pb-3">
+            <div className="flex justify-between items-center border-b border-[var(--border-default)] pb-3">
               <h3 className="font-heading font-bold text-lg text-emerald-400">Lên Lịch Đăng Bài</h3>
               <button onClick={() => setDraftToSchedule(null)} className="text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
@@ -346,7 +346,7 @@ export const InternalDrafts = () => {
                 <button type="button" onClick={() => setDraftToSchedule(null)} className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">
                   Hủy
                 </button>
-                <button type="submit" className="btn-primary text-xs px-6 py-2">
+                <button type="submit" className="ds-btn ds-btn-primary text-xs px-6 py-2">
                   Xác Nhận Đăng & Giao Việc
                 </button>
               </div>
@@ -359,7 +359,7 @@ export const InternalDrafts = () => {
       {gradingDraftId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
           <div className="relative w-full max-w-3xl bg-slate-900 border border-blue-500/40 rounded-3xl p-6 shadow-2xl text-white space-y-4 max-h-[90vh] flex flex-col">
-            <div className="flex justify-between items-center border-b border-white/10 pb-3 shrink-0">
+            <div className="flex justify-between items-center border-b border-[var(--border-default)] pb-3 shrink-0">
               <div>
                 <h3 className="font-heading font-bold text-lg text-blue-400 flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-blue-400" /> Chấm Điểm Tương Tác Từng Thành Viên
@@ -372,7 +372,7 @@ export const InternalDrafts = () => {
             </div>
 
             {/* Criteria Legend */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-slate-950/60 p-3 rounded-xl border border-white/5 text-[11px] text-slate-300 shrink-0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-[var(--bg-input)] p-3 rounded-xl border border-white/5 text-[11px] text-slate-300 shrink-0">
               <div className="space-y-1">
                 <div className="font-bold text-emerald-400">➕ Điểm Cộng (+1đ mỗi mục):</div>
                 <div>• +1đ: Share bài viết mới trên page</div>
@@ -388,7 +388,7 @@ export const InternalDrafts = () => {
             </div>
 
             {/* Batch Controls */}
-            <div className="flex items-center justify-between gap-2 py-1 border-b border-white/10 text-xs shrink-0">
+            <div className="flex items-center justify-between gap-2 py-1 border-b border-[var(--border-default)] text-xs shrink-0">
               <span className="font-semibold text-slate-300 flex items-center gap-1.5">
                 <Users className="w-4 h-4 text-cyan-400" /> Danh Sách Thành Viên ({activeMembers.length})
               </span>
@@ -477,11 +477,11 @@ export const InternalDrafts = () => {
                 );
               })}
 
-              <div className="pt-3 border-t border-white/10 flex justify-end gap-2 shrink-0">
+              <div className="pt-3 border-t border-[var(--border-default)] flex justify-end gap-2 shrink-0">
                 <button type="button" onClick={() => setGradingDraftId(null)} className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">
                   Hủy
                 </button>
-                <button type="submit" className="btn-primary text-xs px-6 py-2 shadow-emerald-600/30">
+                <button type="submit" className="ds-btn ds-btn-primary text-xs px-6 py-2 shadow-emerald-600/30">
                   Hoàn Thành Chấm Điểm
                 </button>
               </div>

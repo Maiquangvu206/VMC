@@ -6,7 +6,7 @@ export const StorePage = () => {
   const { products, addToCart, cart } = useClub();
 
   return (
-    <div className="container py-10 space-y-10 pb-20">
+    <div className="page-wrap py-10 space-y-10 pb-20">
       
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto space-y-3">
@@ -27,7 +27,7 @@ export const StorePage = () => {
           return (
             <div
               key={prod.id}
-              className="glass-card rounded-2xl overflow-hidden border border-white/10 flex flex-col justify-between group"
+              className="ds-card rounded-2xl overflow-hidden border border-white/10 flex flex-col justify-between group"
             >
               <div className="relative h-60 overflow-hidden bg-slate-950">
                 <img
@@ -66,7 +66,7 @@ export const StorePage = () => {
                     className={`p-2.5 rounded-xl font-medium transition-all flex items-center gap-1.5 text-xs ${
                       inCart
                         ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                        : 'btn-primary'
+                        : 'ds-btn ds-btn-primary'
                     }`}
                   >
                     {inCart ? (

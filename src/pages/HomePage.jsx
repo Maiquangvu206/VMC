@@ -52,7 +52,7 @@ export const HomePage = () => {
             return (
               <div
                 key={dept.id}
-                className="glass-card p-6 rounded-2xl border border-white/10 hover:border-purple-500/50 flex flex-col justify-between space-y-4 group"
+                className="ds-card p-6 rounded-2xl border border-white/10 hover:border-purple-500/50 flex flex-col justify-between space-y-4 group"
               >
                 <div className="space-y-3">
                   <div className="w-12 h-12 rounded-xl bg-purple-600/20 text-purple-400 flex items-center justify-center group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all">
@@ -90,7 +90,7 @@ export const HomePage = () => {
           </div>
           <button
             onClick={() => setActiveTab('gallery')}
-            className="btn-secondary text-sm self-start sm:self-auto"
+            className="ds-btn ds-btn-secondary text-sm self-start sm:self-auto"
           >
             <span>Xem tất cả tác phẩm ({works.length})</span>
             <ArrowRight className="w-4 h-4" />
@@ -102,7 +102,7 @@ export const HomePage = () => {
             <div
               key={work.id}
               onClick={() => setSelectedWork(work)}
-              className="glass-card rounded-2xl overflow-hidden cursor-pointer group border border-white/10"
+              className="ds-card rounded-2xl overflow-hidden cursor-pointer group border border-white/10"
             >
               <div className="relative h-56 overflow-hidden">
                 <img
@@ -143,7 +143,7 @@ export const HomePage = () => {
 
       {/* Sự kiện sắp diễn ra */}
       <section className="container">
-        <div className="glass-panel p-8 sm:p-10 rounded-3xl border border-purple-500/30 relative overflow-hidden">
+        <div className="ds-card p-8 sm:p-10 rounded-3xl border border-purple-500/30 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-80 h-80 bg-pink-500/10 blur-3xl rounded-full pointer-events-none" />
 
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
@@ -175,7 +175,7 @@ export const HomePage = () => {
               </span>
               <button
                 onClick={() => registerEvent(events[0])}
-                className="btn-primary px-8 py-3.5 shadow-lg shadow-purple-600/40 text-base"
+                className="ds-btn ds-btn-primary px-8 py-3.5 shadow-lg shadow-purple-600/40 text-base"
               >
                 <span>Nhận Vé Tham Dự</span>
                 <ArrowRight className="w-5 h-5" />

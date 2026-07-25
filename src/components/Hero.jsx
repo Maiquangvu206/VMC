@@ -11,7 +11,7 @@ export const Hero = () => {
       {/* Background Ambient Glows */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[650px] bg-gradient-to-tr from-blue-600/20 via-sky-500/15 to-cyan-400/20 blur-[130px] rounded-full pointer-events-none" />
 
-      <div className="container relative z-10 text-center max-w-4xl mx-auto space-y-8">
+      <div className="page-wrap relative z-10 text-center max-w-4xl mx-auto space-y-8">
         
         {/* Official Affiliation Badge */}
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-950/80 border border-blue-500/40 text-blue-300 text-xs font-semibold uppercase tracking-wider animate-float shadow-lg">
@@ -59,7 +59,7 @@ export const Hero = () => {
           ].map((stat, idx) => (
             <div
               key={idx}
-              className="glass-card p-5 text-center rounded-2xl border border-white/10 hover:border-blue-500/40"
+              className="ds-card p-5 text-center rounded-2xl border border-white/10 hover:border-blue-500/40"
             >
               <div className="font-heading text-3xl sm:text-4xl font-extrabold gradient-text">
                 {stat.value}
