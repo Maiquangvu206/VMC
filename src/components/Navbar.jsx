@@ -76,7 +76,6 @@ export const Navbar = () => {
     { id: 'members', label: 'Thành Viên', icon: Users },
     { id: 'profile', label: 'Hồ Sơ', icon: User, badge: 0 },
     { id: 'hr_dashboard', label: 'Thi Đua & Sinh Nhật', icon: Users, badge: 0 },
-    ...(canSeeRecruitment ? [{ id: 'recruitment', label: 'Tuyển Gen', icon: UserPlus, badge: 0 }] : []),
     ...(isSuperAdmin ? [{ id: 'admin_sessions', label: 'Quản Lý Phiên', icon: ShieldCheck, badge: 0 }] : [])
   ];
 

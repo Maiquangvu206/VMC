@@ -51,7 +51,6 @@ const IntranetPortalContent = () => {
                 {activeTab === 'profile' && <InternalProfile />}
                 {activeTab === 'hr_dashboard' && <InternalHRDashboard />}
                 {activeTab === 'admin_sessions' && <InternalAdminSessions />}
-                {activeTab === 'recruitment' && <InternalRecruitment />}
               </main>
             </div>
             <AttendanceModal />
