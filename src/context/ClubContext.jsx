@@ -50,6 +50,7 @@ export const ClubProvider = ({ children }) => {
   const [isAttendanceModalOpen, setIsAttendanceModalOpen] = useState(false);
   const [membersFilterDept, setMembersFilterDept] = useState('ALL');
   const [isRecruitmentSeasonActive, setIsRecruitmentSeasonActive] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -58,62 +59,71 @@ export const ClubProvider = ({ children }) => {
 
   // Load Members from SQL Database API on Mount
   useEffect(() => {
+    let isMounted = true;
     const loadSqlMembers = async () => {
-      const sqlMembers = await fetchMembersFromDatabaseAPI();
-      if (sqlMembers && sqlMembers.length > 0) {
-        setDb(prev => {
-          let mergedMembers = sqlMembers.map(serverMem => {
-            const localMem = (prev.members || []).find(m => m.id === serverMem.id) || {};
-            return { ...localMem, ...serverMem };
-          });
-
-          const currentMonth = new Date().toISOString().slice(0, 7);
-          let nextDb = { ...prev, members: mergedMembers };
-
-          if (prev.lastPointsAddedMonth && prev.lastPointsAddedMonth !== currentMonth) {
-            mergedMembers = mergedMembers.map(m => {
-              if (m.status !== 'Suspended') {
-                const newPoints = (m.points || 0) + 50;
-                updateMemberAPI(m.memberCode || m.member_code || m.id, { points: newPoints }).catch(e => console.log(e));
-                return { ...m, points: newPoints };
-              }
-              return m;
+      try {
+        const sqlMembers = await fetchMembersFromDatabaseAPI();
+        if (sqlMembers && sqlMembers.length > 0 && isMounted) {
+          setDb(prev => {
+            let mergedMembers = sqlMembers.map(serverMem => {
+              const localMem = (prev.members || []).find(m => m.id === serverMem.id) || {};
+              return { ...localMem, ...serverMem };
             });
-            nextDb = { ...nextDb, members: mergedMembers, lastPointsAddedMonth: currentMonth };
-          } else if (!prev.lastPointsAddedMonth) {
-            nextDb = { ...nextDb, lastPointsAddedMonth: currentMonth };
-          }
 
-          // Check 24h Grader Deadline
-          const now = Date.now();
-          if (nextDb.drafts) {
-            nextDb.drafts = nextDb.drafts.map(draft => {
-              if (draft.status === 'approved' && draft.publishDate && draft.graderId && draft.gradingStatus === 'pending') {
-                const publishTime = new Date(draft.publishDate).getTime();
-                if (now > publishTime + 24 * 60 * 60 * 1000) {
-                  const grader = nextDb.members.find(m => m.id === draft.graderId);
-                  if (grader) {
-                    const newPoints = (grader.points || 0) - 5;
-                    updateMemberAPI(grader.memberCode || grader.member_code || grader.id, { points: newPoints }).catch(e => console.log(e));
-                    nextDb.members = nextDb.members.map(m => m.id === draft.graderId ? { ...m, points: newPoints } : m);
-                  }
-                  return { ...draft, gradingStatus: 'failed_deadline' };
+            const currentMonth = new Date().toISOString().slice(0, 7);
+            let nextDb = { ...prev, members: mergedMembers };
+
+            if (prev.lastPointsAddedMonth && prev.lastPointsAddedMonth !== currentMonth) {
+              mergedMembers = mergedMembers.map(m => {
+                if (m.status !== 'Suspended') {
+                  const newPoints = (m.points || 0) + 50;
+                  updateMemberAPI(m.memberCode || m.member_code || m.id, { points: newPoints }).catch(e => console.log(e));
+                  return { ...m, points: newPoints };
                 }
-              }
-              return draft;
-            });
-          }
+                return m;
+              });
+              nextDb = { ...nextDb, members: mergedMembers, lastPointsAddedMonth: currentMonth };
+            } else if (!prev.lastPointsAddedMonth) {
+              nextDb = { ...nextDb, lastPointsAddedMonth: currentMonth };
+            }
 
-          try {
-            saveDatabaseToStorage(nextDb);
-          } catch (e) {
-            console.warn('Failed to save database to storage:', e);
-          }
-          return nextDb;
-        });
+            const now = Date.now();
+            if (nextDb.drafts) {
+              nextDb.drafts = nextDb.drafts.map(draft => {
+                if (draft.status === 'approved' && draft.publishDate && draft.graderId && draft.gradingStatus === 'pending') {
+                  const publishTime = new Date(draft.publishDate).getTime();
+                  if (now > publishTime + 24 * 60 * 60 * 1000) {
+                    const grader = nextDb.members.find(m => m.id === draft.graderId);
+                    if (grader) {
+                      const newPoints = (grader.points || 0) - 5;
+                      updateMemberAPI(grader.memberCode || grader.member_code || grader.id, { points: newPoints }).catch(e => console.log(e));
+                      nextDb.members = nextDb.members.map(m => m.id === draft.graderId ? { ...m, points: newPoints } : m);
+                    }
+                    return { ...draft, gradingStatus: 'failed_deadline' };
+                  }
+                }
+                return draft;
+              });
+            }
+
+            try {
+              saveDatabaseToStorage(nextDb);
+            } catch (e) {
+              console.warn('Failed to save database to storage:', e);
+            }
+            return nextDb;
+          });
+        }
+      } catch (err) {
+        console.warn('⚠️ Không thể tải danh sách thành viên từ MySQL:', err.message);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
     loadSqlMembers();
+    return () => { isMounted = false; };
   }, []);
 
   // Automatic Real-Time Silent Sync with MySQL Database
@@ -1672,6 +1682,7 @@ export const ClubProvider = ({ children }) => {
     currentUser,
     isAdmin,
     isAuthenticated,
+    isLoading,
     requirePasswordChange,
     login,
     changePassword,
@@ -1789,6 +1800,7 @@ export const ClubProvider = ({ children }) => {
     db,
     currentUser,
     isAuthenticated,
+    isLoading,
     requirePasswordChange,
     addFinanceRecord,
     updateFinanceStatus,

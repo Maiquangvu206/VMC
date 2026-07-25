@@ -5,9 +5,9 @@ export const useAuth = (db, setDb) => {
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const savedUser = sessionStorage.getItem('VMC_CURRENT_USER');
-      return savedUser ? JSON.parse(savedUser) : (db.members?.[0] || null);
+      return savedUser ? JSON.parse(savedUser) : (db?.members?.[0] || null);
     } catch (e) {
-      return db.members?.[0] || null;
+      return db?.members?.[0] || null;
     }
   });
 
@@ -15,7 +15,7 @@ export const useAuth = (db, setDb) => {
     try {
       return sessionStorage.getItem('VMC_IS_AUTH') === 'true';
     } catch (e) {
-      return true;
+      return false;
     }
   });
 
