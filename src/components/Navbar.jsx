@@ -14,7 +14,8 @@ import {
   User,
   LogOut,
   UserCheck,
-  ShieldCheck
+  ShieldCheck,
+  UserPlus
 } from 'lucide-react';
 
 export const Navbar = () => {
@@ -30,7 +31,8 @@ export const Navbar = () => {
     drafts,
     isHRMember,
     isAdmin,
-    isSuperAdmin
+    isSuperAdmin,
+    isRecruitmentSeasonActive
   } = useClub();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -70,6 +72,7 @@ export const Navbar = () => {
     { id: 'members', label: 'Thành Viên', icon: Users },
     { id: 'profile', label: 'Hồ Sơ', icon: User, badge: 0 },
     { id: 'hr_dashboard', label: 'Thi Đua & Sinh Nhật', icon: Users, badge: 0 },
+    ...(isSuperAdmin || isRecruitmentSeasonActive ? [{ id: 'recruitment', label: 'Tuyển Gen', icon: UserPlus, badge: 0 }] : []),
     ...(isSuperAdmin ? [{ id: 'admin_sessions', label: 'Quản Lý Phiên', icon: ShieldCheck, badge: 0 }] : [])
   ];
 

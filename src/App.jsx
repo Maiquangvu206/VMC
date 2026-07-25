@@ -17,6 +17,7 @@ import { InternalDatabase } from './pages/InternalDatabase';
 import { InternalProfile } from './pages/InternalProfile';
 import { InternalHRDashboard } from './pages/InternalHRDashboard';
 import { InternalAdminSessions } from './pages/InternalAdminSessions';
+import { InternalRecruitment } from './pages/InternalRecruitment';
 
 const Loading = () => (
   <div className="min-h-screen w-full flex items-center justify-center bg-[#0f172a] text-slate-200 font-sans">
@@ -52,8 +53,9 @@ const AppContent = () => {
           {activeTab === 'members' && <InternalMembers />}
           {activeTab === 'database' && <InternalDatabase />}
           {activeTab === 'profile' && <InternalProfile />}
-          {activeTab === 'hr_dashboard' && <InternalHRDashboard />}
-          {activeTab === 'admin_sessions' && <InternalAdminSessions />}
+                {activeTab === 'hr_dashboard' && <InternalHRDashboard />}
+                {activeTab === 'admin_sessions' && <InternalAdminSessions />}
+                {activeTab === 'recruitment' && <InternalRecruitment />}
         </main>
       </div>
       <AttendanceModal />
