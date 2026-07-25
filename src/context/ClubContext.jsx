@@ -24,7 +24,7 @@ export const ClubProvider = ({ children }) => {
   const { toasts, showToast, removeToast } = useToast();
   const { db, setDb, saveDatabase, resetDatabase, exportDatabase, importDatabase, updateDatabase } = useDatabase();
   
-  const { currentUser, isAuthenticated, requirePasswordChange, setRequirePasswordChange, login, logout, updateUser, currentSessionId, setCurrentSessionId } = useAuth(db, setDb);
+  const { currentUser, setCurrentUser, isAuthenticated, requirePasswordChange, setRequirePasswordChange, login, logout, updateUser, currentSessionId, setCurrentSessionId } = useAuth(db, setDb);
 
   const [activeTab, setActiveTabState] = useState(() => {
     try {

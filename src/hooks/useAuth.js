@@ -124,6 +124,7 @@ export const useAuth = (db, setDb) => {
 
   return {
     currentUser,
+    setCurrentUser,
     isAuthenticated,
     requirePasswordChange,
     setRequirePasswordChange,
