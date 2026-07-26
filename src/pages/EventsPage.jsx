@@ -11,7 +11,7 @@ export const EventsPage = () => {
       
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto space-y-3">
-        <span className="badge badge-pink">Sự Kiện & Lịch Sinh Hoạt</span>
+        <span className="ds-badge ds-badge-pink">Sự Kiện & Lịch Sinh Hoạt</span>
         <h1 className="font-heading text-4xl font-extrabold text-white">
           Hoạt Động Nổi Bật <span className="gradient-text">VMC Events</span>
         </h1>
@@ -31,11 +31,11 @@ export const EventsPage = () => {
           {events.map(ev => (
             <div
               key={ev.id}
-              className="ds-card rounded-2xl overflow-hidden border border-white/10 flex flex-col justify-between"
+              className="ds-card rounded-2xl overflow-hidden flex flex-col justify-between"
             >
               <div className="relative h-48 overflow-hidden">
                 <img src={ev.image} alt={ev.title} className="w-full h-full object-cover" />
-                <span className="absolute top-3 left-3 badge badge-cyan">{ev.category}</span>
+                <span className="ds-badge ds-badge-cyan">{ev.category}</span>
               </div>
 
               <div className="p-5 space-y-4 flex-1 flex flex-col justify-between">
@@ -48,7 +48,7 @@ export const EventsPage = () => {
                   </p>
                 </div>
 
-                <div className="space-y-1.5 text-xs text-slate-300 pt-3 border-t border-white/10">
+                <div className="space-y-1.5 text-xs text-slate-300 pt-3 border-t border-[var(--border-default)]">
                   <div className="flex items-center gap-2">
                     <User className="w-3.5 h-3.5 text-purple-400" />
                     <span className="truncate">Diễn giả: {ev.speaker}</span>
@@ -98,7 +98,7 @@ export const EventsPage = () => {
               <div
                 key={t.id}
                 onClick={() => setActiveTicketModal(t)}
-                className="bg-slate-900/90 p-4 rounded-xl border border-white/10 hover:border-purple-500 cursor-pointer space-y-2"
+                className="ds-card p-4 cursor-pointer space-y-2"
               >
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-purple-400 font-mono font-bold">{t.id}</span>
@@ -123,19 +123,17 @@ export const EventsPage = () => {
           {SCHEDULES.map((sc, idx) => (
             <div
               key={idx}
-              className="ds-card p-5 rounded-2xl border border-white/10 flex items-center justify-between gap-4"
+              className="ds-card p-5 flex items-center justify-between gap-4"
             >
               <div className="space-y-1">
-                <span className="badge badge-purple">{sc.day}</span>
+                <span className="ds-badge ds-badge-purple">{sc.day}</span>
                 <h3 className="font-heading font-bold text-base text-white">{sc.title}</h3>
                 <p className="text-xs text-slate-400 flex items-center gap-2">
                   <MapPin className="w-3.5 h-3.5 text-amber-400" /> {sc.location}
                 </p>
               </div>
               <div className="text-right shrink-0">
-                <span className="font-mono text-xs text-cyan-400 font-bold bg-slate-900 px-3 py-1.5 rounded-lg border border-white/10">
-                  {sc.time}
-                </span>
+                <span className="ds-badge ds-badge-cyan">{sc.time}</span>
               </div>
             </div>
           ))}

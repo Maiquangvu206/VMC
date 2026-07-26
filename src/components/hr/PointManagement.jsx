@@ -36,10 +36,10 @@ export const PointManagement = () => {
     }
   };
 
-  if (!isHRHead) return null; // Only HR Heads can manage points manually
+  if (!isHRHead) return null;
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+    <div className="ds-card p-6">
       <div className="flex items-center gap-3 mb-6">
         <div className="p-2 bg-indigo-500/10 rounded-xl">
           <Award className="text-indigo-400 w-5 h-5" />
@@ -53,8 +53,8 @@ export const PointManagement = () => {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-xs text-slate-400 mb-1 block">Chọn Thành Viên</label>
-            <select required className="input-field w-full" value={form.memberId} onChange={e => setForm({...form, memberId: e.target.value})}>
+            <label className="ds-field-label">Chọn Thành Viên</label>
+            <select required className="ds-input w-full" value={form.memberId} onChange={e => setForm({...form, memberId: e.target.value})}>
               <option value="">-- Chọn thành viên --</option>
               {members.filter(m => {
                 const roleTitle = (m.roleTitle || m.role_title || '').toLowerCase();
@@ -67,8 +67,8 @@ export const PointManagement = () => {
             </select>
           </div>
           <div>
-            <label className="text-xs text-slate-400 mb-1 block">Nội dung tính điểm</label>
-            <select required className="input-field w-full" value={form.ruleId} onChange={e => setForm({...form, ruleId: e.target.value})}>
+            <label className="ds-field-label">Nội dung tính điểm</label>
+            <select required className="ds-input w-full" value={form.ruleId} onChange={e => setForm({...form, ruleId: e.target.value})}>
               <option value="">-- Chọn nội dung --</option>
               <optgroup label="CỘNG ĐIỂM">
                 {POINT_RULES.filter(r => r.points > 0).map(r => (
@@ -84,13 +84,13 @@ export const PointManagement = () => {
           </div>
         </div>
         <div className="flex justify-end pt-2">
-          <button type="submit" className="btn-primary" disabled={!form.memberId || !form.ruleId}>
+          <button type="submit" className="ds-btn ds-btn-primary" disabled={!form.memberId || !form.ruleId}>
             Áp dụng Điểm
           </button>
         </div>
       </form>
       
-      <div className="mt-4 p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-200/80">
+      <div className="mt-4 ds-card p-4 border border-amber-500/30 bg-amber-500/10 text-xs text-amber-200/80">
         <strong className="text-amber-400 block mb-1">Quy định Nhân đôi Phạt:</strong>
         Thành viên thuộc Ban Đối Ngoại - Nhân Sự (khi bị trừ điểm) sẽ tự động bị x2 hệ số phạt để làm gương cho các ban khác.
       </div>

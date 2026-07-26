@@ -40,7 +40,7 @@ export const InternalDatabase = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <span className="badge badge-cyan flex items-center gap-1 w-fit">
+          <span className="ds-badge ds-badge-cyan flex items-center gap-1 w-fit">
             <Database className="w-3.5 h-3.5" /> Quản Trị CSDL Động (Dynamic Local Database)
           </span>
           <h1 className="font-heading text-3xl font-extrabold text-white mt-1">
@@ -55,7 +55,7 @@ export const InternalDatabase = () => {
         <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={handleExportDB}
-            className="btn-primary text-xs px-4 py-2.5 shadow-blue-600/30"
+            className="ds-btn ds-btn-primary"
           >
             <Download className="w-4 h-4" />
             <span>Xuất Backup (.JSON)</span>
@@ -63,7 +63,7 @@ export const InternalDatabase = () => {
 
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="btn-secondary text-xs px-4 py-2.5"
+            className="ds-btn ds-btn-secondary"
           >
             <Upload className="w-4 h-4 text-blue-400" />
             <span>Nhập File Backup</span>
@@ -81,7 +81,7 @@ export const InternalDatabase = () => {
 
       {/* Database Status Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="ds-card p-5 rounded-2xl border border-white/10 flex items-center gap-4">
+        <div className="ds-card p-5 rounded-2xl flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center shrink-0">
             <Users className="w-6 h-6" />
           </div>
@@ -93,7 +93,7 @@ export const InternalDatabase = () => {
           </div>
         </div>
 
-        <div className="ds-card p-5 rounded-2xl border border-white/10 flex items-center gap-4">
+        <div className="ds-card p-5 rounded-2xl flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-amber-600/20 text-amber-400 flex items-center justify-center shrink-0">
             <CheckSquare className="w-6 h-6" />
           </div>
@@ -105,7 +105,7 @@ export const InternalDatabase = () => {
           </div>
         </div>
 
-        <div className="ds-card p-5 rounded-2xl border border-white/10 flex items-center gap-4">
+        <div className="ds-card p-5 rounded-2xl flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-cyan-600/20 text-cyan-400 flex items-center justify-center shrink-0">
             <Camera className="w-6 h-6" />
           </div>
@@ -117,7 +117,7 @@ export const InternalDatabase = () => {
           </div>
         </div>
 
-        <div className="ds-card p-5 rounded-2xl border border-white/10 flex items-center gap-4">
+        <div className="ds-card p-5 rounded-2xl flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center shrink-0">
             <FileText className="w-6 h-6" />
           </div>
@@ -131,8 +131,8 @@ export const InternalDatabase = () => {
       </div>
 
       {/* Database Management Tools */}
-      <div className="glass-panel p-6 rounded-3xl border border-white/10 space-y-6">
-        <div className="flex items-center justify-between border-b border-white/10 pb-4">
+      <div className="ds-card p-6 rounded-3xl border border-[var(--border-default)] space-y-6">
+        <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-4">
           <div className="flex items-center gap-3">
             <HardDrive className="w-6 h-6 text-blue-400" />
             <div>
@@ -145,7 +145,7 @@ export const InternalDatabase = () => {
 
           <button
             onClick={handleResetDB}
-            className="flex items-center gap-1.5 px-4 py-2 bg-red-500/15 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/30 rounded-xl text-xs font-semibold transition-all"
+            className="ds-btn ds-btn-danger"
           >
             <RotateCcw className="w-4 h-4" />
             <span>Reset CSDL Mặc Định</span>
@@ -161,7 +161,7 @@ export const InternalDatabase = () => {
             </span>
           </div>
 
-          <pre className="p-4 rounded-2xl bg-slate-950 border border-white/10 text-[11px] font-mono text-cyan-300 max-h-96 overflow-y-auto leading-relaxed">
+          <pre className="p-4 rounded-2xl bg-slate-950 border border-[var(--border-default)] text-[11px] font-mono text-cyan-300 max-h-96 overflow-y-auto leading-relaxed">
             {JSON.stringify(db, null, 2)}
           </pre>
         </div>

@@ -37,7 +37,7 @@ export const JoinUsPage = () => {
 
       {/* Header */}
       <div className="text-center space-y-3">
-        <span className="badge badge-purple">Tuyển Thành Viên VMC Gen 6</span>
+        <span className="ds-badge ds-badge-purple">Tuyển Thành Viên VMC Gen 6</span>
         <h1 className="font-heading text-4xl font-extrabold text-white">
           Trở Thành Một Phần Của <span className="gradient-text">VMC Family</span>
         </h1>
@@ -79,57 +79,57 @@ export const JoinUsPage = () => {
               <div className="space-y-4 animate-slide-up">
                 <h3 className="font-heading font-bold text-lg text-white">Bước 1: Thông Tin Cá Nhân</h3>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Họ và tên *</label>
-                  <input
-                    type="text"
-                    required
-                    name="fullName"
-                    value={formData.fullName}
-                    onChange={handleChange}
-                    placeholder="Nguyễn Văn A"
-                    className="w-full px-4 py-3 bg-slate-900 border border-white/10 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
-                  />
-                </div>
+                 <div>
+                   <label className="ds-field-label">Họ và tên *</label>
+                   <input
+                     type="text"
+                     required
+                     name="fullName"
+                     value={formData.fullName}
+                     onChange={handleChange}
+                     placeholder="Nguyễn Văn A"
+                     className="ds-input"
+                   />
+                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">Email liên hệ *</label>
-                    <input
-                      type="email"
-                      required
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="nguyenvana@gmail.com"
-                      className="w-full px-4 py-3 bg-slate-900 border border-white/10 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">Số điện thoại / Zalo *</label>
-                    <input
-                      type="tel"
-                      required
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      placeholder="0987654321"
-                      className="w-full px-4 py-3 bg-slate-900 border border-white/10 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
-                    />
-                  </div>
-                </div>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                   <div>
+                     <label className="ds-field-label">Email liên hệ *</label>
+                     <input
+                       type="email"
+                       required
+                       name="email"
+                       value={formData.email}
+                       onChange={handleChange}
+                       placeholder="nguyenvana@gmail.com"
+                       className="ds-input"
+                     />
+                   </div>
+                   <div>
+                     <label className="ds-field-label">Số điện thoại / Zalo *</label>
+                     <input
+                       type="tel"
+                       required
+                       name="phone"
+                       value={formData.phone}
+                       onChange={handleChange}
+                       placeholder="0987654321"
+                       className="ds-input"
+                     />
+                   </div>
+                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Link Facebook / Instagram cá nhân</label>
-                  <input
-                    type="url"
-                    name="facebook"
-                    value={formData.facebook}
-                    onChange={handleChange}
-                    placeholder="https://facebook.com/username"
-                    className="w-full px-4 py-3 bg-slate-900 border border-white/10 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
-                  />
-                </div>
+                 <div>
+                   <label className="ds-field-label">Link Facebook / Instagram cá nhân</label>
+                   <input
+                     type="url"
+                     name="facebook"
+                     value={formData.facebook}
+                     onChange={handleChange}
+                     placeholder="https://facebook.com/username"
+                     className="ds-input"
+                   />
+                 </div>
 
                 <div className="pt-4 flex justify-end">
                   <button
@@ -168,14 +168,14 @@ export const JoinUsPage = () => {
                       const Icon = d.icon;
                       const selected = formData.department === d.id;
                       return (
-                        <div
-                          key={d.id}
-                          onClick={() => setFormData(prev => ({ ...prev, department: d.id }))}
-                          className={`p-4 rounded-xl border text-center cursor-pointer space-y-2 transition-all ${selected
-                              ? 'bg-purple-600/20 border-purple-500 text-purple-300'
-                              : 'bg-slate-900 border-white/10 text-slate-400 hover:bg-slate-800'
-                            }`}
-                        >
+                     <div
+                       key={d.id}
+                       onClick={() => setFormData(prev => ({ ...prev, department: d.id }))}
+                       className={`ds-card p-4 text-center cursor-pointer space-y-2 transition-all ${selected
+                           ? 'border-purple-500/50 text-purple-300'
+                           : 'border-[var(--border-default)] text-slate-400 hover:bg-slate-800/50'
+                         }`}
+                     >
                           <Icon className="w-6 h-6 mx-auto" />
                           <span className="text-xs font-semibold block">{d.label}</span>
                         </div>
@@ -184,33 +184,33 @@ export const JoinUsPage = () => {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Link Portfolio / Google Drive tác phẩm cá nhân (nếu có)
-                  </label>
-                  <input
-                    type="url"
-                    name="portfolioUrl"
-                    value={formData.portfolioUrl}
-                    onChange={handleChange}
-                    placeholder="https://behance.net/you hoặc https://drive.google.com/..."
-                    className="w-full px-4 py-3 bg-slate-900 border border-white/10 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
-                  />
-                </div>
+                 <div>
+                   <label className="ds-field-label">
+                     Link Portfolio / Google Drive tác phẩm cá nhân (nếu có)
+                   </label>
+                   <input
+                     type="url"
+                     name="portfolioUrl"
+                     value={formData.portfolioUrl}
+                     onChange={handleChange}
+                     placeholder="https://behance.net/you hoặc https://drive.google.com/..."
+                     className="ds-input"
+                   />
+                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Kinh nghiệm hoặc công cụ bạn thường sử dụng (Lightroom, Premiere, Photoshop, FL Studio,...)
-                  </label>
-                  <input
-                    type="text"
-                    name="experience"
-                    value={formData.experience}
-                    onChange={handleChange}
-                    placeholder="Ví dụ: Đã sử dụng Lightroom 1 năm, có máy ảnh Canon 700D..."
-                    className="w-full px-4 py-3 bg-slate-900 border border-white/10 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
-                  />
-                </div>
+                 <div>
+                   <label className="ds-field-label">
+                     Kinh nghiệm hoặc công cụ bạn thường sử dụng (Lightroom, Premiere, Photoshop, FL Studio,...)
+                   </label>
+                   <input
+                     type="text"
+                     name="experience"
+                     value={formData.experience}
+                     onChange={handleChange}
+                     placeholder="Ví dụ: Đã sử dụng Lightroom 1 năm, có máy ảnh Canon 700D..."
+                     className="ds-input"
+                   />
+                 </div>
 
                 <div className="pt-4 flex justify-between">
                   <button
@@ -239,26 +239,26 @@ export const JoinUsPage = () => {
               <div className="space-y-4 animate-slide-up">
                 <h3 className="font-heading font-bold text-lg text-white">Bước 3: Động Lực & Xác Nhận</h3>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Vì sao bạn muốn gia nhập VMC và bạn kỳ vọng điều gì nhất tại CLB? *
-                  </label>
-                  <textarea
-                    required
-                    rows={4}
-                    name="motivation"
-                    value={formData.motivation}
-                    onChange={handleChange}
-                    placeholder="Chia sẻ lý do và định hướng sáng tạo của bạn..."
-                    className="w-full px-4 py-3 bg-slate-900 border border-white/10 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-purple-500"
-                  />
-                </div>
+                 <div>
+                   <label className="ds-field-label">
+                     Vì sao bạn muốn gia nhập VMC và bạn kỳ vọng điều gì nhất tại CLB? *
+                   </label>
+                   <textarea
+                     required
+                     rows={4}
+                     name="motivation"
+                     value={formData.motivation}
+                     onChange={handleChange}
+                     placeholder="Chia sẻ lý do và định hướng sáng tạo của bạn..."
+                     className="ds-textarea"
+                   />
+                 </div>
 
-                <div className="p-4 rounded-xl bg-slate-900/60 border border-purple-500/20 text-xs text-slate-300 space-y-1">
-                  <div className="font-bold text-purple-400">Xác nhận thông tin ứng tuyển:</div>
-                  <p>Họ tên: {formData.fullName} ({formData.phone})</p>
-                  <p>Ban đăng ký: Ban {formData.department.toUpperCase()}</p>
-                </div>
+                 <div className="ds-card p-4 space-y-1 text-xs text-slate-300">
+                   <div className="font-bold text-purple-400">Xác nhận thông tin ứng tuyển:</div>
+                   <p>Họ tên: {formData.fullName} ({formData.phone})</p>
+                   <p>Ban đăng ký: Ban {formData.department.toUpperCase()}</p>
+                 </div>
 
                 <div className="pt-4 flex justify-between">
                   <button
@@ -297,7 +297,7 @@ export const JoinUsPage = () => {
             </p>
           </div>
 
-          <div className="inline-block p-4 rounded-2xl bg-slate-900 border border-white/10 text-center space-y-1 font-mono">
+          <div className="ds-card p-4 text-center space-y-1 font-mono">
             <div className="text-xs text-slate-400">Mã Đơn Ứng Tuyển Của Bạn:</div>
             <div className="text-2xl font-bold text-purple-400">{appId}</div>
           </div>

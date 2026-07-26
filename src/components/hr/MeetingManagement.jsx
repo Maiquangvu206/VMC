@@ -47,37 +47,37 @@ export const MeetingManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <h3 className="text-lg font-bold text-white flex items-center gap-2">
           <Users className="text-purple-400" /> Quản Lý Điểm Danh & Họp
         </h3>
         {isHRHead && (
-          <button onClick={() => setShowForm(!showForm)} className="btn-primary text-xs px-4 py-2 flex items-center gap-2">
+          <button onClick={() => setShowForm(!showForm)} className="ds-btn ds-btn-primary ds-btn-xs">
             <Plus className="w-4 h-4" /> Tạo Cuộc Họp
           </button>
         )}
       </div>
 
       {showForm && (
-        <form onSubmit={handleCreate} className="bg-slate-900 p-5 rounded-2xl border border-purple-500/30 space-y-4">
+        <form onSubmit={handleCreate} className="ds-card p-5 border border-purple-500/30 space-y-4">
           <div>
-            <label className="text-xs text-slate-400 mb-1 block">Tên cuộc họp</label>
-            <input required type="text" className="input-field" placeholder="VD: Họp giao ban đầu tháng" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
+            <label className="ds-field-label">Tên cuộc họp</label>
+            <input required type="text" className="ds-input" placeholder="VD: Họp giao ban đầu tháng" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">Ngày họp</label>
-              <input required type="date" min={todayDate} className="input-field" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
+              <label className="ds-field-label">Ngày họp</label>
+              <input required type="date" min={todayDate} className="ds-input" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
             </div>
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">Giờ họp</label>
-              <input required type="time" className="input-field" value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} />
+              <label className="ds-field-label">Giờ họp</label>
+              <input required type="time" className="ds-input" value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">Người điểm danh</label>
-              <select className="input-field" value={formData.attendanceTakerId} onChange={e => setFormData({...formData, attendanceTakerId: e.target.value})}>
+              <label className="ds-field-label">Người điểm danh</label>
+              <select className="ds-input" value={formData.attendanceTakerId} onChange={e => setFormData({...formData, attendanceTakerId: e.target.value})}>
                 <option value="">-- Chọn thành viên --</option>
                 {members
                   .filter(m => m.deptName?.toLowerCase().includes('đối ngoại') || m.deptName?.toLowerCase().includes('nhân sự'))
@@ -85,8 +85,8 @@ export const MeetingManagement = () => {
               </select>
             </div>
             <div>
-              <label className="text-xs text-slate-400 mb-1 block">Người ghi biên bản</label>
-              <select className="input-field" value={formData.minuteTakerId} onChange={e => setFormData({...formData, minuteTakerId: e.target.value})}>
+              <label className="ds-field-label">Người ghi biên bản</label>
+              <select className="ds-input" value={formData.minuteTakerId} onChange={e => setFormData({...formData, minuteTakerId: e.target.value})}>
                 <option value="">-- Chọn thành viên --</option>
                 {members
                   .filter(m => m.deptName?.toLowerCase().includes('đối ngoại') || m.deptName?.toLowerCase().includes('nhân sự'))
@@ -94,13 +94,13 @@ export const MeetingManagement = () => {
               </select>
             </div>
           </div>
-          <button type="submit" className="btn-primary w-full py-2">Lưu Cuộc Họp</button>
+          <button type="submit" className="ds-btn ds-btn-primary w-full">Lưu Cuộc Họp</button>
         </form>
       )}
 
       {/* Danh sách cuộc họp */}
       <div className="space-y-4">
-        {meetings.length === 0 && <p className="text-sm text-slate-500 italic">Chưa có lịch họp nào.</p>}
+        {meetings.length === 0 && <p className="text-sm text-slate-500 italic ds-card p-6 text-center">Chưa có lịch họp nào.</p>}
         
         {meetings.map(m => {
           const attendanceTaker = members.find(mem => String(mem.id) === String(m.attendanceTakerId));
@@ -109,13 +109,13 @@ export const MeetingManagement = () => {
           const isMinuteTaker = String(currentUser?.id) === String(m.minuteTakerId);
 
           return (
-            <div key={m.id} className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-4 relative overflow-hidden">
+            <div key={m.id} className="ds-card p-5 space-y-4">
               <div className="absolute top-0 right-0 p-3 flex gap-2">
-                {m.status === 'pending' && <span className="badge badge-purple bg-purple-500/10 text-purple-400 border border-purple-500/20">Sắp diễn ra</span>}
-                {m.status === 'postponed' && <span className="badge badge-amber bg-amber-500/10 text-amber-400 border border-amber-500/20">Đã Hoãn</span>}
-                {m.status === 'cancelled' && <span className="badge badge-rose bg-rose-500/10 text-rose-400 border border-rose-500/20">Đã Hủy</span>}
-                {m.status === 'pending_minutes' && <span className="badge badge-amber bg-amber-500/10 text-amber-400 border border-amber-500/20">Chờ nộp biên bản</span>}
-                {m.status === 'completed' && <span className="badge badge-emerald bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Đã hoàn thành</span>}
+                {m.status === 'pending' && <span className="ds-badge ds-badge-blue">Sắp diễn ra</span>}
+                {m.status === 'postponed' && <span className="ds-badge ds-badge-amber">Đã Hoãn</span>}
+                {m.status === 'cancelled' && <span className="ds-badge ds-badge-rose">Đã Hủy</span>}
+                {m.status === 'pending_minutes' && <span className="ds-badge ds-badge-amber">Chờ nộp biên bản</span>}
+                {m.status === 'completed' && <span className="ds-badge ds-badge-emerald">Đã hoàn thành</span>}
               </div>
 
               <div>
@@ -125,7 +125,7 @@ export const MeetingManagement = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 text-xs bg-slate-900/50 p-3 rounded-xl border border-white/5">
+              <div className="grid grid-cols-2 gap-4 text-xs ds-card p-3 border border-[var(--border-default)]">
                 <div>
                   <span className="text-slate-500">Phụ trách điểm danh:</span><br/>
                   <span className="font-semibold text-blue-300">{attendanceTaker?.name || 'Chưa phân công'}</span>
@@ -139,18 +139,18 @@ export const MeetingManagement = () => {
               {/* Actions */}
               <div className="flex flex-wrap gap-2 pt-2">
                 {m.status === 'pending' && (isAttendanceTaker || isHRHead) && (
-                  <button onClick={() => startAttendance(m)} className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold flex items-center gap-2 transition-colors">
+                  <button onClick={() => startAttendance(m)} className="ds-btn ds-btn-primary ds-btn-xs">
                     <CheckCircle2 className="w-4 h-4" /> Bắt đầu điểm danh
                   </button>
                 )}
                 
                 {m.status === 'pending_minutes' && (isMinuteTaker || isHRHead) && (
-                  <button onClick={() => handleMinuteSubmit(m.id)} className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold flex items-center gap-2 transition-colors">
+                  <button onClick={() => handleMinuteSubmit(m.id)} className="ds-btn ds-btn-primary ds-btn-xs">
                     <FileText className="w-4 h-4" /> Nộp link biên bản
                   </button>
                 )}
                 {m.minutesLink && (
-                  <a href={m.minutesLink} target="_blank" rel="noreferrer" className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-2 transition-colors border border-slate-700">
+                  <a href={m.minutesLink} target="_blank" rel="noreferrer" className="ds-btn ds-btn-secondary ds-btn-xs">
                     Xem biên bản
                   </a>
                 )}
@@ -161,13 +161,13 @@ export const MeetingManagement = () => {
                       setEditMeetingId(m.id);
                       setEditDate(m.date);
                       setEditTime(m.time);
-                    }} className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-400 text-xs font-semibold transition-colors">
+                    }} className="ds-btn ds-btn-secondary ds-btn-xs">
                       Đổi giờ
                     </button>
-                    <button onClick={() => updateMeeting(m.id, null, null, true)} className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs font-semibold transition-colors">
+                    <button onClick={() => updateMeeting(m.id, null, null, true)} className="ds-btn ds-btn-ghost ds-btn-xs text-amber-400">
                       Hoãn
                     </button>
-                    <button onClick={() => cancelMeeting(m.id)} className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-rose-400 text-xs font-semibold transition-colors">
+                    <button onClick={() => cancelMeeting(m.id)} className="ds-btn ds-btn-danger ds-btn-xs">
                       Hủy
                     </button>
                   </>
@@ -175,23 +175,23 @@ export const MeetingManagement = () => {
               </div>
 
               {editMeetingId === m.id && (
-                <div className="mt-4 p-4 bg-slate-900 border border-blue-500/30 rounded-xl space-y-3">
+                <div className="mt-4 ds-card p-4 border border-blue-500/30 space-y-3">
                   <div className="flex gap-4">
                     <div className="flex-1">
-                      <label className="text-xs text-slate-400 block mb-1">Ngày mới</label>
-                      <input type="date" min={todayDate} className="input-field" value={editDate} onChange={e => setEditDate(e.target.value)} />
+                      <label className="ds-field-label">Ngày mới</label>
+                      <input type="date" min={todayDate} className="ds-input" value={editDate} onChange={e => setEditDate(e.target.value)} />
                     </div>
                     <div className="flex-1">
-                      <label className="text-xs text-slate-400 block mb-1">Giờ mới</label>
-                      <input type="time" className="input-field" value={editTime} onChange={e => setEditTime(e.target.value)} />
+                      <label className="ds-field-label">Giờ mới</label>
+                      <input type="time" className="ds-input" value={editTime} onChange={e => setEditTime(e.target.value)} />
                     </div>
                   </div>
                   <div className="flex justify-end gap-2">
-                    <button onClick={() => setEditMeetingId(null)} className="px-3 py-1.5 text-xs text-slate-400 hover:text-white">Hủy</button>
+                    <button onClick={() => setEditMeetingId(null)} className="ds-btn ds-btn-ghost ds-btn-xs">Hủy</button>
                     <button onClick={() => {
                       updateMeeting(m.id, editDate, editTime, false);
                       setEditMeetingId(null);
-                    }} className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold">Lưu thay đổi</button>
+                    }} className="ds-btn ds-btn-primary ds-btn-xs">Lưu thay đổi</button>
                   </div>
                 </div>
               )}
@@ -202,16 +202,16 @@ export const MeetingManagement = () => {
 
       {/* Attendance Modal */}
       {activeAttendanceMeeting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-slate-900 rounded-3xl w-full max-w-2xl border border-slate-700 flex flex-col max-h-[90vh]">
-            <div className="p-6 border-b border-slate-800 flex justify-between items-center shrink-0">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
+          <div className="ds-card p-6 w-full max-w-2xl shadow-2xl text-white flex flex-col max-h-[90vh]">
+            <div className="p-6 border-b border-[var(--border-default)] flex justify-between items-center shrink-0">
               <h3 className="font-bold text-white text-lg">
                 Điểm danh: {activeAttendanceMeeting.title}
               </h3>
             </div>
             
             <div className="p-6 overflow-y-auto space-y-2 flex-1">
-              <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl mb-4 flex gap-3 text-sm text-amber-200/80">
+              <div className="ds-card p-4 border border-amber-500/30 bg-amber-500/10 mb-4 flex gap-3 text-sm text-amber-200/80">
                 <AlertCircle className="w-5 h-5 shrink-0 text-amber-400" />
                 <p>Thành viên bị đánh dấu "Đi muộn" hoặc "Vắng không phép" sẽ bị trừ điểm tự động ngay khi bạn chốt điểm danh.</p>
               </div>
@@ -222,7 +222,7 @@ export const MeetingManagement = () => {
                 const code = (m.memberCode || m.member_code || '').toUpperCase();
                 return !roleTitle.includes('super admin') && !roleTitle.includes('cố vấn') && !deptName.includes('cố vấn') && code !== 'ADMIN';
               }).map(m => (
-                <div key={m.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-slate-950 rounded-xl border border-white/5">
+                <div key={m.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 ds-card p-3">
                   <div className="flex-1">
                     <div className="font-bold text-sm text-white">{m.name}</div>
                     <div className="text-[10px] text-slate-500">{m.deptName}</div>
@@ -230,25 +230,25 @@ export const MeetingManagement = () => {
                   <div className="flex gap-2">
                     <button 
                       onClick={() => setAttendanceState({...attendanceState, [m.id]: 'present'})}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${attendanceState[m.id] === 'present' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-transparent'}`}
+                      className={`ds-btn ds-btn-xs ${attendanceState[m.id] === 'present' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-transparent'}`}
                     >
                       Có mặt
                     </button>
                     <button 
                       onClick={() => setAttendanceState({...attendanceState, [m.id]: 'late'})}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${attendanceState[m.id] === 'late' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-transparent'}`}
+                      className={`ds-btn ds-btn-xs ${attendanceState[m.id] === 'late' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-transparent'}`}
                     >
                       Đi muộn (-5đ)
                     </button>
                     <button 
                       onClick={() => setAttendanceState({...attendanceState, [m.id]: 'absent_excused'})}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${attendanceState[m.id] === 'absent_excused' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-transparent'}`}
+                      className={`ds-btn ds-btn-xs ${attendanceState[m.id] === 'absent_excused' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-transparent'}`}
                     >
                       Vắng (Có phép)
                     </button>
                     <button 
                       onClick={() => setAttendanceState({...attendanceState, [m.id]: 'absent'})}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${attendanceState[m.id] === 'absent' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/50' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-transparent'}`}
+                      className={`ds-btn ds-btn-xs ${attendanceState[m.id] === 'absent' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/50' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-transparent'}`}
                     >
                       Vắng (-10đ)
                     </button>
@@ -257,11 +257,11 @@ export const MeetingManagement = () => {
               ))}
             </div>
 
-            <div className="p-6 border-t border-slate-800 flex justify-end gap-3 shrink-0">
-              <button onClick={() => setActiveAttendanceMeeting(null)} className="px-6 py-2.5 rounded-xl text-sm font-semibold text-slate-300 hover:bg-slate-800">
+            <div className="p-6 border-t border-[var(--border-default)] flex justify-end gap-3 shrink-0">
+              <button onClick={() => setActiveAttendanceMeeting(null)} className="ds-btn ds-btn-secondary">
                 Hủy
               </button>
-              <button onClick={handleAttendanceSubmit} className="btn-primary px-6 py-2.5">
+              <button onClick={handleAttendanceSubmit} className="ds-btn ds-btn-primary">
                 Chốt Điểm Danh
               </button>
             </div>

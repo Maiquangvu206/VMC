@@ -21,39 +21,17 @@ class ErrorBoundary extends React.Component {
       const errorMessage = this.state.error?.message || 'Không xác định';
       const errorStack = this.state.error?.stack || '';
       return (
-        <div style={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: '#0f172a',
-          color: '#e2e8f0',
-          fontFamily: 'monospace',
-          padding: '2rem',
-          textAlign: 'center'
-        }}>
-          <div style={{ maxWidth: '700px', width: '100%' }}>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+        <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)] text-[var(--text-primary)] font-body p-4 text-center">
+          <div className="ds-card p-8 max-w-lg w-full space-y-4">
+            <h1 className="font-heading text-2xl font-bold text-white">
               Ứng dụng gặp lỗi
             </h1>
-            <p style={{ fontSize: '0.875rem', color: '#94a3b8', marginBottom: '1rem' }}>
+            <p className="text-sm text-slate-400">
               Đã có lỗi xảy ra khi tải trang. Vui lòng tải lại trang hoặc đăng xuất rồi đăng nhập lại.
             </p>
-            <div style={{
-              background: '#1e293b',
-              border: '1px solid #334155',
-              borderRadius: '0.5rem',
-              padding: '1rem',
-              marginBottom: '1.5rem',
-              textAlign: 'left',
-              fontSize: '0.75rem',
-              color: '#f87171',
-              wordBreak: 'break-word',
-              maxHeight: '300px',
-              overflowY: 'auto'
-            }}>
-              <div style={{ marginBottom: '0.5rem', fontWeight: 'bold' }}>Lỗi: {errorMessage}</div>
-              {errorStack && <div style={{ color: '#94a3b8' }}>{errorStack}</div>}
+            <div className="p-4 rounded-xl bg-slate-950 border border-[var(--border-default)] text-left text-xs text-red-400 font-mono max-h-[300px] overflow-y-auto">
+              <div className="font-bold text-red-400 mb-2">Lỗi: {errorMessage}</div>
+              {errorStack && <div className="text-slate-400">{errorStack}</div>}
             </div>
             <button
               onClick={() => {
@@ -62,16 +40,7 @@ class ErrorBoundary extends React.Component {
                 }
                 window.location.reload();
               }}
-              style={{
-                padding: '0.5rem 1.5rem',
-                background: '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '0.5rem',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                fontWeight: '600'
-              }}
+              className="ds-btn ds-btn-primary"
             >
               Tải lại trang
             </button>

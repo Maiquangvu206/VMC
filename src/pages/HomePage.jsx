@@ -35,9 +35,9 @@ export const HomePage = () => {
       <Hero />
 
       {/* 4 Ban Chuyên Môn */}
-      <section className="container">
+      <section>
         <div className="text-center space-y-3 mb-12">
-          <span className="badge badge-purple">4 Trụ Cột Sáng Tạo</span>
+          <span className="ds-badge ds-badge-purple">4 Trụ Cột Sáng Tạo</span>
           <h2 className="font-heading text-3xl sm:text-4xl font-bold text-white">
             Các Ban Chuyên Môn Tại <span className="gradient-text">VMC</span>
           </h2>
@@ -52,7 +52,7 @@ export const HomePage = () => {
             return (
               <div
                 key={dept.id}
-                className="ds-card p-6 rounded-2xl border border-white/10 hover:border-purple-500/50 flex flex-col justify-between space-y-4 group"
+                className="ds-card p-6 rounded-2xl hover:border-purple-500/50 flex flex-col justify-between space-y-4 group"
               >
                 <div className="space-y-3">
                   <div className="w-12 h-12 rounded-xl bg-purple-600/20 text-purple-400 flex items-center justify-center group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all">
@@ -68,7 +68,7 @@ export const HomePage = () => {
 
                 <button
                   onClick={() => setActiveTab('gallery')}
-                  className="text-xs font-semibold text-purple-400 hover:text-purple-300 flex items-center gap-1 pt-2"
+                  className="ds-btn ds-btn-ghost text-xs"
                 >
                   <span>Xem tác phẩm ban</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -80,10 +80,10 @@ export const HomePage = () => {
       </section>
 
       {/* Tác phẩm nổi bật */}
-      <section className="container">
+      <section>
         <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
           <div>
-            <span className="badge badge-pink mb-2">Showcase VMC</span>
+            <span className="ds-badge ds-badge-pink mb-2">Showcase VMC</span>
             <h2 className="font-heading text-3xl font-bold text-white">
               Tác Phẩm Tiêu Biểu Từ <span className="gradient-text">Thành Viên</span>
             </h2>
@@ -102,7 +102,7 @@ export const HomePage = () => {
             <div
               key={work.id}
               onClick={() => setSelectedWork(work)}
-              className="ds-card rounded-2xl overflow-hidden cursor-pointer group border border-white/10"
+              className="ds-card rounded-2xl overflow-hidden cursor-pointer group"
             >
               <div className="relative h-56 overflow-hidden">
                 <img
@@ -111,7 +111,7 @@ export const HomePage = () => {
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />
-                <span className="absolute top-3 left-3 badge badge-purple">
+                <span className="ds-badge ds-badge-purple">
                   {work.category}
                 </span>
               </div>
@@ -142,13 +142,13 @@ export const HomePage = () => {
       </section>
 
       {/* Sự kiện sắp diễn ra */}
-      <section className="container">
+      <section>
         <div className="ds-card p-8 sm:p-10 rounded-3xl border border-purple-500/30 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-80 h-80 bg-pink-500/10 blur-3xl rounded-full pointer-events-none" />
 
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
             <div className="space-y-4 max-w-2xl">
-              <span className="badge badge-amber">Sự Kiện Hot Sắp Diễn Ra</span>
+              <span className="ds-badge ds-badge-amber">Sự Kiện Hot Sắp Diễn Ra</span>
               <h2 className="font-heading text-3xl font-bold text-white">
                 {events[0].title}
               </h2>
@@ -157,13 +157,13 @@ export const HomePage = () => {
               </p>
 
               <div className="flex flex-wrap gap-4 text-xs text-slate-300 pt-2">
-                <span className="flex items-center gap-1.5 bg-slate-900/60 px-3 py-1.5 rounded-lg border border-white/10">
+                <span className="ds-badge ds-badge-purple">
                   <Calendar className="w-4 h-4 text-purple-400" /> {events[0].date}
                 </span>
-                <span className="flex items-center gap-1.5 bg-slate-900/60 px-3 py-1.5 rounded-lg border border-white/10">
+                <span className="ds-badge ds-badge-cyan">
                   <Clock className="w-4 h-4 text-cyan-400" /> {events[0].time}
                 </span>
-                <span className="flex items-center gap-1.5 bg-slate-900/60 px-3 py-1.5 rounded-lg border border-white/10">
+                <span className="ds-badge ds-badge-amber">
                   <MapPin className="w-4 h-4 text-amber-400" /> {events[0].location}
                 </span>
               </div>
@@ -188,7 +188,7 @@ export const HomePage = () => {
       {/* Lightbox Detail Modal */}
       {selectedWork && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
-          <div className="relative w-full max-w-3xl bg-slate-900 border border-purple-500/40 rounded-3xl overflow-hidden shadow-2xl p-6 text-white space-y-4">
+          <div className="ds-card p-6 w-full max-w-3xl shadow-2xl text-white space-y-4">
             <button
               onClick={() => setSelectedWork(null)}
               className="absolute top-4 right-4 text-slate-400 hover:text-white"
@@ -205,7 +205,7 @@ export const HomePage = () => {
               </div>
               <button
                 onClick={() => likeWork(selectedWork.id)}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-pink-500/20 text-pink-400 border border-pink-500/30 hover:bg-pink-500 hover:text-white transition-all text-xs font-bold"
+                className="ds-btn ds-btn-danger"
               >
                 <Heart className="w-4 h-4 fill-pink-400" /> Thích ({selectedWork.likes})
               </button>

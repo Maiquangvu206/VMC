@@ -22,26 +22,26 @@ export const CartDrawer = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/70 backdrop-blur-sm animate-slide-up">
-      <div className="w-full max-w-md bg-slate-900 border-l border-white/10 h-full flex flex-col shadow-2xl p-6 relative">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 pb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-600/20 text-purple-400 flex items-center justify-center">
-              <ShoppingBag className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-heading font-bold text-lg text-white">Giỏ Hàng VMC Store</h3>
-              <p className="text-xs text-slate-400">{cart.length} vật phẩm đã chọn</p>
-            </div>
-          </div>
-          <button
-            onClick={() => setIsCartOpen(false)}
-            className="p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white transition-all"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+       <div className="ds-card w-full max-w-md h-full flex flex-col shadow-2xl p-6 relative border-l border-[var(--border-default)]">
+         
+         {/* Header */}
+         <div className="flex items-center justify-between pb-4 border-b border-[var(--border-default)]">
+           <div className="flex items-center gap-3">
+             <div className="w-10 h-10 rounded-xl bg-purple-600/20 text-purple-400 flex items-center justify-center">
+               <ShoppingBag className="w-5 h-5" />
+             </div>
+             <div>
+               <h3 className="font-heading font-bold text-lg text-white">Giỏ Hàng VMC Store</h3>
+               <p className="text-xs text-slate-400">{cart.length} vật phẩm đã chọn</p>
+             </div>
+           </div>
+           <button
+             onClick={() => setIsCartOpen(false)}
+             className="ds-btn ds-btn-ghost p-2"
+           >
+             <X className="w-5 h-5" />
+           </button>
+         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto py-4 space-y-4">
@@ -58,11 +58,11 @@ export const CartDrawer = () => {
               <p className="text-xs text-slate-400">Cảm ơn bạn đã ủng hộ quyên góp cho CLB VMC!</p>
             </div>
           ) : (
-            cart.map(item => (
-              <div
-                key={item.id}
-                className="flex gap-4 p-3 rounded-2xl bg-slate-800/60 border border-white/5 items-center"
-              >
+             cart.map(item => (
+               <div
+                 key={item.id}
+                 className="ds-card p-3 flex gap-4 items-center"
+               >
                 <img
                   src={item.image}
                   alt={item.name}
@@ -104,25 +104,25 @@ export const CartDrawer = () => {
           )}
         </div>
 
-        {/* Footer */}
-        {cart.length > 0 && !isCheckoutSubmitted && (
-          <div className="border-t border-white/10 pt-4 space-y-4">
-            <div className="flex justify-between items-center text-sm">
-              <span className="text-slate-400">Tổng cộng thanh toán:</span>
-              <span className="font-heading font-bold text-xl text-purple-400 font-mono">
-                {subtotal.toLocaleString('vi-VN')} VNĐ
-              </span>
-            </div>
+         {/* Footer */}
+         {cart.length > 0 && !isCheckoutSubmitted && (
+           <div className="border-t border-[var(--border-default)] pt-4 space-y-4">
+             <div className="flex justify-between items-center text-sm">
+               <span className="text-slate-400">Tổng cộng thanh toán:</span>
+               <span className="font-heading font-bold text-xl text-purple-400 font-mono">
+                 {subtotal.toLocaleString('vi-VN')} VNĐ
+               </span>
+             </div>
 
-            <button
-              onClick={handleCheckout}
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 via-pink-600 to-cyan-500 text-white font-heading font-semibold flex items-center justify-center gap-2 shadow-lg shadow-purple-600/30 hover:opacity-95 transition-all"
-            >
-              <span>Xác Nhận Đặt Hàng</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        )}
+             <button
+               onClick={handleCheckout}
+               className="ds-btn ds-btn-primary w-full"
+             >
+               <span>Xác Nhận Đặt Hàng</span>
+               <ArrowRight className="w-4 h-4" />
+             </button>
+           </div>
+         )}
 
       </div>
     </div>

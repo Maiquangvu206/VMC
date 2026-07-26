@@ -10,7 +10,7 @@ export const StorePage = () => {
       
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto space-y-3">
-        <span className="badge badge-cyan">Cửa Hàng VMC</span>
+        <span className="ds-badge ds-badge-cyan">Cửa Hàng VMC</span>
         <h1 className="font-heading text-4xl font-extrabold text-white">
           Merchandise & <span className="gradient-text">Vật Phẩm CLB</span>
         </h1>
@@ -27,7 +27,7 @@ export const StorePage = () => {
           return (
             <div
               key={prod.id}
-              className="ds-card rounded-2xl overflow-hidden border border-white/10 flex flex-col justify-between group"
+              className="ds-card rounded-2xl overflow-hidden flex flex-col justify-between group"
             >
               <div className="relative h-60 overflow-hidden bg-slate-950">
                 <img
@@ -36,7 +36,7 @@ export const StorePage = () => {
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 {prod.badge && (
-                  <span className="absolute top-3 left-3 badge badge-purple">
+                  <span className="ds-badge ds-badge-purple">
                     {prod.badge}
                   </span>
                 )}
@@ -56,17 +56,17 @@ export const StorePage = () => {
                   </p>
                 </div>
 
-                <div className="pt-3 border-t border-white/10 flex items-center justify-between">
+                <div className="pt-3 border-t border-[var(--border-default)] flex items-center justify-between">
                   <span className="font-heading font-bold text-lg text-purple-400 font-mono">
                     {prod.price.toLocaleString('vi-VN')} VNĐ
                   </span>
 
                   <button
                     onClick={() => addToCart(prod)}
-                    className={`p-2.5 rounded-xl font-medium transition-all flex items-center gap-1.5 text-xs ${
+                    className={`ds-btn ${
                       inCart
                         ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                        : 'ds-btn ds-btn-primary'
+                        : 'ds-btn-primary'
                     }`}
                   >
                     {inCart ? (

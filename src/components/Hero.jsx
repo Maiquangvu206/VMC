@@ -13,11 +13,11 @@ export const Hero = () => {
 
       <div className="page-wrap relative z-10 text-center max-w-4xl mx-auto space-y-8">
         
-        {/* Official Affiliation Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-950/80 border border-blue-500/40 text-blue-300 text-xs font-semibold uppercase tracking-wider animate-float shadow-lg">
-          <ShieldCheck className="w-4 h-4 text-blue-400" />
-          <span>Trực thuộc Đoàn TNCS Hồ Chí Minh Trường THPT Vĩnh Bảo</span>
-        </div>
+         {/* Official Affiliation Badge */}
+         <div className="ds-badge ds-badge-blue">
+           <ShieldCheck className="w-4 h-4 text-blue-400" />
+           <span>Trực thuộc Đoàn TNCS Hồ Chí Minh Trường THPT Vĩnh Bảo</span>
+         </div>
 
         {/* Official Title */}
         <h1 className="font-heading text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.15]">
@@ -32,21 +32,21 @@ export const Hero = () => {
 
         {/* Buttons CTA */}
         <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
-          <button
-            onClick={() => setActiveTab('join')}
-            className="btn-primary text-sm sm:text-base px-8 py-3.5 shadow-blue-600/40 hover:scale-105"
-          >
-            <span>Ứng Tuyển Gia Nhập VMC</span>
-            <ArrowRight className="w-5 h-5" />
-          </button>
+           <button
+             onClick={() => setActiveTab('join')}
+             className="ds-btn ds-btn-primary text-sm sm:text-base"
+           >
+             <span>Ứng Tuyển Gia Nhập VMC</span>
+             <ArrowRight className="w-5 h-5" />
+           </button>
 
-          <button
-            onClick={() => setActiveTab('gallery')}
-            className="btn-secondary text-sm sm:text-base px-8 py-3.5"
-          >
-            <Play className="w-4 h-4 text-blue-400 fill-blue-400" />
-            <span>Xem Tác Phẩm & Phim Ngắn</span>
-          </button>
+           <button
+             onClick={() => setActiveTab('gallery')}
+             className="ds-btn ds-btn-secondary text-sm sm:text-base"
+           >
+             <Play className="w-4 h-4 text-blue-400 fill-blue-400" />
+             <span>Xem Tác Phẩm & Phim Ngắn</span>
+           </button>
         </div>
 
         {/* Stats Grid */}
@@ -57,10 +57,10 @@ export const Hero = () => {
             { label: "Bằng khen Đoàn trường", value: "15+" },
             { label: "Năm thành lập", value: "2020" }
           ].map((stat, idx) => (
-            <div
-              key={idx}
-              className="ds-card p-5 text-center rounded-2xl border border-white/10 hover:border-blue-500/40"
-            >
+           <div
+             key={idx}
+             className="ds-card p-5 text-center rounded-2xl hover:border-blue-500/40"
+           >
               <div className="font-heading text-3xl sm:text-4xl font-extrabold gradient-text">
                 {stat.value}
               </div>

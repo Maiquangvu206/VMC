@@ -94,9 +94,9 @@ export const InternalAdminSessions = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="font-heading font-black text-xl text-white tracking-tight">Quản Lý Phiên Làm Việc</h1>
-                <span className="badge bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[10px] font-mono font-bold px-2 py-0.5">
-                  Super Admin
-                </span>
+               <span className="ds-badge ds-badge-cyan text-[10px] font-mono font-bold px-2 py-0.5">
+                   Super Admin
+                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-1">
                 Theo dõi toàn bộ các phiên đăng nhập, thiết bị di động/máy tính & cưỡng chế đăng xuất từ xa.
@@ -111,7 +111,7 @@ export const InternalAdminSessions = () => {
                   revokeAllSessions();
                 }
               }}
-              className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-rose-600/30 transition-all"
+              className="ds-btn ds-btn-danger ds-btn-xs w-full sm:w-auto"
             >
               <LogOut className="w-4 h-4" />
               <span>Đăng Xuất Tất Cả Phiên Trừ Tôi</span>
@@ -122,7 +122,7 @@ export const InternalAdminSessions = () => {
 
       {/* Analytics Metric Cards - 3 Distinct Statuses */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="ds-card p-4 rounded-2xl border border-emerald-500/30 bg-[var(--bg-card)]">
+         <div className="ds-card p-4 rounded-2xl border border-emerald-500/30">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
             <span>Đang Hoạt Động</span>
             <Wifi className="w-4 h-4 text-emerald-400 animate-pulse" />
@@ -131,7 +131,7 @@ export const InternalAdminSessions = () => {
           <div className="text-[10px] text-slate-400 mt-1">Phiên đang kết nối thực tế</div>
         </div>
 
-        <div className="ds-card p-4 rounded-2xl border border-slate-700 bg-[var(--bg-card)]">
+         <div className="ds-card p-4 rounded-2xl border border-slate-700">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
             <span>Kết Thúc Phiên</span>
             <Clock className="w-4 h-4 text-slate-400" />
@@ -140,7 +140,7 @@ export const InternalAdminSessions = () => {
           <div className="text-[10px] text-slate-400 mt-1">Tự đăng xuất hoặc hết hạn</div>
         </div>
 
-        <div className="ds-card p-4 rounded-2xl border border-rose-500/30 bg-[var(--bg-card)]">
+         <div className="ds-card p-4 rounded-2xl border border-rose-500/30">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
             <span>Bị Hủy</span>
             <XCircle className="w-4 h-4 text-rose-400" />
@@ -149,7 +149,7 @@ export const InternalAdminSessions = () => {
           <div className="text-[10px] text-slate-400 mt-1">Admin cưỡng chế thu hồi</div>
         </div>
 
-        <div className="ds-card p-4 rounded-2xl border border-purple-500/30 bg-[var(--bg-card)]">
+         <div className="ds-card p-4 rounded-2xl border border-purple-500/30">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
             <span>Thiết Bị</span>
             <Monitor className="w-4 h-4 text-purple-400" />
@@ -167,7 +167,7 @@ export const InternalAdminSessions = () => {
       </div>
 
       {/* Filter & Search Bar - 3 Status Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-900 p-4 rounded-2xl border border-[var(--border-default)]">
+      <div className="ds-card p-4 flex flex-col sm:flex-row gap-3 items-center justify-between">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
           <input
@@ -175,7 +175,7 @@ export const InternalAdminSessions = () => {
             placeholder="Tìm theo tên, mã TV, địa chỉ IP..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-950 border border-[var(--border-default)] rounded-xl text-xs text-white focus:outline-none focus:border-cyan-500"
+            className="ds-input"
           />
         </div>
 
@@ -183,7 +183,7 @@ export const InternalAdminSessions = () => {
           <span className="text-xs text-slate-400 shrink-0">Lọc:</span>
           <button
             onClick={() => setStatusFilter('all')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
+            className={`ds-btn ds-btn-xs ${
               statusFilter === 'all' ? 'bg-cyan-600 text-white' : 'bg-slate-950 text-slate-400 hover:text-white'
             }`}
           >
@@ -191,7 +191,7 @@ export const InternalAdminSessions = () => {
           </button>
           <button
             onClick={() => setStatusFilter('active')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
+            className={`ds-btn ds-btn-xs ${
               statusFilter === 'active' ? 'bg-emerald-600 text-white' : 'bg-slate-950 text-slate-400 hover:text-white'
             }`}
           >
@@ -199,7 +199,7 @@ export const InternalAdminSessions = () => {
           </button>
           <button
             onClick={() => setStatusFilter('ended')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
+            className={`ds-btn ds-btn-xs ${
               statusFilter === 'ended' ? 'bg-slate-700 text-white' : 'bg-slate-950 text-slate-400 hover:text-white'
             }`}
           >
@@ -209,17 +209,17 @@ export const InternalAdminSessions = () => {
       </div>
 
       {/* Sessions Table */}
-      <div className="bg-slate-900 rounded-2xl border border-[var(--border-default)] overflow-hidden shadow-xl">
+      <div className="ds-card overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950/80 text-slate-400 uppercase font-mono text-[10px] border-b border-[var(--border-default)]">
+          <table className="ds-table">
+            <thead>
               <tr>
-                <th className="px-4 py-3.5">Thành Viên</th>
-                <th className="px-4 py-3.5">Thiết Bị & IP</th>
-                <th className="px-4 py-3.5">Đăng Nhập</th>
-                <th className="px-4 py-3.5">Hoạt Động Gần Nhất</th>
-                <th className="px-4 py-3.5 text-center">Trạng Thái</th>
-                <th className="px-4 py-3.5 text-right">Thao Tác</th>
+                <th>Thành Viên</th>
+                <th>Thiết Bị & IP</th>
+                <th>Đăng Nhập</th>
+                <th>Hoạt Động Gần Nhất</th>
+                <th className="text-center">Trạng Thái</th>
+                <th className="text-right">Thao Tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
@@ -250,7 +250,7 @@ export const InternalAdminSessions = () => {
 
                   return (
                     <tr key={s.id} className={`hover:bg-white/5 transition-all ${isCurrent ? 'bg-cyan-500/10' : ''}`}>
-                      <td className="px-4 py-3.5">
+                      <td>
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold font-heading shrink-0 border border-blue-500/30">
                             {displayName.charAt(0).toUpperCase()}
@@ -259,7 +259,7 @@ export const InternalAdminSessions = () => {
                             <div className="font-bold text-white flex items-center gap-1.5">
                               <span>{displayName}</span>
                               {isCurrent && (
-                                <span className="bg-cyan-500/20 text-cyan-300 text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border border-cyan-500/30">
+                                <span className="ds-badge ds-badge-cyan text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border border-cyan-500/30">
                                   Bạn (Phiên này)
                                 </span>
                               )}
@@ -273,7 +273,7 @@ export const InternalAdminSessions = () => {
                         </div>
                       </td>
 
-                      <td className="px-4 py-3.5">
+                      <td>
                         <div className="flex items-center gap-2">
                           {isMobile ? (
                             <Smartphone className="w-4 h-4 text-pink-400 shrink-0" />
@@ -287,11 +287,11 @@ export const InternalAdminSessions = () => {
                         </div>
                       </td>
 
-                      <td className="px-4 py-3.5 font-mono text-[11px] text-slate-300">
+                      <td className="font-mono text-[11px] text-slate-300">
                         {s.login_time ? new Date(s.login_time).toLocaleString('vi-VN') : 'Mới đây'}
                       </td>
 
-                      <td className="px-4 py-3.5 font-mono text-[11px]">
+                      <td className="font-mono text-[11px]">
                         <div className="flex items-center gap-1.5">
                           <Clock className="w-3.5 h-3.5 text-slate-400" />
                           <span className={isRecent ? 'text-emerald-400 font-bold' : 'text-slate-300'}>
@@ -300,23 +300,23 @@ export const InternalAdminSessions = () => {
                         </div>
                       </td>
 
-                      <td className="px-4 py-3.5 text-center">
+                      <td className="text-center">
                         {isActive ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                          <span className="ds-badge ds-badge-emerald">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Đang Hoạt Động
                           </span>
                         ) : s.logout_reason === 'revoked' ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                          <span className="ds-badge ds-badge-rose">
                             <XCircle className="w-3 h-3" /> Bị Hủy
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                          <span className="ds-badge ds-badge-cyan">
                             <Clock className="w-3 h-3 text-slate-400" /> Kết Thúc Phiên
                           </span>
                         )}
                       </td>
 
-                      <td className="px-4 py-3.5 text-right">
+                      <td className="text-right">
                         {isActive && !isCurrent && (
                           <button
                             onClick={() => {
@@ -324,7 +324,7 @@ export const InternalAdminSessions = () => {
                                 revokeSession(s.id);
                               }
                             }}
-                            className="px-3 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-600 text-rose-300 hover:text-white text-xs font-bold border border-rose-500/30 transition-all flex items-center gap-1.5 ml-auto"
+                            className="ds-btn ds-btn-danger ds-btn-xs"
                           >
                             <LogOut className="w-3.5 h-3.5" />
                             <span>Thu Hồi</span>

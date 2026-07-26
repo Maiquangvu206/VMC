@@ -16,14 +16,14 @@ export const Footer = () => {
   };
 
   return (
-    <footer className="relative bg-[#0b0f17] border-t border-white/10 pt-12 pb-8 overflow-hidden text-slate-400">
+    <footer className="relative bg-[var(--bg-primary)] border-t border-[var(--border-default)] pt-12 pb-8 overflow-hidden text-slate-400">
       <div className="page-wrap relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
           
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-full bg-[#0a1128] border-2 border-cyan-400/80 shadow-lg shadow-cyan-500/20 overflow-hidden p-0.5 shrink-0">
+              <div className="w-11 h-11 rounded-full bg-[var(--bg-tertiary)] border-2 border-cyan-400/80 shadow-lg shadow-cyan-500/20 overflow-hidden p-0.5 shrink-0">
                 <img src="/vmc-logo.jpg" alt="VMC Logo" className="w-full h-full object-cover rounded-full" />
               </div>
               <div>
@@ -51,7 +51,7 @@ export const Footer = () => {
                     key={idx}
                     href="#"
                     title={s.title}
-                    className="w-9 h-9 rounded-full bg-slate-900/80 border border-white/10 flex items-center justify-center text-slate-300 hover:text-blue-400 hover:border-blue-500/50 hover:scale-110 transition-all"
+                    className="ds-btn ds-btn-ghost w-9 h-9 p-0"
                   >
                     <Icon className="w-4 h-4" />
                   </a>
@@ -102,14 +102,14 @@ export const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-white/10 mb-6" />
+        <div className="border-t border-[var(--border-default)] mb-6" />
 
         {/* Bottom Bar */}
         <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4 text-xs">
           <p className="leading-relaxed text-center sm:text-left">© 2026 Ban Đối Ngoại - Nhân Sự (VMC). All rights reserved.</p>
           <button
             onClick={scrollToTop}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900 border border-white/10 hover:border-blue-500 text-slate-300 hover:text-white transition-all text-xs"
+            className="ds-btn ds-btn-secondary ds-btn-xs"
           >
             <span>Lên đầu trang</span>
             <ArrowUp className="w-3.5 h-3.5" />
