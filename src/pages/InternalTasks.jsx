@@ -94,20 +94,20 @@ export const InternalTasks = () => {
     <div className="page-wrap space-y-8 pb-20">
       
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div>
           <span className="ds-badge ds-badge-purple">VMC Operations</span>
-          <h1 className="font-heading text-3xl font-extrabold text-white mt-1">
-            Phân Công & <span className="gradient-text">Nhiệm Vụ 4 Ban</span>
+          <h1 className="font-heading text-3xl font-extrabold text-slate-100 mt-2">
+            Phân Công & <span className="text-blue-400">Nhiệm Vụ 4 Ban</span>
           </h1>
-          <p className="text-xs text-slate-400">
+          <p className="text-sm text-slate-400 mt-1">
             Quản lý công việc Ban Chủ Nhiệm, Ban Nội Dung - Phát Thanh, Ban Sản Xuất và Ban Đối Ngoại - Nhân Sự.
           </p>
         </div>
 
         <button
           onClick={() => setIsNewTaskModalOpen(true)}
-          className="ds-btn ds-btn-primary text-xs px-5 py-2.5 shadow-blue-600/40"
+          className="ds-btn ds-btn-primary"
         >
           <Plus className="w-4 h-4" />
           <span>Giao Công Việc Mới</span>
@@ -115,9 +115,9 @@ export const InternalTasks = () => {
       </div>
 
       {/* Filter Tabs matching 4 exact departments */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2">
-        <span className="text-xs text-slate-400 font-semibold flex items-center gap-1 shrink-0">
-          <Filter className="w-3.5 h-3.5" /> Lọc theo Ban:
+      <div className="flex items-center gap-3 overflow-x-auto pb-2">
+        <span className="text-sm text-slate-400 font-semibold flex items-center gap-2 shrink-0">
+          <Filter className="w-4 h-4" /> Lọc theo Ban:
         </span>
         {[
           { id: 'all', label: 'Tất cả 4 Ban' },
@@ -129,11 +129,7 @@ export const InternalTasks = () => {
           <button
             key={tab.id}
             onClick={() => setDeptFilter(tab.id)}
-            className={`ds-btn ds-btn-xs shrink-0 ${
-              deptFilter === tab.id
-                ? 'ds-btn ds-btn-primary'
-                : 'ds-btn ds-btn-secondary'
-            }`}
+            className={`ds-btn ${deptFilter === tab.id ? 'ds-btn-primary' : 'ds-btn-secondary'} shrink-0`}
           >
             {tab.label}
           </button>
@@ -144,42 +140,42 @@ export const InternalTasks = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         {/* Column 1: Cần Thực Hiện (To Do) */}
-        <div className="space-y-4 bg-[var(--bg-input)] p-4 rounded-2xl border border-[var(--border-default)]">
-          <div className="flex items-center justify-between pb-2 border-b border-[var(--border-default)]">
-            <h3 className="font-heading font-bold text-sm text-amber-400 flex items-center gap-2">
-              <Clock className="w-4 h-4" />
+        <div className="ds-card p-5 space-y-4">
+          <div className="ds-section-header pb-4 border-b border-slate-700/50 mb-0">
+            <h3 className="font-heading font-bold text-base text-amber-400 flex items-center gap-2">
+              <Clock className="w-5 h-5" />
               <span>CẦN LÀM ({todoTasks.length})</span>
             </h3>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             {todoTasks.map(task => {
               const deptInfo = getDeptBadge(task.department);
               const overdue = isOverdue(task.deadline);
               return (
-                <div key={task.id} className={`ds-card p-4 rounded-xl border space-y-3 ${overdue ? 'border-red-500/50 bg-red-950/20' : 'border-[var(--border-default)]'}`}>
-                  <div className="flex justify-between items-center text-[11px]">
-                    <span className={`badge ${deptInfo.class}`}>{deptInfo.label}</span>
-                    <span className={`font-mono flex items-center gap-1 ${overdue ? 'text-red-400 font-bold' : 'text-slate-400'}`}>
-                      {overdue && <AlertTriangle className="w-3 h-3" />}
+                <div key={task.id} className={`ds-card p-5 space-y-4 transition-all ${overdue ? 'border-red-500/50 bg-red-950/20' : ''}`}>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${deptInfo.class}`}>{deptInfo.label}</span>
+                    <span className={`font-mono flex items-center gap-1.5 ${overdue ? 'text-red-400 font-bold' : 'text-slate-400'}`}>
+                      {overdue && <AlertTriangle className="w-4 h-4" />}
                       Hạn: {task.deadline}
                     </span>
                   </div>
 
                   {overdue && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-500/20 text-red-400 text-[10px] font-bold border border-red-500/30 animate-pulse">
-                      <AlertTriangle className="w-3 h-3" /> QUÁ HẠN
+                    <span className="ds-badge ds-badge-rose animate-pulse">
+                      <AlertTriangle className="w-4 h-4" /> QUÁ HẠN
                     </span>
                   )}
 
-                  <h4 className="font-heading font-bold text-sm text-white">{task.title}</h4>
-                  <p className="text-xs text-slate-400 line-clamp-2">{task.desc}</p>
+                  <h4 className="font-heading font-bold text-base text-slate-100">{task.title}</h4>
+                  <p className="text-sm text-slate-400 line-clamp-2">{task.desc}</p>
 
-                  <div className="pt-2 border-t border-[var(--border-default)] flex items-center justify-between text-xs">
+                  <div className="pt-4 border-t border-slate-700/50 flex items-center justify-between text-sm">
                     <span className="text-slate-300 font-semibold">{getTaskAssignee(task)}</span>
                     <button
                       onClick={() => updateTaskStatus(task.id, 'doing')}
-                      className="px-3 py-1 bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white rounded-lg text-[11px] font-semibold transition-all"
+                      className="ds-btn ds-btn-primary ds-btn-xs"
                     >
                       Bắt đầu làm →
                     </button>
@@ -191,42 +187,42 @@ export const InternalTasks = () => {
         </div>
 
         {/* Column 2: Đang Thực Hiện (Doing) */}
-        <div className="space-y-4 bg-[var(--bg-input)] p-4 rounded-2xl border border-[var(--border-default)]">
-          <div className="flex items-center justify-between pb-2 border-b border-[var(--border-default)]">
-            <h3 className="font-heading font-bold text-sm text-blue-400 flex items-center gap-2">
-              <CheckSquare className="w-4 h-4" />
+        <div className="ds-card p-5 space-y-4">
+          <div className="ds-section-header pb-4 border-b border-slate-700/50 mb-0">
+            <h3 className="font-heading font-bold text-base text-blue-400 flex items-center gap-2">
+              <CheckSquare className="w-5 h-5" />
               <span>ĐANG LÀM ({doingTasks.length})</span>
             </h3>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             {doingTasks.map(task => {
               const deptInfo = getDeptBadge(task.department);
               const overdue = isOverdue(task.deadline);
               return (
-                <div key={task.id} className={`ds-card p-4 rounded-xl border space-y-3 ${overdue ? 'border-red-500/50 bg-red-950/20' : 'border-blue-500/30'}`}>
-                  <div className="flex justify-between items-center text-[11px]">
-                    <span className={`badge ${deptInfo.class}`}>{deptInfo.label}</span>
-                    <span className={`font-mono flex items-center gap-1 ${overdue ? 'text-red-400 font-bold' : 'text-blue-400'}`}>
-                      {overdue && <AlertTriangle className="w-3 h-3" />}
+                <div key={task.id} className={`ds-card p-5 space-y-4 transition-all ${overdue ? 'border-red-500/50 bg-red-950/20' : ''}`}>
+                  <div className="flex justify-between items-center text-sm">
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${deptInfo.class}`}>{deptInfo.label}</span>
+                    <span className={`font-mono flex items-center gap-1.5 ${overdue ? 'text-red-400 font-bold' : 'text-blue-400'}`}>
+                      {overdue && <AlertTriangle className="w-4 h-4" />}
                       Hạn: {task.deadline}
                     </span>
                   </div>
 
                   {overdue && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-500/20 text-red-400 text-[10px] font-bold border border-red-500/30 animate-pulse">
-                      <AlertTriangle className="w-3 h-3" /> QUÁ HẠN
+                    <span className="ds-badge ds-badge-rose animate-pulse">
+                      <AlertTriangle className="w-4 h-4" /> QUÁ HẠN
                     </span>
                   )}
 
-                  <h4 className="font-heading font-bold text-sm text-white">{task.title}</h4>
-                  <p className="text-xs text-slate-400 line-clamp-2">{task.desc}</p>
+                  <h4 className="font-heading font-bold text-base text-slate-100">{task.title}</h4>
+                  <p className="text-sm text-slate-400 line-clamp-2">{task.desc}</p>
 
-                  <div className="pt-2 border-t border-[var(--border-default)] flex items-center justify-between text-xs">
+                  <div className="pt-4 border-t border-slate-700/50 flex items-center justify-between text-sm">
                     <span className="text-slate-300 font-semibold">{getTaskAssignee(task)}</span>
                     <button
                       onClick={() => updateTaskStatus(task.id, 'done')}
-                      className="px-3 py-1 bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white rounded-lg text-[11px] font-semibold transition-all"
+                      className="ds-btn ds-btn-success ds-btn-xs"
                     >
                       Xong ✓
                     </button>
@@ -238,28 +234,28 @@ export const InternalTasks = () => {
         </div>
 
         {/* Column 3: Hoàn Thành (Done) */}
-        <div className="space-y-4 bg-[var(--bg-input)] p-4 rounded-2xl border border-[var(--border-default)]">
-          <div className="flex items-center justify-between pb-2 border-b border-[var(--border-default)]">
-            <h3 className="font-heading font-bold text-sm text-emerald-400 flex items-center gap-2">
-              <CheckCircle className="w-4 h-4" />
+        <div className="ds-card p-5 space-y-4">
+          <div className="ds-section-header pb-4 border-b border-slate-700/50 mb-0">
+            <h3 className="font-heading font-bold text-base text-emerald-400 flex items-center gap-2">
+              <CheckCircle className="w-5 h-5" />
               <span>HOÀN THÀNH ({doneTasks.length})</span>
             </h3>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-4">
             {doneTasks.map(task => {
               const deptInfo = getDeptBadge(task.department);
               return (
-                <div key={task.id} className="ds-card p-4 rounded-xl border border-emerald-500/20 opacity-85 space-y-3">
-                  <div className="flex justify-between items-center text-[11px]">
-                    <span className={`badge ${deptInfo.class}`}>{deptInfo.label}</span>
+                <div key={task.id} className="ds-card p-5 space-y-4 opacity-75">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${deptInfo.class}`}>{deptInfo.label}</span>
                     <span className="text-emerald-400 font-mono">Xong</span>
                   </div>
 
-                  <h4 className="font-heading font-bold text-sm text-white line-through opacity-80">{task.title}</h4>
-                  <p className="text-xs text-slate-400 line-clamp-1">{task.desc}</p>
+                  <h4 className="font-heading font-bold text-base text-slate-100 line-through opacity-70">{task.title}</h4>
+                  <p className="text-sm text-slate-400 line-clamp-1">{task.desc}</p>
 
-                  <div className="pt-2 border-t border-[var(--border-default)] text-xs text-slate-400">
+                  <div className="pt-4 border-t border-slate-700/50 text-sm text-slate-400">
                     Phụ trách: {getTaskAssignee(task)}
                   </div>
                 </div>
@@ -273,35 +269,35 @@ export const InternalTasks = () => {
       {/* New Task Modal */}
       {isNewTaskModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
-          <div className="relative w-full max-w-lg bg-slate-900 border border-blue-500/40 rounded-3xl p-6 shadow-2xl text-white space-y-4">
+          <div className="relative w-full max-w-lg ds-card ds-card-elevated border border-blue-500/30 p-6 shadow-2xl text-white space-y-6">
             
-            <div className="flex justify-between items-center border-b border-[var(--border-default)] pb-3">
-              <h3 className="font-heading font-bold text-lg text-white">Giao Nhiệm Vụ Mới</h3>
-              <button onClick={() => setIsNewTaskModalOpen(false)} className="text-slate-400 hover:text-white">
+            <div className="flex justify-between items-center pb-4 border-b border-slate-700/50">
+              <h3 className="font-heading font-bold text-lg text-slate-100">Giao Nhiệm Vụ Mới</h3>
+              <button onClick={() => setIsNewTaskModalOpen(false)} className="text-slate-400 hover:text-white p-2 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmitNewTask} className="space-y-4">
+            <form onSubmit={handleSubmitNewTask} className="space-y-5">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Tên công việc / Sự kiện *</label>
+                <label className="ds-field-label">Tên công việc / Sự kiện *</label>
                 <input
                   type="text"
                   required
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="Kịch bản radio số 09 / Dựng clip RECAP Khai giảng..."
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-[var(--border-default)] rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="ds-input"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Giao cho Ban nào *</label>
+                  <label className="ds-field-label">Giao cho Ban nào *</label>
                   <select
                     value={formData.department}
                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-slate-950 border border-[var(--border-default)] rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
+                    className="ds-input ds-select"
                   >
                     <option value="bcn">👑 Ban Chủ Nhiệm</option>
                     <option value="content_radio">🎙️ Ban Nội Dung - Phát Thanh</option>
@@ -311,24 +307,24 @@ export const InternalTasks = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Hạn hoàn thành *</label>
+                  <label className="ds-field-label">Hạn hoàn thành *</label>
                   <input
                     type="date"
                     required
                     value={formData.deadline}
                     onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-[var(--border-default)] rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
+                    className="ds-input"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Người phụ trách chính *</label>
+                <label className="ds-field-label">Người phụ trách chính *</label>
                 <select
                   required
                   value={formData.assignee}
                   onChange={(e) => setFormData({ ...formData, assignee: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-[var(--border-default)] rounded-xl text-xs text-white focus:outline-none focus:border-blue-500"
+                  className="ds-input ds-select"
                 >
                   <option value="" disabled hidden>-- Chọn người phụ trách --</option>
                   {members.filter(m => {
@@ -355,27 +351,27 @@ export const InternalTasks = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Mô tả & Yêu cầu sản phẩm</label>
+                <label className="ds-field-label">Mô tả & Yêu cầu sản phẩm</label>
                 <textarea
                   rows={3}
                   value={formData.desc}
                   onChange={(e) => setFormData({ ...formData, desc: e.target.value })}
                   placeholder="Yêu cầu nộp kịch bản radio trước 17:00 Thứ 2..."
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-[var(--border-default)] rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="ds-textarea"
                 />
               </div>
 
-              <div className="pt-2 flex justify-end gap-2">
+              <div className="pt-4 flex justify-end gap-3 border-t border-slate-700/50">
                 <button
                   type="button"
                   onClick={() => setIsNewTaskModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold"
+                  className="ds-btn ds-btn-secondary"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="ds-btn ds-btn-primary text-xs px-6 py-2"
+                  className="ds-btn ds-btn-primary"
                 >
                   Xác Nhận Giao Việc
                 </button>

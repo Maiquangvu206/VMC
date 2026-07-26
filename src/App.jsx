@@ -56,7 +56,7 @@ const AppContent = () => {
   const ActivePage = pageComponents[activeTab];
 
   return (
-    <div className="main-layout bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-300 font-body selection:bg-blue-600 selection:text-white">
+    <div className="main-layout bg-[#0b0f17] text-slate-100 transition-colors duration-300 font-body selection:bg-blue-600 selection:text-white overflow-x-hidden">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
       <Navbar />
       <div className="flex-1 pt-6 pb-20">

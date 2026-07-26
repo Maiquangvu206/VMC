@@ -83,30 +83,30 @@ export const Navbar = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 ds-card border-b border-white/10 backdrop-blur-xl" style={{ borderRadius: 0, borderLeft: 'none', borderRight: 'none', borderTop: 'none' }}>
-      <div className="page-wrap flex items-center justify-between h-16">
+    <header className="sticky top-0 z-50 bg-[#0b0f17]/95 backdrop-blur-xl border-b border-slate-800">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
         
         {/* Brand Logo */}
         <div 
           onClick={() => handleNavClick('dashboard')}
-          className="flex items-center gap-2.5 cursor-pointer group shrink-0"
+          className="flex items-center gap-3 cursor-pointer group shrink-0"
         >
-          <div className="w-10 h-10 rounded-full bg-[#0a1128] border-2 border-cyan-400/80 shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition-all overflow-hidden p-0.5 shrink-0">
-            <img src="/vmc-logo.jpg" alt="VMC Logo" className="w-full h-full object-cover rounded-full" />
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 border border-blue-500/30 shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-all overflow-hidden p-0.5 shrink-0">
+            <img src="/vmc-logo.jpg" alt="VMC Logo" className="w-full h-full object-cover rounded-lg" />
           </div>
 
           <div className="hidden sm:block">
-            <span className="font-heading font-black text-base tracking-tight text-white block leading-none">
+            <span className="font-heading font-black text-lg tracking-tight text-slate-100 block leading-none">
               VMC PORTAL
             </span>
-            <span className="text-[10px] block text-slate-400 font-medium mt-0.5">
+            <span className="text-xs block text-slate-400 font-medium mt-0.5">
               THPT Vĩnh Bảo
             </span>
           </div>
         </div>
 
         {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center gap-1 bg-slate-900/90 px-2 py-1 rounded-full border border-white/10 shrink-0">
+        <nav className="hidden lg:flex items-center gap-1.5 bg-slate-900/90 px-3 py-2 rounded-2xl border border-slate-700/50 shrink-0">
           {navItems.map(item => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -115,20 +115,20 @@ export const Navbar = () => {
               <button
                 key={item.id}
                 onClick={() => !isRestricted && handleNavClick(item.id)}
-                className={`flex flex-row items-center gap-1.5 px-3 py-1.5 rounded-full font-bold text-xs whitespace-nowrap transition-all duration-200 ${
+                className={`flex flex-row items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm whitespace-nowrap transition-all duration-200 ${
                   isRestricted ? 'opacity-30 blur-[1px] cursor-not-allowed' : ''
                 } ${
                   isActive
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-                    : 'text-slate-300 hover:text-white hover:bg-white/10'
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800'
                 }`}
                 title={isRestricted ? 'Chức năng chỉ dành cho Admin' : ''}
               >
-                <Icon className="w-3.5 h-3.5 shrink-0" />
+                <Icon className="w-4 h-4 shrink-0" />
                 <span>{item.label}</span>
                 {item.badge > 0 && (
-                  <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full leading-none ${
-                    isActive ? 'bg-white text-blue-700' : 'bg-blue-500 text-white'
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full leading-none ${
+                    isActive ? 'bg-white text-blue-600' : 'bg-blue-500 text-white'
                   }`}>
                     {item.badge}
                   </span>
@@ -139,7 +139,7 @@ export const Navbar = () => {
         </nav>
 
         {/* User Profile & Actions */}
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex items-center gap-3 shrink-0">
           
           {/* User Profile Card */}
           <div 
@@ -149,41 +149,41 @@ export const Navbar = () => {
             <button
               onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
               onMouseEnter={() => setIsUserDropdownOpen(true)}
-              className="flex items-center gap-2 p-1 pl-1.5 pr-2.5 rounded-full bg-slate-900 border border-white/10 hover:border-blue-500/50 transition-all text-xs"
+              className="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700/50 hover:border-blue-500/50 transition-all text-sm"
             >
               <img
                 src={safeUser.avatar}
                 alt={safeUser.name}
-                className="w-7 h-7 rounded-full object-cover border border-blue-400 shrink-0"
+                className="w-9 h-9 rounded-lg object-cover border-2 border-blue-500/30 shrink-0"
               />
-              <div className="text-left max-w-[120px] truncate hidden md:block">
-                <div className="font-bold text-white text-xs truncate leading-tight">{safeUser.name}</div>
-                <div className="text-[9px] text-blue-400 font-medium truncate">{safeUser.roleTitle}</div>
+              <div className="text-left max-w-[140px] truncate hidden md:block">
+                <div className="font-bold text-slate-100 text-sm truncate leading-tight">{safeUser.name}</div>
+                <div className="text-xs text-blue-400 font-medium truncate">{safeUser.roleTitle}</div>
               </div>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
             </button>
 
             {/* Profile Dropdown */}
             {isUserDropdownOpen && (
-              <div className="absolute right-0 mt-1 w-64 ds-card border border-white/10 p-2 shadow-2xl z-50 animate-slide-up space-y-1.5">
+              <div className="absolute right-0 mt-2 w-72 bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-3 shadow-2xl z-50 animate-slide-up space-y-2">
                 {/* Account Info */}
-                <div className="p-2.5 rounded-xl bg-slate-900/90 border border-white/5 space-y-0.5 text-xs">
-                  <div className="font-bold text-white truncate">{safeUser.name}</div>
-                  <div className="text-[10px] text-blue-400 font-medium truncate">{safeUser.roleTitle}</div>
-                  <div className="text-[9px] text-slate-400 font-mono">Mã TV: {safeUser.memberCode} • Lớp {safeUser.class}</div>
+                <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/50 space-y-1 text-sm">
+                  <div className="font-bold text-slate-100 truncate">{safeUser.name}</div>
+                  <div className="text-xs text-blue-400 font-medium truncate">{safeUser.roleTitle}</div>
+                  <div className="text-xs text-slate-400 font-mono">Mã TV: {safeUser.memberCode} • Lớp {safeUser.class}</div>
                 </div>
 
                 {/* Attendance */}
                 {isHRMember && (
                   <button
                     onClick={checkinAttendance}
-                    className="w-full flex items-center justify-between p-2.5 rounded-xl bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500 hover:text-slate-950 font-bold text-xs transition-all"
+                    className="w-full flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500 hover:text-slate-950 font-semibold text-sm transition-all"
                   >
                     <div className="flex items-center gap-2">
-                      <UserCheck className="w-4 h-4" />
+                      <UserCheck className="w-5 h-5" />
                       <span>Điểm Danh Sinh Hoạt</span>
                     </div>
-                    <span className="text-[10px] font-mono font-bold">+50 PTS</span>
+                    <span className="text-xs font-mono font-bold">+50 PTS</span>
                   </button>
                 )}
 
@@ -192,9 +192,9 @@ export const Navbar = () => {
                     setActiveTab('profile');
                     setIsUserDropdownOpen(false);
                   }}
-                  className="w-full flex items-center gap-2 p-2.5 rounded-xl bg-blue-600/20 text-blue-300 hover:bg-blue-600 hover:text-white transition-all text-xs font-bold text-left"
+                  className="w-full flex items-center gap-2 p-3 rounded-xl bg-blue-500/10 text-blue-300 hover:bg-blue-500 hover:text-white transition-all text-sm font-semibold text-left"
                 >
-                  <User className="w-4 h-4" />
+                  <User className="w-5 h-5" />
                   <span>Xem Hồ Sơ Thành Viên</span>
                 </button>
 
@@ -203,9 +203,9 @@ export const Navbar = () => {
                     setIsUserDropdownOpen(false);
                     logout();
                   }}
-                  className="w-full flex items-center justify-center gap-2 p-2.5 rounded-xl bg-red-500/15 hover:bg-red-500 text-red-400 hover:text-white font-bold text-xs transition-all"
+                  className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-300 hover:text-white font-semibold text-sm transition-all"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
+                  <LogOut className="w-4 h-4" />
                   <span>Đăng Xuất Tài Khoản</span>
                 </button>
               </div>
@@ -215,16 +215,16 @@ export const Navbar = () => {
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-full bg-slate-800 text-slate-200 border border-white/10 hover:scale-105 transition-all shrink-0"
+            className="p-2.5 rounded-xl bg-slate-900/90 text-slate-300 border border-slate-700/50 hover:border-blue-500/50 transition-all shrink-0"
             title="Chuyển chế độ Giao diện"
           >
-            {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-blue-400" />}
+            {theme === 'dark' ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-blue-400" />}
           </button>
 
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden p-2 rounded-full bg-slate-800 text-slate-200 border border-white/10 shrink-0"
+            className="lg:hidden p-2.5 rounded-xl bg-slate-900/90 text-slate-300 border border-slate-700/50 shrink-0"
           >
             {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -234,7 +234,7 @@ export const Navbar = () => {
 
       {/* Mobile Drawer */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden ds-card border-t border-white/10 p-3 space-y-1.5 animate-slide-up" style={{ borderRadius: 0, borderLeft: 'none', borderRight: 'none' }}>
+        <div className="lg:hidden bg-slate-900/95 backdrop-blur-xl border-t border-slate-700/50 p-4 space-y-2 animate-slide-up">
           {navItems.map(item => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -243,21 +243,21 @@ export const Navbar = () => {
               <button
                 key={item.id}
                 onClick={() => !isRestricted && handleNavClick(item.id)}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl font-semibold text-xs transition-all ${
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm transition-all ${
                   isRestricted ? 'opacity-30 blur-[1px] cursor-not-allowed' : ''
                 } ${
                   isActive
                     ? 'bg-blue-600 text-white font-bold'
-                    : 'text-slate-300 hover:bg-white/5'
+                    : 'text-slate-300 hover:bg-slate-800'
                 }`}
                 title={isRestricted ? 'Chức năng chỉ dành cho Admin' : ''}
               >
-                <div className="flex items-center gap-2.5">
-                  <Icon className="w-4 h-4" />
+                <div className="flex items-center gap-3">
+                  <Icon className="w-5 h-5" />
                   <span>{item.label}</span>
                 </div>
                 {item.badge > 0 && (
-                  <span className="bg-blue-500 text-white px-2 py-0.2 rounded-full text-[10px] font-bold">
+                  <span className="bg-blue-500 text-white px-2.5 py-0.5 rounded-full text-xs font-bold">
                     {item.badge}
                   </span>
                 )}

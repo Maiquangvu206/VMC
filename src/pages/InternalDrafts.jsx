@@ -147,20 +147,20 @@ export const InternalDrafts = () => {
     <div className="page-wrap space-y-8 pb-20">
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div>
           <span className="ds-badge ds-badge-amber">Content Studio VMC</span>
-          <h1 className="font-heading text-3xl font-extrabold text-white mt-1">
-            Kho Kịch Bản & <span className="gradient-text">Duyệt Bài Fanpage</span>
+          <h1 className="font-heading text-3xl font-extrabold text-slate-100 mt-2">
+            Kho Kịch Bản & <span className="text-blue-400">Duyệt Bài Fanpage</span>
           </h1>
-          <p className="text-xs text-slate-400">
+          <p className="text-sm text-slate-400 mt-1">
             Khu vực biên tập kịch bản video, bài viết truyền thông THPT Vĩnh Bảo trước khi duyệt đăng chính thức.
           </p>
         </div>
 
         <button
           onClick={() => setIsNewDraftModalOpen(true)}
-          className="ds-btn ds-btn-primary text-xs"
+          className="ds-btn ds-btn-primary"
         >
           <Plus className="w-4 h-4" />
           <span>Soạn Bài Viết Mới</span>
@@ -168,31 +168,31 @@ export const InternalDrafts = () => {
       </div>
 
       {/* Drafts List */}
-      <div className="space-y-4">
+      <div className="space-y-6">
         {drafts.map(draft => (
           <div
             key={draft.id}
-            className="ds-card p-6 rounded-2xl border border-[var(--border-default)] space-y-4"
+            className="ds-card p-6 space-y-6"
           >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[var(--border-default)] pb-3">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 text-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-700/50 pb-4">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm">
                   <span className="text-blue-400 font-semibold">{draft.author}</span>
                   <span className="text-slate-500">•</span>
                   <span className="text-slate-400 font-mono">{draft.createdAt}</span>
                 </div>
-                <h3 className="font-heading font-bold text-lg text-white">{draft.title}</h3>
+                <h3 className="font-heading font-bold text-xl text-slate-100">{draft.title}</h3>
               </div>
 
               <div className="flex items-center gap-3 shrink-0">
-                <span className={`badge ${draft.status === 'approved' ? 'ds-badge ds-badge-emerald' : 'ds-badge ds-badge-amber'}`}>
+                <span className={`ds-badge ${draft.status === 'approved' ? 'ds-badge-emerald' : 'ds-badge-amber'}`}>
                   {draft.status === 'approved' ? 'Đã Lên Lịch Đăng' : 'Chờ Phê Duyệt & Lên Lịch'}
                 </span>
 
                 {draft.status === 'pending' && canApproveDraft && (
                   <button
                     onClick={() => setDraftToSchedule(draft.id)}
-                    className="ds-btn ds-btn-primary text-xs px-4 py-1.5 shadow-emerald-600/30"
+                    className="ds-btn ds-btn-success"
                   >
                     <CheckCircle className="w-4 h-4" />
                     <span>Lên Lịch & Giao Chấm Bài</span>
@@ -202,7 +202,7 @@ export const InternalDrafts = () => {
                 {draft.status === 'approved' && draft.gradingStatus === 'pending' && (draft.graderId === currentUser.id || canApproveDraft) && (
                   <button
                     onClick={() => setGradingDraftId(draft.id)}
-                    className="ds-btn ds-btn-primary text-xs px-4 py-1.5 shadow-blue-600/30 flex items-center gap-1.5 animate-pulse"
+                    className="ds-btn ds-btn-primary"
                   >
                     <CheckCircle className="w-4 h-4" />
                     <span>Tiến Hành Chấm Điểm</span>
@@ -210,9 +210,9 @@ export const InternalDrafts = () => {
                 )}
 
                 {draft.status === 'approved' && draft.gradingStatus === 'completed' && (
-                  <div className="text-right text-xs bg-slate-950/40 p-2.5 rounded-xl border border-white/5 space-y-1">
+                  <div className="ds-card p-3 text-right text-sm space-y-2">
                     <div className="font-semibold text-emerald-400">📊 Đã Chấm Điểm: {draft.finalScore || 0}/100</div>
-                    <div className="text-[10px] text-slate-400 grid grid-cols-2 gap-x-2 gap-y-0.5">
+                    <div className="text-xs text-slate-400 grid grid-cols-2 gap-x-3 gap-y-1">
                       <span>• Thích: {draft.likesCount || 0}</span>
                       <span>• Chia sẻ: {draft.sharesCount || 0}</span>
                       <span>• Bình luận: {draft.commentsCount || 0}</span>
@@ -223,7 +223,7 @@ export const InternalDrafts = () => {
               </div>
             </div>
 
-            <div className="bg-slate-950/80 p-4 rounded-xl border border-white/5 whitespace-pre-line text-xs text-slate-300 font-sans leading-relaxed">
+            <div className="ds-card p-5 whitespace-pre-line text-sm text-slate-300 font-sans leading-relaxed">
               {draft.content}
             </div>
           </div>
@@ -233,51 +233,51 @@ export const InternalDrafts = () => {
       {/* New Draft Modal */}
       {isNewDraftModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
-          <div className="relative w-full max-w-xl bg-slate-900 border border-blue-500/40 rounded-3xl p-6 shadow-2xl text-white space-y-4">
+          <div className="relative w-full max-w-xl ds-card ds-card-elevated border border-blue-500/30 p-6 shadow-2xl text-white space-y-6">
 
-            <div className="flex justify-between items-center border-b border-[var(--border-default)] pb-3">
-              <h3 className="font-heading font-bold text-lg text-white">Soạn Bài Viết Nháp Mới</h3>
-              <button onClick={() => setIsNewDraftModalOpen(false)} className="text-slate-400 hover:text-white">
+            <div className="flex justify-between items-center pb-4 border-b border-slate-700/50">
+              <h3 className="font-heading font-bold text-lg text-slate-100">Soạn Bài Viết Nháp Mới</h3>
+              <button onClick={() => setIsNewDraftModalOpen(false)} className="text-slate-400 hover:text-white p-2 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmitNewDraft} className="space-y-4">
+            <form onSubmit={handleSubmitNewDraft} className="space-y-5">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Tiêu đề bài viết / Phim ngắn *</label>
+                <label className="ds-field-label">Tiêu đề bài viết / Phim ngắn *</label>
                 <input
                   type="text"
                   required
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="[RECAP] LỄ KHAI GIẢNG NĂM HỌC MỚI..."
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-[var(--border-default)] rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  className="ds-input"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Nội dung bài đăng Fanpage *</label>
+                <label className="ds-field-label">Nội dung bài đăng Fanpage *</label>
                 <textarea
                   required
                   rows={8}
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   placeholder="Soạn thảo nội dung bài đăng Fanpage tại đây..."
-                  className="w-full px-3.5 py-2.5 bg-slate-950 border border-[var(--border-default)] rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 font-sans"
+                  className="ds-textarea"
                 />
               </div>
 
-              <div className="pt-2 flex justify-end gap-2">
+              <div className="pt-4 flex justify-end gap-3 border-t border-slate-700/50">
                 <button
                   type="button"
                   onClick={() => setIsNewDraftModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold"
+                  className="ds-btn ds-btn-secondary"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="ds-btn ds-btn-primary text-xs px-6 py-2"
+                  className="ds-btn ds-btn-primary"
                 >
                   Gửi Bài Chờ Duyệt
                 </button>
@@ -291,7 +291,7 @@ export const InternalDrafts = () => {
       {/* Schedule Draft Modal */}
       {draftToSchedule && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
-          <div className="relative w-full max-w-md bg-slate-900 border border-emerald-500/40 rounded-3xl p-6 shadow-2xl text-white space-y-4">
+          <div className="relative w-full max-w-md ds-card ds-card-elevated border border-emerald-500/40 p-6 shadow-2xl text-white space-y-4">
             <div className="flex justify-between items-center border-b border-[var(--border-default)] pb-3">
               <h3 className="font-heading font-bold text-lg text-emerald-400">Lên Lịch Đăng Bài</h3>
               <button onClick={() => setDraftToSchedule(null)} className="text-slate-400 hover:text-white">
@@ -310,22 +310,22 @@ export const InternalDrafts = () => {
               setScheduleForm({ publishDate: '', graderId: '' });
             }} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Ngày Giờ Đăng Thực Tế</label>
+                <label className="ds-field-label">Ngày Giờ Đăng Thực Tế</label>
                 <input
                   type="datetime-local"
                   required
                   value={scheduleForm.publishDate}
                   onChange={e => setScheduleForm({ ...scheduleForm, publishDate: e.target.value })}
-                  className="input-field w-full"
+                  className="ds-input w-full"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Giao nhiệm vụ chấm tương tác</label>
+                <label className="ds-field-label">Giao nhiệm vụ chấm tương tác</label>
                 <select
                   required
                   value={scheduleForm.graderId}
                   onChange={e => setScheduleForm({ ...scheduleForm, graderId: e.target.value })}
-                  className="input-field w-full"
+                  className="ds-input ds-select w-full"
                 >
                   <option value="">-- Chọn thành viên Ban Đối Ngoại - Nhân Sự --</option>
                   {members.filter(m => {
@@ -343,10 +343,10 @@ export const InternalDrafts = () => {
               </div>
 
               <div className="pt-2 flex justify-end gap-2">
-                <button type="button" onClick={() => setDraftToSchedule(null)} className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">
+                <button type="button" onClick={() => setDraftToSchedule(null)} className="ds-btn ds-btn-secondary">
                   Hủy
                 </button>
-                <button type="submit" className="ds-btn ds-btn-primary text-xs px-6 py-2">
+                <button type="submit" className="ds-btn ds-btn-primary">
                   Xác Nhận Đăng & Giao Việc
                 </button>
               </div>
@@ -358,7 +358,7 @@ export const InternalDrafts = () => {
       {/* Grading Modal - Per Member Checklist (+1/-1) */}
       {gradingDraftId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
-          <div className="relative w-full max-w-3xl bg-slate-900 border border-blue-500/40 rounded-3xl p-6 shadow-2xl text-white space-y-4 max-h-[90vh] flex flex-col">
+          <div className="relative w-full max-w-3xl ds-card ds-card-elevated border border-blue-500/40 p-6 shadow-2xl text-white space-y-4 max-h-[90vh] flex flex-col">
             <div className="flex justify-between items-center border-b border-[var(--border-default)] pb-3 shrink-0">
               <div>
                 <h3 className="font-heading font-bold text-lg text-blue-400 flex items-center gap-2">
@@ -396,21 +396,21 @@ export const InternalDrafts = () => {
                 <button
                   type="button"
                   onClick={() => toggleAllForCriteria('shared')}
-                  className="px-2.5 py-1 rounded-lg bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 text-[10px] font-bold border border-blue-500/30"
+                  className="ds-btn ds-btn-ghost ds-btn-xs"
                 >
                   <Share2 className="w-3 h-3 inline mr-1" /> Chọn tất cả Share
                 </button>
                 <button
                   type="button"
                   onClick={() => toggleAllForCriteria('reacted')}
-                  className="px-2.5 py-1 rounded-lg bg-pink-500/20 text-pink-300 hover:bg-pink-500/30 text-[10px] font-bold border border-pink-500/30"
+                  className="ds-btn ds-btn-ghost ds-btn-xs"
                 >
                   <ThumbsUp className="w-3 h-3 inline mr-1" /> Chọn tất cả Thích
                 </button>
                 <button
                   type="button"
                   onClick={() => toggleAllForCriteria('commented')}
-                  className="px-2.5 py-1 rounded-lg bg-purple-500/20 text-purple-300 hover:bg-purple-500/30 text-[10px] font-bold border border-purple-500/30"
+                  className="ds-btn ds-btn-ghost ds-btn-xs"
                 >
                   <MessageSquare className="w-3 h-3 inline mr-1" /> Chọn tất cả 3 Cmt
                 </button>
@@ -423,7 +423,7 @@ export const InternalDrafts = () => {
                 const g = memberGrades[m.id] || { shared: false, reacted: false, commented: false };
                 const score = getMemberScore(m.id);
                 return (
-                  <div key={m.id} className="p-3 bg-slate-950 rounded-xl border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-slate-700 transition-colors">
+                  <div key={m.id} className="ds-card p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-slate-700 transition-colors">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="w-7 h-7 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-xs shrink-0 border border-blue-500/30">
                         {m.name.charAt(0)}
@@ -478,10 +478,10 @@ export const InternalDrafts = () => {
               })}
 
               <div className="pt-3 border-t border-[var(--border-default)] flex justify-end gap-2 shrink-0">
-                <button type="button" onClick={() => setGradingDraftId(null)} className="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold">
+                <button type="button" onClick={() => setGradingDraftId(null)} className="ds-btn ds-btn-secondary">
                   Hủy
                 </button>
-                <button type="submit" className="ds-btn ds-btn-primary text-xs px-6 py-2 shadow-emerald-600/30">
+                <button type="submit" className="ds-btn ds-btn-primary">
                   Hoàn Thành Chấm Điểm
                 </button>
               </div>

@@ -490,13 +490,13 @@ export const InternalRecruitment = () => {
   }, [selectedSeasonForInterviewers, currentSeason, members]);
 
   return (
-    <div className="page-wrap space-y-6 pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="page-wrap space-y-8 pb-20">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="font-heading text-3xl font-extrabold text-white mt-1 flex items-center gap-3">
+          <h1 className="font-heading text-3xl font-extrabold text-slate-100 mt-1 flex items-center gap-3">
             <UserPlus className="text-violet-400 w-8 h-8" /> Quản Lý Tuyển Gen Nội Bộ
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-sm text-slate-400 mt-2">
             Hệ thống chấm điểm mù, phân công phỏng vấn và tổng hợp kết quả tuyển gen.
           </p>
         </div>
@@ -504,11 +504,7 @@ export const InternalRecruitment = () => {
         {isSuperAdmin && (
           <button
             onClick={toggleRecruitmentSeason}
-            className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl font-bold text-sm transition-all border ${
-              isRecruitmentSeasonActive
-                ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/25'
-                : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'
-            }`}
+            className={`ds-btn ${isRecruitmentSeasonActive ? 'ds-btn-success' : 'ds-btn-secondary'}`}
           >
             {isRecruitmentSeasonActive
               ? <ToggleRight className="w-5 h-5 text-emerald-400" />
@@ -520,14 +516,10 @@ export const InternalRecruitment = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-2 border-b border-[var(--border-default)] pb-4">
+      <div className="flex flex-wrap gap-3 border-b border-slate-700/50 pb-4">
         <button
           onClick={() => setActiveTab('seasons')}
-          className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
-            activeTab === 'seasons'
-              ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
-              : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
-          }`}
+          className={`ds-btn ${activeTab === 'seasons' ? 'ds-btn-primary' : 'ds-btn-secondary'}`}
         >
           Mùa Tuyển
         </button>
@@ -544,11 +536,7 @@ export const InternalRecruitment = () => {
             {(isSuperAdmin || isAdmin || isHRHead || isDeptHead) && (
               <button
                 onClick={() => setActiveTab('criteria')}
-                className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
-                  activeTab === 'criteria'
-                    ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
-                    : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
-                }`}
+                className={`ds-btn ${activeTab === 'criteria' ? 'ds-btn-primary' : 'ds-btn-secondary'}`}
               >
                 Tiêu Chí
               </button>
@@ -556,11 +544,7 @@ export const InternalRecruitment = () => {
             
             <button
               onClick={() => setActiveTab('candidates')}
-              className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
-                activeTab === 'candidates'
-                  ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
-                  : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
-              }`}
+              className={`ds-btn ${activeTab === 'candidates' ? 'ds-btn-primary' : 'ds-btn-secondary'}`}
             >
               Ứng Viên
             </button>
@@ -569,11 +553,7 @@ export const InternalRecruitment = () => {
             {(canScore || isSuperAdmin) && (
               <button
                 onClick={() => setActiveTab('scoring')}
-                className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
-                  activeTab === 'scoring'
-                    ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
-                    : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
-                }`}
+                className={`ds-btn ${activeTab === 'scoring' ? 'ds-btn-primary' : 'ds-btn-secondary'}`}
               >
                 Chấm Điểm
               </button>
@@ -582,11 +562,7 @@ export const InternalRecruitment = () => {
             {/* Results tab - for all department members */}
             <button
               onClick={() => setActiveTab('results')}
-              className={`px-4 py-2 rounded-lg font-bold text-xs transition-all ${
-                activeTab === 'results'
-                  ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
-                  : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
-              }`}
+              className={`ds-btn ${activeTab === 'results' ? 'ds-btn-primary' : 'ds-btn-secondary'}`}
             >
               Kết Quả
             </button>
@@ -594,475 +570,469 @@ export const InternalRecruitment = () => {
         )}
       </div>
 
-      {/* Seasons Tab */}
-      {activeTab === 'seasons' && (
-        <div className="space-y-4">
-          {isSuperAdmin || isAdmin || isHRHead ? (
-            <>
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-bold text-white">Danh Sách Mùa Tuyển</h2>
-                <button
-                  onClick={() => setShowSeasonModal(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-violet-500/20 text-violet-300 rounded-lg hover:bg-violet-500/30 border border-violet-500/30"
-                >
-                  <Plus className="w-4 h-4" /> Tạo Mùa Tuyển Mới
-                </button>
-              </div>
-              <div className="grid gap-4">
-                {seasons.map(season => (
-                  <div key={season.id} className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-bold text-white text-lg">{season.name}</h3>
-                        <p className="text-slate-400 text-sm">Ban: {season.department || 'Tất cả'} | Chỉ tiêu: {season.quota} thành viên</p>
-                        <div className="flex items-center gap-2 mt-2">
-                          {season.is_active === 1 ? (
-                            <span className="flex items-center gap-1 text-emerald-400 text-xs">
-                              <CheckCircle className="w-3 h-3" /> Đang hoạt động
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-1 text-slate-400 text-xs">
-                              <Clock className="w-3 h-3" /> Đã kết thúc
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        {season.is_active === 1 ? (
-                          <button
-                            onClick={() => deactivateSeason(season.id)}
-                            className="p-2 bg-amber-500/20 text-amber-300 rounded-lg hover:bg-amber-500/30"
-                            title="Tắt mùa tuyển"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => activateSeason(season.id)}
-                            className="p-2 bg-emerald-500/20 text-emerald-300 rounded-lg hover:bg-emerald-500/30"
-                            title="Kích hoạt"
-                          >
-                            <CheckCircle className="w-4 h-4" />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => openInterviewerModal(season)}
-                          className="p-2 bg-blue-500/20 text-blue-300 rounded-lg hover:bg-blue-500/30"
-                          title="Phân công Phỏng vấn"
-                        >
-                          <Users className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => setCurrentSeason(season)}
-                          className={`p-2 rounded-lg ${currentSeason?.id === season.id ? 'bg-violet-500/30 text-violet-300' : 'bg-slate-800 text-slate-400'}`}
-                          title="Chọn"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : (
-            // Regular members - show only active season info
-            <>
-              <h2 className="text-xl font-bold text-white">Mùa Tuyển Hiện Tại</h2>
-              {currentSeason ? (
-                <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 bg-emerald-500/20 rounded-xl">
-                      <CheckCircle className="w-8 h-8 text-emerald-400" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-white text-xl">{currentSeason.name}</h3>
-                      <p className="text-slate-400 text-sm mt-1">Ban: {currentSeason.department || 'Tất cả'} | Chỉ tiêu: {currentSeason.quota} thành viên</p>
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="flex items-center gap-1 text-emerald-400 text-sm">
-                          <CheckCircle className="w-4 h-4" /> Đang hoạt động
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-6 text-center">
-                  <Clock className="w-12 h-12 text-slate-500 mx-auto mb-3" />
-                  <p className="text-slate-400">Hiện tại không có mùa tuyển nào đang hoạt động</p>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
+       {/* Seasons Tab */}
+       {activeTab === 'seasons' && (
+         <div className="space-y-6">
+           {isSuperAdmin || isAdmin || isHRHead ? (
+             <>
+               <div className="flex justify-between items-center">
+                 <h2 className="text-2xl font-bold text-slate-100">Danh Sách Mùa Tuyển</h2>
+                 <button
+                   onClick={() => setShowSeasonModal(true)}
+                   className="ds-btn ds-btn-primary"
+                 >
+                   <Plus className="w-5 h-5" /> Tạo Mùa Tuyển Mới
+                 </button>
+               </div>
+               <div className="grid gap-5">
+                 {seasons.map(season => (
+                   <div key={season.id} className="ds-card p-6">
+                     <div className="flex justify-between items-start">
+                       <div>
+                         <h3 className="font-bold text-slate-100 text-xl">{season.name}</h3>
+                         <p className="text-slate-400 text-base mt-2">Ban: {season.department || 'Tất cả'} | Chỉ tiêu: {season.quota} thành viên</p>
+                         <div className="flex items-center gap-3 mt-3">
+                           {season.is_active === 1 ? (
+                             <span className="flex items-center gap-2 text-emerald-400 text-sm">
+                               <CheckCircle className="w-4 h-4" /> Đang hoạt động
+                             </span>
+                           ) : (
+                             <span className="flex items-center gap-2 text-slate-400 text-sm">
+                               <Clock className="w-4 h-4" /> Đã kết thúc
+                             </span>
+                           )}
+                         </div>
+                       </div>
+                       <div className="flex gap-3">
+                         {season.is_active === 1 ? (
+                           <button
+                             onClick={() => deactivateSeason(season.id)}
+                             className="ds-btn ds-btn-danger ds-btn-xs"
+                             title="Tắt mùa tuyển"
+                           >
+                             <X className="w-5 h-5" />
+                           </button>
+                         ) : (
+                           <button
+                             onClick={() => activateSeason(season.id)}
+                             className="ds-btn ds-btn-success ds-btn-xs"
+                             title="Kích hoạt"
+                           >
+                             <CheckCircle className="w-5 h-5" />
+                           </button>
+                         )}
+                         <button
+                           onClick={() => openInterviewerModal(season)}
+                           className="ds-btn ds-btn-primary ds-btn-xs"
+                           title="Phân công Phỏng vấn"
+                         >
+                           <Users className="w-5 h-5" />
+                         </button>
+                         <button
+                           onClick={() => setCurrentSeason(season)}
+                           className={`ds-btn ds-btn-xs ${currentSeason?.id === season.id ? 'ds-btn-primary' : 'ds-btn-secondary'}`}
+                           title="Chọn"
+                         >
+                           <Edit className="w-5 h-5" />
+                         </button>
+                       </div>
+                     </div>
+                   </div>
+                 ))}
+               </div>
+             </>
+           ) : (
+             // Regular members - show only active season info
+             <>
+               <h2 className="text-2xl font-bold text-slate-100">Mùa Tuyển Hiện Tại</h2>
+               {currentSeason ? (
+                 <div className="ds-card p-8">
+                   <div className="flex items-start gap-5">
+                     <div className="p-4 bg-emerald-500/20 rounded-2xl">
+                       <CheckCircle className="w-10 h-10 text-emerald-400" />
+                     </div>
+                     <div className="flex-1">
+                       <h3 className="font-bold text-slate-100 text-2xl">{currentSeason.name}</h3>
+                       <p className="text-slate-400 text-base mt-2">Ban: {currentSeason.department || 'Tất cả'} | Chỉ tiêu: {currentSeason.quota} thành viên</p>
+                       <div className="flex items-center gap-3 mt-3">
+                         <span className="flex items-center gap-2 text-emerald-400 text-base">
+                           <CheckCircle className="w-5 h-5" /> Đang hoạt động
+                         </span>
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+               ) : (
+                 <div className="ds-card p-8 text-center">
+                   <Clock className="w-16 h-16 text-slate-500 mx-auto mb-4" />
+                   <p className="text-slate-400 text-base">Hiện tại không có mùa tuyển nào đang hoạt động</p>
+                 </div>
+               )}
+             </>
+           )}
+         </div>
+       )}
 
-      {/* Criteria Tab - only for Trưởng Ban */}
-      {activeTab === 'criteria' && currentSeason && (isSuperAdmin || isAdmin || isHRHead || isDeptHead) && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold text-white">Tiêu Chí Chấm Điểm - {currentSeason.name}</h2>
-            <button
-              onClick={() => setShowCriteriaModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-violet-500/20 text-violet-300 rounded-lg hover:bg-violet-500/30 border border-violet-500/30"
-            >
-              <Plus className="w-4 h-4" /> Thêm Tiêu Chí
-            </button>
-          </div>
-          <div className="grid gap-3">
-            {criteria.map(c => (
-              <div key={c.id} className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-4 flex justify-between items-center">
-                <div>
-                  <h3 className="font-bold text-white">{c.criteria_name}</h3>
-                  <p className="text-slate-400 text-sm">Điểm tối đa: {c.max_score}</p>
-                </div>
-                <button
-                  onClick={() => deleteCriteria(c.id)}
-                  className="p-2 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+       {/* Criteria Tab - only for Trưởng Ban */}
+       {activeTab === 'criteria' && currentSeason && (isSuperAdmin || isAdmin || isHRHead || isDeptHead) && (
+         <div className="space-y-4">
+           <div className="flex justify-between items-center">
+             <h2 className="text-xl font-bold text-white">Tiêu Chí Chấm Điểm - {currentSeason.name}</h2>
+             <button
+               onClick={() => setShowCriteriaModal(true)}
+               className="ds-btn ds-btn-primary"
+             >
+               <Plus className="w-4 h-4" /> Thêm Tiêu Chí
+             </button>
+           </div>
+           <div className="grid gap-3">
+             {criteria.map(c => (
+               <div key={c.id} className="ds-card p-4 flex justify-between items-center">
+                 <div>
+                   <h3 className="font-bold text-white">{c.criteria_name}</h3>
+                   <p className="text-slate-400 text-sm">Điểm tối đa: {c.max_score}</p>
+                 </div>
+                 <button
+                   onClick={() => deleteCriteria(c.id)}
+                   className="ds-btn ds-btn-danger ds-btn-xs"
+                 >
+                   <Trash2 className="w-4 h-4" />
+                 </button>
+               </div>
+             ))}
+           </div>
+         </div>
+       )}
 
-      {/* Candidates Tab */}
-      {activeTab === 'candidates' && currentSeason && (
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold text-white">Danh Sách Ứng Viên - {currentSeason.name}</h2>
-            {(isAdmin || isHRHead) && (
-              <button
-                onClick={() => setShowCandidateModal(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-violet-500/20 text-violet-300 rounded-lg hover:bg-violet-500/30 border border-violet-500/30"
-              >
-                <Plus className="w-4 h-4" /> Thêm Ứng Viên
-              </button>
-            )}
-          </div>
-          <div className="grid gap-3">
-            {candidates.map(c => (
-              <div key={c.id} className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-bold text-white text-lg">{c.full_name}</h3>
-                    <p className="text-slate-400 text-sm">Lớp: {c.class_name} | ĐT: {c.phone}</p>
-                    <p className="text-slate-400 text-sm">Ban mong muốn: {c.desired_dept}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      {c.status === 'passed' && <span className="text-emerald-400 text-xs">✅ Đậu</span>}
-                      {c.status === 'failed' && <span className="text-red-400 text-xs">❌ Rớt</span>}
-                      {c.status === 'reserve' && <span className="text-amber-400 text-xs">⏳ Dự bị</span>}
-                      {c.status === 'scored' && <span className="text-blue-400 text-xs">📝 Đã chấm</span>}
-                      {c.status === 'pending' && <span className="text-slate-400 text-xs">⏳ Chờ chấm</span>}
-                    </div>
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    {!isAdmin && !isHRHead && !submittedCandidates.includes(c.id) && (() => {
-                      // Check if user is assigned to score this candidate
-                      const scoringTypes = Array.isArray(currentSeason.scoring_type) ? currentSeason.scoring_type : [currentSeason.scoring_type || 'teamwork'];
-                      const canScoreThisCandidate = scoringTypes.some(type => {
-                        if (type === 'don') {
-                          // Đơn: all dept members + BCN + advisors can score
-                          const seasonDept = currentSeason.department?.toLowerCase() || '';
-                          const userDept = (currentUser?.deptName || currentUser?.department || '').toLowerCase();
-                          const userRoleTitle = (currentUser?.roleTitle || '').toLowerCase();
-                          const isBCN = userRoleTitle.includes('chủ nhiệm') || userRoleTitle.includes('phó chủ nhiệm');
-                          const isAdvisor = userRoleTitle.includes('cố vấn') || userRoleTitle.includes('advisor');
-                          const isDeptMember = seasonDept && userDept.includes(seasonDept);
-                          return isBCN || isAdvisor || isDeptMember;
-                        } else if (type === 'teamwork') {
-                          // Teamwork: only assigned scorers can score
-                          return (c.teamwork_scorer_ids || []).includes(currentUser?.id) || 
-                                 (c.interviewer_ids || []).includes(currentUser?.id) ||
-                                 (currentSeason?.interviewer_ids || []).includes(currentUser?.id);
-                        }
-                        return false;
-                      });
-                      return canScoreThisCandidate;
-                    })() && (
-                      <button
-                        onClick={() => {
-                          setSelectedCandidate(c);
-                          setShowScoringModal(true);
-                        }}
-                        className="p-2 bg-blue-500/20 text-blue-300 rounded-lg hover:bg-blue-500/30"
-                        title="Chấm điểm"
-                      >
-                        <Star className="w-4 h-4" />
-                      </button>
-                    )}
-                    {(isAdmin || isHRHead) && (
-                      <div className="flex gap-1 flex-wrap">
-                        <button
-                          onClick={() => {
-                            setSelectedCandidate(c);
-                            setSelectedCandidateInterviewers(c.interviewer_ids || []);
-                            setShowCandidateInterviewerModal(true);
-                            setShowCandidateTeamworkModal(false);
-                          }}
-                          className="bg-blue-500/20 text-blue-300 text-xs rounded-lg px-2 py-1 border border-blue-500/30 hover:bg-blue-500/30 whitespace-nowrap"
-                        >
-                          Phỏng vấn ({(c.interviewer_ids || []).length})
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedCandidate(c);
-                            setSelectedCandidateTeamworkScorers(c.teamwork_scorer_ids || []);
-                            setShowCandidateTeamworkModal(true);
-                            setShowCandidateInterviewerModal(false);
-                          }}
-                          className="bg-purple-500/20 text-purple-300 text-xs rounded-lg px-2 py-1 border border-purple-500/30 hover:bg-purple-500/30 whitespace-nowrap"
-                        >
-                          Teamwork ({(c.teamwork_scorer_ids || []).length})
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+       {/* Candidates Tab */}
+       {activeTab === 'candidates' && currentSeason && (
+         <div className="space-y-4">
+           <div className="flex justify-between items-center">
+             <h2 className="text-xl font-bold text-white">Danh Sách Ứng Viên - {currentSeason.name}</h2>
+             {(isAdmin || isHRHead) && (
+               <button
+                 onClick={() => setShowCandidateModal(true)}
+                 className="ds-btn ds-btn-primary"
+               >
+                 <Plus className="w-4 h-4" /> Thêm Ứng Viên
+               </button>
+             )}
+           </div>
+           <div className="grid gap-3">
+             {candidates.map(c => (
+               <div key={c.id} className="ds-card p-4">
+                 <div className="flex justify-between items-start">
+                   <div>
+                     <h3 className="font-bold text-white text-lg">{c.full_name}</h3>
+                     <p className="text-slate-400 text-sm">Lớp: {c.class_name} | ĐT: {c.phone}</p>
+                     <p className="text-slate-400 text-sm">Ban mong muốn: {c.desired_dept}</p>
+                     <div className="flex items-center gap-2 mt-2">
+                       {c.status === 'passed' && <span className="ds-badge ds-badge-emerald">✅ Đậu</span>}
+                       {c.status === 'failed' && <span className="ds-badge ds-badge-rose">❌ Rớt</span>}
+                       {c.status === 'reserve' && <span className="ds-badge ds-badge-amber">⏳ Dự bị</span>}
+                       {c.status === 'scored' && <span className="ds-badge ds-badge-blue">📝 Đã chấm</span>}
+                       {c.status === 'pending' && <span className="ds-badge ds-badge-secondary">⏳ Chờ chấm</span>}
+                     </div>
+                   </div>
+                   <div className="flex gap-2 flex-wrap">
+                     {!isAdmin && !isHRHead && !submittedCandidates.includes(c.id) && (() => {
+                       // Check if user is assigned to score this candidate
+                       const scoringTypes = Array.isArray(currentSeason.scoring_type) ? currentSeason.scoring_type : [currentSeason.scoring_type || 'teamwork'];
+                       const canScoreThisCandidate = scoringTypes.some(type => {
+                         if (type === 'don') {
+                           const seasonDept = currentSeason.department?.toLowerCase() || '';
+                           const userDept = (currentUser?.deptName || currentUser?.department || '').toLowerCase();
+                           const userRoleTitle = (currentUser?.roleTitle || '').toLowerCase();
+                           const isBCN = userRoleTitle.includes('chủ nhiệm') || userRoleTitle.includes('phó chủ nhiệm');
+                           const isAdvisor = userRoleTitle.includes('cố vấn') || userRoleTitle.includes('advisor');
+                           const isDeptMember = seasonDept && userDept.includes(seasonDept);
+                           return isBCN || isAdvisor || isDeptMember;
+                         } else if (type === 'teamwork') {
+                           return (c.teamwork_scorer_ids || []).includes(currentUser?.id) || 
+                                  (c.interviewer_ids || []).includes(currentUser?.id) ||
+                                  (currentSeason?.interviewer_ids || []).includes(currentUser?.id);
+                         }
+                         return false;
+                       });
+                       return canScoreThisCandidate;
+                     })() && (
+                       <button
+                         onClick={() => {
+                           setSelectedCandidate(c);
+                           setShowScoringModal(true);
+                         }}
+                         className="ds-btn ds-btn-primary ds-btn-xs"
+                         title="Chấm điểm"
+                       >
+                         <Star className="w-4 h-4" />
+                       </button>
+                     )}
+                     {(isAdmin || isHRHead) && (
+                       <div className="flex gap-1 flex-wrap">
+                         <button
+                           onClick={() => {
+                             setSelectedCandidate(c);
+                             setSelectedCandidateInterviewers(c.interviewer_ids || []);
+                             setShowCandidateInterviewerModal(true);
+                             setShowCandidateTeamworkModal(false);
+                           }}
+                           className="ds-btn ds-btn-primary ds-btn-xs"
+                         >
+                           Phỏng vấn ({(c.interviewer_ids || []).length})
+                         </button>
+                         <button
+                           onClick={() => {
+                             setSelectedCandidate(c);
+                             setSelectedCandidateTeamworkScorers(c.teamwork_scorer_ids || []);
+                             setShowCandidateTeamworkModal(true);
+                             setShowCandidateInterviewerModal(false);
+                           }}
+                           className="ds-btn ds-btn-secondary ds-btn-xs"
+                         >
+                           Teamwork ({(c.teamwork_scorer_ids || []).length})
+                         </button>
+                       </div>
+                     )}
+                   </div>
+                 </div>
+               </div>
+             ))}
+           </div>
+         </div>
+       )}
 
-      {/* Scoring Tab - redesigned with candidate search and single candidate form */}
-      {activeTab === 'scoring' && (canScore || isSuperAdmin) && currentSeason && (
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold text-white">
-            Chấm Điểm Ứng Viên - {currentSeason.name}
-            <span className="text-sm font-normal text-slate-400 ml-2">
-              ({Array.isArray(currentSeason.scoring_type) ? currentSeason.scoring_type.join(', ') : currentSeason.scoring_type})
-            </span>
-          </h2>
-          
-          {/* Filter by scoring type if both are enabled */}
-          {Array.isArray(currentSeason.scoring_type) && currentSeason.scoring_type.length > 1 && (
-            <div className="flex gap-2">
-              {currentSeason.scoring_type.map(type => (
-                <button
-                  key={type}
-                  onClick={() => setScoringTypeFilter(type)}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold ${
-                    scoringTypeFilter === type
-                      ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
-                      : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
-                  }`}
-                >
-                  {type === 'don' ? 'Đơn' : 'Teamwork'}
-                </button>
-              ))}
-            </div>
-          )}
+       {/* Scoring Tab - redesigned with candidate search and single candidate form */}
+       {activeTab === 'scoring' && (canScore || isSuperAdmin) && currentSeason && (
+         <div className="space-y-4">
+           <h2 className="text-xl font-bold text-white">
+             Chấm Điểm Ứng Viên - {currentSeason.name}
+             <span className="text-sm font-normal text-slate-400 ml-2">
+               ({Array.isArray(currentSeason.scoring_type) ? currentSeason.scoring_type.join(', ') : currentSeason.scoring_type})
+             </span>
+           </h2>
+           
+           {/* Filter by scoring type if both are enabled */}
+           {Array.isArray(currentSeason.scoring_type) && currentSeason.scoring_type.length > 1 && (
+             <div className="flex gap-2">
+               {currentSeason.scoring_type.map(type => (
+                 <button
+                   key={type}
+                   onClick={() => setScoringTypeFilter(type)}
+                   className={`ds-btn ds-btn-xs ${scoringTypeFilter === type ? 'ds-btn-primary' : 'ds-btn-secondary'}`}
+                 >
+                   {type === 'don' ? 'Đơn' : 'Teamwork'}
+                 </button>
+               ))}
+             </div>
+           )}
 
-          {/* Candidate search/filter */}
-          <div className="flex gap-3">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-              <input
-                type="text"
-                placeholder="Tìm kiếm theo mã ứng viên, tên, hoặc lớp..."
-                value={candidateSearchQuery}
-                onChange={(e) => {
-                  setCandidateSearchQuery(e.target.value);
-                  const query = e.target.value.toLowerCase();
-                  const filtered = candidates.filter(c => 
-                    (c.id || '').toLowerCase().includes(query) ||
-                    (c.full_name || '').toLowerCase().includes(query) ||
-                    (c.class_name || '').toLowerCase().includes(query)
-                  );
-                  setFilteredCandidates(filtered);
-                  setCurrentScoringCandidateIndex(0);
-                  if (filtered.length > 0) {
-                    setSelectedCandidate(filtered[0]);
-                    setScoringComments('');
-                    setScoringData({});
-                  }
-                }}
-                className="w-full bg-slate-800 text-white rounded-lg pl-10 pr-4 py-2 border border-slate-700 focus:border-violet-500 focus:outline-none"
-              />
-            </div>
-            {filteredCandidates.length > 0 && (
-              <div className="text-slate-400 text-sm flex items-center">
-                {currentScoringCandidateIndex + 1} / {filteredCandidates.length}
-              </div>
-            )}
-          </div>
+           {/* Candidate search/filter */}
+           <div className="flex gap-3">
+             <div className="flex-1 relative">
+               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+               <input
+                 type="text"
+                 placeholder="Tìm kiếm theo mã ứng viên, tên, hoặc lớp..."
+                 value={candidateSearchQuery}
+                 onChange={(e) => {
+                   setCandidateSearchQuery(e.target.value);
+                   const query = e.target.value.toLowerCase();
+                   const filtered = candidates.filter(c => 
+                     (c.id || '').toLowerCase().includes(query) ||
+                     (c.full_name || '').toLowerCase().includes(query) ||
+                     (c.class_name || '').toLowerCase().includes(query)
+                   );
+                   setFilteredCandidates(filtered);
+                   setCurrentScoringCandidateIndex(0);
+                   if (filtered.length > 0) {
+                     setSelectedCandidate(filtered[0]);
+                     setScoringComments('');
+                     setScoringData({});
+                   }
+                 }}
+                 className="ds-input"
+               />
+             </div>
+             {filteredCandidates.length > 0 && (
+               <div className="text-slate-400 text-sm flex items-center">
+                 {currentScoringCandidateIndex + 1} / {filteredCandidates.length}
+               </div>
+             )}
+           </div>
 
-          {/* Single candidate scoring form */}
-          {selectedCandidate && filteredCandidates.length > 0 && (() => {
-            const c = selectedCandidate;
-            const isAssignedToScore = (() => {
-              const scoringTypes = Array.isArray(currentSeason.scoring_type) ? currentSeason.scoring_type : [currentSeason.scoring_type || 'teamwork'];
-              const filterType = scoringTypeFilter || scoringTypes[0];
-              if (filterType === 'don') {
-                const seasonDept = currentSeason.department?.toLowerCase() || '';
-                const userDept = (currentUser?.deptName || currentUser?.department || '').toLowerCase();
-                const userRoleTitle = (currentUser?.roleTitle || '').toLowerCase();
-                const isBCN = userRoleTitle.includes('chủ nhiệm') || userRoleTitle.includes('phó chủ nhiệm');
-                const isAdvisor = userRoleTitle.includes('cố vấn') || userRoleTitle.includes('advisor');
-                const isDeptMember = seasonDept && userDept.includes(seasonDept);
-                return isBCN || isAdvisor || isDeptMember;
-              } else {
-                return (c.teamwork_scorer_ids || []).includes(currentUser?.id) || 
-                       (c.interviewer_ids || []).includes(currentUser?.id) ||
-                       (currentSeason?.interviewer_ids || []).includes(currentUser?.id);
-              }
-            })();
-            
-            const isSubmitted = submittedCandidates.includes(c.id);
-            
-            return (
-              <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl p-6">
-                {/* Candidate info */}
-                <div className="flex justify-between items-start mb-6 pb-4 border-b border-[var(--border-default)]">
-                  <div>
-                    <h3 className="text-2xl font-bold text-white">{c.full_name}</h3>
-                    <p className="text-slate-400">Mã: {c.id} | Lớp: {c.class_name}</p>
-                    <p className="text-slate-400">Ban mong muốn: {c.desired_dept}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => {
-                        if (currentScoringCandidateIndex > 0) {
-                          const newIndex = currentScoringCandidateIndex - 1;
-                          setCurrentScoringCandidateIndex(newIndex);
-                          setSelectedCandidate(filteredCandidates[newIndex]);
-                          setScoringComments('');
-                          setScoringData({});
-                        }
-                      }}
-                      disabled={currentScoringCandidateIndex === 0}
-                      className="px-3 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      ← Trước
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (currentScoringCandidateIndex < filteredCandidates.length - 1) {
-                          const newIndex = currentScoringCandidateIndex + 1;
-                          setCurrentScoringCandidateIndex(newIndex);
-                          setSelectedCandidate(filteredCandidates[newIndex]);
-                          setScoringComments('');
-                          setScoringData({});
-                        }
-                      }}
-                      disabled={currentScoringCandidateIndex === filteredCandidates.length - 1}
-                      className="px-3 py-2 bg-slate-800 text-slate-300 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Sau →
-                    </button>
-                  </div>
-                </div>
+           {/* Single candidate scoring form */}
+           {selectedCandidate && filteredCandidates.length > 0 && (() => {
+             const c = selectedCandidate;
+             const isAssignedToScore = (() => {
+               const scoringTypes = Array.isArray(currentSeason.scoring_type) ? currentSeason.scoring_type : [currentSeason.scoring_type || 'teamwork'];
+               const filterType = scoringTypeFilter || scoringTypes[0];
+               if (filterType === 'don') {
+                 const seasonDept = currentSeason.department?.toLowerCase() || '';
+                 const userDept = (currentUser?.deptName || currentUser?.department || '').toLowerCase();
+                 const userRoleTitle = (currentUser?.roleTitle || '').toLowerCase();
+                 const isBCN = userRoleTitle.includes('chủ nhiệm') || userRoleTitle.includes('phó chủ nhiệm');
+                 const isAdvisor = userRoleTitle.includes('cố vấn') || userRoleTitle.includes('advisor');
+                 const isDeptMember = seasonDept && userDept.includes(seasonDept);
+                 return isBCN || isAdvisor || isDeptMember;
+               } else {
+                 return (c.teamwork_scorer_ids || []).includes(currentUser?.id) || 
+                        (c.interviewer_ids || []).includes(currentUser?.id) ||
+                        (currentSeason?.interviewer_ids || []).includes(currentUser?.id);
+               }
+             })();
+             
+             const isSubmitted = submittedCandidates.includes(c.id);
+             
+             return (
+               <div className="ds-card p-6">
+                 {/* Candidate info */}
+                 <div className="flex justify-between items-start mb-6 pb-4 border-b border-[var(--border-default)]">
+                   <div>
+                     <h3 className="text-2xl font-bold text-white">{c.full_name}</h3>
+                     <p className="text-slate-400">Mã: {c.id} | Lớp: {c.class_name}</p>
+                     <p className="text-slate-400">Ban mong muốn: {c.desired_dept}</p>
+                   </div>
+                   <div className="flex gap-2">
+                     <button
+                       onClick={() => {
+                         if (currentScoringCandidateIndex > 0) {
+                           const newIndex = currentScoringCandidateIndex - 1;
+                           setCurrentScoringCandidateIndex(newIndex);
+                           setSelectedCandidate(filteredCandidates[newIndex]);
+                           setScoringComments('');
+                           setScoringData({});
+                         }
+                       }}
+                       disabled={currentScoringCandidateIndex === 0}
+                       className="ds-btn ds-btn-secondary ds-btn-xs"
+                     >
+                       ← Trước
+                     </button>
+                     <button
+                       onClick={() => {
+                         if (currentScoringCandidateIndex < filteredCandidates.length - 1) {
+                           const newIndex = currentScoringCandidateIndex + 1;
+                           setCurrentScoringCandidateIndex(newIndex);
+                           setSelectedCandidate(filteredCandidates[newIndex]);
+                           setScoringComments('');
+                           setScoringData({});
+                         }
+                       }}
+                       disabled={currentScoringCandidateIndex === filteredCandidates.length - 1}
+                       className="ds-btn ds-btn-secondary ds-btn-xs"
+                     >
+                       Sau →
+                     </button>
+                   </div>
+                 </div>
 
-                {/* Scoring form */}
-                {isAssignedToScore && !isSubmitted ? (
-                  <div className="space-y-4">
-                    {criteria.map(crit => (
-                      <div key={crit.id} className="flex items-center gap-4">
-                        <div className="flex-1">
-                          <label className="text-white font-medium block mb-1">{crit.criteria_name}</label>
-                          <p className="text-slate-400 text-xs">Thang điểm: 0 - {crit.max_score}</p>
-                        </div>
-                        <input
-                          type="number"
-                          min="0"
-                          max={crit.max_score}
-                          value={scoringData[crit.id] || ''}
-                          onChange={(e) => setScoringData(prev => ({
-                            ...prev,
-                            [crit.id]: parseFloat(e.target.value) || 0
-                          }))}
-                          className="w-24 bg-slate-800 text-white text-center rounded px-3 py-2 border border-slate-700 focus:border-violet-500 focus:outline-none"
-                        />
-                      </div>
-                    ))}
-                    
-                    {/* Comments field */}
-                    <div>
-                      <label className="text-white font-medium block mb-1">Nhận xét</label>
-                      <textarea
-                        value={scoringComments}
-                        onChange={(e) => setScoringComments(e.target.value)}
-                        placeholder="Nhập nhận xét về ứng viên..."
-                        rows={3}
-                        className="w-full bg-slate-800 text-white rounded-lg px-4 py-2 border border-slate-700 focus:border-violet-500 focus:outline-none resize-none"
-                      />
-                    </div>
+                 {/* Scoring form */}
+                 {isAssignedToScore && !isSubmitted ? (
+                   <div className="space-y-4">
+                     {criteria.map(crit => (
+                       <div key={crit.id} className="flex items-center gap-4">
+                         <div className="flex-1">
+                           <label className="text-white font-medium block mb-1">{crit.criteria_name}</label>
+                           <p className="text-slate-400 text-xs">Thang điểm: 0 - {crit.max_score}</p>
+                         </div>
+                         <input
+                           type="number"
+                           min="0"
+                           max={crit.max_score}
+                           value={scoringData[crit.id] || ''}
+                           onChange={(e) => setScoringData(prev => ({
+                             ...prev,
+                             [crit.id]: parseFloat(e.target.value) || 0
+                           }))}
+                           className="ds-input w-24 text-center"
+                         />
+                       </div>
+                     ))}
+                     
+                     {/* Comments field */}
+                     <div>
+                       <label className="ds-field-label">Nhận xét</label>
+                       <textarea
+                         value={scoringComments}
+                         onChange={(e) => setScoringComments(e.target.value)}
+                         placeholder="Nhập nhận xét về ứng viên..."
+                         rows={3}
+                         className="ds-textarea"
+                       />
+                     </div>
 
-                    {/* Total score */}
-                    <div className="flex justify-between items-center pt-4 border-t border-[var(--border-default)]">
-                      <div className="text-white font-bold text-lg">
-                        Tổng điểm: {criteria.reduce((sum, crit) => sum + (scoringData[crit.id] || 0), 0)}
-                      </div>
-                      <button
-                        onClick={() => {
-                          setSelectedCandidate(c);
-                          setShowScoringModal(true);
-                        }}
-                        className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-bold"
-                      >
-                        Lưu Điểm
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-8">
-                    {isSubmitted ? (
-                      <p className="text-emerald-400 text-lg font-bold">✅ Đã chấm điểm ứng viên này</p>
-                    ) : (
-                      <p className="text-slate-400 text-lg">❌ Bạn không được phân công chấm ứng viên này</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-        </div>
-      )}
+                     {/* Total score */}
+                     <div className="flex justify-between items-center pt-4 border-t border-[var(--border-default)]">
+                       <div className="text-white font-bold text-lg">
+                         Tổng điểm: {criteria.reduce((sum, crit) => sum + (scoringData[crit.id] || 0), 0)}
+                       </div>
+                       <button
+                         onClick={() => {
+                           setSelectedCandidate(c);
+                           setShowScoringModal(true);
+                         }}
+                         className="ds-btn ds-btn-primary"
+                       >
+                         Lưu Điểm
+                       </button>
+                     </div>
+                   </div>
+                 ) : (
+                   <div className="text-center py-8">
+                     {isSubmitted ? (
+                       <p className="text-emerald-400 text-lg font-bold">✅ Đã chấm điểm ứng viên này</p>
+                     ) : (
+                       <p className="text-slate-400 text-lg">❌ Bạn không được phân công chấm ứng viên này</p>
+                     )}
+                   </div>
+                 )}
+               </div>
+             );
+           })()}
+         </div>
+       )}
 
-      {/* Results Tab - for all department members */}
-      {activeTab === 'results' && currentSeason && (
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold text-white">Bảng Tổng Hợp Kết Quả - {currentSeason.name}</h2>
-          <div className="bg-[var(--bg-card)] border border-[var(--border-default)] rounded-xl overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-800/50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-slate-300 font-bold">#</th>
-                  <th className="px-4 py-3 text-left text-slate-300 font-bold">Họ Tên</th>
-                  <th className="px-4 py-3 text-left text-slate-300 font-bold">Lớp</th>
-                  <th className="px-4 py-3 text-left text-slate-300 font-bold">Ban Mong Muốn</th>
-                  <th className="px-4 py-3 text-left text-slate-300 font-bold">Số Phỏng vấn</th>
-                  <th className="px-4 py-3 text-left text-slate-300 font-bold">Điểm TB</th>
-                  <th className="px-4 py-3 text-left text-slate-300 font-bold">Tổng Điểm</th>
-                  <th className="px-4 py-3 text-left text-slate-300 font-bold">Kết Quả</th>
-                </tr>
-              </thead>
-              <tbody>
-                {scoresSummary.map((s, idx) => (
-                  <tr key={s.candidate_id} className="border-t border-[var(--border-default)]">
-                    <td className="px-4 py-3 text-white">{s.rank}</td>
-                    <td className="px-4 py-3 text-white font-medium">{s.full_name}</td>
-                    <td className="px-4 py-3 text-slate-400">{s.class_name}</td>
-                    <td className="px-4 py-3 text-slate-400">{s.desired_dept}</td>
-                    <td className="px-4 py-3 text-slate-400">{s.interviewer_count}</td>
-                    <td className="px-4 py-3 text-white font-bold">{s.avg_score}</td>
-                    <td className="px-4 py-3 text-white">{s.total_score}</td>
-                    <td className="px-4 py-3">
-                      {s.result_status === 'passed' && <span className="text-emerald-400 font-bold">Đậu</span>}
-                      {s.result_status === 'failed' && <span className="text-red-400 font-bold">Rớt</span>}
-                      {s.result_status === 'reserve' && <span className="text-amber-400 font-bold">Dự bị</span>}
-                      {s.result_status === 'pending' && <span className="text-slate-400">Chờ</span>}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+       {/* Results Tab - for all department members */}
+       {activeTab === 'results' && currentSeason && (
+         <div className="space-y-4">
+           <h2 className="text-xl font-bold text-white">Bảng Tổng Hợp Kết Quả - {currentSeason.name}</h2>
+           <div className="ds-card overflow-hidden">
+             <table className="ds-table">
+               <thead>
+                 <tr>
+                   <th>#</th>
+                   <th>Họ Tên</th>
+                   <th>Lớp</th>
+                   <th>Ban Mong Muốn</th>
+                   <th>Số Phỏng vấn</th>
+                   <th>Điểm TB</th>
+                   <th>Tổng Điểm</th>
+                   <th>Kết Quả</th>
+                 </tr>
+               </thead>
+               <tbody>
+                 {scoresSummary.map((s, idx) => (
+                   <tr key={s.candidate_id}>
+                     <td>{s.rank}</td>
+                     <td className="font-medium text-white">{s.full_name}</td>
+                     <td className="text-slate-400">{s.class_name}</td>
+                     <td className="text-slate-400">{s.desired_dept}</td>
+                     <td className="text-slate-400">{s.interviewer_count}</td>
+                     <td className="text-white font-bold">{s.avg_score}</td>
+                     <td className="text-white">{s.total_score}</td>
+                     <td>
+                       {s.result_status === 'passed' && <span className="text-emerald-400 font-bold">Đậu</span>}
+                       {s.result_status === 'failed' && <span className="text-red-400 font-bold">Rớt</span>}
+                       {s.result_status === 'reserve' && <span className="text-amber-400 font-bold">Dự bị</span>}
+                       {s.result_status === 'pending' && <span className="text-slate-400">Chờ</span>}
+                     </td>
+                   </tr>
+                 ))}
+               </tbody>
+             </table>
+           </div>
+         </div>
+       )}
 
       <SeasonModal
         show={showSeasonModal}
