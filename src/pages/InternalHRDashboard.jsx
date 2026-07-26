@@ -208,23 +208,24 @@ export const InternalHRDashboard = () => {
   return (
     <div className="page-wrap space-y-8 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h1 className="font-heading text-3xl font-extrabold text-slate-100 mt-1 flex items-center gap-3">
-            <Users className="text-blue-500 w-8 h-8" /> Thi Đua & Sinh Nhật
+        <div className="flex flex-col items-center justify-center text-center">
+          <Users className="text-blue-500 w-8 h-8" />
+          <h1 className="font-heading text-3xl font-extrabold text-slate-100 mt-1">
+            Thi Đua & Sinh Nhật
           </h1>
           <p className="text-sm text-slate-400 mt-2">
             Theo dõi điểm số, sinh nhật, deadline và thu chi quỹ CLB.
           </p>
         </div>
         
-        <div className="relative w-full md:w-80 flex items-center">
-          <Search className="w-5 h-5 absolute left-3.5 text-slate-500 pointer-events-none" />
+        <div className="relative flex items-center w-full">
+          <Search className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
           <input
             type="text"
             placeholder="Tìm mã hoặc tên TV..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="ds-input"
+            className="ds-input pl-12"
           />
         </div>
       </div>
@@ -305,7 +306,7 @@ export const InternalHRDashboard = () => {
                ))}
              </div>
              
-             <div className="mt-8 pt-8 border-t border-slate-700/50">
+             <div className="mt-8 pt-8 border-t border-[var(--border-default)]">
                <PointManagement />
              </div>
            </div>
@@ -344,7 +345,7 @@ export const InternalHRDashboard = () => {
 
              {/* Phân Công Nhiệm Vụ Sinh Nhật (Chỉ hiển thị cho Ban ĐN-NS & BCN/Admin, ẩn hoàn toàn với Cố Vấn và các ban khác) */}
              {isAllowedBirthdayDuty && (
-               <div className="mt-8 pt-8 border-t border-slate-700/50">
+               <div className="mt-8 pt-8 border-t border-[var(--border-default)]">
                  <BirthdayManagement />
                </div>
              )}
@@ -368,7 +369,7 @@ export const InternalHRDashboard = () => {
                  
                  return (
                    <div key={m.id} className="ds-card p-5 space-y-4">
-                     <div className="flex justify-between items-center border-b border-slate-700/50 pb-3">
+                     <div className="flex justify-between items-center border-b border-[var(--border-default)] pb-3">
                        <div className="font-bold text-base text-slate-100">{m.name}</div>
                        <span className="ds-badge ds-badge-blue">{m.deptName || m.department}</span>
                      </div>
@@ -402,7 +403,7 @@ export const InternalHRDashboard = () => {
                        )}
                      </div>
                      
-                     <div className="pt-3 border-t border-slate-700/50">
+                     <div className="pt-3 border-t border-[var(--border-default)]">
                        <div className="text-sm font-semibold text-emerald-400 flex items-center gap-2">
                          <CheckCircle2 className="w-4 h-4" /> Đã hoàn thành ({doneTasks.length})
                        </div>
@@ -586,7 +587,7 @@ export const InternalHRDashboard = () => {
                    {/* Rejected items */}
                    {(finances || []).filter(f => f.status === 'rejected').length > 0 && (
                      <>
-                       <h5 className="text-sm font-bold text-rose-400 mt-5 pt-4 border-t border-slate-700/50">🚫 Đã Từ Chối</h5>
+                       <h5 className="text-sm font-bold text-rose-400 mt-5 pt-4 border-t border-[var(--border-default)]">🚫 Đã Từ Chối</h5>
                        {(finances || []).filter(f => f.status === 'rejected').map((f) => (
                          <div key={f.id} className="ds-card p-4 flex justify-between items-center opacity-60 border-rose-500/20">
                            <div className="flex gap-4 items-center">

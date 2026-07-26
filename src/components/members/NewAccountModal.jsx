@@ -20,13 +20,13 @@ export const NewAccountModal = ({ show, onClose, formData, setFormData, onSubmit
          <div className="flex-1 overflow-y-auto py-4 space-y-3">
            <div>
              <label className="ds-field-label">Username</label>
-             <div className="relative">
-               <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+             <div className="relative flex items-center">
+               <Hash className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
                <input
                  type="text"
                  value={formData.username}
                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                 className="ds-input pl-10"
+                 className="ds-input pl-12"
                  placeholder="VD: vmc123"
                />
              </div>
@@ -34,27 +34,27 @@ export const NewAccountModal = ({ show, onClose, formData, setFormData, onSubmit
            
            <div>
              <label className="ds-field-label">Họ và tên</label>
-             <div className="relative">
-               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-               <input
-                 type="text"
-                 value={formData.name}
-                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                 className="ds-input pl-10"
-                 placeholder="Họ tên đầy đủ"
-               />
-             </div>
+<div className="relative flex items-center">
+                <User className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="ds-input pl-12"
+                  placeholder="Họ tên đầy đủ"
+                />
+              </div>
            </div>
            
            <div>
              <label className="ds-field-label">Email</label>
-             <div className="relative">
-               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+             <div className="relative flex items-center">
+               <Mail className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
                <input
                  type="email"
                  value={formData.email}
                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                 className="ds-input pl-10"
+                 className="ds-input pl-12"
                  placeholder="email@example.com"
                />
              </div>
@@ -62,13 +62,13 @@ export const NewAccountModal = ({ show, onClose, formData, setFormData, onSubmit
            
            <div>
              <label className="ds-field-label">Lớp</label>
-             <div className="relative">
-               <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+             <div className="relative flex items-center">
+               <GraduationCap className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
                <input
                  type="text"
                  value={formData.class}
                  onChange={(e) => setFormData({ ...formData, class: e.target.value })}
-                 className="ds-input pl-10"
+                 className="ds-input pl-12"
                  placeholder="VD: 12A1"
                />
              </div>
@@ -76,13 +76,13 @@ export const NewAccountModal = ({ show, onClose, formData, setFormData, onSubmit
            
            <div>
              <label className="ds-field-label">Ban</label>
-             <div className="relative">
-               <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+             <div className="relative flex items-center">
+               <Briefcase className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
                <input
                  type="text"
                  value={formData.deptName}
                  onChange={(e) => setFormData({ ...formData, deptName: e.target.value })}
-                 className="ds-input pl-10"
+                 className="ds-input pl-12"
                  placeholder="VD: Ban Sản Xuất Media"
                />
              </div>
@@ -90,13 +90,13 @@ export const NewAccountModal = ({ show, onClose, formData, setFormData, onSubmit
            
            <div>
              <label className="ds-field-label">Số điện thoại</label>
-             <div className="relative">
-               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+             <div className="relative flex items-center">
+               <Phone className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
                <input
                  type="text"
                  value={formData.phone}
                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                 className="ds-input pl-10"
+                 className="ds-input pl-12"
                  placeholder="Số điện thoại"
                />
              </div>
@@ -104,13 +104,13 @@ export const NewAccountModal = ({ show, onClose, formData, setFormData, onSubmit
            
            <div>
              <label className="ds-field-label">Ngày sinh</label>
-             <div className="relative">
-               <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+             <div className="relative flex items-center">
+               <Calendar className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
                <input
                  type="text"
                  value={formData.dob}
                  onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
-                 className="ds-input pl-10"
+                 className="ds-input pl-12"
                  placeholder="DD/MM/YYYY"
                />
              </div>
@@ -118,13 +118,13 @@ export const NewAccountModal = ({ show, onClose, formData, setFormData, onSubmit
            
            <div>
              <label className="ds-field-label">Địa chỉ</label>
-             <div className="relative">
-               <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+             <div className="relative flex items-center">
+               <MapPin className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
                <input
                  type="text"
                  value={formData.address}
                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                 className="ds-input pl-10"
+                 className="ds-input pl-12"
                  placeholder="Địa chỉ"
                />
              </div>
@@ -132,13 +132,13 @@ export const NewAccountModal = ({ show, onClose, formData, setFormData, onSubmit
            
            <div>
              <label className="ds-field-label">Facebook</label>
-             <div className="relative">
-               <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+             <div className="relative flex items-center">
+               <Globe className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
                <input
                  type="text"
                  value={formData.facebook}
                  onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
-                 className="ds-input pl-10"
+                 className="ds-input pl-12"
                  placeholder="Link Facebook"
                />
              </div>

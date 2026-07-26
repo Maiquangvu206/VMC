@@ -70,11 +70,11 @@ export const AttendanceModal = () => {
       });
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md animate-slide-up overflow-y-auto">
        <div className="ds-card-glass p-6 shadow-2xl text-white space-y-6 my-8 w-full max-w-2xl">
          
          {/* Header */}
-         <div className="flex justify-between items-center border-b border-white/[0.06] pb-4">
+         <div className="flex justify-between items-center border-b border-[var(--border-default)] pb-4">
            <div className="flex items-center gap-3">
              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold shrink-0">
                <UserCheck className="w-5 h-5" />
@@ -86,7 +86,7 @@ export const AttendanceModal = () => {
                </p>
              </div>
            </div>
-           <button onClick={() => setIsAttendanceModalOpen(false)} className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-white/[0.04] transition-all">
+           <button onClick={() => setIsAttendanceModalOpen(false)} className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-[var(--bg-hover)] transition-all">
              <X className="w-5 h-5" />
            </button>
          </div>
@@ -150,20 +150,20 @@ export const AttendanceModal = () => {
              </div>
 
              {/* Filter Bar */}
-             <div className="flex items-center gap-3">
-               <div className="flex items-center gap-2 flex-1">
-                 <Search className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                 <input
-                   type="text"
-                   placeholder="Tìm kiếm thành viên..."
-                   className="ds-input text-xs py-2"
-                   onChange={(e) => {
-                     const q = e.target.value.toLowerCase();
-                     // Filter is handled by attendanceFilter for now
-                   }}
-                 />
-               </div>
-               <select
+              <div className="flex items-center gap-3">
+                <div className="relative flex items-center w-full">
+                  <Search className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
+                  <input
+                    type="text"
+                    placeholder="Tìm kiếm thành viên..."
+                    className="ds-input text-xs py-2 pl-12"
+                    onChange={(e) => {
+                      const q = e.target.value.toLowerCase();
+                      // Filter is handled by attendanceFilter for now
+                    }}
+                  />
+                </div>
+                <select
                  value={attendanceFilter}
                  onChange={(e) => setAttendanceFilter(e.target.value)}
                  className="ds-input ds-select text-xs py-2"
@@ -191,7 +191,7 @@ export const AttendanceModal = () => {
                        className={`ds-card p-2.5 flex items-center gap-3 cursor-pointer transition-all ${
                          isChecked 
                            ? 'border-blue-500 text-white' 
-                           : 'border-white/[0.06] text-slate-400 hover:text-white'
+                           : 'border-[var(--border-default)] text-slate-400 hover:text-white'
                        }`}
                      >
                        <img src={m.avatar} alt={m.name} className="w-7 h-7 rounded-full object-cover shrink-0" />
@@ -211,7 +211,7 @@ export const AttendanceModal = () => {
                </div>
              </div>
 
-             <div className="pt-3 flex justify-end gap-2 border-t border-white/[0.06]">
+             <div className="pt-3 flex justify-end gap-2 border-t border-[var(--border-default)]">
                <button
                  type="button"
                  onClick={() => setIsAttendanceModalOpen(false)}
@@ -230,7 +230,7 @@ export const AttendanceModal = () => {
            </form>
          ) : (
            /* Non-HR Department Member View */
-           <div className="ds-card p-4 border border-white/10 text-center space-y-3">
+           <div className="ds-card p-4 border border-[var(--border-default)] text-center space-y-3">
              <div className="w-12 h-12 mx-auto rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center">
                <ShieldCheck className="w-6 h-6" />
              </div>
@@ -243,7 +243,7 @@ export const AttendanceModal = () => {
 
          {/* Section C: History Approved Attendance */}
          {approvedRecords.length > 0 && (
-           <div className="border-t border-white/[0.06] pt-4 space-y-3">
+           <div className="border-t border-[var(--border-default)] pt-4 space-y-3">
              <h4 className="font-bold text-white text-xs flex items-center gap-2">
                <CheckCircle className="w-4 h-4 text-emerald-400" />
                <span>Lịch Sử Buổi Điểm Danh Đã Được Duyệt</span>

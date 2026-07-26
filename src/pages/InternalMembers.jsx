@@ -285,16 +285,12 @@ export const InternalMembers = () => {
     <div className="page-wrap space-y-8 pb-20">
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-        <div>
-          <h1 className="font-heading text-3xl font-extrabold text-slate-100 mt-1 flex items-center gap-3">
-            <Users className="w-8 h-8 text-blue-400" />
-            Danh Sách Thành Viên
-          </h1>
-          <p className="text-sm text-slate-400 mt-2">
-            Tất cả thành viên có quyền tìm kiếm thông tin thành viên qua từng thời kỳ từ khóa sáng lập đến đương nhiệm.
-          </p>
-        </div>
+      <div className="flex flex-col items-center justify-center text-center gap-4">
+        <Users className="w-8 h-8 text-blue-400" />
+        <h1 className="font-heading text-3xl font-extrabold text-slate-100 mt-1">Danh Sách Thành Viên</h1>
+        <p className="text-sm text-slate-400 max-w-2xl">
+          Tất cả thành viên có quyền tìm kiếm thông tin thành viên qua từng thời kỳ từ khóa sáng lập đến đương nhiệm.
+        </p>
 
         <button
           onClick={() => {
@@ -316,16 +312,14 @@ export const InternalMembers = () => {
       <div className="ds-card-glass p-5 flex flex-col md:flex-row items-center gap-5 justify-between">
 
         {/* Search Input Box */}
-        <div className="relative w-full md:w-96 shrink-0">
-          <div className="absolute left-3.5 inset-y-0 flex items-center pointer-events-none">
-            <Search className="w-5 h-5 text-slate-400" />
-          </div>
+        <div className="relative flex items-center w-full md:w-96 shrink-0">
+          <Search className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Tìm kiếm theo Tên, Mã TV, Lớp, SĐT..."
-            className="ds-input"
+            className="ds-input pl-12 pr-10"
           />
           {searchQuery && (
             <div className="absolute right-3 inset-y-0 flex items-center">
@@ -438,7 +432,7 @@ export const InternalMembers = () => {
             </div>
 
             {/* Pinned Card Footer */}
-            <div className="mt-auto pt-4 border-t border-slate-700/50 flex items-center justify-between gap-2 shrink-0">
+            <div className="mt-auto pt-4 border-t border-[var(--border-default)] flex items-center justify-between gap-2 shrink-0">
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setSelectedMember(m)}

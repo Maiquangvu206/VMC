@@ -81,7 +81,7 @@ export const InternalDatabase = () => {
 
       {/* Database Status Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="ds-card p-5 rounded-2xl flex items-center gap-4">
+        <div className="ds-card p-5 flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center shrink-0">
             <Users className="w-6 h-6" />
           </div>
@@ -93,7 +93,7 @@ export const InternalDatabase = () => {
           </div>
         </div>
 
-        <div className="ds-card p-5 rounded-2xl flex items-center gap-4">
+        <div className="ds-card p-5 flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-amber-600/20 text-amber-400 flex items-center justify-center shrink-0">
             <CheckSquare className="w-6 h-6" />
           </div>
@@ -105,7 +105,7 @@ export const InternalDatabase = () => {
           </div>
         </div>
 
-        <div className="ds-card p-5 rounded-2xl flex items-center gap-4">
+        <div className="ds-card p-5 flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-cyan-600/20 text-cyan-400 flex items-center justify-center shrink-0">
             <Camera className="w-6 h-6" />
           </div>
@@ -117,7 +117,7 @@ export const InternalDatabase = () => {
           </div>
         </div>
 
-        <div className="ds-card p-5 rounded-2xl flex items-center gap-4">
+        <div className="ds-card p-5 flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center shrink-0">
             <FileText className="w-6 h-6" />
           </div>
@@ -131,7 +131,7 @@ export const InternalDatabase = () => {
       </div>
 
       {/* Database Management Tools */}
-      <div className="ds-card p-6 rounded-3xl border border-[var(--border-default)] space-y-6">
+      <div className="ds-card p-6 border border-[var(--border-default)] space-y-6">
         <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-4">
           <div className="flex items-center gap-3">
             <HardDrive className="w-6 h-6 text-blue-400" />
@@ -161,7 +161,7 @@ export const InternalDatabase = () => {
             </span>
           </div>
 
-          <pre className="p-4 rounded-2xl bg-slate-950 border border-[var(--border-default)] text-[11px] font-mono text-cyan-300 max-h-96 overflow-y-auto leading-relaxed">
+          <pre className="p-4 rounded-2xl bg-[var(--bg-primary)] border border-[var(--border-default)] text-[11px] font-mono text-cyan-300 max-h-96 overflow-y-auto leading-relaxed">
             {JSON.stringify(db, null, 2)}
           </pre>
         </div>

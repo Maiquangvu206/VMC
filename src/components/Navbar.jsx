@@ -75,19 +75,19 @@ export const Navbar = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-[#0b0f17]/80 backdrop-blur-2xl border-b border-white/[0.06] supports-[backdrop-filter]:bg-[#0b0f17]/70">
+    <header className="sticky top-0 z-50 bg-[var(--bg-primary)] backdrop-blur-2xl border-b border-[var(--border-subtle)] supports-[backdrop-filter]:bg-[var(--bg-primary)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
 
           {/* Brand Logo */}
           <div
             onClick={() => handleNavClick('dashboard')}
-            className="flex items-center gap-3 cursor-pointer group shrink-0"
+            className="flex flex-col items-center justify-center text-center cursor-pointer group shrink-0"
           >
-            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 border border-blue-500/30 shadow-lg shadow-blue-500/20 group-hover:scale-105 group-hover:shadow-blue-500/40 transition-all duration-300 overflow-hidden p-0.5 shrink-0">
+            <div className="relative w-10 h-10 rounded-xl bg-blue-600 border border-blue-500/30 shadow-lg shadow-blue-500/20 group-hover:scale-105 group-hover:shadow-blue-500/40 transition-all duration-300 overflow-hidden p-0.5 shrink-0">
               <img src="/vmc-logo.jpg" alt="VMC Logo" className="w-full h-full object-cover rounded-lg" />
             </div>
-            <div className="hidden sm:block">
+            <div className="hidden sm:block mt-1">
               <span className="font-heading font-black text-lg tracking-tight text-slate-100 block leading-none">
                 VMC PORTAL
               </span>
@@ -98,7 +98,7 @@ export const Navbar = () => {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-1 bg-slate-900/60 backdrop-blur-sm px-2.5 py-1.5 rounded-2xl border border-white/[0.06]">
+          <nav className="hidden lg:flex items-center gap-1 bg-[var(--bg-secondary)] backdrop-blur-sm px-2.5 py-1.5 rounded-2xl border border-[var(--border-subtle)]">
             {navItems.map(item => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -114,7 +114,7 @@ export const Navbar = () => {
                   } ${
                     isActive
                       ? 'bg-blue-600/20 text-blue-300 shadow-lg shadow-blue-500/10 border border-blue-500/30'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] border border-transparent'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-[var(--bg-hover)] border border-transparent'
                   }`}
                   title={isRestricted ? 'Chức năng chỉ dành cho Admin' : ''}
                 >
@@ -138,7 +138,7 @@ export const Navbar = () => {
             {/* Search Toggle */}
             <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
-              className="p-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-all"
+              className="p-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-[var(--bg-hover)] transition-all"
               title="Tìm kiếm"
             >
               <Search className="w-4 h-4" />
@@ -146,11 +146,11 @@ export const Navbar = () => {
 
             {/* Notification Bell */}
             <button
-              className="p-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-all relative"
+              className="p-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-[var(--bg-hover)] transition-all relative"
               title="Thông báo"
             >
               <Bell className="w-4 h-4" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full border-2 border-[#0b0f17]" />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full border-2 border-[var(--bg-primary)]" />
             </button>
 
             {/* User Profile */}
@@ -161,7 +161,7 @@ export const Navbar = () => {
               <button
                 onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
                 onMouseEnter={() => setIsUserDropdownOpen(true)}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-blue-500/30 hover:bg-white/[0.06] transition-all text-sm group"
+                className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] hover:border-blue-500/30 hover:bg-[var(--bg-hover)] transition-all text-sm group"
               >
                 <div className="relative">
                   <img
@@ -169,7 +169,7 @@ export const Navbar = () => {
                     alt={safeUser.name}
                     className="w-8 h-8 rounded-lg object-cover border-2 border-blue-500/20 group-hover:border-blue-500/50 transition-colors"
                   />
-                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#0b0f17]" />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[var(--bg-primary)]" />
                 </div>
                 <div className="text-left max-w-[120px] truncate hidden md:block">
                   <div className="font-semibold text-slate-200 text-xs truncate leading-tight">{safeUser.name}</div>
@@ -180,8 +180,8 @@ export const Navbar = () => {
 
               {/* Profile Dropdown */}
               {isUserDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-72 bg-slate-900/95 backdrop-blur-2xl border border-white/[0.08] rounded-2xl p-3 shadow-2xl z-50 animate-slide-up space-y-1.5">
-                  <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] space-y-1.5">
+                <div className="absolute right-0 mt-2 w-72 bg-[var(--bg-secondary)] backdrop-blur-2xl border border-[var(--border-subtle)] rounded-2xl p-3 shadow-2xl z-50 animate-slide-up space-y-1.5">
+                  <div className="p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] space-y-1.5">
                     <div className="flex items-center gap-3">
                       <img src={safeUser.avatar} alt={safeUser.name} className="w-10 h-10 rounded-xl object-cover border border-blue-500/20" />
                       <div className="min-w-0">
@@ -195,7 +195,7 @@ export const Navbar = () => {
                   {isHRMember && (
                     <button
                       onClick={() => { checkinAttendance(); setIsUserDropdownOpen(false); }}
-                      className="w-full flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500 hover:text-slate-950 font-semibold text-xs transition-all"
+                       className="w-full flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500 hover:text-[var(--bg-primary)] font-semibold text-xs transition-all"
                     >
                       <div className="flex items-center gap-2">
                         <UserCheck className="w-4 h-4" />
@@ -207,7 +207,7 @@ export const Navbar = () => {
 
                   <button
                     onClick={() => { setActiveTab('profile'); setIsUserDropdownOpen(false); }}
-                    className="w-full flex items-center gap-2.5 p-3 rounded-xl hover:bg-white/[0.04] text-slate-300 hover:text-slate-100 transition-all text-xs font-medium"
+                    className="w-full flex items-center gap-2.5 p-3 rounded-xl hover:bg-[var(--bg-hover)] text-slate-300 hover:text-slate-100 transition-all text-xs font-medium"
                   >
                     <User className="w-4 h-4" />
                     <span>Xem Hồ Sơ Thành Viên</span>
@@ -215,13 +215,13 @@ export const Navbar = () => {
 
                   <button
                     onClick={() => { setActiveTab('settings'); setIsUserDropdownOpen(false); }}
-                    className="w-full flex items-center gap-2.5 p-3 rounded-xl hover:bg-white/[0.04] text-slate-300 hover:text-slate-100 transition-all text-xs font-medium"
+                    className="w-full flex items-center gap-2.5 p-3 rounded-xl hover:bg-[var(--bg-hover)] text-slate-300 hover:text-slate-100 transition-all text-xs font-medium"
                   >
                     <Settings className="w-4 h-4" />
                     <span>Cài Đặt</span>
                   </button>
 
-                  <div className="border-t border-white/[0.06] my-1" />
+                  <div className="border-t border-[var(--border-subtle)] my-1" />
 
                   <button
                     onClick={() => { setIsUserDropdownOpen(false); logout(); }}
@@ -237,7 +237,7 @@ export const Navbar = () => {
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] border border-transparent hover:border-white/[0.06] transition-all shrink-0"
+              className="p-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-[var(--bg-hover)] border border-transparent hover:border-[var(--border-subtle)] transition-all shrink-0"
               title="Chuyển chế độ giao diện"
             >
               {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-blue-400" />}
@@ -246,7 +246,7 @@ export const Navbar = () => {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-all shrink-0"
+              className="lg:hidden p-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-[var(--bg-hover)] transition-all shrink-0"
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -256,16 +256,16 @@ export const Navbar = () => {
 
       {/* Search Bar (Expandable) */}
       {isSearchOpen && (
-        <div className="lg:hidden border-t border-white/[0.06] bg-[#0b0f17]/95 backdrop-blur-2xl px-4 py-3 animate-slide-up">
-          <div className="flex items-center gap-3 bg-slate-900/80 border border-white/[0.08] rounded-xl px-4 py-2.5">
-            <Search className="w-4 h-4 text-slate-500 shrink-0" />
+        <div className="lg:hidden border-t border-[var(--border-subtle)] bg-[var(--bg-primary)] backdrop-blur-2xl px-4 py-3 animate-slide-up">
+          <div className="relative flex items-center w-full bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-xl">
+            <Search className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
             <input
               type="text"
               placeholder="Tìm kiếm thành viên, công việc..."
-              className="flex-1 bg-transparent text-sm text-slate-200 placeholder-slate-500 outline-none"
+              className="flex-1 bg-transparent text-sm text-slate-200 placeholder-slate-500 outline-none pl-12"
               autoFocus
             />
-            <button onClick={() => setIsSearchOpen(false)} className="text-slate-500 hover:text-slate-300">
+            <button onClick={() => setIsSearchOpen(false)} className="absolute right-3 text-slate-500 hover:text-slate-300">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -274,7 +274,7 @@ export const Navbar = () => {
 
       {/* Mobile Drawer */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden bg-slate-900/95 backdrop-blur-2xl border-t border-white/[0.06] p-4 space-y-1.5 animate-slide-up">
+        <div className="lg:hidden bg-[var(--bg-secondary)] backdrop-blur-2xl border-t border-[var(--border-subtle)] p-4 space-y-1.5 animate-slide-up">
           {navItems.map(item => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -288,7 +288,7 @@ export const Navbar = () => {
                 } ${
                   isActive
                     ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
-                    : 'text-slate-300 hover:bg-white/[0.04] border border-transparent'
+                    : 'text-slate-300 hover:bg-[var(--bg-hover)] border border-transparent'
                 }`}
               >
                 <div className="flex items-center gap-3">

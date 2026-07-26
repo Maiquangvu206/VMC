@@ -85,21 +85,21 @@ export const InternalAdminSessions = () => {
     <div className="page-wrap px-4 sm:px-6 py-6 space-y-6">
       
       {/* Header Banner */}
-      <div className="ds-card p-6 rounded-3xl border border-cyan-500/30 relative overflow-hidden bg-gradient-to-r from-slate-900 via-slate-900/90 to-cyan-950/40">
+      <div className="ds-card p-6 border border-cyan-500/30 relative overflow-hidden bg-[var(--bg-primary)]">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative z-10">
-          <div className="flex items-center gap-3.5">
+          <div className="flex flex-col items-center justify-center text-center">
             <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-400 shrink-0 shadow-lg shadow-cyan-500/20">
               <ShieldCheck className="w-6 h-6" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
+            <div className="mt-3">
+              <div className="flex items-center justify-center gap-2">
                 <h1 className="font-heading font-black text-xl text-white tracking-tight">Quản Lý Phiên Làm Việc</h1>
                <span className="ds-badge ds-badge-cyan text-[10px] font-mono font-bold px-2 py-0.5">
                    Super Admin
-                 </span>
+                </span>
               </div>
               <p className="text-xs text-slate-400 mt-1">
-                Theo dõi toàn bộ các phiên đăng nhập, thiết bị di động/máy tính & cưỡng chế đăng xuất từ xa.
+                 Theo dõi toàn bộ các phiên đăng nhập, thiết bị di động/máy tính & cưỡng chế đăng xuất từ xa.
               </p>
             </div>
           </div>
@@ -122,7 +122,7 @@ export const InternalAdminSessions = () => {
 
       {/* Analytics Metric Cards - 3 Distinct Statuses */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-         <div className="ds-card p-4 rounded-2xl border border-emerald-500/30">
+         <div className="ds-card p-4 border border-emerald-500/30">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
             <span>Đang Hoạt Động</span>
             <Wifi className="w-4 h-4 text-emerald-400 animate-pulse" />
@@ -131,7 +131,7 @@ export const InternalAdminSessions = () => {
           <div className="text-[10px] text-slate-400 mt-1">Phiên đang kết nối thực tế</div>
         </div>
 
-         <div className="ds-card p-4 rounded-2xl border border-slate-700">
+         <div className="ds-card p-4 border border-slate-700">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
             <span>Kết Thúc Phiên</span>
             <Clock className="w-4 h-4 text-slate-400" />
@@ -140,7 +140,7 @@ export const InternalAdminSessions = () => {
           <div className="text-[10px] text-slate-400 mt-1">Tự đăng xuất hoặc hết hạn</div>
         </div>
 
-         <div className="ds-card p-4 rounded-2xl border border-rose-500/30">
+         <div className="ds-card p-4 border border-rose-500/30">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
             <span>Bị Hủy</span>
             <XCircle className="w-4 h-4 text-rose-400" />
@@ -149,7 +149,7 @@ export const InternalAdminSessions = () => {
           <div className="text-[10px] text-slate-400 mt-1">Admin cưỡng chế thu hồi</div>
         </div>
 
-         <div className="ds-card p-4 rounded-2xl border border-purple-500/30">
+         <div className="ds-card p-4 border border-purple-500/30">
           <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
             <span>Thiết Bị</span>
             <Monitor className="w-4 h-4 text-purple-400" />
@@ -168,14 +168,14 @@ export const InternalAdminSessions = () => {
 
       {/* Filter & Search Bar - 3 Status Filters */}
       <div className="ds-card p-4 flex flex-col sm:flex-row gap-3 items-center justify-between">
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+        <div className="relative flex items-center w-full">
+          <Search className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
           <input
             type="text"
             placeholder="Tìm theo tên, mã TV, địa chỉ IP..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="ds-input"
+            className="ds-input pl-12"
           />
         </div>
 
@@ -249,7 +249,7 @@ export const InternalAdminSessions = () => {
                   const isRecent = lastActiveDate && ((now - lastActiveDate) / (1000 * 60)) <= 5;
 
                   return (
-                    <tr key={s.id} className={`hover:bg-white/5 transition-all ${isCurrent ? 'bg-cyan-500/10' : ''}`}>
+                    <tr key={s.id} className={isCurrent ? 'bg-cyan-500/10' : ''}>
                       <td>
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold font-heading shrink-0 border border-blue-500/30">

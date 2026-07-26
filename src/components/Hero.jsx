@@ -9,13 +9,13 @@ export const Hero = () => {
   return (
     <section className="relative pt-8 pb-16 overflow-hidden">
       {/* Background Ambient Glows */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-gradient-to-tr from-blue-600/15 via-sky-500/10 to-cyan-400/15 blur-[150px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-purple-600/8 blur-[120px] rounded-full pointer-events-none" />
+       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-blue-600/15 blur-[150px] rounded-full pointer-events-none" />
+       <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-purple-600/10 blur-xl rounded-full pointer-events-none" />
 
       <div className="page-wrap relative z-10 text-center max-w-4xl mx-auto space-y-8">
         
         {/* Official Affiliation Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs font-semibold">
+        <div className="ds-badge bg-blue-500/10 border border-blue-500/20 text-blue-300 normal-case gap-2">
           <ShieldCheck className="w-3.5 h-3.5" />
           <span>Trực thuộc Đoàn TNCS Hồ Chí Minh Trường THPT Vĩnh Bảo</span>
         </div>

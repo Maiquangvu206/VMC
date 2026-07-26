@@ -14,7 +14,7 @@ export const MembersPage = () => {
       
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto space-y-3">
-        <span className="badge badge-purple">Gia Đình VMC</span>
+        <span className="ds-badge ds-badge-purple">Gia Đình VMC</span>
         <h1 className="font-heading text-4xl font-extrabold text-white">
           Đội Ngũ & <span className="gradient-text">Ban Điều Hành</span>
         </h1>
@@ -35,11 +35,7 @@ export const MembersPage = () => {
           <button
             key={tab.id}
             onClick={() => setSelectedDept(tab.id)}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-              selectedDept === tab.id
-                ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
-                : 'bg-slate-900/60 text-slate-300 hover:bg-slate-800 border border-white/5'
-            }`}
+            className={`ds-btn ${selectedDept === tab.id ? 'ds-btn-primary' : 'ds-btn-secondary'} px-4 py-2 text-xs font-semibold transition-all`}
           >
             {tab.label}
           </button>
@@ -51,15 +47,15 @@ export const MembersPage = () => {
         {filteredMembers.map(m => (
           <div
             key={m.id}
-            className="ds-card p-6 rounded-2xl border border-white/10 text-center space-y-4 hover:border-purple-500/40 group"
+            className="ds-card p-6 text-center space-y-4 hover:border-purple-500/40 group"
           >
-            <div className="relative w-28 h-28 mx-auto rounded-full p-1 bg-gradient-to-tr from-purple-600 via-pink-500 to-cyan-400">
+            <div className="relative w-28 h-28 mx-auto rounded-full p-1 bg-gradient-to-r from-purple-600 to-pink-600">
               <img
                 src={m.avatar}
                 alt={m.name}
                 className="w-full h-full object-cover rounded-full"
               />
-              <span className="absolute bottom-0 right-0 p-1.5 rounded-full bg-slate-900 border border-purple-500 text-amber-400" title="Điểm đóng góp">
+                <span className="absolute bottom-0 right-0 p-1.5 rounded-full bg-[var(--bg-primary)] border border-purple-500 text-amber-400" title="Điểm đóng góp">
                 <Award className="w-4 h-4" />
               </span>
             </div>
@@ -75,7 +71,7 @@ export const MembersPage = () => {
               "{m.bio}"
             </p>
 
-            <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
+            <div className="pt-3 border-t border-[var(--border-default)] flex items-center justify-between text-xs text-slate-400">
               <span>Điểm thi đua: <strong className="text-white font-mono">{m.points} PTS</strong></span>
               <button
                 onClick={() => alert(`Xem Portfolio cá nhân của ${m.name}`)}

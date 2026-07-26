@@ -196,16 +196,16 @@ export const InternalDashboard = () => {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8 pb-20">
+    <div className="page-wrap py-6 space-y-8 pb-20">
 
       {/* Welcome Banner */}
-      <div className="ds-card-glass p-6 sm:p-8 relative overflow-hidden">
+      <div className="ds-card p-6 sm:p-8 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 blur-3xl rounded-full pointer-events-none" />
 
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
 
           <div className="flex items-center gap-4">
-            <div className="relative w-16 h-16 rounded-2xl overflow-hidden p-0.5 bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 shrink-0 shadow-lg shadow-blue-500/20">
+            <div className="relative w-16 h-16 rounded-2xl overflow-hidden p-0.5 bg-blue-500 shrink-0 shadow-lg shadow-blue-500/20">
               <img src={safeUser.avatar} alt={safeUser.name} className="w-full h-full object-cover rounded-xl" />
             </div>
 
@@ -214,7 +214,7 @@ export const InternalDashboard = () => {
                 <h1 className="font-heading text-2xl sm:text-3xl font-extrabold text-slate-100">
                   Xin chào, {safeUser.name}!
                 </h1>
-                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/30 flex items-center gap-1.5">
+                <span className="ds-badge ds-badge-blue font-semibold flex items-center gap-1.5">
                   <ShieldCheck className="w-3.5 h-3.5" /> {safeUser.roleTitle}
                 </span>
               </div>
@@ -252,7 +252,7 @@ export const InternalDashboard = () => {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-6 border-t border-white/[0.06]">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-6 border-t border-[var(--border-default)]">
           {statCards.map((stat, idx) => {
             const Icon = stat.icon;
             return (
@@ -288,7 +288,7 @@ export const InternalDashboard = () => {
                   setMembersFilterDept(dept.name);
                   setActiveTab('members');
                 }}
-                className="ds-card-glass p-6 cursor-pointer group flex flex-col justify-between hover:border-blue-500/50 transition-all"
+                className="ds-card p-6 cursor-pointer group flex flex-col justify-between hover:border-blue-500/50 transition-all"
               >
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
@@ -324,7 +324,7 @@ export const InternalDashboard = () => {
         <div className="lg:col-span-2 space-y-8">
 
           {/* Active Tasks */}
-          <div className="ds-card-glass p-6 space-y-6">
+          <div className="ds-card p-6 space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
@@ -351,7 +351,7 @@ export const InternalDashboard = () => {
                   className="ds-card p-5 space-y-3 transition-all"
                 >
                   <div className="flex items-center justify-between text-sm">
-                    <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/30">{task.department?.toUpperCase?.()}</span>
+                    <span className="ds-badge ds-badge-blue font-semibold">{task.department?.toUpperCase?.()}</span>
                     <span className="text-slate-400 font-mono">Hạn: {task.deadline}</span>
                   </div>
                   <h3 className="font-heading font-bold text-base text-slate-100">{task.title}</h3>
@@ -362,7 +362,7 @@ export const InternalDashboard = () => {
           </div>
 
           {/* Pending Drafts */}
-          <div className="ds-card-glass p-6 space-y-6">
+          <div className="ds-card p-6 space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
@@ -395,7 +395,7 @@ export const InternalDashboard = () => {
                     </span>
                   </div>
                   <h3 className="font-heading font-bold text-base text-slate-100">{draft.title}</h3>
-                  <p className="text-sm text-slate-400 line-clamp-2 italic ds-card p-4 border border-white/[0.06]">
+                  <p className="text-sm text-slate-400 line-clamp-2 italic ds-card p-4 border border-[var(--border-default)]">
                     "{draft.content}"
                   </p>
                 </div>
@@ -409,7 +409,7 @@ export const InternalDashboard = () => {
         <div className="space-y-8">
 
           {/* Announcements */}
-          <div className="ds-card-glass p-6 space-y-6">
+          <div className="ds-card p-6 space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
@@ -423,7 +423,7 @@ export const InternalDashboard = () => {
               {canManageAnnouncements && (
                 <button
                   onClick={() => setIsAnnModalOpen(true)}
-                  className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-slate-100 font-semibold text-xs shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2"
+                  className="ds-btn ds-btn-primary ds-btn-xs"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Đăng Thông Báo</span>
@@ -470,8 +470,8 @@ export const InternalDashboard = () => {
       {/* Announcement Modal */}
       {isAnnModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-          <div className="ds-card-glass p-6 w-full max-w-lg shadow-2xl text-white space-y-6 border border-blue-500/30">
-            <div className="flex items-center justify-between pb-4 border-b border-white/[0.06]">
+          <div className="ds-card p-6 w-full max-w-lg shadow-2xl text-white space-y-6 border border-blue-500/30">
+            <div className="flex items-center justify-between pb-4 border-b border-[var(--border-default)]">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
                   <Bell className="w-5 h-5" />
@@ -529,7 +529,7 @@ export const InternalDashboard = () => {
                 </label>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-white/[0.06]">
+              <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border-default)]">
                 <button
                   type="button"
                   onClick={() => setIsAnnModalOpen(false)}

@@ -29,7 +29,7 @@ class ErrorBoundary extends React.Component {
             <p className="text-sm text-slate-400">
               Đã có lỗi xảy ra khi tải trang. Vui lòng tải lại trang hoặc đăng xuất rồi đăng nhập lại.
             </p>
-            <div className="p-4 rounded-xl bg-slate-950 border border-[var(--border-default)] text-left text-xs text-red-400 font-mono max-h-[300px] overflow-y-auto">
+             <div className="p-4 rounded-xl bg-[var(--bg-primary)] border border-[var(--border-default)] text-left text-xs text-red-400 font-mono max-h-[300px] overflow-y-auto">
               <div className="font-bold text-red-400 mb-2">Lỗi: {errorMessage}</div>
               {errorStack && <div className="text-slate-400">{errorStack}</div>}
             </div>

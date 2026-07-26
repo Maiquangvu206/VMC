@@ -66,17 +66,17 @@ export const GalleryPage = () => {
            ))}
          </div>
 
-         {/* Search Input */}
-         <div className="relative w-full md:w-64">
-           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-           <input
-             type="text"
-             value={searchQuery}
-             onChange={(e) => setSearchQuery(e.target.value)}
-             placeholder="Tìm tác giả, tác phẩm..."
-             className="ds-input"
-           />
-         </div>
+{/* Search Input */}
+          <div className="relative flex items-center w-full">
+            <Search className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Tìm tác giả, tác phẩm..."
+              className="ds-input pl-12"
+            />
+          </div>
 
        </div>
 
@@ -94,7 +94,7 @@ export const GalleryPage = () => {
                 alt={work.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-primary)] to-transparent opacity-80" />
               <span className="ds-badge ds-badge-purple">
                 {work.category}
               </span>
@@ -107,7 +107,7 @@ export const GalleryPage = () => {
 
               <div className="flex flex-wrap gap-1">
                 {work.tags.map((tag, idx) => (
-                  <span key={idx} className="text-[10px] bg-slate-950 text-slate-400 px-2 py-0.5 rounded border border-[var(--border-default)]">
+                  <span key={idx} className="text-[10px] bg-[var(--bg-primary)] text-slate-400 px-2 py-0.5 rounded border border-[var(--border-default)]">
                     #{tag}
                   </span>
                 ))}
@@ -140,7 +140,7 @@ export const GalleryPage = () => {
 
       {/* Modal View Detail */}
       {selectedWork && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-slide-up">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--bg-primary)]/85 backdrop-blur-md animate-slide-up">
           <div className="ds-card p-6 w-full max-w-4xl shadow-2xl text-white grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[90vh] overflow-y-auto">
             
             <button
@@ -151,7 +151,7 @@ export const GalleryPage = () => {
             </button>
 
             {/* Left Image */}
-            <div className="relative rounded-2xl overflow-hidden bg-slate-950 h-full min-h-[300px]">
+            <div className="relative rounded-2xl overflow-hidden bg-[var(--bg-primary)] h-full min-h-[300px]">
               <img src={selectedWork.image} alt={selectedWork.title} className="w-full h-full object-cover" />
             </div>
 
@@ -169,7 +169,7 @@ export const GalleryPage = () => {
                   </div>
                 </div>
 
-                <p className="text-xs text-slate-300 leading-relaxed p-3 rounded-xl bg-slate-800/50 border border-[var(--border-default)]">
+                <p className="text-xs text-slate-300 leading-relaxed p-3 ds-card border border-[var(--border-default)]">
                   {selectedWork.desc}
                 </p>
 
@@ -199,7 +199,7 @@ export const GalleryPage = () => {
 
                 <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
                   {selectedWork.comments.map((c, idx) => (
-                    <div key={idx} className="bg-slate-950/60 p-2.5 rounded-lg text-xs space-y-0.5">
+                    <div key={idx} className="ds-card p-2.5 rounded-lg text-xs space-y-0.5">
                       <span className="font-bold text-purple-400">{c.user}: </span>
                       <span className="text-slate-300">{c.text}</span>
                     </div>

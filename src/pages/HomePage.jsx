@@ -32,7 +32,7 @@ export const HomePage = () => {
   };
 
   return (
-    <div className="space-y-16 pb-20">
+    <div className="page-wrap space-y-16 pb-20">
       {/* Hero Section */}
       <Hero />
 
@@ -112,7 +112,7 @@ export const HomePage = () => {
                   alt={work.title}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent opacity-80" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-primary)] to-transparent opacity-80" />
                 <span className="ds-badge ds-badge-purple">
                   {work.category}
                 </span>
@@ -123,7 +123,7 @@ export const HomePage = () => {
                   {work.title}
                 </h3>
                 
-                <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-white/10">
+                <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-[var(--border-default)]">
                   <div className="flex items-center gap-2">
                     <img src={work.avatar} alt={work.author} className="w-6 h-6 rounded-full object-cover" />
                     <span>{work.author}</span>
@@ -189,7 +189,7 @@ export const HomePage = () => {
 
       {/* Lightbox Detail Modal */}
       {selectedWork && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md animate-slide-up">
           <div className="ds-card-glass p-6 w-full max-w-3xl shadow-2xl text-white space-y-4">
             <button
               onClick={() => setSelectedWork(null)}

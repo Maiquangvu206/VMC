@@ -70,6 +70,15 @@ export const DashboardPage = () => {
     music: Music
   };
 
+  const iconColorMap = { blue: 'text-blue-400', purple: 'text-purple-400', amber: 'text-amber-400', cyan: 'text-cyan-400' };
+  const deptColorMap = {
+    purple: 'bg-purple-500/10 text-purple-400 border-purple-500/20 group-hover:bg-purple-500',
+    cyan: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20 group-hover:bg-cyan-500',
+    blue: 'bg-blue-500/10 text-blue-400 border-blue-500/20 group-hover:bg-blue-500',
+    emerald: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 group-hover:bg-emerald-500',
+    amber: 'bg-amber-500/10 text-amber-400 border-amber-500/20 group-hover:bg-amber-500',
+  };
+
   return (
     <div className="page-wrap py-8 space-y-8 pb-20">
       
@@ -116,14 +125,14 @@ export const DashboardPage = () => {
         </div>
 
         {/* Stats Strip */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-8 pt-6 border-t border-white/10">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-8 pt-6 border-t border-[var(--border-default)]">
           {statCards.map((stat, idx) => {
             const Icon = stat.icon;
             return (
-              <div key={idx} className="bg-slate-900/60 p-4 rounded-xl border border-white/5 hover:border-white/10 transition-all">
+              <div key={idx} className="ds-card p-4 hover:border-[var(--border-hover)] transition-all">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-slate-400 font-medium">{stat.label}</span>
-                  <Icon className={`w-4 h-4 text-${stat.color}-400`} />
+                  <Icon className={`w-4 h-4 ${iconColorMap[stat.color]}`} />
                 </div>
                 <div className="font-heading font-extrabold text-2xl text-white font-mono mt-1">
                   {stat.value}<span className="text-sm text-slate-400 font-normal ml-1">{stat.suffix}</span>
@@ -157,7 +166,7 @@ export const DashboardPage = () => {
                 className="ds-card p-5 rounded-2xl hover:border-blue-500/40 transition-all group cursor-pointer"
               >
                 <div className="flex items-center justify-between mb-3">
-                  <div className={`w-10 h-10 rounded-xl bg-${dept.color}-500/10 text-${dept.color}-400 flex items-center justify-center border border-${dept.color}-500/20 group-hover:bg-${dept.color}-500 group-hover:text-white transition-all`}>
+                  <div className={`w-10 h-10 rounded-xl ${deptColorMap[dept.color]} group-hover:text-white transition-all`}>
                     <Icon className="w-5 h-5" />
                   </div>
                   <span className="ds-badge ds-badge-blue text-[10px]">
@@ -185,7 +194,7 @@ export const DashboardPage = () => {
           {(user?.badges || []).map((badge, idx) => (
             <div
               key={idx}
-              className="ds-card p-4 rounded-xl border border-white/10 flex items-center gap-3 hover:border-amber-500/30 transition-all"
+              className="ds-card p-4 rounded-xl border border-[var(--border-default)] flex items-center gap-3 hover:border-amber-500/30 transition-all"
             >
               <div className="w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
                 <Sparkles className="w-5 h-5" />
@@ -213,7 +222,7 @@ export const DashboardPage = () => {
           {displayResources.map(res => (
             <div
               key={res.id}
-              className="ds-card p-5 rounded-2xl border border-white/10 flex flex-col justify-between space-y-4 hover:border-purple-500/30 transition-all"
+              className="ds-card p-5 rounded-2xl border border-[var(--border-default)] flex flex-col justify-between space-y-4 hover:border-purple-500/30 transition-all"
             >
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
@@ -238,7 +247,7 @@ export const DashboardPage = () => {
       </div>
 
       {/* Thông báo nội bộ */}
-      <div className="ds-card p-6 rounded-2xl border border-white/10 space-y-4">
+      <div className="ds-card p-6 rounded-2xl border border-[var(--border-default)] space-y-4">
         <h3 className="font-heading font-bold text-lg text-white flex items-center gap-2">
           <Bell className="w-5 h-5 text-pink-400" />
           <span>Thông Báo Nội Bộ Ban Chủ Nhiệm</span>
@@ -250,7 +259,7 @@ export const DashboardPage = () => {
             { date: "Hôm qua", title: "Nhắc nhở nộp tác phẩm cho số Tạp chí Photobook Tháng 8 trước 23:59", tag: "IMPORTANT" },
             { date: "18/07", title: "Kết quả chấm giải Phim Ngắn Fest 2026 đã được cập nhật trên trang chủ", tag: "INFO" }
           ].map((notice, idx) => (
-            <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-950/60 text-xs border border-white/5 hover:border-white/10 transition-all">
+            <div key={idx} className="flex items-center justify-between p-3 ds-card text-xs border border-[var(--border-default)] hover:border-[var(--border-hover)] transition-all">
               <div className="flex items-center gap-3">
                 <span className="text-slate-400 font-mono shrink-0">{notice.date}</span>
                 <span className="text-slate-200 font-medium line-clamp-1">{notice.title}</span>

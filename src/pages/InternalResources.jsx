@@ -163,11 +163,9 @@ export const InternalResources = () => {
 
       {/* Section 1: Thư Mục Google Drive Trực Tiếp Của Từng Ban */}
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="font-heading text-2xl font-extrabold text-slate-100 flex items-center gap-3">
-            <FolderOpen className="w-6 h-6 text-amber-400" />
-            <span>Thư Mục Google Drive Trực Tiếp Từng Ban</span>
-          </h2>
+        <div className="flex flex-col items-center justify-center text-center gap-2">
+          <FolderOpen className="w-6 h-6 text-amber-400" />
+          <h2 className="font-heading text-2xl font-bold text-slate-100">Thư Mục Google Drive Trực Tiếp Từng Ban</h2>
           <span className="text-sm text-slate-400">Click để mở trực tiếp Folder Drive của Ban</span>
         </div>
 
@@ -179,7 +177,7 @@ export const InternalResources = () => {
             >
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="w-12 h-12 rounded-xl bg-slate-800/50 border border-slate-700/50 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <div className="w-12 h-12 ds-card border border-[var(--border-default)] flex items-center justify-center group-hover:scale-110 transition-transform">
                     {getDeptIcon(dept.icon)}
                   </div>
                   
@@ -218,30 +216,28 @@ export const InternalResources = () => {
         </div>
       </div>
 
-      <hr className="border-slate-800" />
+      <hr className="border-[var(--border-default)]" />
 
       {/* Section 2: Kho File & Tài Nguyên Chi Tiết */}
       <div className="space-y-6">
         
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-6">
           
-          <div>
-            <h2 className="font-heading text-2xl font-bold text-slate-100 flex items-center gap-3">
-              <HardDrive className="w-6 h-6 text-cyan-400" />
-              <span>Kho File Chi Tiết & Tài Nguyên Theo Ban</span>
-            </h2>
+          <div className="flex flex-col items-center justify-center text-center gap-1">
+            <HardDrive className="w-6 h-6 text-cyan-400" />
+            <h2 className="font-heading text-2xl font-bold text-slate-100">Kho File Chi Tiết & Tài Nguyên Theo Ban</h2>
             <p className="text-sm text-slate-400 mt-2">Danh sách các file lẻ, Preset, Template PSD được phân loại theo Ban</p>
           </div>
 
           {/* Search Bar */}
-          <div className="relative min-w-[320px]">
-            <Search className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <div className="relative flex items-center w-full">
+            <Search className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
             <input
               type="text"
               placeholder="Tìm file, loại định dạng, người đăng..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="ds-input"
+              className="ds-input pl-12 pr-10"
             />
             {searchTerm && (
               <button 
@@ -280,7 +276,7 @@ export const InternalResources = () => {
           </div>
 
           {/* Category Filter Pills */}
-          <div className="flex items-center gap-3 overflow-x-auto pt-2 scrollbar-none border-t border-slate-700/50">
+          <div className="flex items-center gap-3 overflow-x-auto pt-2 scrollbar-none border-t border-[var(--border-default)]">
             <span className="text-sm font-semibold text-slate-400 whitespace-nowrap pr-2">Loại Dữ Liệu:</span>
             {categories.map(cat => (
               <button
@@ -335,7 +331,7 @@ export const InternalResources = () => {
                   )}
                 </div>
 
-                <div className="pt-4 border-t border-slate-700/50 flex items-center gap-3">
+                <div className="pt-4 border-t border-[var(--border-default)] flex items-center gap-3">
                   <button
                     onClick={() => handleOpenDrive(res.driveUrl)}
                     className="ds-btn ds-btn-primary flex-1"
@@ -361,10 +357,10 @@ export const InternalResources = () => {
 
       {/* Modal: Thêm Tài Nguyên Mới vào Kho Drive Ban */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md">
           <div className="relative w-full max-w-lg ds-card ds-card-elevated border border-blue-500/30 p-6 sm:p-8 shadow-2xl space-y-6 text-white animate-slide-up">
             
-            <div className="flex items-center justify-between pb-4 border-b border-slate-700/50">
+            <div className="flex items-center justify-between pb-4 border-b border-[var(--border-default)]">
               <div className="flex items-center gap-3">
                 <Cloud className="w-6 h-6 text-cyan-400" />
                 <h3 className="font-heading font-bold text-lg text-slate-100">Thêm File Vào Kho Drive Của Ban</h3>
@@ -470,7 +466,7 @@ export const InternalResources = () => {
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-700/50">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border-default)]">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
@@ -495,7 +491,7 @@ export const InternalResources = () => {
 
       {/* Modal: Sửa Link Google Drive Gốc Của Ban */}
       {editingDept && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md">
           <div className="relative w-full max-w-md ds-card ds-card-elevated border border-amber-500/40 p-6 sm:p-8 shadow-2xl space-y-6 text-white animate-slide-up">
             
             <div className="flex items-center justify-between pb-4 border-b border-[var(--border-default)]">

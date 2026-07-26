@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useClub } from '../context/ClubContext';
-import { Lock, User, AlertCircle, ArrowRight, Laptop, Crown, Eye, EyeOff } from 'lucide-react';
+import { Lock, User, AlertCircle, ArrowRight, Eye, EyeOff } from 'lucide-react';
 
 export const LoginModal = () => {
   const { login } = useClub();
@@ -28,67 +28,65 @@ export const LoginModal = () => {
     }
   };
 
-  const handleAdminQuickLogin = async () => {
-    setMemberCodeInput('ADMIN');
-    setPasswordInput('admin123');
-    setErrorMessage('');
-    await login('ADMIN', 'admin123');
-  };
-
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 bg-[var(--bg-primary)] text-slate-200 relative overflow-hidden font-sans">
        
        {/* Ambient Radial Background Glow */}
        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] bg-blue-600/15 blur-[140px] rounded-full pointer-events-none" />
 
-       {/* Main Login Card (max-w-md w-full) */}
-       <div className="relative w-full max-w-md ds-card p-6 sm:p-8 shadow-2xl space-y-6">
-        
-        {/* 1. Header Branding & Logo */}
-        <div className="text-center space-y-3">
-          {/* VMC Brand Badge */}
-          <div className="w-20 h-20 mx-auto rounded-full bg-[#0a1128] border-2 border-cyan-400/80 shadow-xl shadow-cyan-500/20 overflow-hidden p-1">
-            <img src="/vmc-logo.jpg" alt="VMC Logo" className="w-full h-full object-cover rounded-full" />
-          </div>
+       {/* Main Login Card */}
+       <div className="relative w-full max-w-md mx-auto ds-card p-8 sm:p-10 shadow-2xl">
+         
+         {/* Header: Logo + Title */}
+         <div className="mb-8 flex flex-col items-center text-center">
+           {/* VMC Brand Logo */}
+           <div className="w-20 h-20 rounded-full p-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 shadow-lg shadow-blue-500/30">
+             <img src="/vmc-logo.jpg" alt="VMC Logo" className="w-full h-full object-cover rounded-full bg-[var(--bg-input)]" />
+           </div>
 
-          <div>
-            <h2 className="text-2xl font-black tracking-tight text-white">
-              CỔNG ĐĂNG NHẬP NỘI BỘ
-            </h2>
-            <p className="text-xs text-slate-400 mt-1">
-              CLB Truyền Thông Trường THPT Vĩnh Bảo (VMC Portal)
-            </p>
-          </div>
-        </div>
+           <div className="mt-3">
+             <h2 className="text-2xl font-bold tracking-wide uppercase text-white mb-2">
+               CỔNG ĐĂNG NHẬP NỘI BỘ
+             </h2>
+             <p className="text-xs text-slate-400 font-normal mb-8">
+               CLB Truyền Thông Trường THPT Vĩnh Bảo (VMC Portal)
+             </p>
+           </div>
+         </div>
 
          {/* Error Alert */}
          {errorMessage && (
-           <div className="ds-card p-3.5 border border-red-500/30 bg-red-500/10 text-red-400 text-xs font-semibold flex items-center gap-2 animate-slide-up">
+           <div className="ds-card p-3.5 border border-red-500/30 bg-red-500/10 text-red-400 text-xs font-semibold flex items-center gap-2 animate-slide-up mb-5">
              <AlertCircle className="w-4 h-4 shrink-0" />
              <span>{errorMessage}</span>
            </div>
          )}
 
-         {/* 3. Form Đăng Nhập */}
-         <form onSubmit={handleFormSubmit} className="space-y-4">
+         {/* Form Đăng Nhập */}
+         <form onSubmit={handleFormSubmit} className="flex flex-col gap-6">
+           {/* Mã Thành Viên */}
            <div>
-             <label className="ds-field-label flex items-center gap-1.5">
-               <User className="w-3.5 h-3.5 text-cyan-400 shrink-0" /> Mã Thành Viên *
+             <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2 block">
+               Mã Thành Viên <span className="text-rose-500">*</span>
              </label>
-             <input
-               type="text"
-               required
-               value={memberCodeInput}
-               onChange={(e) => setMemberCodeInput(e.target.value)}
-               placeholder="Nhập Mã Thành Viên..."
-               className="ds-input uppercase"
-             />
+             <div className="relative flex items-center w-full">
+               <User className="ds-input-icon text-cyan-400" />
+               <input
+                 type="text"
+                 required
+                 value={memberCodeInput}
+                 onChange={(e) => setMemberCodeInput(e.target.value)}
+                 placeholder="NHẬP MÃ THÀNH VIÊN..."
+                 className="ds-input pl-12 w-full placeholder:text-xs placeholder:tracking-wider placeholder:text-slate-500"
+               />
+             </div>
            </div>
 
+           {/* Mật Khẩu */}
            <div>
-             <div className="flex justify-between items-center mb-1.5">
-               <label className="ds-field-label flex items-center gap-1.5">
-                 <Lock className="w-3.5 h-3.5 text-cyan-400 shrink-0" /> Mật Khẩu *
+             <div className="flex items-center justify-between mb-2">
+               <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
+                 Mật Khẩu <span className="text-rose-500">*</span>
                </label>
                <button
                  type="button"
@@ -98,19 +96,20 @@ export const LoginModal = () => {
                  Quên mật khẩu?
                </button>
              </div>
-             <div className="relative flex items-center">
+             <div className="relative flex items-center w-full">
+               <Lock className="ds-input-icon text-cyan-400" />
                <input
                  type={showPassword ? 'text' : 'password'}
                  required
                  value={passwordInput}
                  onChange={(e) => setPasswordInput(e.target.value)}
                  placeholder="••••••••••••"
-                 className="ds-input pl-4 pr-12"
+                 className="ds-input pl-12 pr-4 w-full placeholder:text-xs placeholder:tracking-wider placeholder:text-slate-500"
                />
                <button
                  type="button"
                  onClick={() => setShowPassword(!showPassword)}
-                 className="absolute inset-y-0 right-0 pr-4 flex items-center justify-center text-slate-400 hover:text-slate-200 focus:outline-none"
+                 className="absolute right-4 z-10 flex items-center justify-center text-slate-400 hover:text-slate-200 focus:outline-none"
                >
                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                </button>
@@ -129,14 +128,14 @@ export const LoginModal = () => {
 
            <button
              type="submit"
-             className="ds-btn ds-btn-primary w-full"
+             className="ds-btn ds-btn-primary w-full py-3 flex items-center justify-center gap-2 text-sm"
            >
              <span>Đăng Nhập VMC Portal</span>
              <ArrowRight className="w-4 h-4" />
            </button>
          </form>
 
-      </div>
+       </div>
     </div>
   );
 };

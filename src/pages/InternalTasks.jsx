@@ -141,7 +141,7 @@ export const InternalTasks = () => {
         
         {/* Column 1: Cần Thực Hiện (To Do) */}
         <div className="ds-card p-5 space-y-4">
-          <div className="ds-section-header pb-4 border-b border-slate-700/50 mb-0">
+          <div className="ds-section-header pb-4 border-b border-[var(--border-default)] mb-0">
             <h3 className="font-heading font-bold text-base text-amber-400 flex items-center gap-2">
               <Clock className="w-5 h-5" />
               <span>CẦN LÀM ({todoTasks.length})</span>
@@ -171,7 +171,7 @@ export const InternalTasks = () => {
                   <h4 className="font-heading font-bold text-base text-slate-100">{task.title}</h4>
                   <p className="text-sm text-slate-400 line-clamp-2">{task.desc}</p>
 
-                  <div className="pt-4 border-t border-slate-700/50 flex items-center justify-between text-sm">
+                  <div className="pt-4 border-t border-[var(--border-default)] flex items-center justify-between text-sm">
                     <span className="text-slate-300 font-semibold">{getTaskAssignee(task)}</span>
                     <button
                       onClick={() => updateTaskStatus(task.id, 'doing')}
@@ -188,7 +188,7 @@ export const InternalTasks = () => {
 
         {/* Column 2: Đang Thực Hiện (Doing) */}
         <div className="ds-card p-5 space-y-4">
-          <div className="ds-section-header pb-4 border-b border-slate-700/50 mb-0">
+          <div className="ds-section-header pb-4 border-b border-[var(--border-default)] mb-0">
             <h3 className="font-heading font-bold text-base text-blue-400 flex items-center gap-2">
               <CheckSquare className="w-5 h-5" />
               <span>ĐANG LÀM ({doingTasks.length})</span>
@@ -218,7 +218,7 @@ export const InternalTasks = () => {
                   <h4 className="font-heading font-bold text-base text-slate-100">{task.title}</h4>
                   <p className="text-sm text-slate-400 line-clamp-2">{task.desc}</p>
 
-                  <div className="pt-4 border-t border-slate-700/50 flex items-center justify-between text-sm">
+                  <div className="pt-4 border-t border-[var(--border-default)] flex items-center justify-between text-sm">
                     <span className="text-slate-300 font-semibold">{getTaskAssignee(task)}</span>
                     <button
                       onClick={() => updateTaskStatus(task.id, 'done')}
@@ -235,7 +235,7 @@ export const InternalTasks = () => {
 
         {/* Column 3: Hoàn Thành (Done) */}
         <div className="ds-card p-5 space-y-4">
-          <div className="ds-section-header pb-4 border-b border-slate-700/50 mb-0">
+          <div className="ds-section-header pb-4 border-b border-[var(--border-default)] mb-0">
             <h3 className="font-heading font-bold text-base text-emerald-400 flex items-center gap-2">
               <CheckCircle className="w-5 h-5" />
               <span>HOÀN THÀNH ({doneTasks.length})</span>
@@ -255,7 +255,7 @@ export const InternalTasks = () => {
                   <h4 className="font-heading font-bold text-base text-slate-100 line-through opacity-70">{task.title}</h4>
                   <p className="text-sm text-slate-400 line-clamp-1">{task.desc}</p>
 
-                  <div className="pt-4 border-t border-slate-700/50 text-sm text-slate-400">
+                  <div className="pt-4 border-t border-[var(--border-default)] text-sm text-slate-400">
                     Phụ trách: {getTaskAssignee(task)}
                   </div>
                 </div>
@@ -271,7 +271,7 @@ export const InternalTasks = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
           <div className="relative w-full max-w-lg ds-card ds-card-elevated border border-blue-500/30 p-6 shadow-2xl text-white space-y-6">
             
-            <div className="flex justify-between items-center pb-4 border-b border-slate-700/50">
+            <div className="flex justify-between items-center pb-4 border-b border-[var(--border-default)]">
               <h3 className="font-heading font-bold text-lg text-slate-100">Giao Nhiệm Vụ Mới</h3>
               <button onClick={() => setIsNewTaskModalOpen(false)} className="text-slate-400 hover:text-white p-2 transition-colors">
                 <X className="w-5 h-5" />
@@ -361,7 +361,7 @@ export const InternalTasks = () => {
                 />
               </div>
 
-              <div className="pt-4 flex justify-end gap-3 border-t border-slate-700/50">
+              <div className="pt-4 flex justify-end gap-3 border-t border-[var(--border-default)]">
                 <button
                   type="button"
                   onClick={() => setIsNewTaskModalOpen(false)}

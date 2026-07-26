@@ -48,7 +48,7 @@ export const MeetingManagement = () => {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+        <h3 className="text-lg font-bold text-white flex flex-col items-center justify-center text-center gap-2">
           <Users className="text-purple-400" /> Quản Lý Điểm Danh & Họp
         </h3>
         {isHRHead && (
@@ -202,7 +202,7 @@ export const MeetingManagement = () => {
 
       {/* Attendance Modal */}
       {activeAttendanceMeeting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md animate-slide-up">
           <div className="ds-card p-6 w-full max-w-2xl shadow-2xl text-white flex flex-col max-h-[90vh]">
             <div className="p-6 border-b border-[var(--border-default)] flex justify-between items-center shrink-0">
               <h3 className="font-bold text-white text-lg">
@@ -230,25 +230,25 @@ export const MeetingManagement = () => {
                   <div className="flex gap-2">
                     <button 
                       onClick={() => setAttendanceState({...attendanceState, [m.id]: 'present'})}
-                      className={`ds-btn ds-btn-xs ${attendanceState[m.id] === 'present' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-transparent'}`}
+                      className={`ds-btn ds-btn-xs ${attendanceState[m.id] === 'present' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50' : 'bg-[var(--bg-input)] text-slate-400 hover:bg-slate-700 border border-transparent'}`}
                     >
                       Có mặt
                     </button>
                     <button 
                       onClick={() => setAttendanceState({...attendanceState, [m.id]: 'late'})}
-                      className={`ds-btn ds-btn-xs ${attendanceState[m.id] === 'late' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-transparent'}`}
+                      className={`ds-btn ds-btn-xs ${attendanceState[m.id] === 'late' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' : 'bg-[var(--bg-input)] text-slate-400 hover:bg-slate-700 border border-transparent'}`}
                     >
                       Đi muộn (-5đ)
                     </button>
                     <button 
                       onClick={() => setAttendanceState({...attendanceState, [m.id]: 'absent_excused'})}
-                      className={`ds-btn ds-btn-xs ${attendanceState[m.id] === 'absent_excused' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-transparent'}`}
+                      className={`ds-btn ds-btn-xs ${attendanceState[m.id] === 'absent_excused' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50' : 'bg-[var(--bg-input)] text-slate-400 hover:bg-slate-700 border border-transparent'}`}
                     >
                       Vắng (Có phép)
                     </button>
                     <button 
                       onClick={() => setAttendanceState({...attendanceState, [m.id]: 'absent'})}
-                      className={`ds-btn ds-btn-xs ${attendanceState[m.id] === 'absent' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/50' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-transparent'}`}
+                      className={`ds-btn ds-btn-xs ${attendanceState[m.id] === 'absent' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/50' : 'bg-[var(--bg-input)] text-slate-400 hover:bg-slate-700 border border-transparent'}`}
                     >
                       Vắng (-10đ)
                     </button>

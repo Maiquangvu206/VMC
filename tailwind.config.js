@@ -52,8 +52,8 @@ export default {
         },
       },
       fontFamily: {
-        heading: ['Outfit', 'sans-serif'],
-        body: ['Plus Jakarta Sans', 'sans-serif'],
+        heading: ['Be Vietnam Pro', 'sans-serif'],
+        body: ['Be Vietnam Pro', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       borderRadius: {

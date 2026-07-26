@@ -174,7 +174,7 @@ export const InternalDrafts = () => {
             key={draft.id}
             className="ds-card p-6 space-y-6"
           >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-700/50 pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--border-default)] pb-4">
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-blue-400 font-semibold">{draft.author}</span>
@@ -235,7 +235,7 @@ export const InternalDrafts = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
           <div className="relative w-full max-w-xl ds-card ds-card-elevated border border-blue-500/30 p-6 shadow-2xl text-white space-y-6">
 
-            <div className="flex justify-between items-center pb-4 border-b border-slate-700/50">
+            <div className="flex justify-between items-center pb-4 border-b border-[var(--border-default)]">
               <h3 className="font-heading font-bold text-lg text-slate-100">Soạn Bài Viết Nháp Mới</h3>
               <button onClick={() => setIsNewDraftModalOpen(false)} className="text-slate-400 hover:text-white p-2 transition-colors">
                 <X className="w-5 h-5" />
@@ -267,7 +267,7 @@ export const InternalDrafts = () => {
                 />
               </div>
 
-              <div className="pt-4 flex justify-end gap-3 border-t border-slate-700/50">
+              <div className="pt-4 flex justify-end gap-3 border-t border-[var(--border-default)]">
                 <button
                   type="button"
                   onClick={() => setIsNewDraftModalOpen(false)}
@@ -372,7 +372,7 @@ export const InternalDrafts = () => {
             </div>
 
             {/* Criteria Legend */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-[var(--bg-input)] p-3 rounded-xl border border-white/5 text-[11px] text-slate-300 shrink-0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-[var(--bg-input)] p-3 rounded-xl border border-[var(--border-default)] text-[11px] text-slate-300 shrink-0">
               <div className="space-y-1">
                 <div className="font-bold text-emerald-400">➕ Điểm Cộng (+1đ mỗi mục):</div>
                 <div>• +1đ: Share bài viết mới trên page</div>

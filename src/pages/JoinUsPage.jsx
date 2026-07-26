@@ -47,10 +47,10 @@ export const JoinUsPage = () => {
       </div>
 
       {!isSubmitted ? (
-        <div className="ds-card p-6 sm:p-10 rounded-3xl border border-purple-500/30 relative shadow-2xl">
+        <div className="ds-card p-6 sm:p-10">
 
           {/* Step Indicator */}
-          <div className="flex items-center justify-between mb-8 pb-6 border-b border-white/10 text-xs font-semibold">
+          <div className="flex items-center justify-between mb-8 pb-6 border-b border-[var(--border-default)] text-xs font-semibold">
             {[
               { num: 1, label: 'Thông tin cá nhân' },
               { num: 2, label: 'Ban chuyên môn' },
@@ -61,7 +61,7 @@ export const JoinUsPage = () => {
                     ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white'
                     : step > s.num
                       ? 'bg-emerald-500 text-slate-950'
-                      : 'bg-slate-800 text-slate-400'
+                      : 'bg-[var(--bg-secondary)] text-slate-400'
                   }`}>
                   {s.num}
                 </span>
@@ -173,7 +173,7 @@ export const JoinUsPage = () => {
                        onClick={() => setFormData(prev => ({ ...prev, department: d.id }))}
                        className={`ds-card p-4 text-center cursor-pointer space-y-2 transition-all ${selected
                            ? 'border-purple-500/50 text-purple-300'
-                           : 'border-[var(--border-default)] text-slate-400 hover:bg-slate-800/50'
+                           : 'border-[var(--border-default)] text-slate-400 hover:bg-[var(--bg-card-hover)]'
                          }`}
                      >
                           <Icon className="w-6 h-6 mx-auto" />
@@ -285,7 +285,7 @@ export const JoinUsPage = () => {
 
         </div>
       ) : (
-        <div className="ds-card p-8 sm:p-12 rounded-3xl border border-emerald-500/40 text-center space-y-6 animate-slide-up">
+        <div className="ds-card p-8 sm:p-12 border border-emerald-500/40 text-center space-y-6 animate-slide-up">
           <div className="w-16 h-16 mx-auto rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center animate-bounce">
             <CheckCircle className="w-10 h-10" />
           </div>

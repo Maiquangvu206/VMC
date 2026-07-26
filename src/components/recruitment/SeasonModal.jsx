@@ -42,21 +42,21 @@ export const SeasonModal = ({ show, onClose, seasonForm, setSeasonForm, onSubmit
            <div>
              <label className="ds-field-label">Loại chấm điểm</label>
              <div className="flex gap-2">
-               <label className="ds-card p-3 flex items-center gap-2 cursor-pointer border border-[var(--border-default)]">
-                 <input
-                   type="checkbox"
-                   checked={seasonForm.scoring_type.includes('don')}
-                   onChange={(e) => {
-                     if (e.target.checked) {
-                       setSeasonForm({ ...seasonForm, scoring_type: [...seasonForm.scoring_type, 'don'] });
-                     } else {
-                       setSeasonForm({ ...seasonForm, scoring_type: seasonForm.scoring_type.filter(t => t !== 'don') });
-                     }
-                   }}
-                 />
-                 <span className="text-sm text-slate-300">Đơn</span>
-               </label>
-               <label className="ds-card p-3 flex items-center gap-2 cursor-pointer border border-[var(--border-default)]">
+                <label className="ds-card p-3 flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={seasonForm.scoring_type.includes('don')}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSeasonForm({ ...seasonForm, scoring_type: [...seasonForm.scoring_type, 'don'] });
+                      } else {
+                        setSeasonForm({ ...seasonForm, scoring_type: seasonForm.scoring_type.filter(t => t !== 'don') });
+                      }
+                    }}
+                  />
+                  <span className="text-sm text-slate-300">Đơn</span>
+                </label>
+                <label className="ds-card p-3 flex items-center gap-2 cursor-pointer">
                  <input
                    type="checkbox"
                    checked={seasonForm.scoring_type.includes('teamwork')}

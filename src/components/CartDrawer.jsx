@@ -21,11 +21,11 @@ export const CartDrawer = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/80 backdrop-blur-md animate-slide-up">
-       <div className="ds-card-glass w-full max-w-md h-full flex flex-col shadow-2xl p-6 relative border-l border-white/[0.06]">
+    <div className="fixed inset-0 z-50 flex justify-end bg-[var(--bg-primary)]/80 backdrop-blur-md animate-slide-up">
+       <div className="ds-card w-full max-w-md h-full flex flex-col shadow-2xl p-6 relative border-l border-[var(--border-default)]">
          
          {/* Header */}
-         <div className="flex items-center justify-between pb-4 border-b border-white/[0.06]">
+         <div className="flex items-center justify-between pb-4 border-b border-[var(--border-default)]">
            <div className="flex items-center gap-3">
              <div className="w-10 h-10 rounded-xl bg-purple-600/20 text-purple-400 flex items-center justify-center">
                <ShoppingBag className="w-5 h-5" />
@@ -79,14 +79,14 @@ export const CartDrawer = () => {
                   <div className="flex items-center gap-2 mt-2">
                     <button
                       onClick={() => updateCartQty(item.id, -1)}
-                      className="w-6 h-6 rounded-md bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-slate-200"
+                      className="w-6 h-6 rounded-md bg-[var(--bg-tertiary)] hover:bg-[var(--bg-card-hover)] flex items-center justify-center text-slate-200"
                     >
                       <Minus className="w-3 h-3" />
                     </button>
                     <span className="text-xs font-bold px-1">{item.qty}</span>
                     <button
                       onClick={() => updateCartQty(item.id, 1)}
-                      className="w-6 h-6 rounded-md bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-slate-200"
+                      className="w-6 h-6 rounded-md bg-[var(--bg-tertiary)] hover:bg-[var(--bg-card-hover)] flex items-center justify-center text-slate-200"
                     >
                       <Plus className="w-3 h-3" />
                     </button>
@@ -106,7 +106,7 @@ export const CartDrawer = () => {
 
          {/* Footer */}
          {cart.length > 0 && !isCheckoutSubmitted && (
-           <div className="border-t border-white/[0.06] pt-4 space-y-4">
+           <div className="border-t border-[var(--border-default)] pt-4 space-y-4">
              <div className="flex justify-between items-center text-sm">
                <span className="text-slate-400">Tổng cộng thanh toán:</span>
                <span className="font-heading font-bold text-xl text-purple-400 font-mono">

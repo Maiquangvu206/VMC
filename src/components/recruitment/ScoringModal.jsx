@@ -68,19 +68,19 @@ export const ScoringModal = ({
            </button>
          </div>
 
-         {/* Candidate Search */}
-         <div className="mb-4">
-           <div className="relative">
-             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-             <input
-               type="text"
-               placeholder="Tìm ứng viên..."
-               value={candidateSearchQuery}
-               onChange={(e) => setCandidateSearchQuery(e.target.value)}
-               className="ds-input"
-             />
-           </div>
-         </div>
+{/* Candidate Search */}
+           <div className="mb-4">
+             <div className="relative flex items-center w-full">
+              <Search className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
+              <input
+                type="text"
+                placeholder="Tìm ứng viên..."
+                value={candidateSearchQuery}
+                onChange={(e) => setCandidateSearchQuery(e.target.value)}
+                className="ds-input pl-12"
+              />
+            </div>
+          </div>
 
          {/* Scoring Form */}
          <div className="space-y-4 mb-6">

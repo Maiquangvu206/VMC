@@ -492,9 +492,10 @@ export const InternalRecruitment = () => {
   return (
     <div className="page-wrap space-y-8 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h1 className="font-heading text-3xl font-extrabold text-slate-100 mt-1 flex items-center gap-3">
-            <UserPlus className="text-violet-400 w-8 h-8" /> Quản Lý Tuyển Gen Nội Bộ
+        <div className="flex flex-col items-center justify-center text-center">
+          <UserPlus className="text-violet-400 w-8 h-8" />
+          <h1 className="font-heading text-3xl font-extrabold text-slate-100 mt-1">
+            Quản Lý Tuyển Gen Nội Bộ
           </h1>
           <p className="text-sm text-slate-400 mt-2">
             Hệ thống chấm điểm mù, phân công phỏng vấn và tổng hợp kết quả tuyển gen.
@@ -516,7 +517,7 @@ export const InternalRecruitment = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap gap-3 border-b border-slate-700/50 pb-4">
+      <div className="flex flex-wrap gap-3 border-b border-[var(--border-default)] pb-4">
         <button
           onClick={() => setActiveTab('seasons')}
           className={`ds-btn ${activeTab === 'seasons' ? 'ds-btn-primary' : 'ds-btn-secondary'}`}
@@ -826,33 +827,33 @@ export const InternalRecruitment = () => {
              </div>
            )}
 
-           {/* Candidate search/filter */}
-           <div className="flex gap-3">
-             <div className="flex-1 relative">
-               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-               <input
-                 type="text"
-                 placeholder="Tìm kiếm theo mã ứng viên, tên, hoặc lớp..."
-                 value={candidateSearchQuery}
-                 onChange={(e) => {
-                   setCandidateSearchQuery(e.target.value);
-                   const query = e.target.value.toLowerCase();
-                   const filtered = candidates.filter(c => 
-                     (c.id || '').toLowerCase().includes(query) ||
-                     (c.full_name || '').toLowerCase().includes(query) ||
-                     (c.class_name || '').toLowerCase().includes(query)
-                   );
-                   setFilteredCandidates(filtered);
-                   setCurrentScoringCandidateIndex(0);
-                   if (filtered.length > 0) {
-                     setSelectedCandidate(filtered[0]);
-                     setScoringComments('');
-                     setScoringData({});
-                   }
-                 }}
-                 className="ds-input"
-               />
-             </div>
+{/* Candidate search/filter */}
+            <div className="flex gap-3">
+              <div className="relative flex items-center w-full">
+                <Search className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Tìm kiếm theo mã ứng viên, tên, hoặc lớp..."
+                  value={candidateSearchQuery}
+                  onChange={(e) => {
+                    setCandidateSearchQuery(e.target.value);
+                    const query = e.target.value.toLowerCase();
+                    const filtered = candidates.filter(c => 
+                      (c.id || '').toLowerCase().includes(query) ||
+                      (c.full_name || '').toLowerCase().includes(query) ||
+                      (c.class_name || '').toLowerCase().includes(query)
+                    );
+                    setFilteredCandidates(filtered);
+                    setCurrentScoringCandidateIndex(0);
+                    if (filtered.length > 0) {
+                      setSelectedCandidate(filtered[0]);
+                      setScoringComments('');
+                      setScoringData({});
+                    }
+                  }}
+                  className="ds-input pl-12"
+                />
+              </div>
              {filteredCandidates.length > 0 && (
                <div className="text-slate-400 text-sm flex items-center">
                  {currentScoringCandidateIndex + 1} / {filteredCandidates.length}

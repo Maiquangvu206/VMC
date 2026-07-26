@@ -8,32 +8,32 @@ export const TicketModal = () => {
   if (!activeTicketModal) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md animate-slide-up">
        <div className="ds-card-glass p-6 shadow-2xl overflow-hidden text-white w-full max-w-md relative">
          
          {/* Glow accent */}
-         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-purple-600/20 blur-2xl rounded-full pointer-events-none" />
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-purple-600/20 blur-xl rounded-full pointer-events-none" />
 
          {/* Close Button */}
          <button
            onClick={() => setActiveTicketModal(null)}
-           className="absolute top-4 right-4 p-2 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-all"
+           className="absolute top-4 right-4 ds-btn ds-btn-ghost p-2"
          >
            <X className="w-5 h-5" />
          </button>
 
-         {/* Header */}
-         <div className="text-center mb-6">
-           <div className="w-12 h-12 mx-auto rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mb-3 animate-bounce">
-             <CheckCircle className="w-6 h-6" />
-           </div>
-           <h3 className="font-heading text-xl font-bold gradient-text">Đăng Ký Vé Thành Công!</h3>
-           <p className="text-xs text-slate-400 mt-1">Vé điện tử VMC Pass đã sẵn sàng cho bạn</p>
-         </div>
+          {/* Header */}
+          <div className="flex flex-col items-center justify-center text-center mb-6">
+            <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center mb-3 animate-bounce">
+              <CheckCircle className="w-6 h-6" />
+            </div>
+            <h3 className="font-heading text-xl font-bold gradient-text">Đăng Ký Vé Thành Công!</h3>
+            <p className="text-xs text-slate-400 mt-1">Vé điện tử VMC Pass đã sẵn sàng cho bạn</p>
+          </div>
 
          {/* Ticket Card */}
          <div className="ds-card p-5 relative overflow-hidden shadow-inner space-y-4">
-           <div className="flex justify-between items-center border-b border-white/[0.06] pb-3">
+           <div className="flex justify-between items-center border-b border-[var(--border-default)] pb-3">
              <div className="flex items-center gap-2">
                <Ticket className="w-5 h-5 text-purple-400" />
                <span className="font-heading font-bold text-sm text-purple-300">VMC EVENT PASS</span>

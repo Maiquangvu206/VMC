@@ -27,9 +27,9 @@ export const StorePage = () => {
           return (
             <div
               key={prod.id}
-              className="ds-card rounded-2xl overflow-hidden flex flex-col justify-between group"
+              className="ds-card overflow-hidden flex flex-col justify-between group"
             >
-              <div className="relative h-60 overflow-hidden bg-slate-950">
+              <div className="relative h-60 overflow-hidden bg-[var(--bg-primary)]">
                 <img
                   src={prod.image}
                   alt={prod.name}

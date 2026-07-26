@@ -93,7 +93,7 @@ export const InternalEquipment = () => {
               <input required type="text" className="ds-input" placeholder="VD: Tốt / Hỏng móp méo..." value={newEq.condition} onChange={e => setNewEq({...newEq, condition: e.target.value})} />
             </div>
           </div>
-          <div className="flex justify-end gap-3 pt-2 border-t border-slate-700/50">
+          <div className="flex justify-end gap-3 pt-2 border-t border-[var(--border-default)]">
             <button type="button" onClick={() => setShowAddForm(false)} className="ds-btn ds-btn-secondary">Hủy</button>
             <button type="submit" className="ds-btn ds-btn-primary">Thêm mới</button>
           </div>
@@ -110,7 +110,7 @@ export const InternalEquipment = () => {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="ds-badge ds-badge-purple">{item.category}</span>
-                <span className="font-mono text-sm text-slate-400 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700/50">
+                <span className="font-mono text-sm text-slate-400 ds-card px-3 py-1.5 rounded-lg border border-[var(--border-default)]">
                   {item.code}
                 </span>
               </div>
@@ -119,17 +119,17 @@ export const InternalEquipment = () => {
                 {item.name}
               </h3>
 
-              <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 space-y-2 text-sm text-slate-300">
+              <div className="p-4 ds-card border border-[var(--border-default)] space-y-2 text-sm text-slate-300">
                 <div>Tình trạng: <span className="text-slate-400">{item.condition}</span></div>
                 {item.status === 'borrowed' && (
-                  <div className="text-amber-400 font-semibold pt-2 border-t border-slate-700/50">
+                  <div className="text-amber-400 font-semibold pt-2 border-t border-[var(--border-default)]">
                     Đang mượn bởi: <strong>{item.borrower}</strong> (Trả ngày: {item.returnDate})
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-700/50 flex items-center justify-between">
+            <div className="pt-4 border-t border-[var(--border-default)] flex items-center justify-between">
               <span className={`ds-badge ${
                 item.status === 'available'
                   ? 'ds-badge-emerald'
@@ -163,14 +163,14 @@ export const InternalEquipment = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
           <div className="ds-card p-6 w-full max-w-md shadow-2xl text-white space-y-6">
             
-            <div className="flex justify-between items-center pb-4 border-b border-slate-700/50">
+            <div className="flex justify-between items-center pb-4 border-b border-[var(--border-default)]">
               <h3 className="font-heading font-bold text-lg text-slate-100">Đăng Ký Mượn Thiết Bị</h3>
               <button onClick={() => setSelectedEq(null)} className="text-slate-400 hover:text-white p-2 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 space-y-2 text-sm">
+            <div className="p-4 ds-card border border-[var(--border-default)] space-y-2 text-sm">
               <div className="font-bold text-blue-400">{selectedEq.name}</div>
               <div className="text-slate-400">Mã: {selectedEq.code}</div>
             </div>
@@ -202,7 +202,7 @@ export const InternalEquipment = () => {
                 <span>Thành viên cam kết bảo quản cẩn thận máy ảnh, ống kính và sạc pin đầy đủ trước khi trả về tủ thiết bị.</span>
               </div>
 
-              <div className="pt-4 flex justify-end gap-3 border-t border-slate-700/50">
+              <div className="pt-4 flex justify-end gap-3 border-t border-[var(--border-default)]">
                 <button
                   type="button"
                   onClick={() => setSelectedEq(null)}

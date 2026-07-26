@@ -8,8 +8,8 @@ export const MemberDetailModal = ({ show, onClose, member, onEdit, onLock, onRes
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up overflow-y-auto">
        <div className="ds-card p-3.5 sm:p-6 w-[95%] sm:w-full max-w-xl shadow-2xl text-white flex flex-col my-auto overflow-hidden">
          <div className="flex justify-between items-start pb-3 border-b border-[var(--border-default)] shrink-0">
-           <div className="flex items-center gap-3">
-             <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center text-lg font-bold shrink-0">
+           <div className="flex flex-col items-center justify-center text-center">
+             <div className="w-12 h-12 rounded-full bg-[var(--accent-blue)] flex items-center justify-center text-lg font-bold shrink-0">
                {member.name?.charAt(0) || '?'}
              </div>
              <div>

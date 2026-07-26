@@ -218,16 +218,17 @@ export const BirthdayManagement = () => {
        {/* Header Banner */}
        <div className="ds-card p-5 border border-pink-500/30">
          <div>
-           <h3 className="font-heading text-lg font-bold text-white flex items-center gap-2">
-             <Gift className="text-pink-400" /> Phân Công & Quản Lý Dữ Liệu Sinh Nhật
-           </h3>
+              <h3 className="font-heading text-lg font-bold text-white flex flex-col items-center justify-center text-center gap-2">
+                <Gift className="text-pink-400" />
+                <span>Phân Công & Quản Lý Dữ Liệu Sinh Nhật</span>
+              </h3>
            <p className="text-xs text-slate-400 mt-1">
              Nộp ảnh/bài đăng cho từng cá nhân sinh nhật trong tháng. Hạn chót nộp tư liệu đến ngày 28 của tháng trước, hạn trực kết thúc cuối tháng.
            </p>
          </div>
 
          <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono">
-           <span className="ds-badge ds-badge-pink">
+           <span className="ds-badge ds-badge-rose">
              <Calendar className="w-3.5 h-3.5 text-pink-400" /> Ngày 15: Gửi DS tháng sau
            </span>
            <span className="ds-badge ds-badge-amber">
@@ -313,9 +314,10 @@ export const BirthdayManagement = () => {
                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pb-3 border-b border-[var(--border-default)]">
                  <div>
                    <div className="flex items-center gap-2">
-                     <h4 className="font-bold text-white flex items-center gap-2">
-                       <Gift className="w-4 h-4 text-pink-400" /> Sinh nhật tháng {a.month}/{a.year}
-                     </h4>
+                      <h4 className="font-bold text-white flex flex-col items-center justify-center text-center gap-2">
+                        <Gift className="w-4 h-4 text-pink-400" />
+                        <span>Sinh nhật tháng {a.month}/{a.year}</span>
+                      </h4>
                      {isCompleted ? (
                        <span className="ds-badge ds-badge-emerald">
                          <CheckCircle2 className="w-3 h-3" /> Hoàn Thành Nộp ({submittedCount}/{totalCount})
@@ -531,12 +533,13 @@ export const BirthdayManagement = () => {
 
         {/* Modal Nộp Link/Ảnh Sinh Nhật cho 1 Thành Viên Cụ Thể */}
        {submittingMemberId && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md animate-slide-up">
            <div className="ds-card p-6 w-full max-w-md shadow-2xl text-white space-y-4">
              <div className="flex justify-between items-center pb-3 border-b border-[var(--border-default)]">
-               <h3 className="font-heading font-bold text-base text-white flex items-center gap-2">
-                 <ImageIcon className="text-pink-400 w-5 h-5" /> Nộp Ảnh / Link Mừng Sinh Nhật
-               </h3>
+                  <h3 className="font-heading font-bold text-base text-white flex flex-col items-center justify-center text-center gap-2">
+                    <ImageIcon className="text-pink-400 w-5 h-5" />
+                    <span>Nộp Ảnh / Link Mừng Sinh Nhật</span>
+                  </h3>
                <button onClick={() => { setSubmittingMemberId(null); setSelectedFile(null); }} className="ds-btn ds-btn-ghost p-1">
                  <X className="w-5 h-5" />
                </button>
@@ -544,7 +547,7 @@ export const BirthdayManagement = () => {
 
              <form onSubmit={handleConfirmMemberSubmit} className="space-y-4 text-xs">
                {/* Method Tabs */}
-               <div className="flex gap-2 p-1 bg-slate-950 rounded-xl border border-[var(--border-default)]">
+               <div className="flex gap-2 p-1 bg-[var(--bg-primary)] rounded-xl border border-[var(--border-default)]">
                  <button
                    type="button"
                    onClick={() => setSubmissionMethod('upload')}
@@ -650,12 +653,13 @@ export const BirthdayManagement = () => {
 
        {/* Modal Nộp Đơn Giải Trình Lý Do */}
        {excuseModalAssignmentId && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md animate-slide-up">
            <div className="ds-card p-6 w-full max-w-md shadow-2xl text-white space-y-4">
              <div className="flex justify-between items-center pb-3 border-b border-[var(--border-default)]">
-               <h3 className="font-heading font-bold text-base text-white flex items-center gap-2">
-                 <FileText className="text-amber-400 w-5 h-5" /> Nộp Đơn Giải Trình Nộp Chậm
-               </h3>
+                  <h3 className="font-heading font-bold text-base text-white flex flex-col items-center justify-center text-center gap-2">
+                    <FileText className="text-amber-400 w-5 h-5" />
+                    <span>Nộp Đơn Giải Trình Nộp Chậm</span>
+                  </h3>
                <button onClick={() => setExcuseModalAssignmentId(null)} className="ds-btn ds-btn-ghost p-1">
                  <X className="w-5 h-5" />
                </button>

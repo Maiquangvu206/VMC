@@ -226,7 +226,7 @@ export const InternalProfile = () => {
               onClick={() => setIsAvatarModalOpen(true)}
               title="Click để đổi ảnh đại diện"
             >
-              <div className="w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-cyan-500 via-blue-500 to-indigo-500 shadow-md shrink-0 relative overflow-hidden">
+              <div className="w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-cyan-500 to-blue-600 shadow-md shrink-0 relative overflow-hidden">
                 <img 
                   src={cu.avatar} 
                   alt={cu.name} 
@@ -338,75 +338,80 @@ export const InternalProfile = () => {
               
               <div className="ds-grid-2">
                 <div>
-                  <label className="ds-field-label flex items-center gap-1.5">
-                    <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Số Điện Thoại / Zalo *
-                  </label>
-                  <input
-                    type="tel"
-                    required
-                    value={selfData.phone}
-                    onChange={(e) => setSelfData({ ...selfData, phone: e.target.value })}
-                    placeholder="0981 234 567..."
-                    className="ds-input"
-                  />
+                  <label className="ds-field-label">Số Điện Thoại / Zalo *</label>
+                  <div className="relative flex items-center w-full">
+                    <Phone className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
+                    <input
+                      type="tel"
+                      required
+                      value={selfData.phone}
+                      onChange={(e) => setSelfData({ ...selfData, phone: e.target.value })}
+                      placeholder="0981 234 567..."
+                      className="ds-input pl-12"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="ds-field-label flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Email Học Sinh *
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={selfData.email}
-                    onChange={(e) => setSelfData({ ...selfData, email: e.target.value })}
-                    placeholder="hoanglong.vmc@vinhbao.edu.vn..."
-                    className="ds-input"
-                  />
+                  <label className="ds-field-label">Email Học Sinh *</label>
+                  <div className="relative flex items-center w-full">
+                    <Mail className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
+                    <input
+                      type="email"
+                      required
+                      value={selfData.email}
+                      onChange={(e) => setSelfData({ ...selfData, email: e.target.value })}
+                      placeholder="hoanglong.vmc@vinhbao.edu.vn..."
+                      className="ds-input pl-12"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="ds-field-label flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-cyan-400 shrink-0" /> Ngày Sinh (DD/MM/YYYY) *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={selfData.dob}
-                    onChange={(e) => setSelfData({ ...selfData, dob: e.target.value })}
-                    placeholder="01/01/2009..."
-                    className="ds-input"
-                  />
+                  <label className="ds-field-label">Ngày Sinh (DD/MM/YYYY) *</label>
+                  <div className="relative flex items-center w-full">
+                    <Calendar className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
+                    <input
+                      type="text"
+                      required
+                      value={selfData.dob}
+                      onChange={(e) => setSelfData({ ...selfData, dob: e.target.value })}
+                      placeholder="01/01/2009..."
+                      className="ds-input pl-12"
+                    />
+                  </div>
                 </div>
               </div>
 
               <div className="ds-grid-2">
                 <div>
-                  <label className="ds-field-label flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Địa Chỉ Thường Trú *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={selfData.address}
-                    onChange={(e) => setSelfData({ ...selfData, address: e.target.value })}
-                    placeholder="Khu 3, Thị trấn Vĩnh Bảo, Vĩnh Bảo, Hải Phòng..."
-                    className="ds-input"
-                  />
+                  <label className="ds-field-label">Địa Chỉ Thường Trú *</label>
+                  <div className="relative flex items-center w-full">
+                    <MapPin className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
+                    <input
+                      type="text"
+                      required
+                      value={selfData.address}
+                      onChange={(e) => setSelfData({ ...selfData, address: e.target.value })}
+                      placeholder="Khu 3, Thị trấn Vĩnh Bảo, Vĩnh Bảo, Hải Phòng..."
+                      className="ds-input pl-12"
+                    />
+                  </div>
                 </div>
 
                 <div>
-                  <label className="ds-field-label flex items-center gap-1.5">
-                    <Globe className="w-3.5 h-3.5 text-emerald-400 shrink-0" /> Liên Hệ Facebook Cá Nhân *
-                  </label>
-                  <input
-                    type="url"
-                    required
-                    value={selfData.facebook}
-                    onChange={(e) => setSelfData({ ...selfData, facebook: e.target.value })}
-                    placeholder="https://facebook.com/..."
-                    className="ds-input"
-                  />
+                  <label className="ds-field-label">Liên Hệ Facebook Cá Nhân *</label>
+                  <div className="relative flex items-center w-full">
+                    <Globe className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
+                    <input
+                      type="url"
+                      required
+                      value={selfData.facebook}
+                      onChange={(e) => setSelfData({ ...selfData, facebook: e.target.value })}
+                      placeholder="https://facebook.com/..."
+                      className="ds-input pl-12"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -562,7 +567,7 @@ export const InternalProfile = () => {
 
        {/* Modal: Chỉnh Sửa Ảnh Đại Diện Thành Viên */}
        {isAvatarModalOpen && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md">
            <div className="relative w-full max-w-md ds-card ds-card-elevated border border-blue-500/40 p-6 sm:p-8 shadow-2xl space-y-6 text-white animate-slide-up">
              
              <div className="flex items-center justify-between pb-4 border-b border-[var(--border-default)]">
@@ -595,7 +600,7 @@ export const InternalProfile = () => {
                {/* Upload File từ thiết bị */}
                <div className="space-y-2">
                  <label className="ds-field-label text-center">Tải Ảnh Mới Từ Thiết Bị</label>
-                 <label className="w-full py-4 px-4 rounded-2xl bg-slate-950 hover:bg-slate-800 border-2 border-dashed border-blue-500/50 hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center gap-2 text-slate-300 hover:text-white transition-all group">
+                  <label className="w-full py-4 px-4 rounded-2xl bg-[var(--bg-primary)] hover:bg-[var(--bg-input)] border-2 border-dashed border-blue-500/50 hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center gap-2 text-slate-300 hover:text-white transition-all group">
                    <div className="p-3 rounded-full bg-blue-500/10 text-cyan-400 group-hover:scale-110 transition-transform">
                      <Upload className="w-6 h-6" />
                    </div>
@@ -636,7 +641,7 @@ export const InternalProfile = () => {
 
        {/* Modal: Thêm Cột Mốc Lịch Sử Chức Vụ (Ban ĐN-NS / Admin) */}
        {isMilestoneModalOpen && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md">
            <div className="relative w-full max-w-md ds-card ds-card-elevated border border-cyan-500/40 p-6 sm:p-8 shadow-2xl space-y-5 text-white animate-slide-up">
              
              <div className="flex items-center justify-between pb-3 border-b border-[var(--border-default)]">
