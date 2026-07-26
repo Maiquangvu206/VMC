@@ -10,7 +10,19 @@ import {
   Sparkles, 
   ShieldCheck, 
   Zap, 
-  FileText 
+  FileText,
+  TrendingUp,
+  Clock,
+  Star,
+  Target,
+  BookOpen,
+  Camera,
+  Video,
+  Palette,
+  Music,
+  ArrowRight,
+  Heart,
+  Eye
 } from 'lucide-react';
 
 const Loading = () => (
@@ -36,12 +48,34 @@ export const DashboardPage = () => {
 
   const displayResources = resources.length > 0 ? resources : (MEMBER_RESOURCES || []);
 
+  const statCards = [
+    { label: 'Điểm Đóng Góp', value: user?.points || 0, suffix: 'PTS', icon: TrendingUp, color: 'blue', trend: '+12%' },
+    { label: 'Cấp Độ', value: 'PRO', suffix: 'CREATOR', icon: Star, color: 'purple', trend: '' },
+    { label: 'Huy Hiệu', value: user?.badges?.length ?? 0, suffix: 'Badges', icon: Award, color: 'amber', trend: '' },
+    { label: 'Số Buổi Điểm Danh', value: user?.checkins || 0, suffix: 'buổi', icon: Clock, color: 'cyan', trend: '+3' },
+  ];
+
+  const committeeDepts = [
+    { name: 'Ban Chủ Nhiệm', icon: Crown, color: 'purple', count: 3, lead: 'Chủ Nhiệm CLB' },
+    { name: 'Ban Nội Dung - Phát Thanh', icon: Mic, color: 'cyan', count: 12, lead: 'Trưởng Ban ND-PH' },
+    { name: 'Ban Sản Xuất', icon: Film, color: 'blue', count: 18, lead: 'Trưởng Ban SX' },
+    { name: 'Ban Đối Ngoại - Nhân Sự', icon: Handshake, color: 'emerald', count: 8, lead: 'Trưởng Ban ĐN-NS' },
+    { name: 'Ban Cố Vấn', icon: Award, color: 'amber', count: 4, lead: 'Cố Vấn CLB' },
+  ];
+
+  const deptIcons = {
+    photo: Camera,
+    media: Video,
+    design: Palette,
+    music: Music
+  };
+
   return (
-    <div className="page-wrap py-10 space-y-10 pb-20">
+    <div className="page-wrap py-8 space-y-8 pb-20">
       
       {/* Header Profile Card */}
-      <div className="ds-card p-6 sm:p-8 rounded-3xl border border-purple-500/40 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-72 h-72 bg-purple-600/15 blur-3xl rounded-full pointer-events-none" />
+      <div className="ds-card-glass p-6 sm:p-8 rounded-2xl border border-purple-500/30 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-72 h-72 bg-purple-600/10 blur-3xl rounded-full pointer-events-none" />
 
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
           
@@ -53,7 +87,7 @@ export const DashboardPage = () => {
             <div className="space-y-1">
               <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
                 <h1 className="font-heading text-2xl font-bold text-white">{user?.name}</h1>
-                <span className="badge badge-emerald flex items-center gap-1">
+                <span className="ds-badge ds-badge-emerald flex items-center gap-1">
                   <ShieldCheck className="w-3.5 h-3.5" /> {user?.role}
                 </span>
               </div>
@@ -82,29 +116,62 @@ export const DashboardPage = () => {
         </div>
 
         {/* Stats Strip */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8 pt-6 border-t border-white/10 text-center">
-          <div className="bg-slate-900/60 p-4 rounded-xl border border-white/5">
-            <div className="text-xs text-slate-400">Điểm Đóng Góp (Points)</div>
-            <div className="font-heading font-extrabold text-2xl text-purple-400 font-mono mt-1">
-              {user?.points} PTS
-            </div>
-          </div>
-
-          <div className="bg-slate-900/60 p-4 rounded-xl border border-white/5">
-            <div className="text-xs text-slate-400">Cấp Độ Thành Viên</div>
-            <div className="font-heading font-extrabold text-2xl text-pink-400 font-mono mt-1">
-              PRO CREATOR
-            </div>
-          </div>
-
-          <div className="bg-slate-900/60 p-4 rounded-xl border border-white/5">
-            <div className="text-xs text-slate-400">Số Huy Hiệu Đạt Được</div>
-            <div className="font-heading font-extrabold text-2xl text-cyan-400 font-mono mt-1">
-              {user?.badges?.length ?? 0} Badges
-            </div>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mt-8 pt-6 border-t border-white/10">
+          {statCards.map((stat, idx) => {
+            const Icon = stat.icon;
+            return (
+              <div key={idx} className="bg-slate-900/60 p-4 rounded-xl border border-white/5 hover:border-white/10 transition-all">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-400 font-medium">{stat.label}</span>
+                  <Icon className={`w-4 h-4 text-${stat.color}-400`} />
+                </div>
+                <div className="font-heading font-extrabold text-2xl text-white font-mono mt-1">
+                  {stat.value}<span className="text-sm text-slate-400 font-normal ml-1">{stat.suffix}</span>
+                </div>
+                {stat.trend && (
+                  <div className="text-[10px] text-emerald-400 font-medium mt-1">{stat.trend}</div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
+      </div>
+
+      {/* 5 Ban Chuyên Môn */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-heading text-xl font-bold text-white flex items-center gap-2">
+            <Users className="w-5 h-5 text-blue-400" />
+            <span>5 Ban Chuyên Môn</span>
+          </h2>
+          <span className="text-xs text-slate-400 font-medium">Tổng cộng {committeeDepts.reduce((a, d) => a + d.count, 0)} thành viên</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {committeeDepts.map((dept, idx) => {
+            const Icon = deptIcons[dept.name.toLowerCase().includes('sản xuất') ? 'film' : dept.name.toLowerCase().includes('nội dung') ? 'mic' : dept.name.toLowerCase().includes('đối ngoại') ? 'handshake' : dept.name.toLowerCase().includes('cố vấn') ? 'award' : 'crown'];
+            return (
+              <div
+                key={idx}
+                className="ds-card p-5 rounded-2xl hover:border-blue-500/40 transition-all group cursor-pointer"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className={`w-10 h-10 rounded-xl bg-${dept.color}-500/10 text-${dept.color}-400 flex items-center justify-center border border-${dept.color}-500/20 group-hover:bg-${dept.color}-500 group-hover:text-white transition-all`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <span className="ds-badge ds-badge-blue text-[10px]">
+                    {dept.count} TV
+                  </span>
+                </div>
+                <h3 className="font-heading font-bold text-sm text-slate-100 group-hover:text-blue-300 transition-colors mb-1">
+                  {dept.name}
+                </h3>
+                <p className="text-[11px] text-slate-400">{dept.lead}</p>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Huy hiệu & Thành tích */}
@@ -118,7 +185,7 @@ export const DashboardPage = () => {
           {(user?.badges || []).map((badge, idx) => (
             <div
               key={idx}
-              className="ds-card p-4 rounded-xl border border-white/10 flex items-center gap-3"
+              className="ds-card p-4 rounded-xl border border-white/10 flex items-center gap-3 hover:border-amber-500/30 transition-all"
             >
               <div className="w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
                 <Sparkles className="w-5 h-5" />
@@ -132,12 +199,12 @@ export const DashboardPage = () => {
         </div>
       </div>
 
-      {/* Kho Tài Nguyên Độc Quyền Dành Cho Thành Viên */}
+      {/* Kho Tài Nguyên */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-heading text-xl font-bold text-white flex items-center gap-2">
             <Zap className="w-5 h-5 text-cyan-400" />
-            <span>Kho Tài Nguyên Sáng Tạo Độc Quyền</span>
+            <span>Kho Tài Nguyên Sáng Tạo</span>
           </h2>
           <span className="text-xs text-purple-400 font-semibold">Tải miễn phí cho thành viên VMC</span>
         </div>
@@ -146,11 +213,11 @@ export const DashboardPage = () => {
           {displayResources.map(res => (
             <div
               key={res.id}
-              className="ds-card p-5 rounded-2xl border border-white/10 flex flex-col justify-between space-y-4"
+              className="ds-card p-5 rounded-2xl border border-white/10 flex flex-col justify-between space-y-4 hover:border-purple-500/30 transition-all"
             >
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="badge badge-purple">{res.category}</span>
+                  <span className="ds-badge ds-badge-purple">{res.category}</span>
                   <span className="text-[10px] font-mono text-slate-400">{res.type} • {res.size}</span>
                 </div>
                 <h4 className="font-heading font-semibold text-sm text-white line-clamp-2">
@@ -183,12 +250,12 @@ export const DashboardPage = () => {
             { date: "Hôm qua", title: "Nhắc nhở nộp tác phẩm cho số Tạp chí Photobook Tháng 8 trước 23:59", tag: "IMPORTANT" },
             { date: "18/07", title: "Kết quả chấm giải Phim Ngắn Fest 2026 đã được cập nhật trên trang chủ", tag: "INFO" }
           ].map((notice, idx) => (
-            <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-950/60 text-xs border border-white/5">
+            <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-slate-950/60 text-xs border border-white/5 hover:border-white/10 transition-all">
               <div className="flex items-center gap-3">
                 <span className="text-slate-400 font-mono shrink-0">{notice.date}</span>
                 <span className="text-slate-200 font-medium line-clamp-1">{notice.title}</span>
               </div>
-              <span className="badge badge-pink shrink-0">{notice.tag}</span>
+              <span className="ds-badge ds-badge-rose shrink-0">{notice.tag}</span>
             </div>
           ))}
         </div>

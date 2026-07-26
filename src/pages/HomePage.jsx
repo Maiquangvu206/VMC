@@ -15,7 +15,9 @@ import {
   Clock,
   Sparkles,
   Users,
-  CheckCircle
+  CheckCircle,
+  TrendingUp,
+  Activity
 } from 'lucide-react';
 
 export const HomePage = () => {
@@ -30,13 +32,13 @@ export const HomePage = () => {
   };
 
   return (
-    <div className="space-y-20 pb-20">
+    <div className="space-y-16 pb-20">
       {/* Hero Section */}
       <Hero />
 
       {/* 4 Ban Chuyên Môn */}
       <section>
-        <div className="text-center space-y-3 mb-12">
+        <div className="text-center space-y-3 mb-10">
           <span className="ds-badge ds-badge-purple">4 Trụ Cột Sáng Tạo</span>
           <h2 className="font-heading text-3xl sm:text-4xl font-bold text-white">
             Các Ban Chuyên Môn Tại <span className="gradient-text">VMC</span>
@@ -52,7 +54,7 @@ export const HomePage = () => {
             return (
               <div
                 key={dept.id}
-                className="ds-card p-6 rounded-2xl hover:border-purple-500/50 flex flex-col justify-between space-y-4 group"
+                className="ds-card-glass p-6 rounded-2xl hover:border-purple-500/50 flex flex-col justify-between space-y-4 group transition-all"
               >
                 <div className="space-y-3">
                   <div className="w-12 h-12 rounded-xl bg-purple-600/20 text-purple-400 flex items-center justify-center group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all">
@@ -102,7 +104,7 @@ export const HomePage = () => {
             <div
               key={work.id}
               onClick={() => setSelectedWork(work)}
-              className="ds-card rounded-2xl overflow-hidden cursor-pointer group"
+              className="ds-card-glass rounded-2xl overflow-hidden cursor-pointer group"
             >
               <div className="relative h-56 overflow-hidden">
                 <img
@@ -143,7 +145,7 @@ export const HomePage = () => {
 
       {/* Sự kiện sắp diễn ra */}
       <section>
-        <div className="ds-card p-8 sm:p-10 rounded-3xl border border-purple-500/30 relative overflow-hidden">
+        <div className="ds-card-glass p-8 sm:p-10 rounded-3xl border border-purple-500/30 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-80 h-80 bg-pink-500/10 blur-3xl rounded-full pointer-events-none" />
 
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
@@ -188,10 +190,10 @@ export const HomePage = () => {
       {/* Lightbox Detail Modal */}
       {selectedWork && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
-          <div className="ds-card p-6 w-full max-w-3xl shadow-2xl text-white space-y-4">
+          <div className="ds-card-glass p-6 w-full max-w-3xl shadow-2xl text-white space-y-4">
             <button
               onClick={() => setSelectedWork(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1"
             >
               ✕
             </button>

@@ -24,7 +24,7 @@ export const ClubProvider = ({ children }) => {
   const { toasts, showToast, removeToast } = useToast();
   const { db, setDb, saveDatabase, resetDatabase, exportDatabase, importDatabase, updateDatabase } = useDatabase();
   
-  const { currentUser, setCurrentUser, isAuthenticated, requirePasswordChange, setRequirePasswordChange, login, logout, updateUser, currentSessionId, setCurrentSessionId } = useAuth(db, setDb);
+  const { currentUser, setCurrentUser, isAuthenticated, login, logout, updateUser, currentSessionId, setCurrentSessionId } = useAuth(db, setDb);
 
   const [activeTab, setActiveTabState] = useState(() => {
     try {
@@ -534,9 +534,8 @@ export const ClubProvider = ({ children }) => {
       is_first_login: false
     }));
 
-    setRequirePasswordChange(false);
-    setIsAuthenticated(true);
-    triggerConfetti();
+setIsAuthenticated(true);
+     triggerConfetti();
     showToast('🎉 Đổi mật khẩu cá nhân thành công! Mật khẩu mới và trạng thái đã được lưu vào CSDL MySQL.', 'success');
     return true;
   };
@@ -597,14 +596,8 @@ export const ClubProvider = ({ children }) => {
   const switchUserAccount = (id) => {
     const acc = db.members.find(m => m.id === id);
     if (acc) {
-      setCurrentUser(acc);
-      if (acc.isFirstLogin) {
-        setRequirePasswordChange(true);
-        setIsAuthenticated(false);
-      } else {
-        setRequirePasswordChange(false);
-        setIsAuthenticated(true);
-      }
+setCurrentUser(acc);
+       setIsAuthenticated(true);
       triggerConfetti();
     }
   };
@@ -1679,16 +1672,15 @@ export const ClubProvider = ({ children }) => {
     addFinanceRecord,
     updateFinanceStatus,
     deleteFinanceRecord,
-    currentUser,
-    isAdmin,
-    isAuthenticated,
-    isLoading,
-    requirePasswordChange,
-    login,
-    changePassword,
-    logout,
-    switchUserAccount,
-    updateSelfProfile,
+currentUser,
+     isAdmin,
+     isAuthenticated,
+     isLoading,
+     login,
+     changePassword,
+     logout,
+     switchUserAccount,
+     updateSelfProfile,
     updateMemberByTech,
     addMemberMilestone,
     user: currentUser,
@@ -1797,16 +1789,15 @@ export const ClubProvider = ({ children }) => {
     showToast,
     removeToast,
     activeTab,
-    db,
-    currentUser,
-    isAuthenticated,
-    isLoading,
-    requirePasswordChange,
-    addFinanceRecord,
-    updateFinanceStatus,
-    deleteFinanceRecord,
-    login,
-    changePassword,
+db,
+     currentUser,
+     isAuthenticated,
+     isLoading,
+     addFinanceRecord,
+     updateFinanceStatus,
+     deleteFinanceRecord,
+     login,
+     changePassword,
     logout,
     switchUserAccount,
     updateSelfProfile,

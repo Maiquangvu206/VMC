@@ -9,7 +9,7 @@ export const TicketModal = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
-       <div className="ds-card p-6 shadow-2xl overflow-hidden text-white w-full max-w-md">
+       <div className="ds-card-glass p-6 shadow-2xl overflow-hidden text-white w-full max-w-md relative">
          
          {/* Glow accent */}
          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-purple-600/20 blur-2xl rounded-full pointer-events-none" />
@@ -33,7 +33,7 @@ export const TicketModal = () => {
 
          {/* Ticket Card */}
          <div className="ds-card p-5 relative overflow-hidden shadow-inner space-y-4">
-           <div className="flex justify-between items-center border-b border-[var(--border-default)] pb-3">
+           <div className="flex justify-between items-center border-b border-white/[0.06] pb-3">
              <div className="flex items-center gap-2">
                <Ticket className="w-5 h-5 text-purple-400" />
                <span className="font-heading font-bold text-sm text-purple-300">VMC EVENT PASS</span>

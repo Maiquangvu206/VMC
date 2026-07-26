@@ -25,7 +25,9 @@ import {
   Search,
   Filter,
   Sparkles,
-  Trash2
+  Trash2,
+  ChevronDown,
+  CheckCircle2
 } from 'lucide-react';
 import { NewAccountModal } from '../components/members/NewAccountModal';
 import { MemberDetailModal } from '../components/members/MemberDetailModal';
@@ -70,7 +72,6 @@ export const InternalMembers = () => {
     setMembersFilterDept
   } = useClub();
 
-  // STRICT PERMISSION: ONLY Admin & Kỹ Thuật Ban Đối Ngoại - Nhân Sự (Chủ Nhiệm, Trưởng/Phó Ban KHÔNG có quyền)
   const canManageAccountsPermission = Boolean(
     currentUser?.role === 'admin' ||
     currentUser?.memberCode === 'ADMIN' ||
@@ -94,7 +95,6 @@ export const InternalMembers = () => {
   const [selectedMember, setSelectedMember] = useState(null);
   const [editingMember, setEditingMember] = useState(null);
 
-  // Secure Add Milestone Modal State
   const [isAddMsModalOpen, setIsAddMsModalOpen] = useState(false);
   const [msTitle, setMsTitle] = useState('');
   const [msDate, setMsDate] = useState('');
@@ -129,7 +129,6 @@ export const InternalMembers = () => {
     setIsAddMsModalOpen(false);
   };
 
-  // Search & Period Filter States
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTerm, setSelectedTerm] = useState('ALL');
   const [selectedDept, setSelectedDept] = useState('ALL');
@@ -168,97 +167,19 @@ export const InternalMembers = () => {
   });
 
   const permissionOptions = [
-    {
-      value: 'chairperson',
-      label: 'Chủ Nhiệm CLB',
-      role: 'admin',
-      roleTitle: 'Chủ Nhiệm CLB',
-      deptName: 'Ban Chủ Nhiệm'
-    },
-    {
-      value: 'vice-chairperson',
-      label: 'Phó Chủ Nhiệm CLB',
-      role: 'member',
-      roleTitle: 'Phó Chủ Nhiệm CLB',
-      deptName: 'Ban Chủ Nhiệm'
-    },
-    {
-      value: 'advisor',
-      label: 'Cố Vấn CLB',
-      role: 'member',
-      roleTitle: 'Cố Vấn CLB',
-      deptName: 'Ban Cố Vấn'
-    },
-    {
-      value: 'head-hr',
-      label: 'Trưởng Ban Đối Ngoại - Nhân Sự',
-      role: 'member',
-      roleTitle: 'Trưởng Ban Đối Ngoại - Nhân Sự',
-      deptName: 'Ban Đối Ngoại - Nhân Sự'
-    },
-    {
-      value: 'technical-hr',
-      label: 'Kỹ Thuật Ban Đối Ngoại - Nhân Sự',
-      role: 'member',
-      roleTitle: 'Kỹ Thuật Ban Đối Ngoại - Nhân Sự',
-      deptName: 'Ban Đối Ngoại - Nhân Sự'
-    },
-    {
-      value: 'vice-hr',
-      label: 'Phó Ban Đối Ngoại - Nhân Sự',
-      role: 'member',
-      roleTitle: 'Phó Ban Đối Ngoại - Nhân Sự',
-      deptName: 'Ban Đối Ngoại - Nhân Sự'
-    },
-    {
-      value: 'member-hr',
-      label: 'Thành Viên Ban Đối Ngoại - Nhân Sự',
-      role: 'member',
-      roleTitle: 'Thành Viên Ban Đối Ngoại - Nhân Sự',
-      deptName: 'Ban Đối Ngoại - Nhân Sự'
-    },
-    {
-      value: 'head-production',
-      label: 'Trưởng Ban Sản Xuất',
-      role: 'member',
-      roleTitle: 'Trưởng Ban Sản Xuất',
-      deptName: 'Ban Sản Xuất'
-    },
-    {
-      value: 'vice-production',
-      label: 'Phó Ban Sản Xuất',
-      role: 'member',
-      roleTitle: 'Phó Ban Sản Xuất',
-      deptName: 'Ban Sản Xuất'
-    },
-    {
-      value: 'member-production',
-      label: 'Thành Viên Ban Sản Xuất',
-      role: 'member',
-      roleTitle: 'Thành Viên Ban Sản Xuất',
-      deptName: 'Ban Sản Xuất'
-    },
-    {
-      value: 'head-content',
-      label: 'Trưởng Ban Nội Dung - Phát Thanh',
-      role: 'member',
-      roleTitle: 'Trưởng Ban Nội Dung - Phát Thanh',
-      deptName: 'Ban Nội Dung - Phát Thanh'
-    },
-    {
-      value: 'vice-content',
-      label: 'Phó Ban Nội Dung - Phát Thanh',
-      role: 'member',
-      roleTitle: 'Phó Ban Nội Dung - Phát Thanh',
-      deptName: 'Ban Nội Dung - Phát Thanh'
-    },
-    {
-      value: 'member-content',
-      label: 'Thành Viên Ban Nội Dung - Phát Thanh',
-      role: 'member',
-      roleTitle: 'Thành Viên Ban Nội Dung - Phát Thanh',
-      deptName: 'Ban Nội Dung - Phát Thanh'
-    }
+    { value: 'chairperson', label: 'Chủ Nhiệm CLB', role: 'admin', roleTitle: 'Chủ Nhiệm CLB', deptName: 'Ban Chủ Nhiệm' },
+    { value: 'vice-chairperson', label: 'Phó Chủ Nhiệm CLB', role: 'member', roleTitle: 'Phó Chủ Nhiệm CLB', deptName: 'Ban Chủ Nhiệm' },
+    { value: 'advisor', label: 'Cố Vấn CLB', role: 'member', roleTitle: 'Cố Vấn CLB', deptName: 'Ban Cố Vấn' },
+    { value: 'head-hr', label: 'Trưởng Ban Đối Ngoại - Nhân Sự', role: 'member', roleTitle: 'Trưởng Ban Đối Ngoại - Nhân Sự', deptName: 'Ban Đối Ngoại - Nhân Sự' },
+    { value: 'technical-hr', label: 'Kỹ Thuật Ban Đối Ngoại - Nhân Sự', role: 'member', roleTitle: 'Kỹ Thuật Ban Đối Ngoại - Nhân Sự', deptName: 'Ban Đối Ngoại - Nhân Sự' },
+    { value: 'vice-hr', label: 'Phó Ban Đối Ngoại - Nhân Sự', role: 'member', roleTitle: 'Phó Ban Đối Ngoại - Nhân Sự', deptName: 'Ban Đối Ngoại - Nhân Sự' },
+    { value: 'member-hr', label: 'Thành Viên Ban Đối Ngoại - Nhân Sự', role: 'member', roleTitle: 'Thành Viên Ban Đối Ngoại - Nhân Sự', deptName: 'Ban Đối Ngoại - Nhân Sự' },
+    { value: 'head-production', label: 'Trưởng Ban Sản Xuất', role: 'member', roleTitle: 'Trưởng Ban Sản Xuất', deptName: 'Ban Sản Xuất' },
+    { value: 'vice-production', label: 'Phó Ban Sản Xuất', role: 'member', roleTitle: 'Phó Ban Sản Xuất', deptName: 'Ban Sản Xuất' },
+    { value: 'member-production', label: 'Thành Viên Ban Sản Xuất', role: 'member', roleTitle: 'Thành Viên Ban Sản Xuất', deptName: 'Ban Sản Xuất' },
+    { value: 'head-content', label: 'Trưởng Ban Nội Dung - Phát Thanh', role: 'member', roleTitle: 'Trưởng Ban Nội Dung - Phát Thanh', deptName: 'Ban Nội Dung - Phát Thanh' },
+    { value: 'vice-content', label: 'Phó Ban Nội Dung - Phát Thanh', role: 'member', roleTitle: 'Phó Ban Nội Dung - Phát Thanh', deptName: 'Ban Nội Dung - Phát Thanh' },
+    { value: 'member-content', label: 'Thành Viên Ban Nội Dung - Phát Thanh', role: 'member', roleTitle: 'Thành Viên Ban Nội Dung - Phát Thanh', deptName: 'Ban Nội Dung - Phát Thanh' }
   ];
 
   const resolvePermissionValue = (member) => {
@@ -278,30 +199,25 @@ export const InternalMembers = () => {
 
   const handleEditDepartmentChange = (deptName) => {
     if (!editingMember) return;
-
     if (!isAdmin) {
       setEditingMember({ ...editingMember, deptName });
       return;
     }
-
     const deptPermissionOptions = getPermissionOptionsByDept(deptName);
     const currentPermission = permissionOptions.find(opt =>
       opt.role === (editingMember.role || 'member') &&
       opt.roleTitle === editingMember.roleTitle &&
       opt.deptName === editingMember.deptName
     );
-
     if (currentPermission && currentPermission.deptName === deptName) {
       setEditingMember({ ...editingMember, deptName });
       return;
     }
-
     const fallbackPermission = deptPermissionOptions[0];
     if (!fallbackPermission) {
       setEditingMember({ ...editingMember, deptName });
       return;
     }
-
     setEditingMember({
       ...editingMember,
       deptName,
@@ -319,19 +235,10 @@ export const InternalMembers = () => {
     createMemberAccount(formData);
     setIsNewAccountModalOpen(false);
     setFormData({
-      username: '',
-      name: '',
-      class: '10A1',
-      role: 'member',
-      roleTitle: 'Thành Viên VMC',
-      department: 'production',
-      deptName: 'Ban Sản Xuất',
-      term: 'Gen 6',
-      termName: 'Gen 6',
-      phone: '',
-      email: '',
-      dob: '01/01/2009',
-      address: 'Thị trấn Vĩnh Bảo, Vĩnh Bảo, Hải Phòng',
+      username: '', name: '', class: '10A1', role: 'member',
+      roleTitle: 'Thành Viên VMC', department: 'production', deptName: 'Ban Sản Xuất',
+      term: 'Gen 6', termName: 'Gen 6', phone: '', email: '',
+      dob: '01/01/2009', address: 'Thị trấn Vĩnh Bảo, Vĩnh Bảo, Hải Phòng',
       facebook: 'https://facebook.com/'
     });
   };
@@ -343,7 +250,6 @@ export const InternalMembers = () => {
     setEditingMember(null);
   };
 
-  // Filter out technical Admin & Super Admin accounts from member list calculations (Memoized for performance)
   const nonAdminMembers = React.useMemo(() => {
     return members.filter(m => {
       const roleTitle = (m.roleTitle || m.role_title || '').toLowerCase();
@@ -353,23 +259,16 @@ export const InternalMembers = () => {
     });
   }, [members]);
 
-  // Filter Members Logic by Search Query & Period/Term & Department (Memoized for performance)
   const filteredMembers = React.useMemo(() => {
     return nonAdminMembers.filter(m => {
       const memberGen = formatGen(m.termName || m.term || '');
       const memberDept = normalizeText(m.deptName || m.department || '');
-
-      // 1. Period / Term match
       const matchesTerm = selectedTerm === 'ALL' || memberGen === selectedTerm;
-
-      // 2. Department match
       const selectedDeptNormalized = normalizeText(selectedDept);
       const matchesDept =
         selectedDept === 'ALL' ||
         memberDept === selectedDeptNormalized ||
         memberDept.includes(selectedDeptNormalized);
-
-      // 3. Search text query match
       const q = normalizeText(searchQuery);
       const matchesQuery = !q ||
         normalizeText(m.name).includes(q) ||
@@ -378,7 +277,6 @@ export const InternalMembers = () => {
         normalizeText(m.deptName || m.department).includes(q) ||
         normalizeText(m.roleTitle).includes(q) ||
         normalizeText(m.phone).includes(q);
-
       return matchesTerm && matchesDept && matchesQuery;
     });
   }, [nonAdminMembers, searchQuery, selectedTerm, selectedDept]);
@@ -389,7 +287,8 @@ export const InternalMembers = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div>
-          <h1 className="font-heading text-3xl font-extrabold text-slate-100 mt-1">
+          <h1 className="font-heading text-3xl font-extrabold text-slate-100 mt-1 flex items-center gap-3">
+            <Users className="w-8 h-8 text-blue-400" />
             Danh Sách Thành Viên
           </h1>
           <p className="text-sm text-slate-400 mt-2">
@@ -414,7 +313,7 @@ export const InternalMembers = () => {
       </div>
 
       {/* Toolbar */}
-      <div className="ds-card p-5 flex flex-col md:flex-row items-center gap-5 justify-between">
+      <div className="ds-card-glass p-5 flex flex-col md:flex-row items-center gap-5 justify-between">
 
         {/* Search Input Box */}
         <div className="relative w-full md:w-96 shrink-0">
@@ -479,7 +378,7 @@ export const InternalMembers = () => {
         </div>
       </div>
 
-      {/* Results Count Counter */}
+      {/* Results Count */}
       <div className="flex items-center justify-between text-sm text-slate-400 px-1">
         <span>Hiển thị <strong className="text-slate-100 font-bold">{filteredMembers.length}</strong> / {nonAdminMembers.length} thành viên</span>
         {(searchQuery || selectedTerm !== 'ALL' || selectedDept !== 'ALL') && (
@@ -492,14 +391,14 @@ export const InternalMembers = () => {
         )}
       </div>
 
-      {/* Account Roster Cards Grid (items-stretch) */}
+      {/* Account Roster Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
         {filteredMembers.map(m => (
           <div
             key={m.id}
-            className="ds-card p-6 flex flex-col h-full justify-between hover:border-blue-500/40 transition-all shadow-xl"
+            className="ds-card-glass p-6 flex flex-col h-full justify-between hover:border-blue-500/40 transition-all shadow-xl"
           >
-            {/* Upper Content Box (flex-1 to fill space evenly) */}
+            {/* Upper Content Box */}
             <div className="flex-1 flex flex-col justify-between space-y-5 mb-4">
 
               {/* Header: Avatar + Identity Info */}
@@ -538,7 +437,7 @@ export const InternalMembers = () => {
 
             </div>
 
-            {/* Pinned Card Footer (mt-auto pt-4 border-t border-[var(--border-default)]/60) */}
+            {/* Pinned Card Footer */}
             <div className="mt-auto pt-4 border-t border-slate-700/50 flex items-center justify-between gap-2 shrink-0">
               <div className="flex items-center gap-2">
                 <button
@@ -596,14 +495,13 @@ export const InternalMembers = () => {
                     <button
                       onClick={() => toggleAccountStatus(m.id)}
                       className={`ds-btn ds-btn-xs ${m.status === 'Active' ? 'ds-btn-secondary' : 'ds-btn-success'}`}
-                      title={m.status === 'Active' ? 'Tạm khóa tài khoản (Kỹ Thuật / Trưởng Ban ĐN-NS)' : 'Mở khóa (Kỹ Thuật / Trưởng Ban ĐN-NS)'}
+                      title={m.status === 'Active' ? 'Tạm khóa tài khoản' : 'Mở khóa'}
                     >
                       <Lock className="w-4 h-4" />
                     </button>
                   </>
                 )}
 
-                {/* Nút Xóa Tài Khoản (Chỉ Super Admin mới được phép) */}
                 {isSuperAdmin && (
                   <button
                     onClick={() => deleteMemberAccount(m.id)}

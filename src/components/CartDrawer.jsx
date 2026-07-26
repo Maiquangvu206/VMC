@@ -21,17 +21,17 @@ export const CartDrawer = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/70 backdrop-blur-sm animate-slide-up">
-       <div className="ds-card w-full max-w-md h-full flex flex-col shadow-2xl p-6 relative border-l border-[var(--border-default)]">
+    <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/80 backdrop-blur-md animate-slide-up">
+       <div className="ds-card-glass w-full max-w-md h-full flex flex-col shadow-2xl p-6 relative border-l border-white/[0.06]">
          
          {/* Header */}
-         <div className="flex items-center justify-between pb-4 border-b border-[var(--border-default)]">
+         <div className="flex items-center justify-between pb-4 border-b border-white/[0.06]">
            <div className="flex items-center gap-3">
              <div className="w-10 h-10 rounded-xl bg-purple-600/20 text-purple-400 flex items-center justify-center">
                <ShoppingBag className="w-5 h-5" />
              </div>
              <div>
-               <h3 className="font-heading font-bold text-lg text-white">Giỏ Hàng VMC Store</h3>
+               <h3 className="font-heading font-bold text-lg text-white">VMC Store</h3>
                <p className="text-xs text-slate-400">{cart.length} vật phẩm đã chọn</p>
              </div>
            </div>
@@ -106,7 +106,7 @@ export const CartDrawer = () => {
 
          {/* Footer */}
          {cart.length > 0 && !isCheckoutSubmitted && (
-           <div className="border-t border-[var(--border-default)] pt-4 space-y-4">
+           <div className="border-t border-white/[0.06] pt-4 space-y-4">
              <div className="flex justify-between items-center text-sm">
                <span className="text-slate-400">Tổng cộng thanh toán:</span>
                <span className="font-heading font-bold text-xl text-purple-400 font-mono">

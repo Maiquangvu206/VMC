@@ -13,7 +13,13 @@ import {
   Film,
   Handshake,
   Users,
-  Award
+  Award,
+  TrendingUp,
+  Activity,
+  Clock,
+  Target,
+  Zap,
+  X
 } from 'lucide-react';
 
 const Loading = () => (
@@ -182,11 +188,18 @@ export const InternalDashboard = () => {
     advisory: Award
   };
 
+  const statCards = [
+    { label: 'Nhiệm Vụ Đang Làm', value: doingTasks.length, icon: Target, color: 'blue', trend: '' },
+    { label: 'Kịch Bản Chờ Duyệt', value: pendingDrafts.length, icon: FileText, color: 'amber', trend: '' },
+    { label: 'Thiết Bị Đang Mượn', value: borrowedEquipment.length, icon: Activity, color: 'cyan', trend: '' },
+    { label: 'Công Việc Đã Xong', value: doneTasks.length, icon: CheckSquare, color: 'emerald', trend: '' },
+  ];
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8 pb-20">
 
       {/* Welcome Banner */}
-      <div className="bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 sm:p-8 relative overflow-hidden">
+      <div className="ds-card-glass p-6 sm:p-8 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 blur-3xl rounded-full pointer-events-none" />
 
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
@@ -218,7 +231,7 @@ export const InternalDashboard = () => {
                 setActiveTab('tasks');
                 setIsNewTaskModalOpen(true);
               }}
-              className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-slate-100 font-semibold text-sm shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2"
+              className="ds-btn ds-btn-primary"
             >
               <Plus className="w-4 h-4" />
               <span>Giao Việc Mới</span>
@@ -229,44 +242,31 @@ export const InternalDashboard = () => {
                 setActiveTab('drafts');
                 setIsNewDraftModalOpen(true);
               }}
-              className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-sm border border-slate-700 transition-all flex items-center gap-2"
+              className="ds-btn ds-btn-secondary"
             >
               <FileText className="w-4 h-4 text-blue-400" />
-              <span>Soạn Kịch Bản / Bài Đăng</span>
+              <span>Soạn Kịch Bản</span>
             </button>
           </div>
 
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-6 border-t border-slate-800">
-          <div className="bg-slate-800/50 p-5 rounded-xl border border-slate-700/50 text-center hover:border-blue-500/30 transition-all">
-            <div className="text-sm text-slate-400 font-medium">Nhiệm Vụ Đang Làm</div>
-            <div className="font-heading font-extrabold text-3xl text-blue-400 font-mono mt-2">
-              {doingTasks.length}
-            </div>
-          </div>
-
-          <div className="bg-slate-800/50 p-5 rounded-xl border border-slate-700/50 text-center hover:border-amber-500/30 transition-all">
-            <div className="text-sm text-slate-400 font-medium">Kịch Bản Chờ Duyệt</div>
-            <div className="font-heading font-extrabold text-3xl text-amber-400 font-mono mt-2">
-              {pendingDrafts.length}
-            </div>
-          </div>
-
-          <div className="bg-slate-800/50 p-5 rounded-xl border border-slate-700/50 text-center hover:border-cyan-500/30 transition-all">
-            <div className="text-sm text-slate-400 font-medium">Thiết Bị Đang Mượn</div>
-            <div className="font-heading font-extrabold text-3xl text-cyan-400 font-mono mt-2">
-              {borrowedEquipment.length}
-            </div>
-          </div>
-
-          <div className="bg-slate-800/50 p-5 rounded-xl border border-slate-700/50 text-center hover:border-emerald-500/30 transition-all">
-            <div className="text-sm text-slate-400 font-medium">Công Việc Đã Xong</div>
-            <div className="font-heading font-extrabold text-3xl text-emerald-400 font-mono mt-2">
-              {doneTasks.length}
-            </div>
-          </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-6 border-t border-white/[0.06]">
+          {statCards.map((stat, idx) => {
+            const Icon = stat.icon;
+            return (
+              <div key={idx} className="ds-card p-5 text-center hover:border-blue-500/30 transition-all">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-slate-400 font-medium">{stat.label}</span>
+                  <Icon className={`w-4 h-4 text-${stat.color}-400`} />
+                </div>
+                <div className="font-heading font-extrabold text-3xl text-white font-mono mt-1">
+                  {stat.value}
+                </div>
+              </div>
+            );
+          })}
         </div>
 
       </div>
@@ -288,14 +288,14 @@ export const InternalDashboard = () => {
                   setMembersFilterDept(dept.name);
                   setActiveTab('members');
                 }}
-                className="bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 cursor-pointer group flex flex-col justify-between hover:border-blue-500/50 transition-all"
+                className="ds-card-glass p-6 cursor-pointer group flex flex-col justify-between hover:border-blue-500/50 transition-all"
               >
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shrink-0 border border-blue-500/20">
                       <Icon className="w-6 h-6" />
                     </div>
-                    <span className="text-xs font-mono text-slate-400 bg-slate-800/50 px-3 py-1.5 rounded-full border border-slate-700/50">
+                    <span className="ds-badge ds-badge-blue">
                       {getDepartmentMemberCount(dept.id)} TV
                     </span>
                   </div>
@@ -324,7 +324,7 @@ export const InternalDashboard = () => {
         <div className="lg:col-span-2 space-y-8">
 
           {/* Active Tasks */}
-          <div className="bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 space-y-6">
+          <div className="ds-card-glass p-6 space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
@@ -337,7 +337,7 @@ export const InternalDashboard = () => {
               </div>
               <button
                 onClick={() => setActiveTab('tasks')}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-sm border border-slate-700 transition-all flex items-center gap-2"
+                className="ds-btn ds-btn-secondary ds-btn-sm"
               >
                 <span>Xem tất cả ({tasks.length})</span>
                 <ArrowRight className="w-4 h-4" />
@@ -348,7 +348,7 @@ export const InternalDashboard = () => {
               {tasks.slice(0, 3).map(task => (
                 <div
                   key={task.id}
-                  className="p-5 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:border-blue-500/30 transition-all space-y-3"
+                  className="ds-card p-5 space-y-3 transition-all"
                 >
                   <div className="flex items-center justify-between text-sm">
                     <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/30">{task.department?.toUpperCase?.()}</span>
@@ -362,7 +362,7 @@ export const InternalDashboard = () => {
           </div>
 
           {/* Pending Drafts */}
-          <div className="bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 space-y-6">
+          <div className="ds-card-glass p-6 space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
@@ -375,7 +375,7 @@ export const InternalDashboard = () => {
               </div>
               <button
                 onClick={() => setActiveTab('drafts')}
-                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-sm border border-slate-700 transition-all flex items-center gap-2"
+                className="ds-btn ds-btn-secondary ds-btn-sm"
               >
                 <span>Quản Lý Kịch Bản</span>
                 <ArrowRight className="w-4 h-4" />
@@ -386,16 +386,16 @@ export const InternalDashboard = () => {
               {drafts.map(draft => (
                 <div
                   key={draft.id}
-                  className="p-5 rounded-xl bg-slate-800/50 border border-slate-700/50 space-y-3"
+                  className="ds-card p-5 space-y-3"
                 >
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-slate-400 font-mono">Tác giả: {draft.author}</span>
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${draft.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'}`}>
+                    <span className={`ds-badge ${draft.status === 'approved' ? 'ds-badge-emerald' : 'ds-badge-amber'}`}>
                       {draft.status === 'approved' ? 'Đã Duyệt' : 'Chờ Duyệt'}
                     </span>
                   </div>
                   <h3 className="font-heading font-bold text-base text-slate-100">{draft.title}</h3>
-                  <p className="text-sm text-slate-400 line-clamp-2 italic bg-slate-900/50 p-4 rounded-xl border border-slate-700/50">
+                  <p className="text-sm text-slate-400 line-clamp-2 italic ds-card p-4 border border-white/[0.06]">
                     "{draft.content}"
                   </p>
                 </div>
@@ -409,7 +409,7 @@ export const InternalDashboard = () => {
         <div className="space-y-8">
 
           {/* Announcements */}
-          <div className="bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-2xl p-6 space-y-6">
+          <div className="ds-card-glass p-6 space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
@@ -438,19 +438,19 @@ export const InternalDashboard = () => {
                 </div>
               ) : (
                 announcements.map(ann => (
-                  <div key={ann.id} className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 space-y-2 text-sm relative group hover:border-slate-600 transition-all">
+                  <div key={ann.id} className="ds-card p-4 space-y-2 text-sm relative group hover:border-slate-600 transition-all">
                     <div className="flex justify-between items-center">
                       <span className="text-blue-400 font-mono text-xs">{ann.date || 'Hôm nay'}</span>
                       <div className="flex items-center gap-2">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${ann.isPinned ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30' : 'bg-purple-500/10 text-purple-400 border border-purple-500/30'}`}>
+                        <span className={`ds-badge ${ann.isPinned ? 'ds-badge-rose' : 'ds-badge-purple'}`}>
                           {ann.priority || (ann.isPinned ? 'Ghim đầu' : 'Thông báo')}
                         </span>
                         {canManageAnnouncements && (
                           <button
                             onClick={() => deleteAnnouncement(ann.id)}
-                            className="text-slate-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-opacity text-xs underline"
+                            className="ds-btn ds-btn-ghost ds-btn-xs text-rose-400"
                           >
-                            Xóa
+                            <X className="w-3 h-3" />
                           </button>
                         )}
                       </div>
@@ -470,15 +470,15 @@ export const InternalDashboard = () => {
       {/* Announcement Modal */}
       {isAnnModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-          <div className="relative w-full max-w-lg bg-slate-900/95 backdrop-blur-xl border border-blue-500/30 rounded-2xl p-6 space-y-6 animate-slide-up shadow-2xl">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-700/50">
+          <div className="ds-card-glass p-6 w-full max-w-lg shadow-2xl text-white space-y-6 border border-blue-500/30">
+            <div className="flex items-center justify-between pb-4 border-b border-white/[0.06]">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
                   <Bell className="w-5 h-5" />
                 </div>
                 <h3 className="font-heading font-bold text-lg text-slate-100">ĐĂNG THÔNG BÁO BAN CHỦ NHIỆM</h3>
               </div>
-              <button onClick={() => setIsAnnModalOpen(false)} className="text-slate-400 hover:text-white p-2 transition-colors">
+              <button onClick={() => setIsAnnModalOpen(false)} className="ds-btn ds-btn-ghost p-2">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -493,26 +493,26 @@ export const InternalDashboard = () => {
               setIsAnnModalOpen(false);
             }} className="space-y-5">
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">Tiêu Đề Thông Báo *</label>
+                <label className="ds-field-label">Tiêu Đề Thông Báo *</label>
                 <input
                   type="text"
                   required
                   value={annTitle}
                   onChange={(e) => setAnnTitle(e.target.value)}
                   placeholder="Nhập tiêu đề thông báo..."
-                  className="w-full h-10 px-3 py-2 bg-slate-800/80 border border-slate-700/80 rounded-lg text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  className="ds-input"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-2">Nội Dung Thông Báo *</label>
+                <label className="ds-field-label">Nội Dung Thông Báo *</label>
                 <textarea
                   required
                   rows={4}
                   value={annContent}
                   onChange={(e) => setAnnContent(e.target.value)}
                   placeholder="Nhập nội dung thông báo gửi tới toàn thể thành viên CLB..."
-                  className="w-full min-h-24 px-3 py-2 bg-slate-800/80 border border-slate-700/80 rounded-lg text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all resize-y"
+                  className="ds-textarea"
                 />
               </div>
 
@@ -529,17 +529,17 @@ export const InternalDashboard = () => {
                 </label>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-700/50">
+              <div className="flex justify-end gap-3 pt-4 border-t border-white/[0.06]">
                 <button
                   type="button"
                   onClick={() => setIsAnnModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-sm border border-slate-700 transition-all"
+                  className="ds-btn ds-btn-secondary"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-slate-100 font-semibold text-sm shadow-lg shadow-blue-500/20 transition-all"
+                  className="ds-btn ds-btn-primary"
                 >
                   ĐĂNG THÔNG BÁO
                 </button>

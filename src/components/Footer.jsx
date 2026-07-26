@@ -16,14 +16,16 @@ export const Footer = () => {
   };
 
   return (
-    <footer className="relative bg-[var(--bg-primary)] border-t border-[var(--border-default)] pt-12 pb-8 overflow-hidden text-slate-400">
+    <footer className="relative bg-[var(--bg-primary)] border-t border-white/[0.06] pt-12 pb-8 overflow-hidden text-slate-400">
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-blue-600/5 blur-[120px] rounded-full pointer-events-none" />
+
       <div className="page-wrap relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
           
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-full bg-[var(--bg-tertiary)] border-2 border-cyan-400/80 shadow-lg shadow-cyan-500/20 overflow-hidden p-0.5 shrink-0">
+              <div className="w-11 h-11 rounded-full bg-slate-800 border-2 border-cyan-400/60 shadow-lg shadow-cyan-500/15 overflow-hidden p-0.5 shrink-0">
                 <img src="/vmc-logo.jpg" alt="VMC Logo" className="w-full h-full object-cover rounded-full" />
               </div>
               <div>
@@ -102,7 +104,7 @@ export const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-[var(--border-default)] mb-6" />
+        <div className="border-t border-white/[0.06] mb-6" />
 
         {/* Bottom Bar */}
         <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4 text-xs">

@@ -3,7 +3,6 @@ import { ClubProvider, useClub } from './context/ClubContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { LoginModal } from './components/LoginModal';
-import { ForcePasswordChangeModal } from './components/ForcePasswordChangeModal';
 import { AttendanceModal } from './components/AttendanceModal';
 import { ToastContainer } from './components/Toast';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -40,17 +39,14 @@ const pageComponents = {
 };
 
 const AppContent = () => {
-  const { activeTab, isAuthenticated, requirePasswordChange, isLoading, toasts, removeToast } = useClub();
+  const { activeTab, isAuthenticated, isLoading, toasts, removeToast } = useClub();
 
   if (isLoading) {
     return <Loading />;
   }
 
-  if (!isAuthenticated && !requirePasswordChange) {
+  if (!isAuthenticated) {
     return <LoginModal />;
-  }
-  if (requirePasswordChange) {
-    return <ForcePasswordChangeModal />;
   }
 
   const ActivePage = pageComponents[activeTab];

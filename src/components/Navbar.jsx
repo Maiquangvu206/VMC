@@ -1,30 +1,34 @@
 import React, { useState } from 'react';
 import { useClub } from '../context/ClubContext';
-import { 
-  LayoutDashboard, 
-  CheckSquare, 
-  FileText, 
-  FolderGit2, 
-  Users, 
-  Sun, 
-  Moon, 
-  Menu, 
+import {
+  LayoutDashboard,
+  CheckSquare,
+  FileText,
+  FolderGit2,
+  Users,
+  Sun,
+  Moon,
+  Menu,
   X,
   ChevronDown,
   User,
   LogOut,
   UserCheck,
   ShieldCheck,
-  UserPlus
+  UserPlus,
+  Search,
+  Bell,
+  Settings,
+  Sparkles,
 } from 'lucide-react';
 
 export const Navbar = () => {
-  const { 
-    theme, 
-    toggleTheme, 
-    activeTab, 
-    setActiveTab, 
-    currentUser, 
+  const {
+    theme,
+    toggleTheme,
+    activeTab,
+    setActiveTab,
+    currentUser,
     checkinAttendance,
     logout,
     tasks,
@@ -32,209 +36,245 @@ export const Navbar = () => {
     isHRMember,
     isAdmin,
     isSuperAdmin,
-    isRecruitmentSeasonActive
+    isRecruitmentSeasonActive,
+    showToast,
   } = useClub();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const safeUser = currentUser || {
     name: 'Thành Viên VMC',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
     roleTitle: 'Thành Viên VMC',
     memberCode: 'VMC-MEMBER',
-    class: '10A1'
+    class: '10A1',
   };
 
   const pendingTasksCount = tasks.filter(t => t.status !== 'done').length;
   const pendingDraftsCount = drafts.filter(d => d.status === 'pending').length;
 
-  const currentUserRoleTitle = String(currentUser?.roleTitle || '').toLowerCase();
-  const currentUserDeptName = String(currentUser?.deptName || currentUser?.department || '').toLowerCase();
-
-  const isHRHead = Boolean(
-    currentUser?.role === 'admin' ||
-    currentUser?.memberCode === 'ADMIN' ||
-    currentUserRoleTitle.includes('super admin') ||
-    (currentUserRoleTitle.includes('tr\u01b0\u1edfng ban') && (
-      currentUserDeptName.includes('\u0111\u1ed1i ngo\u1ea1i') ||
-      currentUserDeptName.includes('nh\u00e2n s\u1ef1') ||
-      currentUserDeptName.includes('\u0111n-ns') ||
-      currentUserDeptName.includes('dn-ns')
-    ))
-  );
-
   const navItems = [
-    { id: 'dashboard', label: 'Tổng Quan', icon: LayoutDashboard },
+    { id: 'dashboard', label: 'Tổng Quan', icon: LayoutDashboard, badge: 0 },
     { id: 'tasks', label: 'Phân Công', icon: CheckSquare, badge: pendingTasksCount },
     { id: 'drafts', label: 'Duyệt Bài', icon: FileText, badge: pendingDraftsCount },
-    { id: 'resources', label: 'Tài Nguyên', icon: FolderGit2 },
-    { id: 'members', label: 'Thành Viên', icon: Users },
+    { id: 'resources', label: 'Tài Nguyên', icon: FolderGit2, badge: 0 },
+    { id: 'members', label: 'Thành Viên', icon: Users, badge: 0 },
     { id: 'profile', label: 'Hồ Sơ', icon: User, badge: 0 },
-    { id: 'hr_dashboard', label: 'Thi Đua & Sinh Nhật', icon: Users, badge: 0 },
+    { id: 'hr_dashboard', label: 'Thi Đua', icon: Sparkles, badge: 0 },
     ...(isSuperAdmin || isRecruitmentSeasonActive ? [{ id: 'recruitment', label: 'Tuyển Gen', icon: UserPlus, badge: 0 }] : []),
-    ...(isSuperAdmin ? [{ id: 'admin_sessions', label: 'Quản Lý Phiên', icon: ShieldCheck, badge: 0 }] : [])
+    ...(isSuperAdmin ? [{ id: 'admin_sessions', label: 'Quản Lý', icon: ShieldCheck, badge: 0 }] : []),
   ];
 
   const handleNavClick = (id) => {
     setActiveTab(id);
     setIsMobileMenuOpen(false);
+    setIsSearchOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-[#0b0f17]/95 backdrop-blur-xl border-b border-slate-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-        
-        {/* Brand Logo */}
-        <div 
-          onClick={() => handleNavClick('dashboard')}
-          className="flex items-center gap-3 cursor-pointer group shrink-0"
-        >
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 border border-blue-500/30 shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-all overflow-hidden p-0.5 shrink-0">
-            <img src="/vmc-logo.jpg" alt="VMC Logo" className="w-full h-full object-cover rounded-lg" />
-          </div>
+    <header className="sticky top-0 z-50 bg-[#0b0f17]/80 backdrop-blur-2xl border-b border-white/[0.06] supports-[backdrop-filter]:bg-[#0b0f17]/70">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
 
-          <div className="hidden sm:block">
-            <span className="font-heading font-black text-lg tracking-tight text-slate-100 block leading-none">
-              VMC PORTAL
-            </span>
-            <span className="text-xs block text-slate-400 font-medium mt-0.5">
-              THPT Vĩnh Bảo
-            </span>
-          </div>
-        </div>
-
-        {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center gap-1.5 bg-slate-900/90 px-3 py-2 rounded-2xl border border-slate-700/50 shrink-0">
-          {navItems.map(item => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            const isRestricted = !isAdmin && ['equipment', 'resources'].includes(item.id);
-            return (
-              <button
-                key={item.id}
-                onClick={() => !isRestricted && handleNavClick(item.id)}
-                className={`flex flex-row items-center gap-2 px-4 py-2 rounded-xl font-semibold text-sm whitespace-nowrap transition-all duration-200 ${
-                  isRestricted ? 'opacity-30 blur-[1px] cursor-not-allowed' : ''
-                } ${
-                  isActive
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800'
-                }`}
-                title={isRestricted ? 'Chức năng chỉ dành cho Admin' : ''}
-              >
-                <Icon className="w-4 h-4 shrink-0" />
-                <span>{item.label}</span>
-                {item.badge > 0 && (
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full leading-none ${
-                    isActive ? 'bg-white text-blue-600' : 'bg-blue-500 text-white'
-                  }`}>
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* User Profile & Actions */}
-        <div className="flex items-center gap-3 shrink-0">
-          
-          {/* User Profile Card */}
-          <div 
-            className="relative"
-            onMouseLeave={() => setIsUserDropdownOpen(false)}
+          {/* Brand Logo */}
+          <div
+            onClick={() => handleNavClick('dashboard')}
+            className="flex items-center gap-3 cursor-pointer group shrink-0"
           >
+            <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 border border-blue-500/30 shadow-lg shadow-blue-500/20 group-hover:scale-105 group-hover:shadow-blue-500/40 transition-all duration-300 overflow-hidden p-0.5 shrink-0">
+              <img src="/vmc-logo.jpg" alt="VMC Logo" className="w-full h-full object-cover rounded-lg" />
+            </div>
+            <div className="hidden sm:block">
+              <span className="font-heading font-black text-lg tracking-tight text-slate-100 block leading-none">
+                VMC PORTAL
+              </span>
+              <span className="text-[10px] block text-slate-500 font-medium mt-0.5 tracking-widest uppercase">
+                THPT Vĩnh Bảo
+              </span>
+            </div>
+          </div>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden lg:flex items-center gap-1 bg-slate-900/60 backdrop-blur-sm px-2.5 py-1.5 rounded-2xl border border-white/[0.06]">
+            {navItems.map(item => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              const isRestricted = !isAdmin && ['equipment', 'resources'].includes(item.id);
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => !isRestricted && handleNavClick(item.id)}
+                  className={`relative flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-xs tracking-wide whitespace-nowrap transition-all duration-200 ${
+                    isRestricted
+                      ? 'opacity-30 blur-[1px] cursor-not-allowed'
+                      : ''
+                  } ${
+                    isActive
+                      ? 'bg-blue-600/20 text-blue-300 shadow-lg shadow-blue-500/10 border border-blue-500/30'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] border border-transparent'
+                  }`}
+                  title={isRestricted ? 'Chức năng chỉ dành cho Admin' : ''}
+                >
+                  <Icon className="w-4 h-4 shrink-0" />
+                  <span>{item.label}</span>
+                  {item.badge > 0 && (
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none ${
+                      isActive ? 'bg-blue-500 text-white' : 'bg-amber-500/20 text-amber-300'
+                    }`}>
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* Right Actions */}
+          <div className="flex items-center gap-2 shrink-0">
+
+            {/* Search Toggle */}
             <button
-              onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-              onMouseEnter={() => setIsUserDropdownOpen(true)}
-              className="flex items-center gap-3 px-3 py-2 rounded-xl bg-slate-900/90 border border-slate-700/50 hover:border-blue-500/50 transition-all text-sm"
+              onClick={() => setIsSearchOpen(!isSearchOpen)}
+              className="p-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-all"
+              title="Tìm kiếm"
             >
-              <img
-                src={safeUser.avatar}
-                alt={safeUser.name}
-                className="w-9 h-9 rounded-lg object-cover border-2 border-blue-500/30 shrink-0"
-              />
-              <div className="text-left max-w-[140px] truncate hidden md:block">
-                <div className="font-bold text-slate-100 text-sm truncate leading-tight">{safeUser.name}</div>
-                <div className="text-xs text-blue-400 font-medium truncate">{safeUser.roleTitle}</div>
-              </div>
-              <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />
+              <Search className="w-4 h-4" />
             </button>
 
-            {/* Profile Dropdown */}
-            {isUserDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-72 bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-3 shadow-2xl z-50 animate-slide-up space-y-2">
-                {/* Account Info */}
-                <div className="p-3 rounded-xl bg-slate-800/50 border border-slate-700/50 space-y-1 text-sm">
-                  <div className="font-bold text-slate-100 truncate">{safeUser.name}</div>
-                  <div className="text-xs text-blue-400 font-medium truncate">{safeUser.roleTitle}</div>
-                  <div className="text-xs text-slate-400 font-mono">Mã TV: {safeUser.memberCode} • Lớp {safeUser.class}</div>
+            {/* Notification Bell */}
+            <button
+              className="p-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-all relative"
+              title="Thông báo"
+            >
+              <Bell className="w-4 h-4" />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full border-2 border-[#0b0f17]" />
+            </button>
+
+            {/* User Profile */}
+            <div
+              className="relative"
+              onMouseLeave={() => setIsUserDropdownOpen(false)}
+            >
+              <button
+                onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+                onMouseEnter={() => setIsUserDropdownOpen(true)}
+                className="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:border-blue-500/30 hover:bg-white/[0.06] transition-all text-sm group"
+              >
+                <div className="relative">
+                  <img
+                    src={safeUser.avatar}
+                    alt={safeUser.name}
+                    className="w-8 h-8 rounded-lg object-cover border-2 border-blue-500/20 group-hover:border-blue-500/50 transition-colors"
+                  />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#0b0f17]" />
                 </div>
+                <div className="text-left max-w-[120px] truncate hidden md:block">
+                  <div className="font-semibold text-slate-200 text-xs truncate leading-tight">{safeUser.name}</div>
+                  <div className="text-[10px] text-blue-400 font-medium truncate">{safeUser.roleTitle}</div>
+                </div>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-500 shrink-0 transition-transform group-hover:rotate-180" />
+              </button>
 
-                {/* Attendance */}
-                {isHRMember && (
-                  <button
-                    onClick={checkinAttendance}
-                    className="w-full flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500 hover:text-slate-950 font-semibold text-sm transition-all"
-                  >
-                    <div className="flex items-center gap-2">
-                      <UserCheck className="w-5 h-5" />
-                      <span>Điểm Danh Sinh Hoạt</span>
+              {/* Profile Dropdown */}
+              {isUserDropdownOpen && (
+                <div className="absolute right-0 mt-2 w-72 bg-slate-900/95 backdrop-blur-2xl border border-white/[0.08] rounded-2xl p-3 shadow-2xl z-50 animate-slide-up space-y-1.5">
+                  <div className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] space-y-1.5">
+                    <div className="flex items-center gap-3">
+                      <img src={safeUser.avatar} alt={safeUser.name} className="w-10 h-10 rounded-xl object-cover border border-blue-500/20" />
+                      <div className="min-w-0">
+                        <div className="font-bold text-slate-100 text-sm truncate">{safeUser.name}</div>
+                        <div className="text-[11px] text-blue-400 font-medium truncate">{safeUser.roleTitle}</div>
+                      </div>
                     </div>
-                    <span className="text-xs font-mono font-bold">+50 PTS</span>
+                    <div className="text-[11px] text-slate-400 font-mono">Mã TV: {safeUser.memberCode} • Lớp {safeUser.class}</div>
+                  </div>
+
+                  {isHRMember && (
+                    <button
+                      onClick={() => { checkinAttendance(); setIsUserDropdownOpen(false); }}
+                      className="w-full flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500 hover:text-slate-950 font-semibold text-xs transition-all"
+                    >
+                      <div className="flex items-center gap-2">
+                        <UserCheck className="w-4 h-4" />
+                        <span>Điểm Danh Sinh Hoạt</span>
+                      </div>
+                      <span className="text-[10px] font-mono font-bold">+50 PTS</span>
+                    </button>
+                  )}
+
+                  <button
+                    onClick={() => { setActiveTab('profile'); setIsUserDropdownOpen(false); }}
+                    className="w-full flex items-center gap-2.5 p-3 rounded-xl hover:bg-white/[0.04] text-slate-300 hover:text-slate-100 transition-all text-xs font-medium"
+                  >
+                    <User className="w-4 h-4" />
+                    <span>Xem Hồ Sơ Thành Viên</span>
                   </button>
-                )}
 
-                <button
-                  onClick={() => {
-                    setActiveTab('profile');
-                    setIsUserDropdownOpen(false);
-                  }}
-                  className="w-full flex items-center gap-2 p-3 rounded-xl bg-blue-500/10 text-blue-300 hover:bg-blue-500 hover:text-white transition-all text-sm font-semibold text-left"
-                >
-                  <User className="w-5 h-5" />
-                  <span>Xem Hồ Sơ Thành Viên</span>
-                </button>
+                  <button
+                    onClick={() => { setActiveTab('settings'); setIsUserDropdownOpen(false); }}
+                    className="w-full flex items-center gap-2.5 p-3 rounded-xl hover:bg-white/[0.04] text-slate-300 hover:text-slate-100 transition-all text-xs font-medium"
+                  >
+                    <Settings className="w-4 h-4" />
+                    <span>Cài Đặt</span>
+                  </button>
 
-                <button
-                  onClick={() => {
-                    setIsUserDropdownOpen(false);
-                    logout();
-                  }}
-                  className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-red-500/10 hover:bg-red-500 text-red-300 hover:text-white font-semibold text-sm transition-all"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Đăng Xuất Tài Khoản</span>
-                </button>
-              </div>
-            )}
+                  <div className="border-t border-white/[0.06] my-1" />
+
+                  <button
+                    onClick={() => { setIsUserDropdownOpen(false); logout(); }}
+                    className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-300 hover:text-white font-semibold text-xs transition-all"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Đăng Xuất</span>
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] border border-transparent hover:border-white/[0.06] transition-all shrink-0"
+              title="Chuyển chế độ giao diện"
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-blue-400" />}
+            </button>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden p-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-white/[0.04] transition-all shrink-0"
+            >
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
-
-          {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="p-2.5 rounded-xl bg-slate-900/90 text-slate-300 border border-slate-700/50 hover:border-blue-500/50 transition-all shrink-0"
-            title="Chuyển chế độ Giao diện"
-          >
-            {theme === 'dark' ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-blue-400" />}
-          </button>
-
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden p-2.5 rounded-xl bg-slate-900/90 text-slate-300 border border-slate-700/50 shrink-0"
-          >
-            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
-
         </div>
       </div>
 
+      {/* Search Bar (Expandable) */}
+      {isSearchOpen && (
+        <div className="lg:hidden border-t border-white/[0.06] bg-[#0b0f17]/95 backdrop-blur-2xl px-4 py-3 animate-slide-up">
+          <div className="flex items-center gap-3 bg-slate-900/80 border border-white/[0.08] rounded-xl px-4 py-2.5">
+            <Search className="w-4 h-4 text-slate-500 shrink-0" />
+            <input
+              type="text"
+              placeholder="Tìm kiếm thành viên, công việc..."
+              className="flex-1 bg-transparent text-sm text-slate-200 placeholder-slate-500 outline-none"
+              autoFocus
+            />
+            <button onClick={() => setIsSearchOpen(false)} className="text-slate-500 hover:text-slate-300">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Mobile Drawer */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden bg-slate-900/95 backdrop-blur-xl border-t border-slate-700/50 p-4 space-y-2 animate-slide-up">
+        <div className="lg:hidden bg-slate-900/95 backdrop-blur-2xl border-t border-white/[0.06] p-4 space-y-1.5 animate-slide-up">
           {navItems.map(item => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -247,17 +287,16 @@ export const Navbar = () => {
                   isRestricted ? 'opacity-30 blur-[1px] cursor-not-allowed' : ''
                 } ${
                   isActive
-                    ? 'bg-blue-600 text-white font-bold'
-                    : 'text-slate-300 hover:bg-slate-800'
+                    ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
+                    : 'text-slate-300 hover:bg-white/[0.04] border border-transparent'
                 }`}
-                title={isRestricted ? 'Chức năng chỉ dành cho Admin' : ''}
               >
                 <div className="flex items-center gap-3">
                   <Icon className="w-5 h-5" />
                   <span>{item.label}</span>
                 </div>
                 {item.badge > 0 && (
-                  <span className="bg-blue-500 text-white px-2.5 py-0.5 rounded-full text-xs font-bold">
+                  <span className="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full text-[10px] font-bold">
                     {item.badge}
                   </span>
                 )}

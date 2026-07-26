@@ -19,8 +19,6 @@ export const useAuth = (db, setDb) => {
     }
   });
 
-  const [requirePasswordChange, setRequirePasswordChange] = useState(false);
-
   const [currentSessionId, setCurrentSessionId] = useState(() => {
     try {
       let savedId = sessionStorage.getItem('VMC_SESSION_ID');
@@ -58,15 +56,9 @@ export const useAuth = (db, setDb) => {
           return { success: false, message: 'Tài khoản này đã bị tạm khóa bởi Ban Chủ Nhiệm!' };
         }
 
-        setCurrentUser(user);
-        if (user.isFirstLogin && user.memberCode !== 'ADMIN') {
-          setRequirePasswordChange(true);
-          setIsAuthenticated(false);
-        } else {
-          setRequirePasswordChange(false);
-          setIsAuthenticated(true);
-        }
-        return { success: true };
+setCurrentUser(user);
+         setIsAuthenticated(true);
+         return { success: true };
       }
 
       if (apiRes && !apiRes.success && apiRes.message?.includes('tạm khóa')) {
@@ -103,7 +95,6 @@ export const useAuth = (db, setDb) => {
     sessionStorage.removeItem('VMC_CURRENT_USER');
     sessionStorage.removeItem('VMC_IS_AUTH');
     setIsAuthenticated(false);
-    setRequirePasswordChange(false);
     setCurrentUser(null);
     const newId = 'sess-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now();
     setCurrentSessionId(newId);
@@ -126,8 +117,6 @@ export const useAuth = (db, setDb) => {
     currentUser,
     setCurrentUser,
     isAuthenticated,
-    requirePasswordChange,
-    setRequirePasswordChange,
     login,
     logout,
     updateUser,

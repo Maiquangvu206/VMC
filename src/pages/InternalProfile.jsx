@@ -187,7 +187,7 @@ export const InternalProfile = () => {
     <div className="page-wrap space-y-6 pb-20">
       
       {/* Header Banner */}
-      <div className="ds-card ds-card-elevated p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="ds-card-glass p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
             <span className="ds-badge ds-badge-cyan flex items-center gap-1.5 text-[11px]">
@@ -218,7 +218,7 @@ export const InternalProfile = () => {
         {/* Left Column */}
         <div className="ds-col-span-4 space-y-6">
           
-           <div className="ds-card ds-card-elevated p-6 flex flex-col items-center text-center gap-5">
+           <div className="ds-card-glass p-6 flex flex-col items-center text-center gap-5">
             
             {/* Avatar Circle with Interactive Edit Trigger */}
             <div 
