@@ -37,11 +37,16 @@ export const Navbar = () => {
     isAdmin,
     isSuperAdmin,
     isRecruitmentSeasonActive,
+    announcements,
+    unreadNotifications,
+    markAnnouncementRead,
+    markAllNotificationsRead,
   } = useClub();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
   const safeUser = currentUser || {
     name: 'Thành Viên VMC',
@@ -53,6 +58,7 @@ export const Navbar = () => {
 
   const pendingTasksCount = tasks.filter(t => t.status !== 'done').length;
   const pendingDraftsCount = drafts.filter(d => d.status === 'pending').length;
+  const unreadCount = unreadNotifications.length;
 
   const navItems = [
     { id: 'dashboard', label: 'Tổng Quan', icon: LayoutDashboard, badge: 0 },
@@ -70,6 +76,7 @@ export const Navbar = () => {
     setActiveTab(id);
     setIsMobileMenuOpen(false);
     setIsSearchOpen(false);
+    setIsNotificationOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -142,14 +149,69 @@ export const Navbar = () => {
             </button>
 
             {/* Notification Bell */}
-            <button
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-[var(--bg-hover)] transition-all relative"
-              title="Thông báo"
-              aria-label="Notifications"
-            >
-              <Bell className="w-4 h-4" />
-              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-rose-500 rounded-full" />
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setIsNotificationOpen(prev => !prev);
+                  if (!isNotificationOpen && unreadCount > 0) {
+                    markAllNotificationsRead();
+                  }
+                }}
+                className="p-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-[var(--bg-hover)] transition-all relative"
+                title="Thông báo"
+                aria-label="Notifications"
+              >
+                <Bell className="w-4 h-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {isNotificationOpen && (
+                <div className="absolute right-0 mt-2 w-80 max-h-96 bg-[var(--bg-secondary)] backdrop-blur-2xl border border-[var(--border-subtle)] rounded-2xl shadow-2xl z-50 animate-slide-up overflow-hidden">
+                  <div className="flex items-center justify-between p-3 border-b border-[var(--border-subtle)]">
+                    <span className="font-bold text-slate-200 text-xs">Thông báo</span>
+                    <button
+                      onClick={() => {
+                        markAllNotificationsRead();
+                        handleNavClick('dashboard');
+                      }}
+                      className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold"
+                    >
+                      Đánh dấu tất cả đã đọc
+                    </button>
+                  </div>
+                  <div className="overflow-y-auto max-h-72 scrollbar-thin">
+                    {announcements.length === 0 ? (
+                      <div className="p-4 text-xs text-slate-400 italic text-center">Chưa có thông báo nào.</div>
+                    ) : (
+                      announcements.slice(0, 20).map(ann => {
+                        const isRead = !!readAnnouncements[ann.id];
+                        return (
+                          <button
+                            key={ann.id}
+                            onClick={() => {
+                              markAnnouncementRead(ann.id);
+                              handleNavClick('dashboard');
+                            }}
+                            className={`w-full text-left p-3 border-b border-[var(--border-subtle)] last:border-b-0 hover:bg-[var(--bg-hover)] transition-colors ${isRead ? 'opacity-70' : 'bg-blue-500/5'}`}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className={`text-[10px] font-mono ${isRead ? 'text-slate-500' : 'text-blue-300'}`}>{ann.date || 'Hôm nay'}</span>
+                              {!isRead && <span className="w-2 h-2 bg-blue-500 rounded-full shrink-0" />}
+                            </div>
+                            <div className="text-xs font-semibold text-slate-200 mt-1 line-clamp-1">{ann.title}</div>
+                            <p className="text-[11px] text-slate-400 mt-1 line-clamp-2">{ann.content}</p>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* User Profile */}
             <div
