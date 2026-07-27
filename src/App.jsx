@@ -57,7 +57,7 @@ const AppContent = () => {
       <Navbar />
       <div className="flex-1 pt-6 pb-20">
         <main className="min-h-screen">
-          <div className="page-wrap">
+          <div className="app-container">
             {ActivePage ? <ActivePage /> : null}
           </div>
         </main>

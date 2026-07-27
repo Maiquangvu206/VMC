@@ -1,6 +1,36 @@
 @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
+*, *::before, *::after {
+  box-sizing: border-box !important;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+  width: 100%;
+  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-container {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
 :root {
   --bg-primary: #0b1120;
   --bg-secondary: #111827;
@@ -604,6 +634,39 @@ select option {
 [data-theme='light'] select option {
   background-color: #ffffff !important;
   color: #0f172a !important;
+}
+
+/* ========== GLOBAL MOBILE LAYOUT ========== */
+.app-container {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+/* ========== GLOBAL CARD PADDING ========== */
+.ds-card,
+[class*="ds-card"],
+.ds-card-glass,
+.ds-card-static,
+.ds-card-elevated {
+  padding: 12px 16px;
+}
+
+/* ========== GLOBAL TEXT TRUNCATION ========== */
+.truncate,
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 [data-theme='light'] select option {
   background-color: #ffffff !important;

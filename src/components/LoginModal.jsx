@@ -38,21 +38,22 @@ export const LoginModal = () => {
        <div className="relative w-full max-w-md mx-auto ds-card p-8 sm:p-10 shadow-2xl">
          
          {/* Header: Logo + Title */}
-         <div className="mb-8 flex flex-col items-center text-center">
-           {/* VMC Brand Logo */}
-           <div className="w-20 h-20 rounded-full p-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 shadow-lg shadow-blue-500/30">
-             <img src="/vmc-logo.jpg" alt="VMC Logo" className="w-full h-full object-cover rounded-full bg-[var(--bg-input)]" />
-           </div>
+         <div className="mb-8 flex flex-col items-center text-center gap-4">
+            {/* VMC Brand Logo */}
+            <div className="w-20 h-20 rounded-full p-0.5 bg-gradient-to-r from-cyan-500 to-blue-500 shadow-lg shadow-blue-500/30">
+              <img src="/vmc-logo.jpg" alt="VMC Logo" className="w-full h-full object-cover rounded-full bg-[var(--bg-input)]" />
+            </div>
 
-           <div className="mt-3">
-             <h2 className="text-2xl font-bold tracking-wide uppercase text-white mb-2">
-               CỔNG ĐĂNG NHẬP NỘI BỘ
-             </h2>
-             <p className="text-xs text-slate-400 font-normal mb-8">
-               CLB Truyền Thông Trường THPT Vĩnh Bảo (VMC Portal)
-             </p>
-           </div>
-         </div>
+            {/* Khối chứa chữ dùng flex-col + gap-3 để ép 2 dòng chữ tách rời nhau */}
+            <div className="flex flex-col items-center gap-3">
+              <h2 className="text-2xl font-bold tracking-wide uppercase text-white leading-tight">
+                CỔNG ĐĂNG NHẬP NỘI BỘ
+              </h2>
+              <p className="text-2xs text-slate-400 font-normal mt-2 !mb-8">
+                CLB Truyền Thông Trường THPT Vĩnh Bảo (VMC Portal)
+              </p>
+            </div>
+          </div>
 
          {/* Error Alert */}
          {errorMessage && (
@@ -70,51 +71,59 @@ export const LoginModal = () => {
                Mã Thành Viên <span className="text-rose-500">*</span>
              </label>
              <div className="relative flex items-center w-full">
-               <User className="ds-input-icon text-cyan-400" />
-               <input
-                 type="text"
-                 required
-                 value={memberCodeInput}
-                 onChange={(e) => setMemberCodeInput(e.target.value)}
-                 placeholder="NHẬP MÃ THÀNH VIÊN..."
-                 className="ds-input pl-12 w-full placeholder:text-xs placeholder:tracking-wider placeholder:text-slate-500"
-               />
-             </div>
+                {/* Icon được căn tuyệt đối ở bên trái */}
+                <User className="absolute left-4 z-10 w-5 h-5 text-cyan-400 pointer-events-none" />
+                
+                {/* Input với padding-left lớn hơn (!pl-14) để ép ghi đè mọi CSS trùng lặp */}
+                <input
+                  type="text"
+                  required
+                  value={memberCodeInput}
+                  onChange={(e) => setMemberCodeInput(e.target.value)}
+                  placeholder="NHẬP MÃ THÀNH VIÊN..."
+                  className="ds-input !pl-14 w-full placeholder:text-xs placeholder:tracking-wider placeholder:text-slate-500"
+                />
+              </div>
            </div>
 
            {/* Mật Khẩu */}
            <div>
-             <div className="flex items-center justify-between mb-2">
-               <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
-                 Mật Khẩu <span className="text-rose-500">*</span>
-               </label>
-               <button
-                 type="button"
-                 onClick={() => setShowForgotNotice(!showForgotNotice)}
-                 className="text-xs text-blue-400 hover:text-blue-300 font-semibold transition-colors"
-               >
-                 Quên mật khẩu?
-               </button>
-             </div>
-             <div className="relative flex items-center w-full">
-               <Lock className="ds-input-icon text-cyan-400" />
-               <input
-                 type={showPassword ? 'text' : 'password'}
-                 required
-                 value={passwordInput}
-                 onChange={(e) => setPasswordInput(e.target.value)}
-                 placeholder="••••••••••••"
-                 className="ds-input pl-12 pr-4 w-full placeholder:text-xs placeholder:tracking-wider placeholder:text-slate-500"
-               />
-               <button
-                 type="button"
-                 onClick={() => setShowPassword(!showPassword)}
-                 className="absolute right-4 z-10 flex items-center justify-center text-slate-400 hover:text-slate-200 focus:outline-none"
-               >
-                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-               </button>
-             </div>
-           </div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider block">
+                Mật Khẩu <span className="text-rose-500">*</span>
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowForgotNotice(!showForgotNotice)}
+                className="text-xs text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+              >
+                Quên mật khẩu?
+              </button>
+            </div>
+            <div className="relative flex items-center w-full">
+              {/* 1. Định vị icon Khóa tuyệt đối bên trái */}
+              <Lock className="absolute left-4 z-10 w-4 h-4 text-cyan-400 pointer-events-none" />
+
+              {/* 2. Ép padding trái/phải với !pl-12 và !pr-10 */}
+              <input
+                type={showPassword ? 'text' : 'password'}
+                required
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                placeholder="••••••••••••"
+                className="ds-input !pl-12 !pr-10 w-full placeholder:text-xs placeholder:tracking-wider placeholder:text-slate-500"
+              />
+
+              {/* 3. Nút bật/tắt hiển thị mật khẩu ở góc phải */}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 z-10 flex items-center justify-center text-slate-400 hover:text-slate-200 focus:outline-none"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
 
            {/* Forgot Password Notice */}
            {showForgotNotice && (
