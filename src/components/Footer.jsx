@@ -21,7 +21,7 @@ export const Footer = () => {
 
       <div className="page-wrap relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
-          
+
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
@@ -90,7 +90,7 @@ export const Footer = () => {
             <ul className="space-y-2.5 text-xs">
               <li className="flex items-start gap-2.5">
                 <MapPin className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-                <span>Trường THPT Vĩnh Bảo, Thị trấn Vĩnh Bảo, Huyện Vĩnh Bảo, Hải Phòng</span>
+                <span>Trường THPT Vĩnh Bảo, Số 30 Đường Nguyễn Bình Khiêm - Xã Vĩnh Bảo - Thành Phố Hải Phòng</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <ShieldCheck className="w-4 h-4 text-cyan-400 shrink-0" />
@@ -98,24 +98,29 @@ export const Footer = () => {
               </li>
               <li className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-pink-400 shrink-0" />
-                <span>vmc.thptvinhbao@gmail.com</span>
+                <span>..............@gmail.com</span>
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-[var(--border-subtle)] mb-6" />
+        {/* Khối Footer Bottom / Copyright */}
+        <div className="mt-8 border-t border-[var(--border-subtle)] pt-6 pb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
 
-        {/* Bottom Bar */}
-        <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4 text-xs">
-          <p className="leading-relaxed text-center sm:text-left">© 2026 Ban Đối Ngoại - Nhân Sự (VMC). All rights reserved.</p>
+          {/* Dòng Copyright */}
+          <p className="text-xs text-slate-400">
+            © 2026 Ban Đối Ngoại - Nhân Sự (VMC). All rights reserved.
+          </p>
+
+          {/* Nút Lên đầu trang */}
           <button
-            onClick={scrollToTop}
-            className="ds-btn ds-btn-secondary ds-btn-xs"
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--bg-card)] hover:bg-[var(--bg-hover)] border border-[var(--border-subtle)] text-xs font-semibold text-slate-200 transition-all shadow-sm"
           >
             <span>Lên đầu trang</span>
             <ArrowUp className="w-3.5 h-3.5" />
           </button>
+
         </div>
       </div>
     </footer>
