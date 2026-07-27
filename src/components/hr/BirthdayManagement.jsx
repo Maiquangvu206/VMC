@@ -307,7 +307,7 @@ const handleConfirmMemberSubmit = async (e) => {
         // Get members having birthday in this month
         const birthdayMembersInMonth = members.filter(m => {
           if (!m.dob) return false;
-          const parts = m.dob.split('/');s
+          const parts = m.dob.split('/');
           return parts.length >= 2 && parseInt(parts[1], 10) === parseInt(a.month, 10);
         });
 
