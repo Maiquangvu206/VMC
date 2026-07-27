@@ -13,7 +13,8 @@ import {
   Check, 
   Mail,
   Save,
-  Upload
+  Upload,
+  Sparkles
 } from 'lucide-react';
 
 import { uploadSubmissionImage } from '../../services/driveService';
