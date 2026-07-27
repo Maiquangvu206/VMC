@@ -65,11 +65,11 @@ export const Navbar = () => {
     { id: 'tasks', label: 'Phân Công', icon: CheckSquare, badge: pendingTasksCount },
     { id: 'drafts', label: 'Duyệt Bài', icon: FileText, badge: pendingDraftsCount },
     { id: 'resources', label: 'Tài Nguyên', icon: FolderGit2, badge: 0 },
-    { id: 'members', label: 'Thành Viên', icon: Users, badge: 0 },
-    { id: 'profile', label: 'Hồ Sơ', icon: User, badge: 0 },
     { id: 'hr_dashboard', label: 'Quản lý nhân sự', icon: Sparkles, badge: 0 },
     ...(isSuperAdmin || isRecruitmentSeasonActive ? [{ id: 'recruitment', label: 'Tuyển Gen', icon: UserPlus, badge: 0 }] : []),
-    ...(isSuperAdmin ? [{ id: 'admin_sessions', label: 'Quản Lý', icon: ShieldCheck, badge: 0 }] : []),
+    ...(isSuperAdmin ? [{ id: 'admin_sessions', label: 'Hoạt Động', icon: ShieldCheck, badge: 0 }] : []),
+    { id: 'members', label: 'Thành Viên', icon: Users, badge: 0 },
+    { id: 'profile', label: 'Hồ Sơ', icon: User, badge: 0 },
   ];
 
   const handleNavClick = (id) => {
@@ -261,7 +261,6 @@ export const Navbar = () => {
                         <UserCheck className="w-4 h-4" />
                         <span>Điểm Danh Sinh Hoạt</span>
                       </div>
-                      <span className="text-[10px] font-mono font-bold">+50 PTS</span>
                     </button>
                   )}
 
@@ -270,15 +269,7 @@ export const Navbar = () => {
                     className="w-full flex items-center gap-2.5 p-3 rounded-xl hover:bg-[var(--bg-hover)] text-slate-300 hover:text-slate-100 transition-all text-xs font-medium"
                   >
                     <User className="w-4 h-4" />
-                    <span>Xem Hồ Sơ Thành Viên</span>
-                  </button>
-
-                  <button
-                    onClick={() => { setActiveTab('settings'); setIsUserDropdownOpen(false); }}
-                    className="w-full flex items-center gap-2.5 p-3 rounded-xl hover:bg-[var(--bg-hover)] text-slate-300 hover:text-slate-100 transition-all text-xs font-medium"
-                  >
-                    <Settings className="w-4 h-4" />
-                    <span>Cài Đặt</span>
+                    <span>Xem Hồ Sơ </span>
                   </button>
 
                   <div className="border-t border-[var(--border-subtle)] my-1" />
