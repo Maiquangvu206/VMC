@@ -75,30 +75,30 @@ export const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-[var(--bg-primary)] backdrop-blur-2xl border-b border-[var(--border-subtle)] supports-[backdrop-filter]:bg-[var(--bg-primary)]">
-      {/* Tối ưu Max-width & Padding lề ngang */}
       <div className="max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-12">
+        {/* Đảm bảo h-16 và items-center để mọi thứ chuẩn trục ngang ở giữa */}
         <div className="relative flex items-center justify-between h-16 w-full">
 
-          {/* CỘT TRÁI: Brand Logo */}
+          {/* CỘT TRÁI: Brand Logo - Đã khóa cứng h-full & flex items-center để logo không bao giờ bị lệch trên/dưới */}
           <div
             onClick={() => handleNavClick('dashboard')}
-            className="flex items-center gap-2.5 cursor-pointer group shrink-0 z-10"
+            className="flex items-center gap-2.5 cursor-pointer group shrink-0 z-10 h-full my-auto"
           >
-            <div className="relative w-9 h-9 rounded-xl bg-blue-600 border border-blue-500/30 shadow-lg shadow-blue-500/20 group-hover:scale-105 group-hover:shadow-blue-500/40 transition-all duration-300 overflow-hidden p-0.5 shrink-0">
+            <div className="relative w-9 h-9 rounded-xl bg-blue-600 border border-blue-500/30 shadow-lg shadow-blue-500/20 group-hover:scale-105 group-hover:shadow-blue-500/40 transition-all duration-300 overflow-hidden p-0.5 shrink-0 my-auto">
               <img src="/vmc-logo.jpg" alt="VMC Logo" className="w-full h-full object-cover rounded-lg" />
             </div>
-            <div className="hidden sm:block">
+            <div className="hidden sm:flex flex-col justify-center my-auto">
               <span className="font-heading font-black text-sm tracking-tight text-slate-100 block leading-none">
                 VMC PORTAL
               </span>
-              <span className="text-[8.5px] block text-slate-400 font-medium mt-1 tracking-widest uppercase">
+              <span className="text-[8.5px] block text-slate-400 font-medium mt-1 tracking-widest uppercase leading-none">
                 THPT Vĩnh Bảo
               </span>
             </div>
           </div>
 
-          {/* CỘT GIỮA: Navigation Căn Chuẩn Tâm 100% */}
-          <div className="hidden xl:flex absolute left-1/2 -translate-x-1/2 items-center justify-center">
+          {/* CỘT GIỮA: Absolute Centered Navigation (Căn giữa 100% cả trục X lẫn trục Y) */}
+          <div className="hidden xl:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center justify-center">
             <nav className="flex items-center gap-0.5 bg-[var(--bg-secondary)] backdrop-blur-sm px-2 py-1 rounded-2xl border border-[var(--border-subtle)] shadow-sm">
               {navItems.map(item => {
                 const Icon = item.icon;
@@ -133,7 +133,7 @@ export const Navbar = () => {
           </div>
 
           {/* CỘT PHẢI: Actions & User Info */}
-          <div className="flex items-center justify-end gap-2 shrink-0 z-10">
+          <div className="flex items-center justify-end gap-2 shrink-0 z-10 h-full my-auto">
             {/* Search Button (Mobile/Tablet) */}
             <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
@@ -156,7 +156,7 @@ export const Navbar = () => {
 
             {/* User Profile */}
             <div
-              className="relative"
+              className="relative flex items-center h-full"
               onMouseLeave={() => setIsUserDropdownOpen(false)}
             >
               <button
@@ -181,7 +181,7 @@ export const Navbar = () => {
 
               {/* Profile Dropdown Content */}
               {isUserDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-72 bg-[var(--bg-secondary)] backdrop-blur-2xl border border-[var(--border-subtle)] rounded-2xl p-3 shadow-2xl z-50 animate-slide-up space-y-1.5">
+                <div className="absolute right-0 top-full mt-1 w-72 bg-[var(--bg-secondary)] backdrop-blur-2xl border border-[var(--border-subtle)] rounded-2xl p-3 shadow-2xl z-50 animate-slide-up space-y-1.5">
                   <div className="p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] space-y-1.5">
                     <div className="flex items-center gap-3">
                       <img src={safeUser.avatar} alt={safeUser.name} className="w-10 h-10 rounded-xl object-cover border border-blue-500/20" />
