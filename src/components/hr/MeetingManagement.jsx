@@ -64,7 +64,7 @@ export const MeetingManagement = () => {
             <label className="ds-field-label">Tên cuộc họp</label>
             <input required type="text" className="ds-input" placeholder="VD: Họp giao ban đầu tháng" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="ds-field-label">Ngày họp</label>
               <input required type="date" min={todayDate} className="ds-input" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
@@ -74,7 +74,7 @@ export const MeetingManagement = () => {
               <input required type="time" className="ds-input" value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="ds-field-label">Người điểm danh</label>
               <select className="ds-input" value={formData.attendanceTakerId} onChange={e => setFormData({...formData, attendanceTakerId: e.target.value})}>

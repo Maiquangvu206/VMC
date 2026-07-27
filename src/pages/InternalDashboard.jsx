@@ -196,13 +196,13 @@ export const InternalDashboard = () => {
   ];
 
   return (
-    <div className="page-wrap py-6 space-y-8 pb-20">
+    <div className="page-wrap p-4 sm:p-6 lg:p-8 space-y-8 pb-20">
 
       {/* Welcome Banner */}
-      <div className="ds-card p-6 sm:p-8 relative overflow-hidden">
+      <div className="ds-card p-4 sm:p-6 lg:p-8 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 blur-3xl rounded-full pointer-events-none" />
 
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-6 lg:gap-8 relative z-10">
 
           <div className="flex items-center gap-4">
             <div className="relative w-16 h-16 rounded-2xl overflow-hidden p-0.5 bg-blue-500 shrink-0 shadow-lg shadow-blue-500/20">
@@ -252,11 +252,11 @@ export const InternalDashboard = () => {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-6 border-t border-[var(--border-default)]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mt-8 pt-6 border-t border-[var(--border-default)]">
           {statCards.map((stat, idx) => {
             const Icon = stat.icon;
             return (
-              <div key={idx} className="ds-card p-5 text-center hover:border-blue-500/30 transition-all">
+              <div key={idx} className="ds-card p-3 sm:p-4 lg:p-6 text-center hover:border-blue-500/30 transition-all">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-slate-400 font-medium">{stat.label}</span>
                   <Icon className={`w-4 h-4 text-${stat.color}-400`} />
@@ -278,7 +278,7 @@ export const InternalDashboard = () => {
           <span>5 Ban Chuyên Môn Trong CLB VMC</span>
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
           {CLUB_INFO.departments.map(dept => {
             const Icon = deptIcons[dept.id] || Users;
             return (
@@ -288,7 +288,7 @@ export const InternalDashboard = () => {
                   setMembersFilterDept(dept.name);
                   setActiveTab('members');
                 }}
-                className="ds-card p-6 cursor-pointer group flex flex-col justify-between hover:border-blue-500/50 transition-all"
+                className="ds-card p-3 sm:p-4 lg:p-6 cursor-pointer group flex flex-col justify-between hover:border-blue-500/50 transition-all"
               >
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
@@ -318,13 +318,13 @@ export const InternalDashboard = () => {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
 
         {/* Left: Tasks & Drafts */}
         <div className="lg:col-span-2 space-y-8">
 
           {/* Active Tasks */}
-          <div className="ds-card p-6 space-y-6">
+          <div className="ds-card p-3 sm:p-4 lg:p-6 space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
@@ -362,7 +362,7 @@ export const InternalDashboard = () => {
           </div>
 
           {/* Pending Drafts */}
-          <div className="ds-card p-6 space-y-6">
+          <div className="ds-card p-3 sm:p-4 lg:p-6 space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
@@ -409,7 +409,7 @@ export const InternalDashboard = () => {
         <div className="space-y-8">
 
           {/* Announcements */}
-          <div className="ds-card p-6 space-y-6">
+          <div className="ds-card p-3 sm:p-4 lg:p-6 space-y-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
@@ -470,7 +470,7 @@ export const InternalDashboard = () => {
       {/* Announcement Modal */}
       {isAnnModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-          <div className="ds-card p-6 w-full max-w-lg shadow-2xl text-white space-y-6 border border-blue-500/30">
+          <div className="ds-card p-3 sm:p-4 lg:p-6 w-full max-w-lg shadow-2xl text-white space-y-6 border border-blue-500/30">
             <div className="flex items-center justify-between pb-4 border-b border-[var(--border-default)]">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">

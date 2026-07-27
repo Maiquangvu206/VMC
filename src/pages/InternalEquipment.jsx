@@ -67,7 +67,7 @@ export const InternalEquipment = () => {
 
       {showAddForm && (
         <form onSubmit={handleAddSubmit} className="ds-card p-6 space-y-5">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="ds-field-label">Tên thiết bị</label>
               <input required type="text" className="ds-input" placeholder="VD: Máy ảnh Sony A7IV" value={newEq.name} onChange={e => setNewEq({...newEq, name: e.target.value})} />
@@ -77,7 +77,7 @@ export const InternalEquipment = () => {
               <input required type="text" className="ds-input" placeholder="VD: VMC-CAM-03" value={newEq.code} onChange={e => setNewEq({...newEq, code: e.target.value})} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="ds-field-label">Loại</label>
               <select className="ds-input ds-select" value={newEq.category} onChange={e => setNewEq({...newEq, category: e.target.value})}>

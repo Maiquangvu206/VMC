@@ -23,7 +23,7 @@ export const MemberDetailModal = ({ show, onClose, member, onEdit, onLock, onRes
          </div>
 
          <div className="flex-1 overflow-y-auto py-4 space-y-3">
-           <div className="grid grid-cols-2 gap-3">
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
              <div className="ds-card p-3">
                <div className="flex items-center gap-2 mb-1">
                  <Hash className="w-3.5 h-3.5 text-blue-400" />
@@ -48,7 +48,7 @@ export const MemberDetailModal = ({ show, onClose, member, onEdit, onLock, onRes
              <p className="text-sm font-bold text-white">{member.department || member.deptName || 'N/A'}</p>
            </div>
 
-           <div className="grid grid-cols-2 gap-3">
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
              <div className="ds-card p-3">
                <div className="flex items-center gap-2 mb-1">
                  <Phone className="w-3.5 h-3.5 text-cyan-400" />
@@ -65,7 +65,7 @@ export const MemberDetailModal = ({ show, onClose, member, onEdit, onLock, onRes
              </div>
            </div>
 
-           <div className="grid grid-cols-2 gap-3">
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
              <div className="ds-card p-3">
                <div className="flex items-center gap-2 mb-1">
                  <Calendar className="w-3.5 h-3.5 text-pink-400" />

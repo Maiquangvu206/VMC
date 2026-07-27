@@ -212,7 +212,7 @@ export const InternalDrafts = () => {
                 {draft.status === 'approved' && draft.gradingStatus === 'completed' && (
                   <div className="ds-card p-3 text-right text-sm space-y-2">
                     <div className="font-semibold text-emerald-400">📊 Đã Chấm Điểm: {draft.finalScore || 0}/100</div>
-                    <div className="text-xs text-slate-400 grid grid-cols-2 gap-x-3 gap-y-1">
+                    <div className="text-xs text-slate-400 grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1">
                       <span>• Thích: {draft.likesCount || 0}</span>
                       <span>• Chia sẻ: {draft.sharesCount || 0}</span>
                       <span>• Bình luận: {draft.commentsCount || 0}</span>

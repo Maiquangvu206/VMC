@@ -18,7 +18,7 @@ export const EditMemberModal = ({ show, onClose, member, formData, setFormData, 
          </div>
 
          <div className="flex-1 overflow-y-auto py-4 space-y-3">
-           <div className="grid grid-cols-2 gap-3">
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
              <div>
                <label className="ds-field-label">Mã thành viên</label>
                <div className="relative flex items-center w-full">
@@ -45,7 +45,7 @@ export const EditMemberModal = ({ show, onClose, member, formData, setFormData, 
              </div>
            </div>
 
-           <div className="grid grid-cols-2 gap-3">
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
              <div>
                <label className="ds-field-label">Email</label>
                <div className="relative flex items-center w-full">
@@ -85,7 +85,7 @@ export const EditMemberModal = ({ show, onClose, member, formData, setFormData, 
              </div>
            </div>
 
-           <div className="grid grid-cols-2 gap-3">
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
              <div>
                <label className="ds-field-label">Số điện thoại</label>
                <div className="relative flex items-center w-full">

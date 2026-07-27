@@ -91,7 +91,7 @@ export const InternalTasks = () => {
   };
 
   return (
-    <div className="page-wrap space-y-8 pb-20">
+    <div className="page-wrap p-4 sm:p-6 lg:p-8 space-y-8 pb-20">
       
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
