@@ -162,14 +162,28 @@ const handleConfirmMemberSubmit = async (e) => {
       try {
         const user = currentUser || {};
         
-        // --- BỔ SUNG: Tìm tên thành viên có ngày sinh trong tháng ---
+        // 1. Tìm thông tin thành viên được chúc mừng sinh nhật
         const targetBirthdayMember = (members || []).find(m => String(m.id) === String(submittingMemberId));
         const birthdayPersonName = targetBirthdayMember ? targetBirthdayMember.name : 'ThanhVien';
 
+        // 2. Lấy đợt phân công sinh nhật hiện tại (để lấy tháng/năm sinh nhật)
+        const currentAssignment = (birthdayAssignments || []).find(a => String(a.id) === String(activeAssignmentId));
+        
+        // Lấy tháng sinh từ dob (ví dụ "10/08/2008" -> lấy 8) hoặc lấy từ đợt assignment.month
+        let bdayMonth = currentAssignment?.month;
+        if (targetBirthdayMember?.dob) {
+          const parts = targetBirthdayMember.dob.split('/');
+          if (parts.length >= 2) {
+            bdayMonth = parseInt(parts[1], 10);
+          }
+        }
+
         const result = await uploadSubmissionImage(selectedFile, {
+          birthdayPerson: birthdayPersonName, // Vũ Cát Linh
+          targetMonth: bdayMonth,             // 8
+          targetYear: currentAssignment?.year || new Date().getFullYear(), // 2026
           userCode: user.memberCode || 'VMC',
-          userName: user.name || 'ThanhVien',
-          birthdayPerson: birthdayPersonName // <--- TRUYỀN TÊN NGƯỜI SINH NHẬT VÀO ĐÂY
+          userName: user.name || 'ThanhVien'
         });
 
         if (result.status === 'success' && result.fileUrl) {

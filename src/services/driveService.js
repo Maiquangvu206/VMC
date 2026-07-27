@@ -7,7 +7,6 @@
 export const uploadSubmissionImage = async (file, options = {}) => {
   const scriptUrl = "https://script.google.com/macros/s/AKfycbypy0d7FJQX3i1uEpSR1MhavE_4IzZUyQdduzXX_7Y-mw3his8ah10WLOjY25U_XK2_dg/exec";
 
-  // Chuyển File sang Base64
   const base64Data = await new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
@@ -19,7 +18,9 @@ export const uploadSubmissionImage = async (file, options = {}) => {
   });
 
   const payload = {
-    birthdayPerson: options.birthdayPerson || "", // Tên người sinh nhật
+    birthdayPerson: options.birthdayPerson || "", // Tên người sinh nhật (ví dụ: Vũ Cát Linh)
+    targetMonth: options.targetMonth,             // Tháng sinh nhật (ví dụ: 8)
+    targetYear: options.targetYear,               // Năm đợt sinh nhật (ví dụ: 2026)
     userCode: options.userCode || "VMC",
     userName: options.userName || "ThanhVien",
     fileName: file.name,
