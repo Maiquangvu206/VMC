@@ -75,33 +75,30 @@ export const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-[var(--bg-primary)] backdrop-blur-2xl border-b border-[var(--border-subtle)] supports-[backdrop-filter]:bg-[var(--bg-primary)]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Bố cục Flex 3 khối bằng nhau (flex-1) giúp cột giữa CĂN CHÍNH GIỮA TUYỆT ĐỐI */}
-        <div className="flex items-center justify-between h-16 w-full">
+      <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="relative flex items-center justify-between h-16 w-full">
 
           {/* CỘT TRÁI: Brand Logo */}
-          <div className="flex items-center justify-start flex-1 min-w-0">
-            <div
-              onClick={() => handleNavClick('dashboard')}
-              className="flex items-center gap-3 cursor-pointer group shrink-0"
-            >
-              <div className="relative w-10 h-10 rounded-xl bg-blue-600 border border-blue-500/30 shadow-lg shadow-blue-500/20 group-hover:scale-105 group-hover:shadow-blue-500/40 transition-all duration-300 overflow-hidden p-0.5 shrink-0">
-                <img src="/vmc-logo.jpg" alt="VMC Logo" className="w-full h-full object-cover rounded-lg" />
-              </div>
-              <div className="hidden sm:block">
-                <span className="font-heading font-black text-base tracking-tight text-slate-100 block leading-none">
-                  VMC PORTAL
-                </span>
-                <span className="text-[9px] block text-slate-500 font-medium mt-1 tracking-widest uppercase">
-                  THPT Vĩnh Bảo
-                </span>
-              </div>
+          <div
+            onClick={() => handleNavClick('dashboard')}
+            className="flex items-center gap-3 cursor-pointer group shrink-0 z-10"
+          >
+            <div className="relative w-10 h-10 rounded-xl bg-blue-600 border border-blue-500/30 shadow-lg shadow-blue-500/20 group-hover:scale-105 group-hover:shadow-blue-500/40 transition-all duration-300 overflow-hidden p-0.5 shrink-0">
+              <img src="/vmc-logo.jpg" alt="VMC Logo" className="w-full h-full object-cover rounded-lg" />
+            </div>
+            <div className="hidden sm:block">
+              <span className="font-heading font-black text-base tracking-tight text-slate-100 block leading-none">
+                VMC PORTAL
+              </span>
+              <span className="text-[9px] block text-slate-500 font-medium mt-1 tracking-widest uppercase">
+                THPT Vĩnh Bảo
+              </span>
             </div>
           </div>
 
-          {/* CỘT GIỮA: Desktop Navigation Menu */}
-          <div className="hidden lg:flex items-center justify-center flex-1">
-            <nav className="flex items-center gap-1 bg-[var(--bg-secondary)] backdrop-blur-sm px-2.5 py-1.5 rounded-2xl border border-[var(--border-subtle)] shadow-sm">
+          {/* CỘT GIỮA: Absolute Centered Navigation (Luôn nằm đúng giữa 100% màn hình) */}
+          <div className="hidden xl:flex absolute left-1/2 -translate-x-1/2 items-center justify-center">
+            <nav className="flex items-center gap-0.5 bg-[var(--bg-secondary)] backdrop-blur-sm px-2 py-1.5 rounded-2xl border border-[var(--border-subtle)] shadow-sm">
               {navItems.map(item => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
@@ -110,21 +107,18 @@ export const Navbar = () => {
                   <button
                     key={item.id}
                     onClick={() => !isRestricted && handleNavClick(item.id)}
-                    className={`relative flex items-center justify-center gap-2 px-3 py-1.5 rounded-xl font-semibold text-xs tracking-wide whitespace-nowrap transition-all duration-200 ${
-                      isRestricted ? 'opacity-30 blur-[1px] cursor-not-allowed' : ''
-                    } ${
-                      isActive
+                    className={`relative flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-xl font-semibold text-xs tracking-wide whitespace-nowrap transition-all duration-200 ${isRestricted ? 'opacity-30 blur-[1px] cursor-not-allowed' : ''
+                      } ${isActive
                         ? 'bg-blue-600/20 text-blue-300 shadow-md shadow-blue-500/10 border border-blue-500/30'
                         : 'text-slate-400 hover:text-slate-200 hover:bg-[var(--bg-hover)] border border-transparent'
-                    }`}
+                      }`}
                     title={isRestricted ? 'Chức năng chỉ dành cho Admin' : ''}
                   >
-                    <Icon className="w-4 h-4 shrink-0" />
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
                     <span>{item.label}</span>
                     {item.badge > 0 && (
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none ${
-                        isActive ? 'bg-blue-500 text-white' : 'bg-amber-500/20 text-amber-300'
-                      }`}>
+                      <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full leading-none ${isActive ? 'bg-blue-500 text-white' : 'bg-amber-500/20 text-amber-300'
+                        }`}>
                         {item.badge}
                       </span>
                     )}
@@ -135,11 +129,11 @@ export const Navbar = () => {
           </div>
 
           {/* CỘT PHẢI: Actions & User Info */}
-          <div className="flex items-center justify-end gap-2 shrink-0 flex-1">
-            {/* Search Button (Mở thanh tìm kiếm trên mobile) */}
+          <div className="flex items-center justify-end gap-2 shrink-0 z-10">
+            {/* Search Button (Mobile/Tablet) */}
             <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
-              className="lg:hidden p-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-[var(--bg-hover)] transition-all"
+              className="xl:hidden p-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-[var(--bg-hover)] transition-all"
               title="Tìm kiếm"
               aria-label="Search"
             >
@@ -156,7 +150,7 @@ export const Navbar = () => {
               <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full border-2 border-[var(--bg-primary)]" />
             </button>
 
-            {/* User Profile Dropdown */}
+            {/* User Profile */}
             <div
               className="relative"
               onMouseLeave={() => setIsUserDropdownOpen(false)}
@@ -250,7 +244,7 @@ export const Navbar = () => {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-[var(--bg-hover)] transition-all shrink-0"
+              className="xl:hidden p-2.5 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-[var(--bg-hover)] transition-all shrink-0"
               aria-label="Toggle Menu"
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -261,7 +255,7 @@ export const Navbar = () => {
 
       {/* Expandable Mobile Search Bar */}
       {isSearchOpen && (
-        <div className="lg:hidden border-t border-[var(--border-subtle)] bg-[var(--bg-primary)] backdrop-blur-2xl px-4 py-3 animate-slide-up">
+        <div className="xl:hidden border-t border-[var(--border-subtle)] bg-[var(--bg-primary)] backdrop-blur-2xl px-4 py-3 animate-slide-up">
           <div className="relative flex items-center w-full bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-xl">
             <Search className="absolute left-3 w-4 h-4 text-slate-400 shrink-0 pointer-events-none" />
             <input
@@ -281,9 +275,9 @@ export const Navbar = () => {
         </div>
       )}
 
-      {/* Mobile Drawer */}
+      {/* Mobile / Tablet Drawer */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden bg-[var(--bg-secondary)] backdrop-blur-2xl border-t border-[var(--border-subtle)] p-4 space-y-1.5 animate-slide-up">
+        <div className="xl:hidden bg-[var(--bg-secondary)] backdrop-blur-2xl border-t border-[var(--border-subtle)] p-4 space-y-1.5 animate-slide-up">
           {navItems.map(item => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -292,13 +286,11 @@ export const Navbar = () => {
               <button
                 key={item.id}
                 onClick={() => !isRestricted && handleNavClick(item.id)}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm transition-all ${
-                  isRestricted ? 'opacity-30 blur-[1px] cursor-not-allowed' : ''
-                } ${
-                  isActive
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm transition-all ${isRestricted ? 'opacity-30 blur-[1px] cursor-not-allowed' : ''
+                  } ${isActive
                     ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
                     : 'text-slate-300 hover:bg-[var(--bg-hover)] border border-transparent'
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <Icon className="w-5 h-5" />
