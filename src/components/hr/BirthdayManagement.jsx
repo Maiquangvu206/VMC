@@ -252,15 +252,6 @@ const handleConfirmMemberSubmit = async (e) => {
             Nộp ảnh/bài đăng cho từng cá nhân sinh nhật trong tháng. Hạn chót nộp tư liệu đến ngày 28 của tháng trước, hạn trực kết thúc cuối tháng.
           </p>
         </div>
-
-        <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono">
-          <span className="ds-badge ds-badge-rose">
-            <Calendar className="w-3.5 h-3.5 text-pink-400" /> Ngày 15: Gửi DS tháng sau
-          </span>
-          <span className="ds-badge ds-badge-amber">
-            <Clock className="w-3.5 h-3.5 text-amber-400" /> Hạn chót nộp tư liệu: Ngày 28 tháng trước (-10 PTS)
-          </span>
-        </div>
       </div>
 
       {/* Form Phân Công (HR Head / Leader) */}
