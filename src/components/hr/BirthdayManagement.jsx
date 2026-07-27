@@ -162,11 +162,10 @@ const handleConfirmMemberSubmit = async (e) => {
       try {
         const user = currentUser || {};
         
-        // 1. Tìm thông tin thành viên được chúc mừng sinh nhật
+        // 1. Tìm thông tin chi tiết thành viên được chúc mừng sinh nhật
         const targetBirthdayMember = (members || []).find(m => String(m.id) === String(submittingMemberId));
-        const birthdayPersonName = targetBirthdayMember ? targetBirthdayMember.name : 'ThanhVien';
-
-        // 2. Lấy đợt phân công sinh nhật hiện tại (để lấy tháng/năm sinh nhật)
+        
+        // 2. Lấy đợt phân công sinh nhật hiện tại
         const currentAssignment = (birthdayAssignments || []).find(a => String(a.id) === String(activeAssignmentId));
         
         // Lấy tháng sinh từ dob (ví dụ "10/08/2008" -> lấy 8) hoặc lấy từ đợt assignment.month
@@ -178,17 +177,21 @@ const handleConfirmMemberSubmit = async (e) => {
           }
         }
 
+        // 3. Gọi hàm upload với đầy đủ thông tin để ghép tên file: HPBD_{Tên}_{ngày sinh}_{chức vụ}_{ban}
         const result = await uploadSubmissionImage(selectedFile, {
-          birthdayPerson: birthdayPersonName, // Vũ Cát Linh
-          targetMonth: bdayMonth,             // 8
-          targetYear: currentAssignment?.year || new Date().getFullYear(), // 2026
+          birthdayPerson: targetBirthdayMember?.name || 'ThanhVien',
+          dob: targetBirthdayMember?.dob || '01/01/2000',
+          roleTitle: targetBirthdayMember?.roleTitle || targetBirthdayMember?.role_title || 'ThanhVien',
+          deptName: targetBirthdayMember?.deptName || targetBirthdayMember?.department || 'Ban',
+          targetMonth: bdayMonth,
+          targetYear: currentAssignment?.year || new Date().getFullYear(),
           userCode: user.memberCode || 'VMC',
           userName: user.name || 'ThanhVien'
         });
 
         if (result.status === 'success' && result.fileUrl) {
           submitMemberBirthdayData(activeAssignmentId, submittingMemberId, result.fileUrl);
-          if (showToast) showToast('Đã nộp ảnh vào thư mục Drive của tháng thành công!', 'success');
+          if (showToast) showToast(`🎉 Đã nộp ảnh thành công! File: ${result.fileName}`, 'success');
           setSubmittingMemberId(null);
           setSelectedFile(null);
           setSelectedFilePreview(null);
@@ -208,7 +211,7 @@ const handleConfirmMemberSubmit = async (e) => {
         today.setHours(0, 0, 0, 0);
         if (deadlineDate && today < deadlineDate) {
           const deadlineString = `${String(deadlineDate.getDate()).padStart(2, '0')}/${String(deadlineDate.getMonth() + 1).padStart(2, '0')}/${deadlineDate.getFullYear()}`;
-          if (showToast) showToast(`Lý do không có ảnh chỉ được phép dùng kể từ ngày hạn chót (${deadlineString - 1})!`, 'error');
+          if (showToast) showToast(`Lý do không có ảnh chỉ được phép dùng kể từ ngày hạn chót (${deadlineString})!`, 'error');
           return;
         }
       }
