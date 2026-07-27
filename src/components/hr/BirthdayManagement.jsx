@@ -6,15 +6,17 @@ import {
   Send, 
   CheckCircle2, 
   X, 
-  Calendar, 
-  Clock, 
-  AlertCircle, 
-  FileText, 
+  Calendar,
+  Clock,
+  AlertCircle,
+  FileText,
   Check, 
   Mail,
   Save,
   Upload
 } from 'lucide-react';
+
+import { uploadSubmissionImage } from '../../services/driveService';
 
 export const BirthdayManagement = () => {
   const { 
@@ -47,6 +49,7 @@ export const BirthdayManagement = () => {
 
   const [submissionMethod, setSubmissionMethod] = useState('upload'); // 'upload' or 'link'
   const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFilePreview, setSelectedFilePreview] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
 
   // --- Monthly Email Config State ---
@@ -156,24 +159,23 @@ export const BirthdayManagement = () => {
       }
       setIsUploading(true);
       try {
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-
-        const response = await fetch('/api/birthday/upload', {
-          method: 'POST',
-          body: formData
+        const user = currentUser || {};
+        const result = await uploadSubmissionImage(selectedFile, {
+          userCode: user.memberCode || 'VMC',
+          userName: user.name || 'ThanhVien'
         });
-        const result = await response.json();
-        if (result.success && result.webViewLink) {
-          submitMemberBirthdayData(activeAssignmentId, submittingMemberId, result.webViewLink);
-          if (showToast) showToast('🎉 Đã tải ảnh lên Google Drive Ban thành công!', 'success');
+        
+        if (result.status === 'success' && result.fileUrl) {
+          submitMemberBirthdayData(activeAssignmentId, submittingMemberId, result.fileUrl);
+          if (showToast) showToast('Đã nộp ảnh vào thư mục Drive của tháng thành công!', 'success');
           setSubmittingMemberId(null);
           setSelectedFile(null);
+          setSelectedFilePreview(null);
         } else {
-          if (showToast) showToast(result.message || 'Không thể tải ảnh lên Google Drive!', 'error');
+          if (showToast) showToast(result.message || 'Lỗi khi upload ảnh lên Drive!', 'error');
         }
-      } catch (_err) {
-        if (showToast) showToast('Lỗi khi kết nối đến máy chủ!', 'error');
+      } catch (error) {
+        if (showToast) showToast(error.message || 'Lỗi khi tải ảnh lên Google Drive!', 'error');
       } finally {
         setIsUploading(false);
       }
@@ -185,7 +187,7 @@ export const BirthdayManagement = () => {
         today.setHours(0, 0, 0, 0);
         if (deadlineDate && today < deadlineDate) {
           const deadlineString = `${String(deadlineDate.getDate()).padStart(2, '0')}/${String(deadlineDate.getMonth() + 1).padStart(2, '0')}/${deadlineDate.getFullYear()}`;
-          if (showToast) showToast(`⚠️ Lý do không có ảnh chỉ được phép dùng kể từ ngày hạn chót (${deadlineString})!`, 'error');
+          if (showToast) showToast(`Lý do không có ảnh chỉ được phép dùng kể từ ngày hạn chót (${deadlineString})!`, 'error');
           return;
         }
       }
@@ -590,18 +592,35 @@ export const BirthdayManagement = () => {
                  </button>
                </div>
 
-               {submissionMethod === 'upload' ? (
-                 <div>
-                   <label className="ds-field-label">Chọn file ảnh / video mừng sinh nhật</label>
-                   <input
-                     type="file"
-                     required
-                     accept="image/*,video/*"
-                     onChange={(e) => setSelectedFile(e.target.files[0])}
-                     className="ds-input"
-                   />
-                   <p className="text-[10px] text-slate-500 mt-1">Hệ thống sẽ tự động tải lên Google Drive của Ban Đối Ngoại - Nhân Sự.</p>
-                 </div>
+                {submissionMethod === 'upload' ? (
+                  <div>
+                    <label className="ds-field-label">Chọn file ảnh / video mừng sinh nhật</label>
+                    <input
+                      type="file"
+                      required
+                      accept="image/*,video/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        setSelectedFile(file);
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setSelectedFilePreview(reader.result);
+                          };
+                          reader.readAsDataURL(file);
+                        } else {
+                          setSelectedFilePreview(null);
+                        }
+                      }}
+                      className="ds-input"
+                    />
+                    {selectedFilePreview && (
+                      <div className="mt-3">
+                        <img src={selectedFilePreview} alt="Preview" className="w-full max-h-48 object-contain rounded-xl border border-[var(--border-default)]" />
+                      </div>
+                    )}
+                    <p className="text-[10px] text-slate-500 mt-1">Hệ thống sẽ tự động tải lên Google Drive của tháng.</p>
+                  </div>
                ) : submissionMethod === 'no_photo' ? (
                  <div>
                    <label className="ds-field-label">Lý do không nộp ảnh (ví dụ: Thành viên không cung cấp ảnh...)</label>
@@ -637,14 +656,14 @@ export const BirthdayManagement = () => {
                  >
                    Hủy
                  </button>
-                 <button
-                   type="submit"
-                   disabled={isUploading}
-                   className="ds-btn ds-btn-primary ds-btn-xs"
-                 >
-                   <Send className="w-4 h-4" /> 
-                   <span>{isUploading ? 'Đang Tải Lên...' : 'Xác Nhận Nộp'}</span>
-                 </button>
+                  <button
+                    type="submit"
+                    disabled={isUploading}
+                    className="ds-btn ds-btn-primary ds-btn-xs"
+                  >
+                    <Send className="w-4 h-4" /> 
+                    <span>{isUploading ? 'Đang tải ảnh lên Google Drive...' : 'Xác Nhận Nộp'}</span>
+                  </button>
                </div>
              </form>
            </div>
