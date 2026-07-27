@@ -60,7 +60,7 @@ export const Navbar = () => {
     { id: 'dashboard', label: 'Tổng Quan', icon: LayoutDashboard, badge: 0 },
     { id: 'tasks', label: 'Phân Công', icon: CheckSquare, badge: pendingTasksCount },
     { id: 'drafts', label: 'Duyệt Bài', icon: FileText, badge: pendingDraftsCount },
-    { id: 'resources', label: 'Tài Nguyên', icon: FolderGit2, badge: 0 },
+    //{ id: 'resources', label: 'Tài Nguyên', icon: FolderGit2, badge: 0 },
     { id: 'hr_dashboard', label: 'Quản Lý Nhân Sự', icon: Sparkles, badge: 0 },
     ...(isSuperAdmin || isRecruitmentSeasonActive ? [{ id: 'recruitment', label: 'Tuyển Gen', icon: UserPlus, badge: 0 }] : []),
     ...(isSuperAdmin ? [{ id: 'admin_sessions', label: 'Hoạt Động', icon: ShieldCheck, badge: 0 }] : []),
