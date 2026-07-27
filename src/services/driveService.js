@@ -1,10 +1,10 @@
 /**
  * Tải ảnh lên Google Drive qua Apps Script Web App
  * @param {File} file - File ảnh từ input
- * @param {Object} user - Thông tin người dùng { userCode, userName }
+ * @param {Object} options - Thông tin bổ sung { birthdayPerson, userCode, userName }
  * @returns {Promise<Object>} Trả về { status, fileUrl, fileId, folderName, fileName }
  */
-export const uploadSubmissionImage = async (file, user = {}) => {
+export const uploadSubmissionImage = async (file, options = {}) => {
   const scriptUrl = "https://script.google.com/macros/s/AKfycbypy0d7FJQX3i1uEpSR1MhavE_4IzZUyQdduzXX_7Y-mw3his8ah10WLOjY25U_XK2_dg/exec";
 
   // Chuyển File sang Base64
@@ -19,8 +19,9 @@ export const uploadSubmissionImage = async (file, user = {}) => {
   });
 
   const payload = {
-    userCode: user.userCode || "VMC",
-    userName: user.userName || "ThanhVien",
+    birthdayPerson: options.birthdayPerson || "", // Tên người sinh nhật
+    userCode: options.userCode || "VMC",
+    userName: options.userName || "ThanhVien",
     fileName: file.name,
     mimeType: file.type,
     base64: base64Data,

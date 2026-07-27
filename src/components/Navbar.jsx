@@ -61,7 +61,7 @@ export const Navbar = () => {
     { id: 'resources', label: 'Tài Nguyên', icon: FolderGit2, badge: 0 },
     { id: 'members', label: 'Thành Viên', icon: Users, badge: 0 },
     { id: 'profile', label: 'Hồ Sơ', icon: User, badge: 0 },
-    { id: 'hr_dashboard', label: 'Thi Đua', icon: Sparkles, badge: 0 },
+    { id: 'hr_dashboard', label: 'Quản lý nhân sự', icon: Sparkles, badge: 0 },
     ...(isSuperAdmin || isRecruitmentSeasonActive ? [{ id: 'recruitment', label: 'Tuyển Gen', icon: UserPlus, badge: 0 }] : []),
     ...(isSuperAdmin ? [{ id: 'admin_sessions', label: 'Quản Lý', icon: ShieldCheck, badge: 0 }] : []),
   ];
@@ -108,21 +108,18 @@ export const Navbar = () => {
                   <button
                     key={item.id}
                     onClick={() => !isRestricted && handleNavClick(item.id)}
-                    className={`relative flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-xl font-medium text-[11.5px] tracking-normal whitespace-nowrap transition-all duration-200 ${
-                      isRestricted ? 'opacity-30 blur-[1px] cursor-not-allowed' : ''
-                    } ${
-                      isActive
+                    className={`relative flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-xl font-medium text-[11.5px] tracking-normal whitespace-nowrap transition-all duration-200 ${isRestricted ? 'opacity-30 blur-[1px] cursor-not-allowed' : ''
+                      } ${isActive
                         ? 'bg-blue-600/20 text-blue-300 font-semibold shadow-sm border border-blue-500/30'
                         : 'text-slate-400 hover:text-slate-200 hover:bg-[var(--bg-hover)] border border-transparent'
-                    }`}
+                      }`}
                     title={isRestricted ? 'Chức năng chỉ dành cho Admin' : ''}
                   >
                     <Icon className="w-3.5 h-3.5 shrink-0 opacity-80" />
                     <span>{item.label}</span>
                     {item.badge > 0 && (
-                      <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full leading-none ${
-                        isActive ? 'bg-blue-500 text-white' : 'bg-amber-500/20 text-amber-300'
-                      }`}>
+                      <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full leading-none ${isActive ? 'bg-blue-500 text-white' : 'bg-amber-500/20 text-amber-300'
+                        }`}>
                         {item.badge}
                       </span>
                     )}
@@ -290,13 +287,11 @@ export const Navbar = () => {
               <button
                 key={item.id}
                 onClick={() => !isRestricted && handleNavClick(item.id)}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm transition-all ${
-                  isRestricted ? 'opacity-30 blur-[1px] cursor-not-allowed' : ''
-                } ${
-                  isActive
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm transition-all ${isRestricted ? 'opacity-30 blur-[1px] cursor-not-allowed' : ''
+                  } ${isActive
                     ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
                     : 'text-slate-300 hover:bg-[var(--bg-hover)] border border-transparent'
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <Icon className="w-5 h-5" />
