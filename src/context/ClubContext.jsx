@@ -51,35 +51,6 @@ export const ClubProvider = ({ children }) => {
   const [membersFilterDept, setMembersFilterDept] = useState('ALL');
   const [isRecruitmentSeasonActive, setIsRecruitmentSeasonActive] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [readAnnouncements, setReadAnnouncements] = useState(() => {
-    try {
-      const raw = localStorage.getItem('VMC_READ_ANNOUNCEMENTS');
-      return raw ? JSON.parse(raw) : {};
-    } catch (e) {
-      return {};
-    }
-  });
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('VMC_READ_ANNOUNCEMENTS', JSON.stringify(readAnnouncements));
-    } catch (e) { }
-  }, [readAnnouncements]);
-
-  const markAnnouncementRead = (id) => {
-    setReadAnnouncements(prev => ({ ...prev, [id]: true }));
-  };
-
-  const markAllNotificationsRead = () => {
-    const allIds = (db.announcements || []).map(a => a.id);
-    setReadAnnouncements(prev => {
-      const next = { ...prev };
-      allIds.forEach(id => { next[id] = true; });
-      return next;
-    });
-  };
-
-  const unreadNotifications = (db.announcements || []).filter(a => !readAnnouncements[a.id]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -1751,10 +1722,6 @@ currentUser,
     announcements: db.announcements || [],
     addAnnouncement,
     deleteAnnouncement,
-    readAnnouncements,
-    markAnnouncementRead,
-    markAllNotificationsRead,
-    unreadNotifications,
     generations: db.generations || DEFAULT_GENERATIONS,
     createMemberAccount,
     deleteMemberAccount,
@@ -1846,10 +1813,6 @@ db,
     addDraft,
     addAnnouncement,
     deleteAnnouncement,
-    readAnnouncements,
-    markAnnouncementRead,
-    markAllNotificationsRead,
-    unreadNotifications,
     createMemberAccount,
     deleteMemberAccount,
     resetAccountPassword,
