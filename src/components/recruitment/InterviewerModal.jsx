@@ -8,8 +8,8 @@ export const InterviewerModal = ({ show, onClose, selectedSeason, availableInter
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
-      <div className="ds-card p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto bg-[#111827] border border-[#1f2937] rounded-2xl shadow-2xl space-y-4">
-        <div className="flex justify-between items-center pb-2 border-b border-[#1f2937]">
+      <div className="ds-card p-6 w-full max-w-lg max-h-[90vh] flex flex-col bg-[#111827] border border-[#1f2937] rounded-2xl shadow-2xl space-y-4 overflow-hidden">
+        <div className="flex justify-between items-center pb-2 border-b border-[#1f2937] shrink-0">
           <div>
             <h3 className="font-heading text-base font-bold text-white">Phân Công Phỏng Vấn</h3>
             <p className="text-xs text-blue-400 font-medium mt-0.5">{selectedSeason.name} • {selectedSeason.department || 'Tất cả ban'}</p>
@@ -19,7 +19,7 @@ export const InterviewerModal = ({ show, onClose, selectedSeason, availableInter
           </button>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2 overflow-y-auto flex-1 pr-1 max-h-[60vh]">
           {availableInterviewers.length === 0 ? (
             <p className="text-xs text-slate-400 italic p-4 text-center">Chưa tìm thấy thành viên Ban Cố Vấn, Ban Chủ Nhiệm hoặc Ban Phụ Trách.</p>
           ) : (
@@ -82,7 +82,7 @@ export const InterviewerModal = ({ show, onClose, selectedSeason, availableInter
           )}
         </div>
 
-        <div className="flex gap-3 pt-4 border-t border-[#1f2937]">
+        <div className="flex gap-3 pt-4 border-t border-[#1f2937] shrink-0">
           <button 
             onClick={onClose}
             className="ds-btn ds-btn-secondary text-xs flex-1"

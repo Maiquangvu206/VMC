@@ -1635,22 +1635,22 @@ router.get('/recruitment/criteria/:seasonId', async (req, res) => {
 
 router.post('/recruitment/criteria', async (req, res) => {
   try {
-    const { id, season_id, criteria_name, max_score, sort_order } = req.body;
+    const { id, season_id, criteria_name, max_score, sort_order, round_type } = req.body;
     const cid = id || ('crit-' + Date.now());
     await queryDatabase(
-      'INSERT INTO Recruitment_Criteria (id, season_id, criteria_name, max_score, sort_order) VALUES (?, ?, ?, ?, ?)',
-      [cid, season_id, criteria_name, max_score || 10, sort_order || 0]
+      'INSERT INTO Recruitment_Criteria (id, season_id, criteria_name, max_score, sort_order, round_type) VALUES (?, ?, ?, ?, ?, ?)',
+      [cid, season_id, criteria_name, max_score || 10, sort_order || 0, round_type || 'teamwork']
     );
-    res.json({ success: true, data: { id: cid, season_id, criteria_name, max_score: max_score || 10 } });
+    res.json({ success: true, data: { id: cid, season_id, criteria_name, max_score: max_score || 10, round_type: round_type || 'teamwork' } });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
 router.put('/recruitment/criteria/:id', async (req, res) => {
   try {
-    const { criteria_name, max_score } = req.body;
+    const { criteria_name, max_score, round_type } = req.body;
     await queryDatabase(
-      'UPDATE Recruitment_Criteria SET criteria_name = COALESCE(?, criteria_name), max_score = COALESCE(?, max_score) WHERE id = ?',
-      [criteria_name ?? null, max_score ?? null, req.params.id]
+      'UPDATE Recruitment_Criteria SET criteria_name = COALESCE(?, criteria_name), max_score = COALESCE(?, max_score), round_type = COALESCE(?, round_type) WHERE id = ?',
+      [criteria_name ?? null, max_score ?? null, round_type ?? null, req.params.id]
     );
     res.json({ success: true });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
@@ -1667,7 +1667,7 @@ router.delete('/recruitment/criteria/:id', async (req, res) => {
 router.get('/recruitment/candidates/:seasonId', async (req, res) => {
   try {
     const { interviewer_id } = req.query;
-    let sql = 'SELECT id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, status, notes, created_at FROM Recruitment_Candidates WHERE season_id = ?';
+    let sql = 'SELECT id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, status, notes, application_answers, created_at FROM Recruitment_Candidates WHERE season_id = ?';
     const params = [req.params.seasonId];
     // Interviewer chỉ thấy ứng viên được gán cho mình (check both interviewer_id, interviewer_ids, and teamwork_scorer_ids)
     if (interviewer_id) { 
@@ -1687,7 +1687,7 @@ router.get('/recruitment/candidates/:seasonId', async (req, res) => {
 
 router.post('/recruitment/candidates', async (req, res) => {
   try {
-    const { id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, notes } = req.body;
+    const { id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, notes, application_answers } = req.body;
     const cid = id || ('cand-' + Date.now());
     const interviewerIdsVal = interviewer_ids !== undefined
       ? (Array.isArray(interviewer_ids) ? JSON.stringify(interviewer_ids) : interviewer_ids)
@@ -1696,8 +1696,8 @@ router.post('/recruitment/candidates', async (req, res) => {
       ? (Array.isArray(teamwork_scorer_ids) ? JSON.stringify(teamwork_scorer_ids) : teamwork_scorer_ids)
       : null;
     await queryDatabase(
-      'INSERT INTO Recruitment_Candidates (id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [cid, season_id, full_name, class_name || null, phone || null, email || null, desired_dept || null, interviewer_id || null, interviewerIdsVal, teamworkScorerIdsVal, notes || null]
+      'INSERT INTO Recruitment_Candidates (id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, notes, application_answers) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [cid, season_id, full_name, class_name || null, phone || null, email || null, desired_dept || null, interviewer_id || null, interviewerIdsVal, teamworkScorerIdsVal, notes || null, application_answers || null]
     );
     res.json({ success: true, data: { id: cid, season_id, full_name, interviewer_id, interviewer_ids, teamwork_scorer_ids, status: 'pending' } });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
@@ -1705,7 +1705,7 @@ router.post('/recruitment/candidates', async (req, res) => {
 
 router.put('/recruitment/candidates/:id', async (req, res) => {
   try {
-    const { full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, status, notes } = req.body;
+    const { full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, status, notes, application_answers } = req.body;
     const interviewerIdsVal = interviewer_ids !== undefined
       ? (Array.isArray(interviewer_ids) ? JSON.stringify(interviewer_ids) : interviewer_ids)
       : null;
@@ -1719,9 +1719,10 @@ router.put('/recruitment/candidates/:id', async (req, res) => {
         desired_dept = COALESCE(?, desired_dept), interviewer_id = COALESCE(?, interviewer_id),
         interviewer_ids = COALESCE(?, interviewer_ids),
         teamwork_scorer_ids = COALESCE(?, teamwork_scorer_ids),
-        status = COALESCE(?, status), notes = COALESCE(?, notes)
+        status = COALESCE(?, status), notes = COALESCE(?, notes),
+        application_answers = COALESCE(?, application_answers)
        WHERE id = ?`,
-      [full_name??null, class_name??null, phone??null, email??null, desired_dept??null, interviewer_id??null, interviewerIdsVal, teamworkScorerIdsVal, status??null, notes??null, req.params.id]
+      [full_name??null, class_name??null, phone??null, email??null, desired_dept??null, interviewer_id??null, interviewerIdsVal, teamworkScorerIdsVal, status??null, notes??null, application_answers??null, req.params.id]
     );
     res.json({ success: true });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
@@ -1759,8 +1760,8 @@ router.post('/recruitment/scores', async (req, res) => {
       await queryDatabase(
         `INSERT INTO Recruitment_Scores (id, season_id, candidate_id, interviewer_id, criteria_id, score, comments)
          VALUES (?, ?, ?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE score = VALUES(score), comments = VALUES(comments), submitted_at = NOW()`,
-        [sid, season_id, candidate_id, interviewer_id, s.criteria_id, s.score, comments || null]
+         ON DUPLICATE KEY UPDATE score = VALUES(score), comments = VALUES(comments)`,
+        [sid, season_id, candidate_id, interviewer_id, s.criteria_id, s.score, s.comments || comments || null]
       );
     }
     await queryDatabase(

@@ -127,8 +127,23 @@ export const CandidateModal = ({ show, onClose, candidateForm, setCandidateForm,
               value={candidateForm.notes || ''}
               onChange={(e) => setCandidateForm({ ...candidateForm, notes: e.target.value })}
               className="w-full bg-[#0f172a] border border-[#1f2937] focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-xl p-3 text-xs text-slate-100 placeholder:text-slate-500 leading-relaxed resize-y transition-all"
-              rows={3}
+              rows={2}
               placeholder="Nhập nhận xét sơ bộ, kinh nghiệm cá nhân hoặc ghi chú đặc biệt..."
+            />
+          </div>
+
+          {/* Row 5: Bài làm vòng đơn - Clean Full-width Textarea Layout */}
+          <div className="pt-1">
+            <label className="ds-field-label flex items-center gap-1.5 mb-1.5">
+              <FileText className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+              <span>Bài làm vòng đơn (Câu hỏi & Câu trả lời)</span>
+            </label>
+            <textarea
+              value={candidateForm.application_answers || ''}
+              onChange={(e) => setCandidateForm({ ...candidateForm, application_answers: e.target.value })}
+              className="w-full bg-[#0f172a] border border-[#1f2937] focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-xl p-3 text-xs text-slate-100 placeholder:text-slate-500 leading-relaxed resize-y transition-all"
+              rows={4}
+              placeholder="Nhập các câu hỏi và câu trả lời vòng đơn của ứng viên..."
             />
           </div>
 

@@ -29,6 +29,18 @@ export const CriteriaModal = ({ show, onClose, criteriaForm, setCriteriaForm, on
                placeholder="10"
              />
            </div>
+           <div>
+             <label className="ds-field-label">Vòng Chấm Điểm</label>
+             <select
+               value={criteriaForm.round_type || 'teamwork'}
+               onChange={(e) => setCriteriaForm({ ...criteriaForm, round_type: e.target.value })}
+               className="ds-input bg-slate-900 border border-slate-700 text-white"
+             >
+               <option value="don">📝 Vòng Đơn</option>
+               <option value="teamwork">👥 Vòng Teamwork</option>
+               <option value="phongvan">🎙️ Vòng Phỏng Vấn</option>
+             </select>
+           </div>
          </div>
          <div className="flex gap-3 mt-6">
            <button

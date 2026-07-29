@@ -55,6 +55,7 @@ queryDatabase('ALTER TABLE Members ADD COLUMN milestones LONGTEXT').catch(err =>
 });
 queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN active_round VARCHAR(50) DEFAULT "don"').catch(() => {});
 queryDatabase('ALTER TABLE Recruitment_Criteria ADD COLUMN round_type VARCHAR(50) DEFAULT "teamwork"').catch(() => {});
+queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN application_answers TEXT').catch(() => {});
 
 queryDatabase(`
   CREATE TABLE IF NOT EXISTS Member_Milestones (

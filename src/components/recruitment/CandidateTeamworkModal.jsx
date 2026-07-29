@@ -15,11 +15,18 @@ export const CandidateTeamworkModal = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-       <div className="ds-card p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-         <h3 className="font-heading text-xl font-bold text-white mb-4">Phân công Chấm Teamwork - {candidate.full_name}</h3>
-         <div className="space-y-3">
+       <div className="ds-card p-6 w-full max-w-lg max-h-[90vh] flex flex-col bg-[#111827] border border-[#1f2937] rounded-2xl shadow-2xl space-y-4 overflow-hidden">
+         <div className="flex justify-between items-center pb-2 border-b border-[#1f2937] shrink-0">
+           <h3 className="font-heading text-lg font-bold text-white">Phân công Chấm Teamwork</h3>
+           <button onClick={onClose} className="text-slate-400 hover:text-white p-1">
+             <X className="w-5 h-5" />
+           </button>
+         </div>
+         <p className="text-xs text-purple-400 font-medium shrink-0">Ứng viên: {candidate.full_name}</p>
+
+         <div className="space-y-3 overflow-y-auto flex-1 pr-1 max-h-[60vh]">
            {availableInterviewers.map(m => (
-             <div key={m.id} className="ds-card p-3 flex items-center justify-between">
+             <div key={m.id} className="ds-card p-3 flex items-center justify-between bg-[#0f172a] border-[#1f2937]">
                <div className="flex items-center gap-3">
                  <img 
                    src={m.avatar || '/default-avatar.png'} 
@@ -50,7 +57,7 @@ export const CandidateTeamworkModal = ({
              </div>
            ))}
          </div>
-         <div className="flex gap-3 mt-6">
+         <div className="flex gap-3 pt-4 border-t border-[#1f2937] shrink-0">
            <button 
              onClick={onClose}
              className="ds-btn ds-btn-secondary flex-1"
