@@ -208,24 +208,22 @@ export const InternalAdminSessions = () => {
         </div>
       </div>
 
-      {/* Sessions Table */}
-      <div className="ds-card rounded-xl border border-gray-800 overflow-hidden shadow-xl min-w-0 w-full">
-        <div className="overflow-x-auto w-full scrollbar-thin">
-          <table className="ds-table w-full min-w-[700px]">
+      {/* Sessions Table - Clean No-Scroll Stacked Layout */}
+      <div className="ds-card rounded-xl border border-gray-800 shadow-xl w-full bg-[#10172a] p-4">
+        <div className="w-full overflow-hidden">
+          <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-900/90 text-xs text-slate-400 border-b border-gray-800">
-                <th className="py-3.5 px-4 text-left font-semibold">Thành Viên</th>
-                <th className="py-3.5 px-4 text-left font-semibold">Thiết Bị & IP</th>
-                <th className="py-3.5 px-4 text-left font-semibold">Đăng Nhập</th>
-                <th className="py-3.5 px-4 text-left font-semibold">Hoạt Động Gần Nhất</th>
-                <th className="py-3.5 px-4 text-center font-semibold">Trạng Thái</th>
-                <th className="py-3.5 px-4 text-right font-semibold">Thao Tác</th>
+                <th className="py-3 px-3 font-semibold">Thành Viên</th>
+                <th className="py-3 px-3 font-semibold">Thiết Bị & IP</th>
+                <th className="py-3 px-3 font-semibold hidden sm:table-cell">Đăng Nhập & Hoạt Động</th>
+                <th className="py-3 px-3 text-right font-semibold">Trạng Thái & Thao Tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 text-sm">
+            <tbody className="divide-y divide-slate-800/60 text-xs">
               {filteredSessions.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="text-center py-8 text-slate-500 italic">
+                  <td colSpan="4" className="text-center py-8 text-slate-500 italic">
                     Không tìm thấy phiên làm việc nào phù hợp.
                   </td>
                 </tr>
@@ -250,8 +248,9 @@ export const InternalAdminSessions = () => {
 
                   return (
                     <tr key={s.id} className={`hover:bg-slate-900/50 transition-colors ${isCurrent ? 'bg-cyan-500/10' : ''}`}>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-3 min-w-0">
+                      {/* Column 1: Member Info */}
+                      <td className="py-3 px-3">
+                        <div className="flex items-center gap-2.5 min-w-0">
                           <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold font-heading shrink-0 border border-blue-500/30">
                             {displayName.charAt(0).toUpperCase()}
                           </div>
@@ -273,7 +272,8 @@ export const InternalAdminSessions = () => {
                         </div>
                       </td>
 
-                      <td className="py-3 px-4">
+                      {/* Column 2: Device & IP (Xuống dòng) */}
+                      <td className="py-3 px-3">
                         <div className="flex items-center gap-2 min-w-0">
                           {isMobile ? (
                             <Smartphone className="w-4 h-4 text-pink-400 shrink-0" />
@@ -282,54 +282,58 @@ export const InternalAdminSessions = () => {
                           )}
                           <div className="min-w-0">
                             <div className="font-semibold text-slate-200 text-xs truncate">{s.device_type || 'Desktop / PC'}</div>
-                            <div className="text-[10px] text-slate-400 font-mono truncate">{s.ip_address || '127.0.0.1'}</div>
+                            <div className="text-[10px] text-cyan-400 font-mono truncate">{s.ip_address || '127.0.0.1'}</div>
                           </div>
                         </div>
                       </td>
 
-                      <td className="py-3 px-4 font-mono text-xs text-slate-300 whitespace-nowrap">
-                        {s.login_time ? new Date(s.login_time).toLocaleString('vi-VN') : 'Mới đây'}
-                      </td>
-
-                      <td className="py-3 px-4 font-mono text-xs whitespace-nowrap">
-                        <div className="flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          <span className={isRecent ? 'text-emerald-400 font-bold' : 'text-slate-300'}>
-                            {s.last_active ? new Date(s.last_active).toLocaleTimeString('vi-VN') : 'N/A'}
-                          </span>
+                      {/* Column 3: Login & Last Active (Xuống dòng) */}
+                      <td className="py-3 px-3 hidden sm:table-cell">
+                        <div className="space-y-0.5 font-mono text-[11px]">
+                          <div className="text-slate-300 flex items-center gap-1">
+                            <span className="text-slate-500 text-[10px]">Vào:</span>
+                            <span>{s.login_time ? new Date(s.login_time).toLocaleString('vi-VN') : 'Mới đây'}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-slate-500 text-[10px]">Hoạt động:</span>
+                            <span className={isRecent ? 'text-emerald-400 font-bold' : 'text-slate-400'}>
+                              {s.last_active ? new Date(s.last_active).toLocaleTimeString('vi-VN') : 'N/A'}
+                            </span>
+                          </div>
                         </div>
                       </td>
 
-                      <td className="py-3 px-4 text-center whitespace-nowrap">
-                        {isActive ? (
-                          <span className="ds-badge ds-badge-emerald">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Đang Hoạt Động
-                          </span>
-                        ) : s.logout_reason === 'revoked' ? (
-                          <span className="ds-badge ds-badge-rose">
-                            <XCircle className="w-3 h-3" /> Bị Hủy
-                          </span>
-                        ) : (
-                          <span className="ds-badge ds-badge-cyan">
-                            <Clock className="w-3 h-3 text-slate-400" /> Kết Thúc Phiên
-                          </span>
-                        )}
-                      </td>
+                      {/* Column 4: Status & Action Button */}
+                      <td className="py-3 px-3 text-right">
+                        <div className="flex flex-col items-end gap-1.5">
+                          {isActive ? (
+                            <span className="ds-badge ds-badge-emerald text-[10px]">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Hoạt Động
+                            </span>
+                          ) : s.logout_reason === 'revoked' ? (
+                            <span className="ds-badge ds-badge-rose text-[10px]">
+                              <XCircle className="w-3 h-3" /> Bị Hủy
+                            </span>
+                          ) : (
+                            <span className="ds-badge ds-badge-cyan text-[10px]">
+                              <Clock className="w-3 h-3 text-slate-400" /> Kết Thúc
+                            </span>
+                          )}
 
-                      <td className="py-3 px-4 text-right whitespace-nowrap">
-                        {isActive && !isCurrent && (
-                          <button
-                            onClick={() => {
-                              if (window.confirm(`Bạn có chắc muốn đăng xuất từ xa tài khoản ${s.name}?`)) {
-                                revokeSession(s.id);
-                              }
-                            }}
-                            className="ds-btn ds-btn-danger ds-btn-xs"
-                          >
-                            <LogOut className="w-3.5 h-3.5 shrink-0" />
-                            <span>Thu Hồi</span>
-                          </button>
-                        )}
+                          {isActive && !isCurrent && (
+                            <button
+                              onClick={() => {
+                                if (window.confirm(`Bạn có chắc muốn đăng xuất từ xa tài khoản ${s.name}?`)) {
+                                  revokeSession(s.id);
+                                }
+                              }}
+                              className="ds-btn ds-btn-danger ds-btn-xs text-[10px] !py-0.5 !px-2"
+                            >
+                              <LogOut className="w-3 h-3 shrink-0" />
+                              <span>Thu Hồi</span>
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

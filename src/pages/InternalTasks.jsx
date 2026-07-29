@@ -452,7 +452,7 @@ export const InternalTasks = () => {
                   value={formData.desc}
                   onChange={(e) => setFormData({ ...formData, desc: e.target.value })}
                   placeholder="Yêu cầu nộp kịch bản radio trước 17:00 Thứ 2..."
-                  className="ds-textarea"
+                  className="w-full bg-[#0f172a] border border-[#1f2937] focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-xl p-3 text-xs text-slate-100 placeholder:text-slate-500 leading-relaxed resize-y mt-1 transition-all block"
                 />
               </div>
 
@@ -519,7 +519,7 @@ export const InternalTasks = () => {
                 return (
                   <div
                     key={task.id}
-                    className={`p-4 rounded-xl border space-y-2 transition-all ${
+                    className={`p-4 rounded-xl border space-y-3 transition-all ${
                       task.status === 'done'
                         ? 'bg-emerald-500/5 border-emerald-500/20'
                         : overdue
@@ -527,8 +527,8 @@ export const InternalTasks = () => {
                         : 'bg-[#0f172a] border-[#1f2937]'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="space-y-1">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="space-y-1.5 min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className={deptInfo.class}>{deptInfo.label}</span>
                           {overdue && (
@@ -552,11 +552,11 @@ export const InternalTasks = () => {
                       <select
                         value={task.status}
                         onChange={(e) => updateTaskStatus(task.id, e.target.value)}
-                        className="ds-input ds-select text-xs !py-1 !px-2 w-auto shrink-0"
+                        className="bg-[#1e293b] text-slate-100 border border-slate-700 text-xs py-1.5 px-3 rounded-lg focus:outline-none focus:border-blue-500 shrink-0 cursor-pointer self-start sm:self-auto"
                       >
-                        <option value="todo">Cần Làm</option>
-                        <option value="doing">Đang Làm</option>
-                        <option value="done">Hoàn Thành</option>
+                        <option value="todo">📋 Cần Làm</option>
+                        <option value="doing">⏳ Đang Làm</option>
+                        <option value="done">✓ Hoàn Thành</option>
                       </select>
                     </div>
 

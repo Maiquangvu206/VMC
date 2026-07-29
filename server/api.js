@@ -1574,12 +1574,26 @@ router.post('/recruitment/seasons', async (req, res) => {
     const sid = id || ('season-' + Date.now());
     // Handle scoring_type as array or string
     const scoringTypeVal = Array.isArray(scoring_type) ? JSON.stringify(scoring_type) : (scoring_type || 'teamwork');
-    await queryDatabase(
-      'INSERT INTO Recruitment_Seasons (id, name, quota, department, scoring_type, created_by) VALUES (?, ?, ?, ?, ?, ?)',
-      [sid, name, quota || 0, department || null, scoringTypeVal, created_by || null]
-    );
+    const creatorId = created_by ? String(created_by) : 'ADMIN';
+
+    try {
+      await queryDatabase(
+        'INSERT INTO Recruitment_Seasons (id, name, quota, department, scoring_type, created_by) VALUES (?, ?, ?, ?, ?, ?)',
+        [sid, name, parseInt(quota) || 0, department || null, scoringTypeVal, creatorId]
+      );
+    } catch (dbErr) {
+      console.warn('⚠️ Fallback query for POST recruitment/seasons:', dbErr.message);
+      await queryDatabase(
+        'INSERT INTO Recruitment_Seasons (id, name, quota, department, scoring_type) VALUES (?, ?, ?, ?, ?)',
+        [sid, name, parseInt(quota) || 0, department || null, scoringTypeVal]
+      );
+    }
+
     res.json({ success: true, data: { id: sid, name, quota, department, scoring_type, is_active: 0 } });
-  } catch (e) { res.status(500).json({ success: false, error: e.message }); }
+  } catch (e) {
+    console.error('❌ Error creating season:', e);
+    res.status(500).json({ success: false, error: e.message });
+  }
 });
 
 router.put('/recruitment/seasons/:id', async (req, res) => {

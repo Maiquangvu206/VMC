@@ -248,6 +248,10 @@ async function init() {
     await queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN interviewer_ids TEXT').catch(() => {});
     await queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN department VARCHAR(100)').catch(() => {});
     await queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN scoring_type TEXT').catch(() => {});
+    await queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN created_by VARCHAR(100)').catch(() => {});
+    await queryDatabase('ALTER TABLE Recruitment_Seasons MODIFY COLUMN department VARCHAR(255)').catch(() => {});
+    await queryDatabase('ALTER TABLE Recruitment_Seasons MODIFY COLUMN scoring_type LONGTEXT').catch(() => {});
+    await queryDatabase('ALTER TABLE Recruitment_Seasons MODIFY COLUMN interviewer_ids LONGTEXT').catch(() => {});
     await queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN interviewer_ids TEXT').catch(() => {});
     await queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN teamwork_scorer_ids TEXT').catch(() => {});
     await queryDatabase('ALTER TABLE Recruitment_Scores ADD COLUMN comments TEXT').catch(() => {});
