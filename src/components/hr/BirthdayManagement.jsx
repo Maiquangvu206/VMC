@@ -58,6 +58,8 @@ export const BirthdayManagement = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth() + 1; // 1-12
+    const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
 
     const list = (members || []).map(m => {
       if (!m.dob) return null;
@@ -66,6 +68,9 @@ export const BirthdayManagement = () => {
       const day = parseInt(parts[0], 10);
       const month = parseInt(parts[1], 10);
       if (isNaN(day) || isNaN(month)) return null;
+
+      // Only include members whose birthday month is currentMonth OR nextMonth
+      if (month !== currentMonth && month !== nextMonth) return null;
 
       let nextBday = new Date(currentYear, month - 1, day);
       if (nextBday < today) {
@@ -79,6 +84,8 @@ export const BirthdayManagement = () => {
         ...m,
         bdayDay: day,
         bdayMonth: month,
+        isCurrentMonth: month === currentMonth,
+        isNextMonth: month === nextMonth,
         daysRemaining,
         formattedBday: `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}`
       };
@@ -286,65 +293,71 @@ const handleConfirmMemberSubmit = async (e) => {
         </div>
       </div>
 
-      {/* Upcoming Birthdays Countdown Section */}
+      {/* Upcoming Birthdays Countdown Section (Current & Next Month) */}
       <div className="ds-card p-5 border border-pink-500/30 space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h4 className="font-heading text-sm font-bold text-white flex items-center gap-2">
             <Calendar className="w-4 h-4 text-pink-400" />
-            <span>Danh Sách Sắp Đến Sinh Nhật (Đếm Ngược)</span>
+            <span>Sinh Nhật Thành Viên (Tháng Này & Tháng Tới)</span>
           </h4>
           <span className="text-xs text-pink-300 font-mono">
-            {upcomingBirthdays.length} thành viên
+            Tổng cộng: {upcomingBirthdays.length} thành viên
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {upcomingBirthdays.slice(0, 6).map(m => {
-            const isToday = m.daysRemaining === 0;
-            const isTomorrow = m.daysRemaining === 1;
-            return (
-              <div
-                key={m.id}
-                className={`p-3 rounded-xl border flex items-center justify-between gap-3 transition-all ${
-                  isToday
-                    ? 'bg-pink-500/20 border-pink-500/50 shadow-md shadow-pink-500/10'
-                    : isTomorrow
-                    ? 'bg-purple-500/15 border-purple-500/40'
-                    : 'bg-[#0f172a] border-[#1f2937]'
-                }`}
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <img
-                    src={m.avatar}
-                    alt={m.name}
-                    className="w-10 h-10 rounded-lg object-cover border border-pink-500/30 shrink-0"
-                  />
-                  <div className="min-w-0">
-                    <div className="font-bold text-xs text-slate-100 truncate">{m.name}</div>
-                    <div className="text-[10px] text-slate-400 truncate">{m.deptName || m.department || 'Ban Chuyên Môn'}</div>
-                    <div className="text-[10px] text-pink-300 font-mono">Sinh ngày: {m.formattedBday}</div>
+        {upcomingBirthdays.length === 0 ? (
+          <p className="text-xs text-slate-400 italic">Không có thành viên nào sinh nhật trong tháng này hoặc tháng tới.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {upcomingBirthdays.map(m => {
+              const isToday = m.daysRemaining === 0;
+              const isTomorrow = m.daysRemaining === 1;
+              return (
+                <div
+                  key={m.id}
+                  className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 transition-all ${
+                    isToday
+                      ? 'bg-pink-500/20 border-pink-500/50 shadow-md shadow-pink-500/10'
+                      : isTomorrow
+                      ? 'bg-purple-500/15 border-purple-500/40'
+                      : 'bg-[#0f172a] border-[#1f2937]'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <img
+                      src={m.avatar}
+                      alt={m.name}
+                      className="w-10 h-10 rounded-lg object-cover border border-pink-500/30 shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <div className="font-bold text-xs text-slate-100 truncate">{m.name}</div>
+                      <div className="text-[10px] text-slate-400 truncate">{m.deptName || m.department || 'Ban Chuyên Môn'}</div>
+                      <div className="text-[10px] text-pink-300 font-mono">
+                        Sinh ngày: <strong>{m.formattedBday}</strong> {m.isCurrentMonth ? '(Tháng này)' : '(Tháng tới)'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 text-right">
+                    {isToday ? (
+                      <span className="ds-badge ds-badge-rose animate-bounce font-bold text-[10px]">
+                        🎂 Hôm Nay!
+                      </span>
+                    ) : isTomorrow ? (
+                      <span className="ds-badge ds-badge-purple font-bold text-[10px]">
+                        🎁 Còn 1 ngày
+                      </span>
+                    ) : (
+                      <span className="ds-badge ds-badge-cyan text-[10px]">
+                        🎈 Còn {m.daysRemaining} ngày
+                      </span>
+                    )}
                   </div>
                 </div>
-
-                <div className="shrink-0 text-right">
-                  {isToday ? (
-                    <span className="ds-badge ds-badge-rose animate-bounce font-bold text-[10px]">
-                      🎂 Hôm Nay!
-                    </span>
-                  ) : isTomorrow ? (
-                    <span className="ds-badge ds-badge-purple font-bold text-[10px]">
-                      🎁 Còn 1 ngày
-                    </span>
-                  ) : (
-                    <span className="ds-badge ds-badge-cyan text-[10px]">
-                      🎈 Còn {m.daysRemaining} ngày
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Form Phân Công (HR Head / Leader) */}

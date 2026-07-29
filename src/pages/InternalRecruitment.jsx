@@ -89,8 +89,16 @@ export const InternalRecruitment = () => {
         (c.interviewer_ids || []).includes(currentUser?.id)
       ))
     );
+    // For phỏng vấn, check if user is BCN, advisor, dept member, or assigned interviewer
+    const canScorePhongvan = scoringTypes.includes('phongvan') && (
+      isBCN || isAdvisor || isDeptMember ||
+      (currentSeason?.interviewer_ids || []).includes(currentUser?.id) ||
+      (Array.isArray(candidates) && candidates.some(c => 
+        (c.interviewer_ids || []).includes(currentUser?.id)
+      ))
+    );
     
-    return canScoreDon || canScoreTeamwork;
+    return canScoreDon || canScoreTeamwork || canScorePhongvan;
   }, [currentSeason, currentUser, candidates]);
 
   // Form states
@@ -465,27 +473,41 @@ export const InternalRecruitment = () => {
     }
   };
 
-  // Get available interviewers based on season's department + BCN + advisors
+  // Get available interviewers: Ban Cố Vấn, Ban Chủ Nhiệm, Ban Phụ Trách (Ban Phụ Trách sorted FIRST at top)
   const availableInterviewers = React.useMemo(() => {
+    if (!Array.isArray(members)) return [];
     const targetSeason = selectedSeasonForInterviewers || currentSeason;
-    if (!targetSeason || !Array.isArray(members)) return [];
-    
-    const seasonDept = (targetSeason.department || '').toLowerCase().trim();
-    
-    return members.filter(m => {
-      const roleTitle = (m.roleTitle || '').toLowerCase();
-      const memberDept = (m.deptName || m.department || '').toLowerCase().trim();
-      
-      // BCN (Chủ Nhiệm, Phó Chủ Nhiệm) - always included
-      const isBCN = roleTitle.includes('chủ nhiệm') || roleTitle.includes('phó chủ nhiệm');
-      
-      // Cố vấn (Advisor)
-      const isAdvisor = roleTitle.includes('cố vấn') || roleTitle.includes('advisor');
-      
-      // Department members - exact match only for reliability
-      const isDeptMember = seasonDept && memberDept === seasonDept;
-      
-      return isBCN || isAdvisor || isDeptMember;
+    const targetDept = (targetSeason?.department || '').toLowerCase().trim();
+
+    const filtered = members.filter(m => {
+      if (m.status === 'Suspended') return false;
+      const roleTitle = (m.roleTitle || m.role_title || '').toLowerCase().trim();
+      const deptName = (m.deptName || m.department || '').toLowerCase().trim();
+      const code = (m.memberCode || m.member_code || '').toUpperCase();
+
+      // 1. Ban Cố Vấn
+      const isAdvisor = roleTitle.includes('cố vấn') || deptName.includes('cố vấn') || roleTitle.includes('advisor');
+
+      // 2. Ban Chủ Nhiệm / Admin / Super Admin
+      const isBCN = roleTitle.includes('chủ nhiệm') || deptName.includes('chủ nhiệm') || roleTitle.includes('super admin') || code === 'ADMIN';
+
+      // 3. Ban Phụ Trách (Department in charge of the recruitment season)
+      const isDeptInCharge = targetDept && (deptName.includes(targetDept) || targetDept.includes(deptName));
+
+      return isAdvisor || isBCN || isDeptInCharge;
+    });
+
+    // Sort: Members of Ban Phụ Trách appear FIRST at the top of the list!
+    return filtered.sort((a, b) => {
+      const deptA = (a.deptName || a.department || '').toLowerCase().trim();
+      const deptB = (b.deptName || b.department || '').toLowerCase().trim();
+
+      const aIsInCharge = targetDept && (deptA.includes(targetDept) || targetDept.includes(deptA));
+      const bIsInCharge = targetDept && (deptB.includes(targetDept) || targetDept.includes(deptB));
+
+      if (aIsInCharge && !bIsInCharge) return -1;
+      if (!aIsInCharge && bIsInCharge) return 1;
+      return 0;
     });
   }, [selectedSeasonForInterviewers, currentSeason, members]);
 
@@ -1003,35 +1025,44 @@ export const InternalRecruitment = () => {
              <table className="ds-table">
                <thead>
                  <tr>
+                   <th>Mã Phỏng Vấn</th>
                    <th>#</th>
                    <th>Họ Tên</th>
                    <th>Lớp</th>
                    <th>Ban Mong Muốn</th>
-                   <th>Số Phỏng vấn</th>
+                   <th>Số Giám Khảo</th>
                    <th>Điểm TB</th>
                    <th>Tổng Điểm</th>
                    <th>Kết Quả</th>
                  </tr>
                </thead>
-               <tbody>
-                 {scoresSummary.map((s, idx) => (
-                   <tr key={s.candidate_id}>
-                     <td>{s.rank}</td>
-                     <td className="font-medium text-white">{s.full_name}</td>
-                     <td className="text-slate-400">{s.class_name}</td>
-                     <td className="text-slate-400">{s.desired_dept}</td>
-                     <td className="text-slate-400">{s.interviewer_count}</td>
-                     <td className="text-white font-bold">{s.avg_score}</td>
-                     <td className="text-white">{s.total_score}</td>
-                     <td>
-                       {s.result_status === 'passed' && <span className="text-emerald-400 font-bold">Đậu</span>}
-                       {s.result_status === 'failed' && <span className="text-red-400 font-bold">Rớt</span>}
-                       {s.result_status === 'reserve' && <span className="text-amber-400 font-bold">Dự bị</span>}
-                       {s.result_status === 'pending' && <span className="text-slate-400">Chờ</span>}
-                     </td>
-                   </tr>
-                 ))}
-               </tbody>
+                <tbody>
+                  {scoresSummary.map((s, idx) => {
+                    const code = s.interview_code || s.candidate_code || (candidates.find(c => c.id === s.candidate_id)?.interview_code) || `PV-${String(idx + 1).padStart(2, '0')}`;
+                    return (
+                      <tr key={s.candidate_id}>
+                        <td>
+                          <span className="ds-badge ds-badge-cyan font-mono font-bold text-xs py-1 px-2.5">
+                            {code}
+                          </span>
+                        </td>
+                        <td className="font-mono text-slate-400">{s.rank}</td>
+                        <td className="font-bold text-slate-100">{s.full_name}</td>
+                        <td className="text-slate-300">{s.class_name}</td>
+                        <td className="text-slate-300">{s.desired_dept}</td>
+                        <td className="text-slate-400 font-mono">{s.interviewer_count} GK</td>
+                        <td className="text-emerald-400 font-bold font-mono">{s.avg_score}</td>
+                        <td className="text-white font-mono">{s.total_score}</td>
+                        <td>
+                          {s.result_status === 'passed' && <span className="ds-badge ds-badge-emerald">✅ Đậu</span>}
+                          {s.result_status === 'failed' && <span className="ds-badge ds-badge-rose">❌ Rớt</span>}
+                          {s.result_status === 'reserve' && <span className="ds-badge ds-badge-amber">⏳ Dự bị</span>}
+                          {s.result_status === 'pending' && <span className="ds-badge ds-badge-secondary">⏳ Chờ</span>}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
              </table>
            </div>
          </div>

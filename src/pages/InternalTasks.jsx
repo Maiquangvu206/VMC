@@ -36,6 +36,27 @@ export const InternalTasks = () => {
     priority: 'Medium'
   });
 
+  const isOverdue = (deadline) => {
+    if (!deadline) return false;
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const dl = new Date(deadline);
+    dl.setHours(0, 0, 0, 0);
+    return dl < now;
+  };
+
+  const getTaskAssignee = (task) => {
+    if (task.assignee && task.assignee !== 'Chưa phân công' && task.assignee !== 'Thành viên còn thiếu') {
+      return task.assignee;
+    }
+    const assId = task.assigneeId || task.assignee_id;
+    if (assId) {
+      const match = members.find(m => String(m.id) === String(assId) || String(m.memberCode) === String(assId));
+      if (match) return match.name || match.full_name;
+    }
+    return task.assignee || 'Chưa phân công';
+  };
+
   const filteredTasks = useMemo(() => tasks.filter(t => deptFilter === 'all' || t.department === deptFilter), [tasks, deptFilter]);
 
   const todoTasks = useMemo(() => filteredTasks.filter(t => t.status === 'todo'), [filteredTasks]);
@@ -87,27 +108,6 @@ export const InternalTasks = () => {
       priority: 'Medium',
       desc: ''
     });
-  };
-
-  const isOverdue = (deadline) => {
-    if (!deadline) return false;
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    const dl = new Date(deadline);
-    dl.setHours(0, 0, 0, 0);
-    return dl < now;
-  };
-
-  const getTaskAssignee = (task) => {
-    if (task.assignee && task.assignee !== 'Chưa phân công' && task.assignee !== 'Thành viên còn thiếu') {
-      return task.assignee;
-    }
-    const assId = task.assigneeId || task.assignee_id;
-    if (assId) {
-      const match = members.find(m => String(m.id) === String(assId) || String(m.memberCode) === String(assId));
-      if (match) return match.name || match.full_name;
-    }
-    return task.assignee || 'Chưa phân công';
   };
 
   const getDeptBadge = (deptId) => {

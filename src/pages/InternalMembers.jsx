@@ -288,32 +288,30 @@ export const InternalMembers = () => {
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <button
-            onClick={() => {
-              if (!isAdmin) {
-                showToast('⛔ Quyền bị từ chối! Chỉ có bộ phận kỹ thuật ban Đối Ngoại - Nhân Sự mới có quyền cấp tài khoản thành viên mới!', 'error');
-                return;
-              }
-              setIsNewAccountModalOpen(true);
-            }}
-            className={`ds-btn ds-btn-primary text-xs shrink-0 ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
-            title={isAdmin ? 'Cấp tài khoản mới (Admin)' : 'Chỉ Chủ Nhiệm CLB (Admin) mới có quyền cấp tài khoản mới'}
-          >
-            <UserPlus className="w-4 h-4 shrink-0" />
-            <span>Cấp Tài Khoản Mới</span>
-          </button>
-
-          <div className="min-w-0">
-            <h1 className="font-heading text-xl sm:text-2xl font-extrabold text-slate-100 flex items-center gap-2">
-              <Users className="w-6 h-6 text-blue-400 shrink-0" />
-              <span>Danh Sách Thành Viên</span>
-            </h1>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Tìm kiếm thông tin thành viên qua từng thời kỳ từ khóa sáng lập đến đương nhiệm.
-            </p>
-          </div>
+        <div className="min-w-0">
+          <h1 className="font-heading text-xl sm:text-2xl font-extrabold text-slate-100 flex items-center gap-2">
+            <Users className="w-6 h-6 text-blue-400 shrink-0" />
+            <span>Danh Sách Thành Viên</span>
+          </h1>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Tìm kiếm thông tin thành viên qua từng thời kỳ từ khóa sáng lập đến đương nhiệm.
+          </p>
         </div>
+
+        <button
+          onClick={() => {
+            if (!isAdmin) {
+              showToast('⛔ Quyền bị từ chối! Chỉ có bộ phận kỹ thuật ban Đối Ngoại - Nhân Sự mới có quyền cấp tài khoản thành viên mới!', 'error');
+              return;
+            }
+            setIsNewAccountModalOpen(true);
+          }}
+          className={`ds-btn ds-btn-primary text-xs shrink-0 ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
+          title={isAdmin ? 'Cấp tài khoản mới (Admin)' : 'Chỉ Chủ Nhiệm CLB (Admin) mới có quyền cấp tài khoản mới'}
+        >
+          <UserPlus className="w-4 h-4 shrink-0" />
+          <span>Cấp Tài Khoản Mới</span>
+        </button>
       </div>
 
       {/* Toolbar / Filter Section */}
