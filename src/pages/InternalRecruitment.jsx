@@ -83,6 +83,9 @@ export const InternalRecruitment = () => {
   const [loading, setLoading] = useState(false);
   const [selectedInterviewers, setSelectedInterviewers] = useState([]);
   const [selectedCandidateInterviewers, setSelectedCandidateInterviewers] = useState([]);
+  const [showTeamworkModal, setShowTeamworkModal] = useState(false);
+  const [selectedTeamworkScorers, setSelectedTeamworkScorers] = useState([]);
+  const [selectedSeasonForTeamwork, setSelectedSeasonForTeamwork] = useState(null);
   const [selectedCandidateTeamworkScorers, setSelectedCandidateTeamworkScorers] = useState([]);
   const [showCandidateInterviewerModal, setShowCandidateInterviewerModal] = useState(false);
   const [showCandidateTeamworkModal, setShowCandidateTeamworkModal] = useState(false);
@@ -138,6 +141,10 @@ export const InternalRecruitment = () => {
   const [activeCandidateDetailId, setActiveCandidateDetailId] = useState(null);
   const [selectedQuestions, setSelectedQuestions] = useState({});
   const [questionComments, setQuestionComments] = useState({});
+  const [selectedCandidateForAnswers, setSelectedCandidateForAnswers] = useState(null);
+  const [candidateAnswersData, setCandidateAnswersData] = useState({});
+  const [leadInterviewerId, setLeadInterviewerId] = useState(null);
+  const [localSelectedQuestions, setLocalSelectedQuestions] = useState([]);
   const [candidateForm, setCandidateForm] = useState({
     full_name: '', class_name: '', phone: '', email: '', desired_dept: '', notes: ''
   });
@@ -450,6 +457,7 @@ export const InternalRecruitment = () => {
       // Auto-set desired_dept based on season's department if not specified
       const candidateData = {
         ...candidateForm,
+        id: candidateForm.interview_code,
         season_id: currentSeason.id,
         desired_dept: candidateForm.desired_dept || currentSeason.department || ''
       };
@@ -462,7 +470,7 @@ export const InternalRecruitment = () => {
       if (data.success) {
         showToast('✅ Đã thêm ứng viên mới!', 'success');
         setShowCandidateModal(false);
-        setCandidateForm({ full_name: '', class_name: '', phone: '', email: '', desired_dept: '', notes: '' });
+        setCandidateForm({ full_name: '', class_name: '', phone: '', email: '', desired_dept: '', notes: '', interview_code: '', application_answers: '' });
         fetchCandidates(currentSeason.id);
       } else {
         showToast('❌ Lỗi thêm ứng viên!', 'error');
@@ -473,12 +481,12 @@ export const InternalRecruitment = () => {
     setLoading(false);
   };
 
-  const assignCandidateToInterviewer = async (candidateId, interviewerIds) => {
+  const assignCandidateToInterviewer = async (candidateId, interviewerIds, leadId) => {
     try {
       const res = await fetch(`/api/recruitment/candidates/${candidateId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
-        body: JSON.stringify({ interviewer_ids: interviewerIds })
+        body: JSON.stringify({ interviewer_ids: interviewerIds, lead_interviewer_id: leadId })
       });
       if (res.ok) {
         showToast('✅ Đã phân công Phỏng vấn!', 'success');
@@ -505,6 +513,33 @@ export const InternalRecruitment = () => {
     } catch (e) {
       showToast('❌ Lỗi phân công!', 'error');
     }
+  };
+
+  const saveCandidateAnswers = async () => {
+    if (!selectedCandidateForAnswers) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/recruitment/candidates/${selectedCandidateForAnswers.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+        body: JSON.stringify({
+          application_answers: JSON.stringify(candidateAnswersData)
+        })
+      });
+      if (res.ok) {
+        showToast('✅ Đã lưu câu trả lời thành công!', 'success');
+        setCandidates(prev => prev.map(c => 
+          c.id === selectedCandidateForAnswers.id 
+            ? { ...c, application_answers: JSON.stringify(candidateAnswersData) }
+            : c
+        ));
+      } else {
+        showToast('❌ Lỗi lưu câu trả lời!', 'error');
+      }
+    } catch (e) {
+      showToast('❌ Lỗi kết nối!', 'error');
+    }
+    setLoading(false);
   };
 
   // Scoring operations
@@ -597,9 +632,12 @@ export const InternalRecruitment = () => {
 
     const filtered = members.filter(m => {
       if (m.status === 'Suspended') return false;
+      const username = (m.username || '').toLowerCase().trim();
+      const code = (m.memberCode || m.member_code || '').toUpperCase().trim();
+      if (username === 'admin' || code === 'ADMIN') return false;
+
       const roleTitle = (m.roleTitle || m.role_title || '').toLowerCase().trim();
       const deptName = (m.deptName || m.department || '').toLowerCase().trim();
-      const code = (m.memberCode || m.member_code || '').toUpperCase();
 
       // 1. Ban Cố Vấn
       const isAdvisor = roleTitle.includes('cố vấn') || deptName.includes('cố vấn') || roleTitle.includes('advisor');
@@ -670,12 +708,24 @@ export const InternalRecruitment = () => {
           <>
             {/* Criteria tab - only for Trưởng Ban */}
             {(isSuperAdmin || isAdmin || isHRHead || isDeptHead) && (
-              <button
-                onClick={() => setActiveTab('criteria')}
-                className={`ds-btn ${activeTab === 'criteria' ? 'ds-btn-primary' : 'ds-btn-secondary'}`}
-              >
-                Tiêu Chí
-              </button>
+              <>
+                <button
+                  onClick={() => setActiveTab('criteria')}
+                  className={`ds-btn ${activeTab === 'criteria' ? 'ds-btn-primary' : 'ds-btn-secondary'}`}
+                >
+                  Tiêu Chí
+                </button>
+                <button
+                  onClick={() => {
+                    setActiveTab('appAnswers');
+                    setSelectedCandidateForAnswers(null);
+                    setCandidateAnswersData({});
+                  }}
+                  className={`ds-btn ${activeTab === 'appAnswers' ? 'ds-btn-primary' : 'ds-btn-secondary'}`}
+                >
+                  Nhập Bài Đơn
+                </button>
+              </>
             )}
             
             <button
@@ -912,7 +962,8 @@ export const InternalRecruitment = () => {
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="font-bold text-white text-lg">{c.full_name}</h3>
-                        <p className="text-slate-400 text-sm">Lớp: {c.class_name} | Mã PV: <strong className="text-cyan-400 font-mono text-xs">{c.interview_code || c.id}</strong></p>
+                        <p className="text-slate-400 text-sm">Mùa tuyển sinh: {currentSeason.name} | Mã ứng viên: <strong className="text-cyan-400 font-mono text-xs">{c.id}</strong></p>
+
                         <p className="text-slate-500 text-xs mt-1">Ban nguyện vọng: {c.desired_dept || 'Tất cả'} (Click để xem chi tiết)</p>
                         <div className="flex items-center gap-2 mt-2">
                           {c.status === 'passed' && <span className="ds-badge ds-badge-emerald">✅ Đậu</span>}
@@ -929,6 +980,7 @@ export const InternalRecruitment = () => {
                               onClick={() => {
                                 setSelectedCandidate(c);
                                 setSelectedCandidateInterviewers(c.interviewer_ids || []);
+                                setLeadInterviewerId(c.lead_interviewer_id || null);
                                 setShowCandidateInterviewerModal(true);
                                 setShowCandidateTeamworkModal(false);
                               }}
@@ -956,6 +1008,14 @@ export const InternalRecruitment = () => {
                     {isDetailOpen && (
                       <div className="mt-4 pt-4 border-t border-[#1f2937] space-y-3 text-xs bg-[#0f172a] p-4 rounded-xl animate-fade-in" onClick={(e) => e.stopPropagation()}>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <span className="text-slate-400 block mb-0.5">Mùa tuyển sinh:</span>
+                            <span className="text-slate-200 font-medium">{currentSeason.name}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block mb-0.5">Mã ứng viên:</span>
+                            <span className="text-slate-200 font-medium font-mono">{c.id}</span>
+                          </div>
                           <div>
                             <span className="text-slate-400 block mb-0.5">Số điện thoại:</span>
                             <span className="text-slate-200 font-medium">{c.phone || 'N/A'}</span>
@@ -993,7 +1053,12 @@ export const InternalRecruitment = () => {
           const userDept = (currentUser?.deptName || currentUser?.department || '').toLowerCase().trim();
           const seasonDept = (currentSeason.department || '').toLowerCase().trim();
           const isSeasonDeptHead = isDeptHead && userDept.includes(seasonDept);
-          const isRoundOpen = isSuperAdmin || isAdmin || isHRHead || isSeasonDeptHead || (currentSeason.active_round === scoringTypeFilter);
+          const isRoundOpen = isSuperAdmin || isAdmin || isHRHead || isSeasonDeptHead || (() => {
+            const active = currentSeason.active_round || 'don';
+            if (active === 'all') return true;
+            if (active === 'none') return false;
+            return active.split(',').includes(scoringTypeFilter);
+          })();
 
           return (
             <div className="space-y-4">
@@ -1280,13 +1345,33 @@ export const InternalRecruitment = () => {
           setShowInterviewerModal(false);
           setSelectedInterviewers([]);
           setSelectedSeasonForInterviewers(null);
+          setLeadInterviewerId(null);
         }}
         selectedSeason={selectedSeasonForInterviewers}
         availableInterviewers={availableInterviewers}
         selectedInterviewers={selectedInterviewers}
         setSelectedInterviewers={setSelectedInterviewers}
-        onSubmit={() => assignInterviewers(selectedSeasonForInterviewers.id, selectedInterviewers)}
+        leadInterviewerId={leadInterviewerId}
+        setLeadInterviewerId={setLeadInterviewerId}
+        onSubmit={() => assignInterviewers(selectedSeasonForInterviewers.id, selectedInterviewers, leadInterviewerId)}
         loading={loading}
+      />
+
+      <InterviewerModal
+        show={showTeamworkModal}
+        onClose={() => {
+          setShowTeamworkModal(false);
+          setSelectedTeamworkScorers([]);
+          setSelectedSeasonForTeamwork(null);
+        }}
+        selectedSeason={selectedSeasonForTeamwork}
+        availableInterviewers={availableInterviewers}
+        selectedInterviewers={selectedTeamworkScorers}
+        setSelectedInterviewers={setSelectedTeamworkScorers}
+        onSubmit={() => assignTeamworkScorers(selectedSeasonForTeamwork.id, selectedTeamworkScorers)}
+        loading={loading}
+        title="Phân Công Chấm Teamwork"
+        showLead={false}
       />
 
       <CandidateInterviewerModal
@@ -1295,13 +1380,16 @@ export const InternalRecruitment = () => {
           setShowCandidateInterviewerModal(false);
           setSelectedCandidate(null);
           setSelectedCandidateInterviewers([]);
+          setLeadInterviewerId(null);
         }}
         candidate={selectedCandidate}
         availableInterviewers={availableInterviewers}
         selectedInterviewers={selectedCandidateInterviewers}
         setSelectedInterviewers={setSelectedCandidateInterviewers}
+        leadInterviewerId={leadInterviewerId}
+        setLeadInterviewerId={setLeadInterviewerId}
         onSubmit={() => {
-          assignCandidateToInterviewer(selectedCandidate.id, selectedCandidateInterviewers);
+          assignCandidateToInterviewer(selectedCandidate.id, selectedCandidateInterviewers, leadInterviewerId);
           setShowCandidateInterviewerModal(false);
         }}
         loading={loading}

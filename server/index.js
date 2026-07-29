@@ -54,8 +54,25 @@ queryDatabase('ALTER TABLE Members ADD COLUMN milestones LONGTEXT').catch(err =>
   console.log('ℹ️ CSDL status milestones:', err.message);
 });
 queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN active_round VARCHAR(50) DEFAULT "don"').catch(() => {});
+queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN teamwork_scorer_ids TEXT').catch(() => {});
+queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN lead_interviewer_id VARCHAR(100)').catch(() => {});
+queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN selected_questions TEXT').catch(() => {});
 queryDatabase('ALTER TABLE Recruitment_Criteria ADD COLUMN round_type VARCHAR(50) DEFAULT "teamwork"').catch(() => {});
 queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN application_answers TEXT').catch(() => {});
+queryDatabase(`
+  CREATE TABLE IF NOT EXISTS Birthday_Mail_Logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    member_id VARCHAR(100) NOT NULL,
+    sent_date DATE NOT NULL,
+    sent_year INT NOT NULL,
+    status VARCHAR(50) DEFAULT 'success',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_member_year (member_id, sent_year)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+`).then(() => {
+  const currentYear = new Date().getFullYear();
+  queryDatabase('DELETE FROM Birthday_Mail_Logs WHERE sent_year < ?', [currentYear - 1]).catch(() => {});
+}).catch(() => {});
 
 queryDatabase(`
   CREATE TABLE IF NOT EXISTS Member_Milestones (
@@ -530,6 +547,7 @@ app.get('/api/members', async (req, res) => {
       SELECT 
         id, member_code, username, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, address, facebook, points, is_first_login, status, milestones
       FROM Members 
+      WHERE LOWER(username) != 'admin' AND UPPER(member_code) != 'ADMIN'
       ORDER BY id ASC
     `;
     const members = await queryDatabase(sql);
@@ -845,6 +863,16 @@ const checkAndSendDailyBirthdayEmails = async () => {
       }
 
       if (dDay === todayDay && dMonth === todayMonth) {
+        const currentYear = today.getFullYear();
+        const logs = await queryDatabase(
+          'SELECT id FROM Birthday_Mail_Logs WHERE member_id = ? AND sent_year = ? LIMIT 1',
+          [m.id, currentYear]
+        );
+        if (logs && logs.length > 0) {
+          console.log(`ℹ️ [Auto Birthday Mailer] Birthday email already sent to ${m.full_name} for year ${currentYear}. Skipping.`);
+          continue;
+        }
+
         console.log(`🎉 [Happy Birthday] Today is ${m.full_name}'s birthday (${m.dob})! Sending email to ${m.email}...`);
 
         let wishContentHtml = '';
@@ -907,6 +935,13 @@ const checkAndSendDailyBirthdayEmails = async () => {
           });
           results.push({ name: m.full_name, email: m.email, status: 'sent' });
           console.log(`✅ [Auto Birthday Mailer] Successfully delivered birthday email to ${m.email}!`);
+          
+          // Log to database
+          const sentDateStr = `${currentYear}-${String(todayMonth).padStart(2, '0')}-${String(todayDay).padStart(2, '0')}`;
+          await queryDatabase(
+            'INSERT IGNORE INTO Birthday_Mail_Logs (member_id, sent_date, sent_year, status) VALUES (?, ?, ?, "success")',
+            [m.id, sentDateStr, currentYear]
+          );
         } catch (mailErr) {
           console.error(`❌ [Auto Birthday Mailer] Error sending to ${m.email}:`, mailErr.message);
           results.push({ name: m.full_name, email: m.email, status: 'failed', error: mailErr.message });
@@ -918,6 +953,111 @@ const checkAndSendDailyBirthdayEmails = async () => {
   }
   return results;
 };
+
+// Tự động quét và nhắc nhở hạn chót công việc qua email
+async function checkAndSendTaskDeadlineReminders() {
+  try {
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 10);
+    
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+
+    console.log(`⏰ [Task Reminder] Running daily check for deadlines (Today: ${todayStr}, Tomorrow: ${tomorrowStr})...`);
+
+    await queryDatabase(`
+      CREATE TABLE IF NOT EXISTS Task_Deadline_Mail_Logs (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        task_id VARCHAR(100) NOT NULL,
+        sent_date DATE NOT NULL,
+        type VARCHAR(50) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY unique_task_date (task_id, sent_date)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `).catch(() => {});
+
+    const tasks = await queryDatabase(
+      "SELECT id, title, description, assignee_id, deadline, status FROM Tasks WHERE status != 'done' AND deadline IS NOT NULL AND (DATE(deadline) = ? OR DATE(deadline) = ?)",
+      [todayStr, tomorrowStr]
+    );
+
+    for (const t of tasks) {
+      const taskDeadlineStr = new Date(t.deadline).toISOString().slice(0, 10);
+      const isDueToday = taskDeadlineStr === todayStr;
+      const type = isDueToday ? 'today' : 'tomorrow';
+
+      const logs = await queryDatabase(
+        'SELECT id FROM Task_Deadline_Mail_Logs WHERE task_id = ? AND sent_date = ? LIMIT 1',
+        [t.id, todayStr]
+      );
+      if (logs && logs.length > 0) continue;
+
+      const assignees = await queryDatabase(
+        'SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? LIMIT 1',
+        [t.assignee_id, t.assignee_id]
+      );
+      if (!assignees || assignees.length === 0 || !assignees[0].email) continue;
+      
+      const assignee = assignees[0];
+      const mailSubject = isDueToday 
+        ? `⚠️ [VMC Task] Hạn chót nhiệm vụ hôm nay: "${t.title}"`
+        : `⏰ [VMC Task] Nhiệm vụ sắp tới hạn ngày mai: "${t.title}"`;
+
+      const warningBanner = isDueToday
+        ? `<div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: #991b1b; font-weight: bold; font-size: 15px;">
+            ⚠️ NHIỆM VỤ NÀY HẾT HẠN HÔM NAY!
+           </div>`
+        : `<div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: #92400e; font-weight: bold; font-size: 15px;">
+            ⏰ NHIỆM VỤ SẼ HẾT HẠN VÀO NGÀY MAI!
+           </div>`;
+
+      await transporter.sendMail({
+        from: `"CLB TRUYỀN THÔNG TRƯỜNG THPT VĨNH BẢO (VMC)" <${process.env.SMTP_EMAIL}>`,
+        to: assignee.email,
+        subject: mailSubject,
+        html: `
+          <div style="font-family: Arial, sans-serif; padding: 30px; color: #1e293b; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+            <div style="text-align: center; margin-bottom: 20px;">
+              <span style="font-size: 40px;">🔔</span>
+              <h2 style="color: #0f172a; margin: 10px 0 5px 0;">Nhắc nhở hạn chót công việc</h2>
+              <p style="color: #64748b; font-size: 14px; margin: 0;">CLB Truyền Thông THPT Vĩnh Bảo (VMC)</p>
+            </div>
+
+            ${warningBanner}
+
+            <div style="background-color: #ffffff; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
+              <p style="font-size: 15px; margin-top: 0;">Chào <strong>${assignee.full_name}</strong>,</p>
+              <p style="font-size: 14px; color: #334155;">Đây là thông báo nhắc nhở tự động từ hệ thống VMC Portal về công việc được giao của bạn:</p>
+              
+              <div style="margin-top: 15px; padding: 15px; background-color: #f1f5f9; border-radius: 8px; font-size: 14px;">
+                <p style="margin: 0 0 8px 0;"><strong>📋 Công việc:</strong> ${t.title}</p>
+                <p style="margin: 0 0 8px 0;"><strong>📝 Chi tiết:</strong> ${t.description || 'Không có mô tả chi tiết'}</p>
+                <p style="margin: 0 0 8px 0;"><strong>⏰ Hạn chót:</strong> <strong style="color: #dc2626;">${taskDeadlineStr}</strong></p>
+                <p style="margin: 0;"><strong>⚡ Trạng thái hiện tại:</strong> <span style="text-transform: uppercase; font-weight: bold; color: #f59e0b;">${t.status}</span></p>
+              </div>
+
+              <p style="font-size: 13px; color: #475569; margin-top: 15px; line-height: 1.5;">Vui lòng hoàn thành công việc đúng hạn và cập nhật trạng thái nhiệm vụ lên VMC Portal!</p>
+            </div>
+
+            <div style="text-align: center; margin-top: 25px; font-size: 12px; color: #64748b;">
+              <p style="margin: 0;">Trân trọng,<br/><strong>BAN CHỦ NHIỆM VMC</strong></p>
+              <p style="margin: 10px 0 0 0; font-size: 10px; color: #94a3b8; font-style: italic;">🤖 (Đây là email nhắc nhở tự động, vui lòng không phản hồi trực tiếp).</p>
+            </div>
+          </div>
+        `
+      });
+
+      await queryDatabase(
+        'INSERT IGNORE INTO Task_Deadline_Mail_Logs (task_id, sent_date, type) VALUES (?, ?, ?)',
+        [t.id, todayStr, type]
+      );
+      console.log(`✅ [Task Reminder] Sent deadline reminder email for task "${t.title}" to ${assignee.email}`);
+    }
+  } catch (err) {
+    console.error('❌ [Task Reminder] Error checking deadlines:', err.message);
+  }
+}
 
 // API Endpoint kích hoạt kiểm tra & gửi mail sinh nhật thủ công
 app.post('/api/birthdays/trigger-daily-emails', async (req, res) => {
@@ -949,12 +1089,14 @@ app.listen(PORT, () => {
   console.log(`🚀 Server đang chạy tại: http://localhost:${PORT}`);
   console.log(`📁 Serving frontend từ: ${DIST_DIR}`);
 
-  // Chạy tự động kiểm tra mail sinh nhật daily (10 giây sau khi server khởi động + lặp lại mỗi 12 tiếng)
+  // Chạy tự động kiểm tra mail sinh nhật & deadline daily (15 giây sau khi server khởi động + lặp lại mỗi 12 tiếng)
   setTimeout(() => {
     checkAndSendDailyBirthdayEmails();
-  }, 10000);
+    checkAndSendTaskDeadlineReminders();
+  }, 15000);
 
   setInterval(() => {
     checkAndSendDailyBirthdayEmails();
+    checkAndSendTaskDeadlineReminders();
   }, 12 * 60 * 60 * 1000);
 });

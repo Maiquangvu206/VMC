@@ -80,6 +80,8 @@ export const BirthdayManagement = () => {
       const diffTime = nextBday - today;
       const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
+      if (daysRemaining > 300) return null;
+
       return {
         ...m,
         bdayDay: day,

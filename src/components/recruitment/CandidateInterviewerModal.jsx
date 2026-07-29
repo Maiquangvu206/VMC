@@ -8,6 +8,8 @@ export const CandidateInterviewerModal = ({
   availableInterviewers, 
   selectedInterviewers, 
   setSelectedInterviewers, 
+  leadInterviewerId,
+  setLeadInterviewerId,
   onSubmit, 
   loading 
 }) => {
@@ -87,6 +89,29 @@ export const CandidateInterviewerModal = ({
             })
           )}
         </div>
+
+        {/* Lead Interviewer Selection */}
+        {selectedInterviewers.length > 0 && (
+          <div className="flex flex-col gap-1.5 pt-3 border-t border-[#1f2937] shrink-0">
+            <label className="text-xs font-semibold text-slate-350 flex items-center gap-1.5">
+              👑 Người phỏng vấn chính *
+            </label>
+            <select
+              value={leadInterviewerId || ''}
+              onChange={(e) => setLeadInterviewerId(e.target.value)}
+              className="ds-input bg-slate-900 border border-slate-700 text-white text-xs py-2"
+              required
+            >
+              <option value="">-- Chọn người phỏng vấn chính --</option>
+              {selectedInterviewers.map(id => {
+                const m = availableInterviewers.find(x => x.id === id);
+                return (
+                  <option key={id} value={id}>{m ? m.name : id}</option>
+                );
+              })}
+            </select>
+          </div>
+        )}
 
         <div className="flex gap-3 pt-4 border-t border-[#1f2937] shrink-0">
           <button 

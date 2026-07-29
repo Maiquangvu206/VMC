@@ -422,6 +422,67 @@ router.delete('/announcements/:id', async (req, res) => {
   }
 });
 
+// Helper to send assignment emails to newly assigned interviewers or scorers
+const sendAssignmentEmails = async (candidateName, oldInterviewerIds, newInterviewerIds, oldScorerIds, newScorerIds) => {
+  try {
+    // 1. Send to newly assigned Interviewers
+    const addedInterviewers = newInterviewerIds.filter(id => !oldInterviewerIds.includes(id));
+    for (const memberId of addedInterviewers) {
+      const members = await queryDatabase('SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? LIMIT 1', [memberId, memberId]);
+      if (members && members.length > 0 && members[0].email) {
+        const m = members[0];
+        await sendMailHelper(
+          m.email,
+          `🔔 [VMC Recruitment] Bạn được phân công Phỏng vấn ứng viên "${candidateName}"`,
+          `
+            <div style="font-family: Arial, sans-serif; padding: 25px; color: #1e293b; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #db2777; text-align: center; margin-bottom: 20px;">Phân công phỏng vấn tuyển sinh</h2>
+              <p>Chào <strong>${m.full_name}</strong>,</p>
+              <p>Ban Đối Ngoại - Nhân Sự xin thông báo bạn vừa được phân công làm <strong>Người phỏng vấn</strong> cho ứng viên sau:</p>
+              
+              <div style="background-color: #ffffff; padding: 20px; border-radius: 12px; border: 1px solid #cbd5e1; margin: 20px 0;">
+                <p style="margin: 0 0 10px 0;"><strong>👤 Họ tên ứng viên:</strong> ${candidateName}</p>
+                <p style="margin: 0;"><strong>📌 Vòng tuyển sinh:</strong> Phỏng Vấn (Vòng 2)</p>
+              </div>
+
+              <p>Vui lòng đăng nhập vào <strong>VMC Portal</strong> mục tuyển sinh để chọn câu hỏi phỏng vấn (nếu là người phỏng vấn chính), chấm điểm và nhận xét chi tiết cho ứng viên!</p>
+            </div>
+          `
+        );
+      }
+    }
+
+    // 2. Send to newly assigned Teamwork Scorers
+    const addedScorers = newScorerIds.filter(id => !oldScorerIds.includes(id));
+    for (const memberId of addedScorers) {
+      const members = await queryDatabase('SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? LIMIT 1', [memberId, memberId]);
+      if (members && members.length > 0 && members[0].email) {
+        const m = members[0];
+        await sendMailHelper(
+          m.email,
+          `🔔 [VMC Recruitment] Bạn được phân công chấm điểm Teamwork ứng viên "${candidateName}"`,
+          `
+            <div style="font-family: Arial, sans-serif; padding: 25px; color: #1e293b; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #0f766e; text-align: center; margin-bottom: 20px;">Phân công chấm điểm Teamwork</h2>
+              <p>Chào <strong>${m.full_name}</strong>,</p>
+              <p>Ban Đối Ngoại - Nhân Sự xin thông báo bạn vừa được phân công làm <strong>Người chấm điểm Teamwork</strong> cho ứng viên sau:</p>
+              
+              <div style="background-color: #ffffff; padding: 20px; border-radius: 12px; border: 1px solid #cbd5e1; margin: 20px 0;">
+                <p style="margin: 0 0 10px 0;"><strong>👤 Họ tên ứng viên:</strong> ${candidateName}</p>
+                <p style="margin: 0;"><strong>📌 Vòng tuyển sinh:</strong> Teamwork (Vòng 3)</p>
+              </div>
+
+              <p>Vui lòng đăng nhập vào <strong>VMC Portal</strong> mục tuyển sinh để thực hiện theo dõi, chấm điểm và nhận xét chi tiết kỹ năng làm việc nhóm của ứng viên!</p>
+            </div>
+          `
+        );
+      }
+    }
+  } catch (err) {
+    console.error('❌ Error sending assignment emails:', err.message);
+  }
+};
+
 // Helper to send email from backend APIs
 const sendMailHelper = async (to, subject, html) => {
   if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
@@ -1555,6 +1616,8 @@ router.get('/recruitment/seasons', async (req, res) => {
     const data = rows.map(r => ({
       ...r,
       interviewer_ids: (() => { try { return r.interviewer_ids ? JSON.parse(r.interviewer_ids) : []; } catch { return []; } })(),
+      teamwork_scorer_ids: (() => { try { return r.teamwork_scorer_ids ? JSON.parse(r.teamwork_scorer_ids) : []; } catch { return []; } })(),
+      selected_questions: (() => { try { return r.selected_questions ? JSON.parse(r.selected_questions) : []; } catch { return []; } })(),
       scoring_type: (() => { 
         try { 
           const parsed = r.scoring_type ? JSON.parse(r.scoring_type) : null;
@@ -1598,19 +1661,48 @@ router.post('/recruitment/seasons', async (req, res) => {
 
 router.put('/recruitment/seasons/:id', async (req, res) => {
   try {
-    const { name, quota, department, scoring_type, is_active, interviewer_ids, active_round } = req.body;
-    // Removed the restriction that only one season can be active at a time
+    const { name, quota, department, scoring_type, is_active, interviewer_ids, active_round, teamwork_scorer_ids, lead_interviewer_id, selected_questions } = req.body;
+    
+    // Fetch old season data for assignment email notifications
+    const current = await queryDatabase('SELECT name, interviewer_ids, teamwork_scorer_ids FROM Recruitment_Seasons WHERE id = ?', [req.params.id]);
+    let oldInterviewerIds = [];
+    let oldScorerIds = [];
+    let seasonName = name;
+    if (current && current.length > 0) {
+      seasonName = seasonName || current[0].name;
+      try {
+        oldInterviewerIds = current[0].interviewer_ids ? JSON.parse(current[0].interviewer_ids) : [];
+      } catch (e) { oldInterviewerIds = []; }
+      try {
+        oldScorerIds = current[0].teamwork_scorer_ids ? JSON.parse(current[0].teamwork_scorer_ids) : [];
+      } catch (e) { oldScorerIds = []; }
+    }
+
     const interviewerIdsVal = interviewer_ids !== undefined
       ? (Array.isArray(interviewer_ids) ? JSON.stringify(interviewer_ids) : interviewer_ids)
       : null;
-    // Handle scoring_type as array or string
+    const teamworkScorerIdsVal = teamwork_scorer_ids !== undefined
+      ? (Array.isArray(teamwork_scorer_ids) ? JSON.stringify(teamwork_scorer_ids) : teamwork_scorer_ids)
+      : null;
+    const selectedQuestionsVal = selected_questions !== undefined
+      ? (Array.isArray(selected_questions) ? JSON.stringify(selected_questions) : selected_questions)
+      : null;
     const scoringTypeVal = scoring_type !== undefined
       ? (Array.isArray(scoring_type) ? JSON.stringify(scoring_type) : scoring_type)
       : null;
+
     await queryDatabase(
-      'UPDATE Recruitment_Seasons SET name = COALESCE(?, name), quota = COALESCE(?, quota), department = COALESCE(?, department), scoring_type = COALESCE(?, scoring_type), is_active = COALESCE(?, is_active), interviewer_ids = COALESCE(?, interviewer_ids), active_round = COALESCE(?, active_round) WHERE id = ?',
-      [name ?? null, quota ?? null, department ?? null, scoringTypeVal, is_active !== undefined ? (is_active ? 1 : 0) : null, interviewerIdsVal, active_round ?? null, req.params.id]
+      'UPDATE Recruitment_Seasons SET name = COALESCE(?, name), quota = COALESCE(?, quota), department = COALESCE(?, department), scoring_type = COALESCE(?, scoring_type), is_active = COALESCE(?, is_active), interviewer_ids = COALESCE(?, interviewer_ids), active_round = COALESCE(?, active_round), teamwork_scorer_ids = COALESCE(?, teamwork_scorer_ids), lead_interviewer_id = COALESCE(?, lead_interviewer_id), selected_questions = COALESCE(?, selected_questions) WHERE id = ?',
+      [name ?? null, quota ?? null, department ?? null, scoringTypeVal, is_active !== undefined ? (is_active ? 1 : 0) : null, interviewerIdsVal, active_round ?? null, teamworkScorerIdsVal, lead_interviewer_id ?? null, selectedQuestionsVal, req.params.id]
     );
+
+    // Call assignment mail helper in background for global season level assignments
+    if (interviewer_ids !== undefined || teamwork_scorer_ids !== undefined) {
+      const newInterviewerIds = Array.isArray(interviewer_ids) ? interviewer_ids : [];
+      const newScorerIds = Array.isArray(teamwork_scorer_ids) ? teamwork_scorer_ids : [];
+      sendAssignmentEmails(`Mùa tuyển sinh: ${seasonName}`, oldInterviewerIds, newInterviewerIds, oldScorerIds, newScorerIds);
+    }
+
     res.json({ success: true });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
@@ -1667,7 +1759,7 @@ router.delete('/recruitment/criteria/:id', async (req, res) => {
 router.get('/recruitment/candidates/:seasonId', async (req, res) => {
   try {
     const { interviewer_id } = req.query;
-    let sql = 'SELECT id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, status, notes, application_answers, created_at FROM Recruitment_Candidates WHERE season_id = ?';
+    let sql = 'SELECT id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, status, notes, application_answers, lead_interviewer_id, selected_questions, created_at FROM Recruitment_Candidates WHERE season_id = ?';
     const params = [req.params.seasonId];
     // Interviewer chỉ thấy ứng viên được gán cho mình (check both interviewer_id, interviewer_ids, and teamwork_scorer_ids)
     if (interviewer_id) { 
@@ -1679,7 +1771,8 @@ router.get('/recruitment/candidates/:seasonId', async (req, res) => {
     const data = rows.map(r => ({
       ...r,
       interviewer_ids: (() => { try { return r.interviewer_ids ? JSON.parse(r.interviewer_ids) : []; } catch { return []; } })(),
-      teamwork_scorer_ids: (() => { try { return r.teamwork_scorer_ids ? JSON.parse(r.teamwork_scorer_ids) : []; } catch { return []; } })()
+      teamwork_scorer_ids: (() => { try { return r.teamwork_scorer_ids ? JSON.parse(r.teamwork_scorer_ids) : []; } catch { return []; } })(),
+      selected_questions: (() => { try { return r.selected_questions ? JSON.parse(r.selected_questions) : []; } catch { return []; } })()
     }));
     res.json({ success: true, data });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
@@ -1687,7 +1780,7 @@ router.get('/recruitment/candidates/:seasonId', async (req, res) => {
 
 router.post('/recruitment/candidates', async (req, res) => {
   try {
-    const { id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, notes, application_answers } = req.body;
+    const { id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, notes, application_answers, lead_interviewer_id, selected_questions } = req.body;
     const cid = id || ('cand-' + Date.now());
     const interviewerIdsVal = interviewer_ids !== undefined
       ? (Array.isArray(interviewer_ids) ? JSON.stringify(interviewer_ids) : interviewer_ids)
@@ -1695,9 +1788,12 @@ router.post('/recruitment/candidates', async (req, res) => {
     const teamworkScorerIdsVal = teamwork_scorer_ids !== undefined
       ? (Array.isArray(teamwork_scorer_ids) ? JSON.stringify(teamwork_scorer_ids) : teamwork_scorer_ids)
       : null;
+    const selectedQuestionsVal = selected_questions !== undefined
+      ? (Array.isArray(selected_questions) ? JSON.stringify(selected_questions) : selected_questions)
+      : null;
     await queryDatabase(
-      'INSERT INTO Recruitment_Candidates (id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, notes, application_answers) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [cid, season_id, full_name, class_name || null, phone || null, email || null, desired_dept || null, interviewer_id || null, interviewerIdsVal, teamworkScorerIdsVal, notes || null, application_answers || null]
+      'INSERT INTO Recruitment_Candidates (id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, notes, application_answers, lead_interviewer_id, selected_questions) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [cid, season_id, full_name, class_name || null, phone || null, email || null, desired_dept || null, interviewer_id || null, interviewerIdsVal, teamworkScorerIdsVal, notes || null, application_answers || null, lead_interviewer_id || null, selectedQuestionsVal]
     );
     res.json({ success: true, data: { id: cid, season_id, full_name, interviewer_id, interviewer_ids, teamwork_scorer_ids, status: 'pending' } });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
@@ -1705,13 +1801,33 @@ router.post('/recruitment/candidates', async (req, res) => {
 
 router.put('/recruitment/candidates/:id', async (req, res) => {
   try {
-    const { full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, status, notes, application_answers } = req.body;
+    const { full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, status, notes, application_answers, lead_interviewer_id, selected_questions } = req.body;
+    
+    // Fetch old data for logs and comparison
+    const current = await queryDatabase('SELECT full_name, interviewer_ids, teamwork_scorer_ids FROM Recruitment_Candidates WHERE id = ?', [req.params.id]);
+    let oldInterviewerIds = [];
+    let oldScorerIds = [];
+    let candName = full_name;
+    if (current && current.length > 0) {
+      candName = candName || current[0].full_name;
+      try {
+        oldInterviewerIds = current[0].interviewer_ids ? JSON.parse(current[0].interviewer_ids) : [];
+      } catch (e) { oldInterviewerIds = []; }
+      try {
+        oldScorerIds = current[0].teamwork_scorer_ids ? JSON.parse(current[0].teamwork_scorer_ids) : [];
+      } catch (e) { oldScorerIds = []; }
+    }
+
     const interviewerIdsVal = interviewer_ids !== undefined
       ? (Array.isArray(interviewer_ids) ? JSON.stringify(interviewer_ids) : interviewer_ids)
       : null;
     const teamworkScorerIdsVal = teamwork_scorer_ids !== undefined
       ? (Array.isArray(teamwork_scorer_ids) ? JSON.stringify(teamwork_scorer_ids) : teamwork_scorer_ids)
       : null;
+    const selectedQuestionsVal = selected_questions !== undefined
+      ? (Array.isArray(selected_questions) ? JSON.stringify(selected_questions) : selected_questions)
+      : null;
+
     await queryDatabase(
       `UPDATE Recruitment_Candidates SET
         full_name = COALESCE(?, full_name), class_name = COALESCE(?, class_name),
@@ -1720,10 +1836,20 @@ router.put('/recruitment/candidates/:id', async (req, res) => {
         interviewer_ids = COALESCE(?, interviewer_ids),
         teamwork_scorer_ids = COALESCE(?, teamwork_scorer_ids),
         status = COALESCE(?, status), notes = COALESCE(?, notes),
-        application_answers = COALESCE(?, application_answers)
+        application_answers = COALESCE(?, application_answers),
+        lead_interviewer_id = COALESCE(?, lead_interviewer_id),
+        selected_questions = COALESCE(?, selected_questions)
        WHERE id = ?`,
-      [full_name??null, class_name??null, phone??null, email??null, desired_dept??null, interviewer_id??null, interviewerIdsVal, teamworkScorerIdsVal, status??null, notes??null, application_answers??null, req.params.id]
+      [full_name??null, class_name??null, phone??null, email??null, desired_dept??null, interviewer_id??null, interviewerIdsVal, teamworkScorerIdsVal, status??null, notes??null, application_answers??null, lead_interviewer_id??null, selectedQuestionsVal, req.params.id]
     );
+
+    // Call assignment mail helper in background
+    if (interviewer_ids !== undefined || teamwork_scorer_ids !== undefined) {
+      const newInterviewerIds = Array.isArray(interviewer_ids) ? interviewer_ids : [];
+      const newScorerIds = Array.isArray(teamwork_scorer_ids) ? teamwork_scorer_ids : [];
+      sendAssignmentEmails(candName, oldInterviewerIds, newInterviewerIds, oldScorerIds, newScorerIds);
+    }
+
     res.json({ success: true });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
