@@ -996,7 +996,8 @@ export const InternalRecruitment = () => {
            { key: 'phongvan', label: '🎙️ Vòng Phỏng Vấn', color: 'text-blue-400', border: 'border-blue-500/30', bg: 'bg-blue-500/5', badge: 'bg-blue-500/20 text-blue-300' },
            { key: 'teamwork', label: '👥 Vòng Teamwork', color: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-500/5', badge: 'bg-emerald-500/20 text-emerald-300' },
          ];
-         const seasonScoringTypes = Array.isArray(currentSeason.scoring_type) ? currentSeason.scoring_type : [currentSeason.scoring_type || 'teamwork'];
+         // Always show all rounds in criteria tab - admin can add questions to any round
+
 
          return (
            <div className="space-y-6">
@@ -1013,7 +1014,7 @@ export const InternalRecruitment = () => {
                </button>
              </div>
 
-             {roundGroups.filter(g => seasonScoringTypes.includes(g.key)).map(group => {
+             {roundGroups.map(group => {
                const groupCriteria = criteria.filter(c => (c.round_type || 'teamwork') === group.key);
                return (
                  <div key={group.key} className={`rounded-2xl border ${group.border} ${group.bg} p-5 space-y-3`}>
