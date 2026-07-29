@@ -27,7 +27,8 @@ import {
   Sparkles,
   Trash2,
   ChevronDown,
-  CheckCircle2
+  CheckCircle2,
+  MoreVertical
 } from 'lucide-react';
 import { NewAccountModal } from '../components/members/NewAccountModal';
 import { MemberDetailModal } from '../components/members/MemberDetailModal';
@@ -94,6 +95,7 @@ export const InternalMembers = () => {
 
   const [selectedMember, setSelectedMember] = useState(null);
   const [editingMember, setEditingMember] = useState(null);
+  const [activeMenuId, setActiveMenuId] = useState(null);
 
   const [isAddMsModalOpen, setIsAddMsModalOpen] = useState(false);
   const [msTitle, setMsTitle] = useState('');
@@ -450,88 +452,100 @@ export const InternalMembers = () => {
             </div>
 
             {/* Pinned Card Action Buttons Footer */}
-            <div className="mt-auto pt-3 border-t border-gray-800/80 flex items-center justify-between gap-1.5 w-full min-w-0 shrink-0">
+            <div className="mt-auto pt-3 border-t border-[#1f2937] flex items-center justify-between gap-2 w-full min-w-0 shrink-0 relative">
               {/* Xem Chi Tiết Button */}
               <button
                 onClick={() => setSelectedMember(m)}
-                className="ds-btn ds-btn-primary px-2.5 sm:px-3 py-1.5 text-xs flex-1 min-w-0 h-9 rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-md shrink-0"
+                className="ds-btn ds-btn-primary px-3 py-2 text-xs flex-1 min-w-0 h-9 rounded-xl flex items-center justify-center gap-1.5 transition-all shrink-0"
                 title="Xem chi tiết thông tin thành viên"
               >
                 <Eye className="w-4 h-4 shrink-0" />
                 <span className="truncate font-semibold min-w-0">Xem Chi Tiết</span>
               </button>
 
-              {/* Icon Action Buttons */}
-              <div className="flex items-center gap-1 shrink-0">
-                {/* Edit Button */}
+              {/* 3-Dots Action Popover Menu */}
+              <div className="relative shrink-0">
                 <button
-                  onClick={() => {
-                    if (!isHRMember) {
-                      showToast('⛔ Quyền bị từ chối! Chỉ có thành viên Ban Đối Ngoại - Nhân Sự hoặc Admin mới có quyền chỉnh sửa thông tin thành viên!', 'error');
-                      return;
-                    }
-                    const msList = (Array.isArray(m.milestones) && m.milestones.length > 0) ? m.milestones : [
-                      {
-                        id: 'm-def-1-' + m.id,
-                        date: '20/09/2024',
-                        title: `Gia nhập VMC (${m.deptName || m.department || 'Ban Chuyên Môn'})`,
-                        badgeText: '[Gia nhập]',
-                        badgeStyle: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                      },
-                      {
-                        id: 'm-def-2-' + m.id,
-                        date: '01/06/2025',
-                        title: `Bổ nhiệm chức vụ: ${m.roleTitle || m.role_title || 'Thành Viên VMC'}`,
-                        badgeText: '[Chức vụ]',
-                        badgeStyle: 'bg-blue-500/10 text-blue-400 border-blue-500/30'
-                      }
-                    ];
-                    setEditingMember({ ...m, milestones: msList });
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveMenuId(activeMenuId === m.id ? null : m.id);
                   }}
-                  className={`w-9 h-9 shrink-0 rounded-xl flex items-center justify-center transition-all ${
-                    isHRMember 
-                      ? 'bg-slate-800/80 text-slate-200 border border-slate-700/70 hover:bg-blue-600 hover:text-white hover:border-blue-500' 
-                      : 'bg-slate-800/40 text-slate-500 border border-slate-800 opacity-50 cursor-not-allowed'
-                  }`}
-                  title={isHRMember ? 'Chỉnh sửa thông tin thành viên' : 'Chỉ Ban Đối Ngoại - Nhân Sự mới được sửa'}
+                  className="w-9 h-9 rounded-xl bg-[#1f2937] text-slate-300 border border-[#374151] hover:bg-[#374151] hover:text-white flex items-center justify-center transition-all"
+                  title="Thao tác nâng cao"
                 >
-                  <Edit className="w-4 h-4 shrink-0" />
+                  <MoreVertical className="w-4 h-4 shrink-0" />
                 </button>
 
-                {isAdmin && (
-                  <>
-                    {/* Reset Password */}
-                    <button
-                      onClick={() => resetAccountPassword(m.username)}
-                      className="w-9 h-9 shrink-0 rounded-xl bg-slate-800/80 text-slate-300 border border-slate-700/70 hover:bg-slate-700 hover:text-white transition-all flex items-center justify-center"
-                      title="Reset mật khẩu mặc định"
-                    >
-                      <RefreshCw className="w-4 h-4 shrink-0" />
-                    </button>
-
-                    {/* Lock / Unlock */}
-                    <button
-                      onClick={() => toggleAccountStatus(m.id)}
-                      className={`w-9 h-9 shrink-0 rounded-xl flex items-center justify-center transition-all border ${
-                        m.status === 'Active'
-                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500 hover:text-slate-950'
-                          : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500 hover:text-slate-950'
-                      }`}
-                      title={m.status === 'Active' ? 'Tạm khóa tài khoản' : 'Mở khóa'}
-                    >
-                      <Lock className="w-4 h-4 shrink-0" />
-                    </button>
-                  </>
-                )}
-
-                {isSuperAdmin && (
-                  <button
-                    onClick={() => deleteMemberAccount(m.id)}
-                    className="w-9 h-9 shrink-0 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/30 hover:bg-rose-600 hover:text-white hover:border-rose-600 transition-all flex items-center justify-center"
-                    title="Xóa vĩnh viễn tài khoản thành viên"
+                {/* Dropdown Menu Overlay */}
+                {activeMenuId === m.id && (
+                  <div
+                    className="absolute right-0 bottom-full mb-2 w-48 bg-[#111827] border border-[#1f2937] rounded-xl p-1.5 shadow-2xl z-40 space-y-1 animate-slide-up"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <Trash2 className="w-4 h-4 shrink-0" />
-                  </button>
+                    {/* Edit Option */}
+                    <button
+                      onClick={() => {
+                        setActiveMenuId(null);
+                        if (!isHRMember) {
+                          showToast('⛔ Quyền bị từ chối! Chỉ có thành viên Ban Đối Ngoại - Nhân Sự hoặc Admin mới có quyền chỉnh sửa thông tin thành viên!', 'error');
+                          return;
+                        }
+                        const msList = (Array.isArray(m.milestones) && m.milestones.length > 0) ? m.milestones : [
+                          {
+                            id: 'm-def-1-' + m.id,
+                            date: '20/09/2024',
+                            title: `Gia nhập VMC (${m.deptName || m.department || 'Ban Chuyên Môn'})`,
+                            badgeText: '[Gia nhập]',
+                            badgeStyle: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                          }
+                        ];
+                        setEditingMember({ ...m, milestones: msList });
+                      }}
+                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors"
+                    >
+                      <Edit className="w-3.5 h-3.5 text-blue-400" />
+                      <span>Chỉnh Sửa Thẻ</span>
+                    </button>
+
+                    {isAdmin && (
+                      <>
+                        <button
+                          onClick={() => {
+                            setActiveMenuId(null);
+                            resetAccountPassword(m.username);
+                          }}
+                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Reset Mật Khẩu</span>
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            setActiveMenuId(null);
+                            toggleAccountStatus(m.id);
+                          }}
+                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors"
+                        >
+                          <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>{m.status === 'Active' ? 'Khóa Tài Khoản' : 'Mở Khóa'}</span>
+                        </button>
+                      </>
+                    )}
+
+                    {isSuperAdmin && (
+                      <button
+                        onClick={() => {
+                          setActiveMenuId(null);
+                          deleteMemberAccount(m.id);
+                        }}
+                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                        <span>Xóa Vĩnh Viễn</span>
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

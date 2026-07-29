@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   CheckSquare,
   FileText,
-  FolderGit2,
   Users,
   Sun,
   Moon,
@@ -17,8 +16,6 @@ import {
   ShieldCheck,
   UserPlus,
   Search,
-  Bell,
-  Settings,
   Sparkles,
 } from 'lucide-react';
 
@@ -37,13 +34,11 @@ export const Navbar = () => {
     isAdmin,
     isSuperAdmin,
     isRecruitmentSeasonActive,
-    announcements,
   } = useClub();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
   const safeUser = currentUser || {
     name: 'Thành Viên VMC',
@@ -60,7 +55,6 @@ export const Navbar = () => {
     { id: 'dashboard', label: 'Tổng Quan', icon: LayoutDashboard, badge: 0 },
     { id: 'tasks', label: 'Phân Công', icon: CheckSquare, badge: pendingTasksCount },
     { id: 'drafts', label: 'Duyệt Bài', icon: FileText, badge: pendingDraftsCount },
-    //{ id: 'resources', label: 'Tài Nguyên', icon: FolderGit2, badge: 0 },
     { id: 'hr_dashboard', label: 'Quản Lý Nhân Sự', icon: Sparkles, badge: 0 },
     ...(isSuperAdmin || isRecruitmentSeasonActive ? [{ id: 'recruitment', label: 'Tuyển Gen', icon: UserPlus, badge: 0 }] : []),
     ...(isSuperAdmin ? [{ id: 'admin_sessions', label: 'Hoạt Động', icon: ShieldCheck, badge: 0 }] : []),
@@ -72,121 +66,105 @@ export const Navbar = () => {
     setActiveTab(id);
     setIsMobileMenuOpen(false);
     setIsSearchOpen(false);
-    setIsNotificationOpen(false);
+    setIsUserDropdownOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-[var(--bg-primary)] backdrop-blur-2xl border-b border-[var(--border-subtle)] supports-[backdrop-filter]:bg-[var(--bg-primary)]">
-      <div className="max-w-[1440px] mx-auto px-6 sm:px-10 lg:px-12">
-        {/* Đảm bảo h-16 và items-center để mọi thứ chuẩn trục ngang ở giữa */}
-        <div className="relative flex items-center justify-between h-16 w-full">
+    <header className="sticky top-0 z-50 bg-[#0b0f19]/90 backdrop-blur-md border-b border-[#1f2937] w-full">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 w-full gap-4">
 
-          {/* CỘT TRÁI: Brand Logo - Đã khóa cứng h-full & flex items-center để logo không bao giờ bị lệch trên/dưới */}
+          {/* BRAND LOGO & TITLE */}
           <div
             onClick={() => handleNavClick('dashboard')}
-            className="flex items-center gap-2.5 cursor-pointer group shrink-0 z-10 h-full my-auto"
+            className="flex items-center gap-3 cursor-pointer group shrink-0"
           >
-            <div className="relative w-9 h-9 rounded-xl bg-blue-600 border border-blue-500/30 shadow-lg shadow-blue-500/20 group-hover:scale-105 group-hover:shadow-blue-500/40 transition-all duration-300 overflow-hidden p-0.5 shrink-0 my-auto">
-              <img src="/vmc-logo.jpg" alt="VMC Logo" className="w-full h-full object-cover rounded-lg" />
+            <div className="w-9 h-9 rounded-xl bg-blue-600 border border-blue-500/30 flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-105 transition-transform">
+              <img src="/vmc-logo.jpg" alt="VMC Logo" className="w-full h-full object-cover" />
             </div>
-            <div className="hidden sm:flex flex-col justify-center my-auto">
+            <div className="flex flex-col">
               <span className="font-heading font-black text-sm tracking-tight text-slate-100 block leading-none">
                 VMC PORTAL
               </span>
-              <span className="text-[8.5px] block text-slate-400 font-medium mt-1 tracking-widest uppercase leading-none">
+              <span className="text-[9px] block text-slate-400 font-medium mt-0.5 tracking-wider uppercase leading-none">
                 THPT Vĩnh Bảo
               </span>
             </div>
           </div>
 
-          {/* CỘT GIỮA: Absolute Centered Navigation (Căn giữa 100% cả trục X lẫn trục Y) */}
-          <div className="hidden xl:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center justify-center">
-            <nav className="flex items-center gap-0.5 bg-[var(--bg-secondary)] backdrop-blur-sm px-2 py-1 rounded-2xl border border-[var(--border-subtle)] shadow-sm">
-              {navItems.map(item => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.id;
-                const isRestricted = !isAdmin && ['equipment', 'resources'].includes(item.id);
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => !isRestricted && handleNavClick(item.id)}
-                    className={`relative flex items-center justify-center gap-1.5 px-2.5 py-1 rounded-xl font-medium text-[11.5px] tracking-normal whitespace-nowrap transition-all duration-200 ${isRestricted ? 'opacity-30 blur-[1px] cursor-not-allowed' : ''
-                      } ${isActive
-                        ? 'bg-blue-600/20 text-blue-300 font-semibold shadow-sm border border-blue-500/30'
-                        : 'text-slate-400 hover:text-slate-200 hover:bg-[var(--bg-hover)] border border-transparent'
-                      }`}
-                    title={isRestricted ? 'Chức năng chỉ dành cho Admin' : ''}
-                  >
-                    <Icon className="w-3.5 h-3.5 shrink-0 opacity-80" />
-                    <span>{item.label}</span>
-                    {item.badge > 0 && (
-                      <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full leading-none ${isActive ? 'bg-blue-500 text-white' : 'bg-amber-500/20 text-amber-300'
-                        }`}>
-                        {item.badge}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
+          {/* DESKTOP NAVIGATION BAR (Grouped & Padded) */}
+          <nav className="hidden lg:flex items-center gap-1 bg-[#111827] px-3 py-1.5 rounded-xl border border-[#1f2937]">
+            {navItems.map(item => {
+              const Icon = item.icon;
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleNavClick(item.id)}
+                  className={`relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all whitespace-nowrap ${
+                    isActive
+                      ? 'bg-blue-600/15 text-blue-400 border border-blue-500/30'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-[#1f2937] border border-transparent'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5 shrink-0" />
+                  <span>{item.label}</span>
+                  {item.badge > 0 && (
+                    <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full leading-none ${
+                      isActive ? 'bg-blue-500 text-white' : 'bg-amber-500/20 text-amber-300'
+                    }`}>
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </nav>
 
-          {/* CỘT PHẢI: Actions & User Info */}
-          <div className="flex items-center justify-end gap-2 shrink-0 z-10 h-full my-auto">
-            {/* Search Button (Mobile/Tablet) */}
+          {/* RIGHT UTILITIES & USER PROFILE */}
+          <div className="flex items-center gap-2.5 shrink-0">
+            {/* Theme Toggle */}
             <button
-              onClick={() => setIsSearchOpen(!isSearchOpen)}
-              className="xl:hidden p-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-[var(--bg-hover)] transition-all"
-              title="Tìm kiếm"
-              aria-label="Search"
+              onClick={toggleTheme}
+              className="p-2 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-[#1f2937] border border-[#1f2937] transition-all"
+              title="Chuyển chế độ giao diện"
+              aria-label="Toggle Theme"
             >
-              <Search className="w-4 h-4" />
+              {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-blue-400" />}
             </button>
 
-            {/* User Profile */}
-            <div
-              className="relative flex items-center h-full"
-              onMouseLeave={() => setIsUserDropdownOpen(false)}
-            >
+            {/* User Dropdown Button */}
+            <div className="relative">
               <button
                 onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                onMouseEnter={() => setIsUserDropdownOpen(true)}
-                className="flex items-center gap-2 px-2.5 py-1 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] hover:border-blue-500/30 hover:bg-[var(--bg-hover)] transition-all group"
+                className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl bg-[#111827] border border-[#1f2937] hover:border-slate-700 hover:bg-[#1f2937] transition-all"
               >
-                <div className="relative">
-                  <img
-                    src={safeUser.avatar}
-                    alt={safeUser.name}
-                    className="w-6 h-6 rounded-md object-cover border border-blue-500/20 group-hover:border-blue-500/50 transition-colors"
-                  />
-                  <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full border border-[var(--bg-primary)]" />
+                <img
+                  src={safeUser.avatar}
+                  alt={safeUser.name}
+                  className="w-6 h-6 rounded-lg object-cover border border-slate-700"
+                />
+                <div className="text-left max-w-[110px] truncate hidden md:block">
+                  <div className="font-semibold text-slate-200 text-xs truncate leading-tight">{safeUser.name}</div>
+                  <div className="text-[10px] text-blue-400 font-medium truncate leading-tight">{safeUser.roleTitle}</div>
                 </div>
-                <div className="text-left max-w-[100px] truncate hidden md:block">
-                  <div className="font-semibold text-slate-200 text-[11px] truncate leading-tight">{safeUser.name}</div>
-                  <div className="text-[9.5px] text-blue-400 font-medium truncate">{safeUser.roleTitle}</div>
-                </div>
-                <ChevronDown className="w-3 h-3 text-slate-500 shrink-0 transition-transform group-hover:rotate-180" />
+                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${isUserDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
-              {/* Profile Dropdown Content */}
+              {/* User Dropdown Menu */}
               {isUserDropdownOpen && (
-                <div className="absolute right-0 top-full mt-1 w-72 bg-[var(--bg-secondary)] backdrop-blur-2xl border border-[var(--border-subtle)] rounded-2xl p-3 shadow-2xl z-50 animate-slide-up space-y-1.5">
-                  <div className="p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] space-y-1.5">
-                    <div className="flex items-center gap-3">
-                      <img src={safeUser.avatar} alt={safeUser.name} className="w-10 h-10 rounded-xl object-cover border border-blue-500/20" />
-                      <div className="min-w-0">
-                        <div className="font-bold text-slate-100 text-sm truncate">{safeUser.name}</div>
-                        <div className="text-[11px] text-blue-400 font-medium truncate">{safeUser.roleTitle}</div>
-                      </div>
-                    </div>
-                    <div className="text-[11px] text-slate-400 font-mono">Mã TV: {safeUser.memberCode} • Lớp {safeUser.class}</div>
+                <div className="absolute right-0 top-full mt-2 w-64 bg-[#111827] border border-[#1f2937] rounded-xl p-2.5 shadow-xl z-50 space-y-1">
+                  <div className="p-2.5 rounded-lg bg-[#0f172a] border border-[#1f2937] space-y-1">
+                    <div className="font-bold text-slate-100 text-xs truncate">{safeUser.name}</div>
+                    <div className="text-[11px] text-blue-400 font-medium truncate">{safeUser.roleTitle}</div>
+                    <div className="text-[10px] text-slate-400 font-mono">Mã TV: {safeUser.memberCode}</div>
                   </div>
 
                   {isHRMember && (
                     <button
                       onClick={() => { checkinAttendance(); setIsUserDropdownOpen(false); }}
-                      className="w-full flex items-center justify-between p-3 rounded-xl bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500 hover:text-[var(--bg-primary)] font-semibold text-xs transition-all"
+                      className="w-full flex items-center justify-between p-2.5 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 hover:bg-emerald-600 hover:text-white font-semibold text-xs transition-all"
                     >
                       <div className="flex items-center gap-2">
                         <UserCheck className="w-4 h-4" />
@@ -197,17 +175,17 @@ export const Navbar = () => {
 
                   <button
                     onClick={() => { setActiveTab('profile'); setIsUserDropdownOpen(false); }}
-                    className="w-full flex items-center gap-2.5 p-3 rounded-xl hover:bg-[var(--bg-hover)] text-slate-300 hover:text-slate-100 transition-all text-xs font-medium"
+                    className="w-full flex items-center gap-2 p-2.5 rounded-lg hover:bg-[#1f2937] text-slate-300 hover:text-slate-100 transition-all text-xs font-medium"
                   >
                     <User className="w-4 h-4" />
-                    <span>Xem Hồ Sơ </span>
+                    <span>Xem Hồ Sơ Cá Nhân</span>
                   </button>
 
-                  <div className="border-t border-[var(--border-subtle)] my-1" />
+                  <div className="border-t border-[#1f2937] my-1" />
 
                   <button
                     onClick={() => { setIsUserDropdownOpen(false); logout(); }}
-                    className="w-full flex items-center justify-center gap-2 p-3 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-300 hover:text-white font-semibold text-xs transition-all"
+                    className="w-full flex items-center justify-center gap-2 p-2.5 rounded-lg bg-rose-500/10 hover:bg-rose-600 text-rose-300 hover:text-white font-semibold text-xs transition-all"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Đăng Xuất</span>
@@ -216,20 +194,10 @@ export const Navbar = () => {
               )}
             </div>
 
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-[var(--bg-hover)] border border-transparent hover:border-[var(--border-subtle)] transition-all shrink-0"
-              title="Chuyển chế độ giao diện"
-              aria-label="Toggle Theme"
-            >
-              {theme === 'dark' ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-blue-400" />}
-            </button>
-
-            {/* Mobile Menu Button */}
+            {/* Mobile Menu Toggle Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="xl:hidden p-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-[var(--bg-hover)] transition-all shrink-0"
+              className="lg:hidden p-2 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-[#1f2937] border border-[#1f2937] transition-all shrink-0"
               aria-label="Toggle Menu"
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -238,47 +206,24 @@ export const Navbar = () => {
         </div>
       </div>
 
-      {/* Expandable Mobile Search Bar */}
-      {isSearchOpen && (
-        <div className="xl:hidden border-t border-[var(--border-subtle)] bg-[var(--bg-primary)] backdrop-blur-2xl px-4 py-3 animate-slide-up">
-          <div className="relative flex items-center w-full bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded-xl">
-            <Search className="absolute left-3 w-4 h-4 text-slate-400 shrink-0 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Tìm kiếm thành viên, công việc..."
-              className="flex-1 bg-transparent text-sm text-slate-200 placeholder-slate-500 outline-none !pl-10 !pr-10 py-2"
-              autoFocus
-            />
-            <button
-              onClick={() => setIsSearchOpen(false)}
-              className="absolute right-3 text-slate-500 hover:text-slate-300"
-              aria-label="Close search"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Mobile / Tablet Drawer */}
+      {/* MOBILE DRAWER */}
       {isMobileMenuOpen && (
-        <div className="xl:hidden bg-[var(--bg-secondary)] backdrop-blur-2xl border-t border-[var(--border-subtle)] p-4 space-y-1.5 animate-slide-up">
+        <div className="lg:hidden bg-[#111827] border-t border-[#1f2937] px-4 py-3 space-y-1">
           {navItems.map(item => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
-            const isRestricted = !isAdmin && ['equipment', 'resources'].includes(item.id);
             return (
               <button
                 key={item.id}
-                onClick={() => !isRestricted && handleNavClick(item.id)}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm transition-all ${isRestricted ? 'opacity-30 blur-[1px] cursor-not-allowed' : ''
-                  } ${isActive
-                    ? 'bg-blue-600/20 text-blue-300 border border-blue-500/30'
-                    : 'text-slate-300 hover:bg-[var(--bg-hover)] border border-transparent'
-                  }`}
+                onClick={() => handleNavClick(item.id)}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg font-semibold text-xs transition-all ${
+                  isActive
+                    ? 'bg-blue-600/15 text-blue-300 border border-blue-500/30'
+                    : 'text-slate-300 hover:bg-[#1f2937] border border-transparent'
+                }`}
               >
-                <div className="flex items-center gap-3">
-                  <Icon className="w-5 h-5" />
+                <div className="flex items-center gap-2.5">
+                  <Icon className="w-4 h-4" />
                   <span>{item.label}</span>
                 </div>
                 {item.badge > 0 && (
