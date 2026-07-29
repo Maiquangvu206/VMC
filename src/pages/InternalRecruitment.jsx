@@ -35,6 +35,37 @@ export const InternalRecruitment = () => {
     currentUserRoleTitle.includes('trưởng ban')
   );
 
+  // Helper to check if a user is permitted to access a given season
+  const canAccessSeason = (season) => {
+    if (!season) return false;
+    if (isSuperAdmin || isAdmin || isHRHead) return true;
+
+    const userDept = (currentUser?.deptName || currentUser?.department || '').toLowerCase().trim();
+    const seasonDept = (season.department || '').toLowerCase().trim();
+    const userRoleTitle = (currentUser?.roleTitle || '').toLowerCase();
+    
+    // 1. Check if member of the department in charge
+    const isDeptMember = seasonDept && userDept.includes(seasonDept);
+    
+    // 2. Check if Advisor or anyone explicitly assigned in season.interviewer_ids
+    const getInterviewerIds = (interviewerIdsVal) => {
+      if (!interviewerIdsVal) return [];
+      if (Array.isArray(interviewerIdsVal)) return interviewerIdsVal;
+      try {
+        return JSON.parse(interviewerIdsVal);
+      } catch (e) {
+        return [];
+      }
+    };
+    const isAssignedScorer = getInterviewerIds(season.interviewer_ids).includes(currentUser?.id);
+
+    // 3. BCN / Advisor who is assigned can access
+    const isBCN = userRoleTitle.includes('chủ nhiệm') || userRoleTitle.includes('phó chủ nhiệm');
+    const isAdvisor = userRoleTitle.includes('cố vấn') || userRoleTitle.includes('advisor');
+
+    return isDeptMember || isAssignedScorer || ((isBCN || isAdvisor) && isAssignedScorer);
+  };
+
   const [activeTab, setActiveTab] = useState('seasons');
   const [seasons, setSeasons] = useState([]);
   const [currentSeason, setCurrentSeason] = useState(null);
@@ -114,14 +145,60 @@ export const InternalRecruitment = () => {
       setCandidateForm(prev => ({ ...prev, desired_dept: prev.desired_dept || currentSeason.department }));
     }
   }, [currentSeason?.department]);
+
+  // Set default scoring type filter based on active round or first available type
+  useEffect(() => {
+    if (activeTab === 'scoring' && currentSeason) {
+      setScoringTypeFilter(currentSeason.active_round || 'don');
+    }
+  }, [activeTab, currentSeason]);
   const [scoringData, setScoringData] = useState({});
+
+  // Client-side candidate filtering based on role, round, and search query
+  useEffect(() => {
+    if (!currentSeason || !Array.isArray(candidates)) {
+      setFilteredCandidates([]);
+      return;
+    }
+
+    const query = (candidateSearchQuery || '').toLowerCase().trim();
+    const filterType = scoringTypeFilter || 'don';
+
+    // Filter by query first
+    let list = candidates.filter(c => 
+      (c.id || '').toLowerCase().includes(query) ||
+      (c.full_name || '').toLowerCase().includes(query) ||
+      (c.class_name || '').toLowerCase().includes(query)
+    );
+
+    // Enforce permission assignment check for teamwork and phongvan for normal members
+    const userRoleTitle = (currentUser?.roleTitle || '').toLowerCase();
+    const isBCN = userRoleTitle.includes('chủ nhiệm') || userRoleTitle.includes('phó chủ nhiệm');
+    const isAdvisor = userRoleTitle.includes('cố vấn') || userRoleTitle.includes('advisor');
+    const isPowerUser = isSuperAdmin || isAdmin || isHRHead || isBCN || isAdvisor;
+
+    if (!isPowerUser) {
+      if (filterType === 'teamwork') {
+        list = list.filter(c => (c.teamwork_scorer_ids || []).includes(currentUser?.id));
+      } else if (filterType === 'phongvan') {
+        list = list.filter(c => (c.interviewer_ids || []).includes(currentUser?.id));
+      }
+      // For 'don', any member of the department can score, so no candidate-level filtering is applied.
+    }
+
+    setFilteredCandidates(list);
+    setCurrentScoringCandidateIndex(0);
+    if (list.length > 0) {
+      setSelectedCandidate(list[0]);
+    } else {
+      setSelectedCandidate(null);
+    }
+  }, [candidates, scoringTypeFilter, candidateSearchQuery, currentSeason, currentUser]);
 
   // Fetch data
   useEffect(() => {
-    if (isSuperAdmin || isAdmin || isHRHead || isRecruitmentSeasonActive) {
-      fetchSeasons();
-    }
-  }, [isSuperAdmin, isAdmin, isHRHead, isRecruitmentSeasonActive]);
+    fetchSeasons();
+  }, []);
 
   useEffect(() => {
     if (currentSeason) {
@@ -152,7 +229,9 @@ export const InternalRecruitment = () => {
         
         setSeasons(filteredSeasons);
         const active = filteredSeasons.find(s => s.is_active === 1);
-        if (active) setCurrentSeason(active);
+        if (active && (isSuperAdmin || isAdmin || isHRHead)) {
+          setCurrentSeason(active);
+        }
       } else {
         console.error('Invalid seasons data:', data);
       }
@@ -178,8 +257,7 @@ export const InternalRecruitment = () => {
 
   const fetchCandidates = async (seasonId) => {
     try {
-      const interviewerParam = !isAdmin && !isHRHead ? `?interviewer_id=${currentUser.id}` : '';
-      const res = await fetch(`/api/recruitment/candidates/${seasonId}${interviewerParam}`, { headers: { 'ngrok-skip-browser-warning': 'true' } });
+      const res = await fetch(`/api/recruitment/candidates/${seasonId}`, { headers: { 'ngrok-skip-browser-warning': 'true' } });
       const data = await res.json();
       if (data.success && Array.isArray(data.data)) {
         setCandidates(data.data);
@@ -259,6 +337,25 @@ export const InternalRecruitment = () => {
       }
     } catch (e) {
       showToast('❌ Lỗi kích hoạt mùa tuyển!', 'error');
+    }
+  };
+
+  const updateActiveRound = async (seasonId, round) => {
+    try {
+      const res = await fetch(`/api/recruitment/seasons/${seasonId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+        body: JSON.stringify({ active_round: round })
+      });
+      if (res.ok) {
+        showToast('✅ Đã chuyển vòng chấm điểm!', 'success');
+        fetchSeasons();
+        if (currentSeason?.id === seasonId) {
+          setCurrentSeason(prev => ({ ...prev, active_round: round }));
+        }
+      }
+    } catch (e) {
+      showToast('❌ Lỗi chuyển vòng!', 'error');
     }
   };
 
@@ -549,13 +646,8 @@ export const InternalRecruitment = () => {
           Mùa Tuyển
         </button>
         
-        {/* Other tabs only show when season is selected and user belongs to season's department */}
-        {currentSeason && (() => {
-          const seasonDept = (currentSeason.department || '').toLowerCase().trim();
-          const userDept = (currentUser?.deptName || currentUser?.department || '').toLowerCase().trim();
-          const belongsToSeason = isSuperAdmin || !seasonDept || seasonDept === userDept;
-          return belongsToSeason;
-        })() && (
+        {/* Other tabs only show when season is selected and user is authorized */}
+        {currentSeason && canAccessSeason(currentSeason) && (
           <>
             {/* Criteria tab - only for Trưởng Ban */}
             {(isSuperAdmin || isAdmin || isHRHead || isDeptHead) && (
@@ -598,54 +690,80 @@ export const InternalRecruitment = () => {
        {/* Seasons Tab */}
        {activeTab === 'seasons' && (
          <div className="space-y-6">
-           {isSuperAdmin || isAdmin || isHRHead ? (
-             <>
-               <div className="flex justify-between items-center">
-                 <h2 className="text-2xl font-bold text-slate-100">Danh Sách Mùa Tuyển</h2>
-                 <button
-                   onClick={() => setShowSeasonModal(true)}
-                   className="ds-btn ds-btn-primary"
-                 >
-                   <Plus className="w-5 h-5" /> Tạo Mùa Tuyển Mới
-                 </button>
-               </div>
-               <div className="grid gap-5">
-                 {seasons.map(season => (
-                   <div key={season.id} className="ds-card p-6">
-                     <div className="flex justify-between items-start">
-                       <div>
-                         <h3 className="font-bold text-slate-100 text-xl">{season.name}</h3>
-                         <p className="text-slate-400 text-base mt-2">Ban: {season.department || 'Tất cả'} | Chỉ tiêu: {season.quota} thành viên</p>
-                         <div className="flex items-center gap-3 mt-3">
-                           {season.is_active === 1 ? (
-                             <span className="flex items-center gap-2 text-emerald-400 text-sm">
-                               <CheckCircle className="w-4 h-4" /> Đang hoạt động
-                             </span>
-                           ) : (
-                             <span className="flex items-center gap-2 text-slate-400 text-sm">
-                               <Clock className="w-4 h-4" /> Đã kết thúc
-                             </span>
-                           )}
-                         </div>
-                       </div>
-                       <div className="flex gap-3">
+           <div className="flex justify-between items-center">
+             <h2 className="text-2xl font-bold text-slate-100">
+               {isSuperAdmin || isAdmin || isHRHead ? 'Danh Sách Mùa Tuyển' : 'Chọn Mùa Tuyển Sinh'}
+             </h2>
+             {(isSuperAdmin || isAdmin || isHRHead) && (
+               <button
+                 onClick={() => setShowSeasonModal(true)}
+                 className="ds-btn ds-btn-primary"
+               >
+                 <Plus className="w-5 h-5" /> Tạo Mùa Tuyển Mới
+               </button>
+             )}
+           </div>
+
+           <div className="grid gap-5">
+             {seasons.map(season => {
+               const seasonDept = (season.department || '').toLowerCase().trim();
+               const userDept = (currentUser?.deptName || currentUser?.department || '').toLowerCase().trim();
+               const isSeasonDeptHead = isDeptHead && userDept.includes(seasonDept);
+               const canManageSeason = isSuperAdmin || isAdmin || isHRHead || isSeasonDeptHead;
+
+               const getScoringTypes = (scoringType) => {
+                 if (!scoringType) return ['teamwork'];
+                 if (Array.isArray(scoringType)) return scoringType;
+                 try {
+                   return JSON.parse(scoringType);
+                 } catch (e) {
+                   return [scoringType];
+                 }
+               };
+               const scoringTypes = getScoringTypes(season.scoring_type);
+
+               return (
+                 <div key={season.id} className="ds-card p-6">
+                   <div className="flex justify-between items-start">
+                     <div>
+                       <h3 className="font-bold text-slate-100 text-xl">{season.name}</h3>
+                       <p className="text-slate-400 text-base mt-2">Ban: {season.department || 'Tất cả'} | Chỉ tiêu: {season.quota} thành viên</p>
+                       <div className="flex items-center gap-3 mt-3">
                          {season.is_active === 1 ? (
-                           <button
-                             onClick={() => deactivateSeason(season.id)}
-                             className="ds-btn ds-btn-danger ds-btn-xs"
-                             title="Tắt mùa tuyển"
-                           >
-                             <X className="w-5 h-5" />
-                           </button>
+                           <span className="flex items-center gap-2 text-emerald-400 text-sm">
+                             <CheckCircle className="w-4 h-4" /> Đang hoạt động
+                           </span>
                          ) : (
-                           <button
-                             onClick={() => activateSeason(season.id)}
-                             className="ds-btn ds-btn-success ds-btn-xs"
-                             title="Kích hoạt"
-                           >
-                             <CheckCircle className="w-5 h-5" />
-                           </button>
+                           <span className="flex items-center gap-2 text-slate-400 text-sm">
+                             <Clock className="w-4 h-4" /> Đã kết thúc
+                           </span>
                          )}
+                         <span className="text-slate-600">|</span>
+                         <span className="text-blue-400 font-bold text-xs">
+                           Vòng đang mở: {season.active_round === 'don' ? '📝 Chấm Đơn' : season.active_round === 'teamwork' ? '👥 Chấm Teamwork' : '🎙️ Chấm Phỏng Vấn'}
+                         </span>
+                       </div>
+                     </div>
+                     <div className="flex gap-3">
+                       {season.is_active === 1 && (isSuperAdmin || isAdmin || isHRHead) && (
+                         <button
+                           onClick={() => deactivateSeason(season.id)}
+                           className="ds-btn ds-btn-danger ds-btn-xs"
+                           title="Tắt mùa tuyển"
+                         >
+                           <X className="w-5 h-5" />
+                         </button>
+                       )}
+                       {season.is_active !== 1 && (isSuperAdmin || isAdmin || isHRHead) && (
+                         <button
+                           onClick={() => activateSeason(season.id)}
+                           className="ds-btn ds-btn-success ds-btn-xs"
+                           title="Kích hoạt"
+                         >
+                           <CheckCircle className="w-5 h-5" />
+                         </button>
+                       )}
+                       {(isSuperAdmin || isAdmin || isHRHead) && (
                          <button
                            onClick={() => openInterviewerModal(season)}
                            className="ds-btn ds-btn-primary ds-btn-xs"
@@ -653,48 +771,68 @@ export const InternalRecruitment = () => {
                          >
                            <Users className="w-5 h-5" />
                          </button>
-                         <button
-                           onClick={() => setCurrentSeason(season)}
-                           className={`ds-btn ds-btn-xs ${currentSeason?.id === season.id ? 'ds-btn-primary' : 'ds-btn-secondary'}`}
-                           title="Chọn"
-                         >
-                           <Edit className="w-5 h-5" />
-                         </button>
-                       </div>
+                       )}
+                       {(() => {
+                         const hasAccess = canAccessSeason(season);
+                         if (!hasAccess) {
+                           return (
+                             <button
+                               disabled
+                               className="ds-btn ds-btn-xs bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed"
+                               title="Bạn không thuộc ban phụ trách và không được phân công chấm điểm cho mùa tuyển này"
+                             >
+                               🔒 Khóa
+                             </button>
+                           );
+                         }
+                         return (
+                           <button
+                             onClick={() => setCurrentSeason(season)}
+                             className={`ds-btn ds-btn-xs ${currentSeason?.id === season.id ? 'ds-btn-primary' : 'ds-btn-secondary'}`}
+                           >
+                             {currentSeason?.id === season.id ? '✓ Đang Chọn' : 'Chọn Mùa Tuyển'}
+                           </button>
+                         );
+                       })()}
                      </div>
                    </div>
-                 ))}
-               </div>
-             </>
-           ) : (
-             // Regular members - show only active season info
-             <>
-               <h2 className="text-2xl font-bold text-slate-100">Mùa Tuyển Hiện Tại</h2>
-               {currentSeason ? (
-                 <div className="ds-card p-8">
-                   <div className="flex items-start gap-5">
-                     <div className="p-4 bg-emerald-500/20 rounded-2xl">
-                       <CheckCircle className="w-10 h-10 text-emerald-400" />
-                     </div>
-                     <div className="flex-1">
-                       <h3 className="font-bold text-slate-100 text-2xl">{currentSeason.name}</h3>
-                       <p className="text-slate-400 text-base mt-2">Ban: {currentSeason.department || 'Tất cả'} | Chỉ tiêu: {currentSeason.quota} thành viên</p>
-                       <div className="flex items-center gap-3 mt-3">
-                         <span className="flex items-center gap-2 text-emerald-400 text-base">
-                           <CheckCircle className="w-5 h-5" /> Đang hoạt động
-                         </span>
+
+                   {/* Control active round for head of department / admins */}
+                   {season.is_active === 1 && canManageSeason && (
+                     <div className="mt-4 pt-4 border-t border-[#1f2937] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0f172a] p-3 rounded-xl">
+                       <span className="text-xs text-slate-300 font-medium">🛡️ Điều khiển vòng chấm điểm:</span>
+                       <div className="flex gap-2">
+                         {scoringTypes.includes('don') && (
+                           <button
+                             onClick={() => updateActiveRound(season.id, 'don')}
+                             className={`ds-btn ds-btn-xs ${season.active_round === 'don' ? 'bg-blue-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-700'}`}
+                           >
+                             Mở Chấm Đơn
+                           </button>
+                         )}
+                         {scoringTypes.includes('teamwork') && (
+                           <button
+                             onClick={() => updateActiveRound(season.id, 'teamwork')}
+                             className={`ds-btn ds-btn-xs ${season.active_round === 'teamwork' ? 'bg-blue-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-700'}`}
+                           >
+                             Mở Chấm Teamwork
+                           </button>
+                         )}
+                         {scoringTypes.includes('phongvan') && (
+                           <button
+                             onClick={() => updateActiveRound(season.id, 'phongvan')}
+                             className={`ds-btn ds-btn-xs ${season.active_round === 'phongvan' ? 'bg-blue-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-700'}`}
+                           >
+                             Mở Phỏng Vấn
+                           </button>
+                         )}
                        </div>
                      </div>
-                   </div>
+                   )}
                  </div>
-               ) : (
-                 <div className="ds-card p-8 text-center">
-                   <Clock className="w-16 h-16 text-slate-500 mx-auto mb-4" />
-                   <p className="text-slate-400 text-base">Hiện tại không có mùa tuyển nào đang hoạt động</p>
-                 </div>
-               )}
-             </>
-           )}
+               );
+             })}
+           </div>
          </div>
        )}
 
@@ -826,28 +964,44 @@ export const InternalRecruitment = () => {
          </div>
        )}
 
-       {/* Scoring Tab - redesigned with candidate search and single candidate form */}
-       {activeTab === 'scoring' && (canScore || isSuperAdmin) && currentSeason && (
-         <div className="space-y-4">
-           <h2 className="text-xl font-bold text-white">
-             Chấm Điểm Ứng Viên - {currentSeason.name}
-           </h2>
-           
-           {/* Filter by scoring type if both are enabled */}
-           {Array.isArray(currentSeason.scoring_type) && currentSeason.scoring_type.length > 1 && (
-             <div className="flex gap-2">
-               {currentSeason.scoring_type.map(type => (
-                 <button
-                   key={type}
-                   onClick={() => setScoringTypeFilter(type)}
-                   className={`ds-btn ds-btn-xs ${scoringTypeFilter === type ? 'ds-btn-primary' : 'ds-btn-secondary'}`}
-                 >
-                   {type === 'don' ? 'Đơn' : type === 'phongvan' ? 'Phỏng vấn' : 'Teamwork'}
-                 </button>
-               ))}
-             </div>
-           )}
+        {/* Scoring Tab - redesigned with candidate search and single candidate form */}
+        {activeTab === 'scoring' && (canScore || isSuperAdmin) && currentSeason && (() => {
+          const userDept = (currentUser?.deptName || currentUser?.department || '').toLowerCase().trim();
+          const seasonDept = (currentSeason.department || '').toLowerCase().trim();
+          const isSeasonDeptHead = isDeptHead && userDept.includes(seasonDept);
+          const isRoundOpen = isSuperAdmin || isAdmin || isHRHead || isSeasonDeptHead || (currentSeason.active_round === scoringTypeFilter);
 
+          return (
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold text-white">
+                Chấm Điểm Ứng Viên - {currentSeason.name}
+              </h2>
+              
+              {/* Filter by scoring type if both are enabled */}
+              {Array.isArray(currentSeason.scoring_type) && currentSeason.scoring_type.length > 1 && (
+                <div className="flex gap-2">
+                  {currentSeason.scoring_type.map(type => (
+                    <button
+                      key={type}
+                      onClick={() => setScoringTypeFilter(type)}
+                      className={`ds-btn ds-btn-xs ${scoringTypeFilter === type ? 'ds-btn-primary' : 'ds-btn-secondary'}`}
+                    >
+                      {type === 'don' ? 'Đơn' : type === 'phongvan' ? 'Phỏng vấn' : 'Teamwork'}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {!isRoundOpen ? (
+                <div className="text-center py-12 ds-card bg-[#0f172a]/50 border border-slate-800 rounded-2xl">
+                  <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-3" />
+                  <h4 className="font-heading font-bold text-white text-base">Vòng Chấm Điểm Này Hiện Chưa Được Mở</h4>
+                  <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto leading-relaxed">
+                    Trưởng ban hoặc Admin cần kích hoạt vòng chấm điểm này ở mục Quản lý mùa tuyển trước khi Giám khảo có thể chấm điểm.
+                  </p>
+                </div>
+              ) : (
+                <>
 {/* Candidate search/filter */}
             <div className="flex gap-3">
               <div className="relative flex items-center w-full">
@@ -856,22 +1010,7 @@ export const InternalRecruitment = () => {
                   type="text"
                   placeholder="Tìm kiếm theo mã ứng viên, tên, hoặc lớp..."
                   value={candidateSearchQuery}
-                  onChange={(e) => {
-                    setCandidateSearchQuery(e.target.value);
-                    const query = e.target.value.toLowerCase();
-                    const filtered = candidates.filter(c => 
-                      (c.id || '').toLowerCase().includes(query) ||
-                      (c.full_name || '').toLowerCase().includes(query) ||
-                      (c.class_name || '').toLowerCase().includes(query)
-                    );
-                    setFilteredCandidates(filtered);
-                    setCurrentScoringCandidateIndex(0);
-                    if (filtered.length > 0) {
-                      setSelectedCandidate(filtered[0]);
-                      setScoringComments('');
-                      setScoringData({});
-                    }
-                  }}
+                  onChange={(e) => setCandidateSearchQuery(e.target.value)}
                   className="ds-input pl-12"
                 />
               </div>
@@ -1011,8 +1150,11 @@ export const InternalRecruitment = () => {
                </div>
              );
            })()}
-         </div>
-       )}
+                </>
+              )}
+            </div>
+          );
+        })()}
 
        {/* Results Tab - for all department members */}
        {activeTab === 'results' && currentSeason && (
