@@ -424,7 +424,7 @@ export const InternalTasks = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="ds-field-label">Giao cho Ban nào *</label>
+                  <label className="ds-field-label">Ban phụ trách *</label>
                   <select
                     value={formData.department}
                     onChange={(e) => setFormData({ ...formData, department: e.target.value })}

@@ -53,6 +53,8 @@ queryDatabase('ALTER TABLE Members MODIFY COLUMN avatar_url LONGTEXT').catch(err
 queryDatabase('ALTER TABLE Members ADD COLUMN milestones LONGTEXT').catch(err => {
   console.log('ℹ️ CSDL status milestones:', err.message);
 });
+queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN active_round VARCHAR(50) DEFAULT "don"').catch(() => {});
+queryDatabase('ALTER TABLE Recruitment_Criteria ADD COLUMN round_type VARCHAR(50) DEFAULT "teamwork"').catch(() => {});
 
 queryDatabase(`
   CREATE TABLE IF NOT EXISTS Member_Milestones (

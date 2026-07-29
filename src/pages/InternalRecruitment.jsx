@@ -831,9 +831,6 @@ export const InternalRecruitment = () => {
          <div className="space-y-4">
            <h2 className="text-xl font-bold text-white">
              Chấm Điểm Ứng Viên - {currentSeason.name}
-             <span className="text-sm font-normal text-slate-400 ml-2">
-               ({Array.isArray(currentSeason.scoring_type) ? currentSeason.scoring_type.join(', ') : currentSeason.scoring_type})
-             </span>
            </h2>
            
            {/* Filter by scoring type if both are enabled */}
@@ -845,7 +842,7 @@ export const InternalRecruitment = () => {
                    onClick={() => setScoringTypeFilter(type)}
                    className={`ds-btn ds-btn-xs ${scoringTypeFilter === type ? 'ds-btn-primary' : 'ds-btn-secondary'}`}
                  >
-                   {type === 'don' ? 'Đơn' : 'Teamwork'}
+                   {type === 'don' ? 'Đơn' : type === 'phongvan' ? 'Phỏng vấn' : 'Teamwork'}
                  </button>
                ))}
              </div>
@@ -1026,7 +1023,6 @@ export const InternalRecruitment = () => {
                <thead>
                  <tr>
                    <th>Mã Phỏng Vấn</th>
-                   <th>#</th>
                    <th>Họ Tên</th>
                    <th>Lớp</th>
                    <th>Ban Mong Muốn</th>
@@ -1046,7 +1042,6 @@ export const InternalRecruitment = () => {
                             {code}
                           </span>
                         </td>
-                        <td className="font-mono text-slate-400">{s.rank}</td>
                         <td className="font-bold text-slate-100">{s.full_name}</td>
                         <td className="text-slate-300">{s.class_name}</td>
                         <td className="text-slate-300">{s.desired_dept}</td>

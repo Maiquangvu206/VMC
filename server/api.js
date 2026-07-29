@@ -1598,7 +1598,7 @@ router.post('/recruitment/seasons', async (req, res) => {
 
 router.put('/recruitment/seasons/:id', async (req, res) => {
   try {
-    const { name, quota, department, scoring_type, is_active, interviewer_ids } = req.body;
+    const { name, quota, department, scoring_type, is_active, interviewer_ids, active_round } = req.body;
     // Removed the restriction that only one season can be active at a time
     const interviewerIdsVal = interviewer_ids !== undefined
       ? (Array.isArray(interviewer_ids) ? JSON.stringify(interviewer_ids) : interviewer_ids)
@@ -1608,8 +1608,8 @@ router.put('/recruitment/seasons/:id', async (req, res) => {
       ? (Array.isArray(scoring_type) ? JSON.stringify(scoring_type) : scoring_type)
       : null;
     await queryDatabase(
-      'UPDATE Recruitment_Seasons SET name = COALESCE(?, name), quota = COALESCE(?, quota), department = COALESCE(?, department), scoring_type = COALESCE(?, scoring_type), is_active = COALESCE(?, is_active), interviewer_ids = COALESCE(?, interviewer_ids) WHERE id = ?',
-      [name ?? null, quota ?? null, department ?? null, scoringTypeVal, is_active !== undefined ? (is_active ? 1 : 0) : null, interviewerIdsVal, req.params.id]
+      'UPDATE Recruitment_Seasons SET name = COALESCE(?, name), quota = COALESCE(?, quota), department = COALESCE(?, department), scoring_type = COALESCE(?, scoring_type), is_active = COALESCE(?, is_active), interviewer_ids = COALESCE(?, interviewer_ids), active_round = COALESCE(?, active_round) WHERE id = ?',
+      [name ?? null, quota ?? null, department ?? null, scoringTypeVal, is_active !== undefined ? (is_active ? 1 : 0) : null, interviewerIdsVal, active_round ?? null, req.params.id]
     );
     res.json({ success: true });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
