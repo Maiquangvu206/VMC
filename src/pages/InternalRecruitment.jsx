@@ -715,16 +715,6 @@ export const InternalRecruitment = () => {
                 >
                   Tiêu Chí
                 </button>
-                <button
-                  onClick={() => {
-                    setActiveTab('appAnswers');
-                    setSelectedCandidateForAnswers(null);
-                    setCandidateAnswersData({});
-                  }}
-                  className={`ds-btn ${activeTab === 'appAnswers' ? 'ds-btn-primary' : 'ds-btn-secondary'}`}
-                >
-                  Nhập Bài Đơn
-                </button>
               </>
             )}
             
@@ -734,6 +724,19 @@ export const InternalRecruitment = () => {
             >
               Ứng Viên
             </button>
+
+            {(isSuperAdmin || isAdmin || isHRHead || isDeptHead) && (
+              <button
+                onClick={() => {
+                  setActiveTab('appAnswers');
+                  setSelectedCandidateForAnswers(null);
+                  setCandidateAnswersData({});
+                }}
+                className={`ds-btn ${activeTab === 'appAnswers' ? 'ds-btn-primary' : 'ds-btn-secondary'}`}
+              >
+                Nhập Bài Đơn
+              </button>
+            )}
             
             {/* Scoring tab - based on scoring type, Super Admin can see all */}
             {(canScore || isSuperAdmin) && (
@@ -823,6 +826,33 @@ export const InternalRecruitment = () => {
                            <X className="w-5 h-5" />
                          </button>
                        )}
+                       {(isSuperAdmin || isAdmin || isHRHead) && (
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => {
+                                setSelectedSeasonForInterviewers(season);
+                                setSelectedInterviewers(season.interviewer_ids || []);
+                                setLeadInterviewerId(season.lead_interviewer_id || null);
+                                setShowInterviewerModal(true);
+                              }}
+                              className="ds-btn ds-btn-primary ds-btn-xs"
+                              title="Phân công Phỏng vấn"
+                            >
+                              <Users className="w-3.5 h-3.5 mr-0.5" />PV
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedSeasonForTeamwork(season);
+                                setSelectedTeamworkScorers(season.teamwork_scorer_ids || []);
+                                setShowTeamworkModal(true);
+                              }}
+                              className="ds-btn ds-btn-xs bg-slate-800 text-slate-300 border border-slate-600 hover:text-white"
+                              title="Phân công Teamwork"
+                            >
+                              <Users className="w-3.5 h-3.5 mr-0.5" />TW
+                            </button>
+                          </div>
+                        )}
                        {season.is_active !== 1 && (isSuperAdmin || isAdmin || isHRHead) && (
                          <button
                            onClick={() => activateSeason(season.id)}
@@ -830,15 +860,6 @@ export const InternalRecruitment = () => {
                            title="Kích hoạt"
                          >
                            <CheckCircle className="w-5 h-5" />
-                         </button>
-                       )}
-                       {(isSuperAdmin || isAdmin || isHRHead) && (
-                         <button
-                           onClick={() => openInterviewerModal(season)}
-                           className="ds-btn ds-btn-primary ds-btn-xs"
-                           title="Phân công Phỏng vấn"
-                         >
-                           <Users className="w-5 h-5" />
                          </button>
                        )}
                        {(() => {
@@ -866,76 +887,183 @@ export const InternalRecruitment = () => {
                      </div>
                    </div>
 
-                   {/* Control active round for head of department / admins */}
-                   {season.is_active === 1 && canManageSeason && (
-                     <div className="mt-4 pt-4 border-t border-[#1f2937] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#0f172a] p-3 rounded-xl">
-                       <span className="text-xs text-slate-300 font-medium">🛡️ Điều khiển vòng chấm điểm:</span>
-                       <div className="flex gap-2">
-                         {scoringTypes.includes('don') && (
+                    {/* Control active round for head of department / admins */}
+                    {season.is_active === 1 && canManageSeason && (() => {
+                      const active = season.active_round || 'none';
+                      const openRounds = active === 'all' ? ['don', 'phongvan', 'teamwork'] : (active === 'none' ? [] : active.split(','));
+                      const donOpen = openRounds.includes('don');
+                      const pvOpen = openRounds.includes('phongvan');
+                      const twOpen = openRounds.includes('teamwork');
+
+                      // Toggle a round on or off with sequential rules:
+                      // - OPEN: only allowed if the PREVIOUS round is currently open
+                      // - CLOSE: always allowed regardless of other rounds
+                      // - RE-OPEN backward: blocked if any LATER round is currently open
+                      const toggleRound = (round) => {
+                        let next = [...openRounds];
+                        if (next.includes(round)) {
+                          // Close: always allowed
+                          next = next.filter(r => r !== round);
+                        } else {
+                          // Open: only if prerequisite is met
+                          // don: can open only if phongvan is NOT open (no going backward)
+                          // phongvan: can open only if don is currently open
+                          // teamwork: can open only if phongvan is currently open
+                          if (round === 'don' && pvOpen) return; // blocked: phongvan already open
+                          if (round === 'phongvan' && !donOpen) return; // blocked: don not open yet
+                          if (round === 'phongvan' && twOpen) return; // blocked: teamwork already open
+                          if (round === 'teamwork' && !pvOpen) return; // blocked: phongvan not open yet
+                          next.push(round);
+                        }
+                        const val = next.length === 0 ? 'none' : next.join(',');
+                        updateActiveRound(season.id, val);
+                      };
+
+                      const roundBtn = (key, emoji, label, isOpen, disabled, disabledReason, color) => (
+                        <button
+                          onClick={() => toggleRound(key)}
+                          disabled={disabled}
+                          title={disabled ? disabledReason : (isOpen ? `Đang mở — nhấn để đóng ${label}` : `Mở ${label}`)}
+                          className={`ds-btn ds-btn-xs transition-all ${
+                            isOpen
+                              ? `${color} text-white`
+                              : disabled
+                              ? 'bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed opacity-40'
+                              : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-700'
+                          }`}
+                        >
+                          {emoji} {isOpen ? `✓ ${label}` : label}
+                        </button>
+                      );
+
+                      return (
+                        <div className="mt-4 pt-4 border-t border-[#1f2937] bg-[#0f172a] p-3 rounded-xl space-y-2">
+                          <span className="text-xs text-slate-300 font-medium">🛡️ Điều khiển vòng chấm điểm:</span>
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {scoringTypes.includes('don') && roundBtn(
+                              'don', '📝', 'Đơn', donOpen,
+                              !donOpen && pvOpen, // can't re-open don if phongvan is already open
+                              'Không thể mở lại Vòng Đơn khi Phỏng Vấn đang mở',
+                              'bg-amber-600'
+                            )}
+                            {scoringTypes.includes('phongvan') && roundBtn(
+                              'phongvan', '🎙️', 'PV', pvOpen,
+                              !pvOpen && (!donOpen || twOpen), // can't open if don not open, or if teamwork open (backward)
+                              !donOpen ? 'Cần mở Vòng Đơn trước' : 'Không thể mở lại PV khi Teamwork đang mở',
+                              'bg-blue-600'
+                            )}
+                            {scoringTypes.includes('teamwork') && roundBtn(
+                              'teamwork', '👥', 'TW', twOpen,
+                              !twOpen && !pvOpen, // can't open teamwork if phongvan not open
+                              'Cần mở Vòng Phỏng Vấn trước',
+                              'bg-emerald-600'
+                            )}
+                            <div className="h-5 border-l border-slate-700 mx-0.5" />
+                            <button
+                              onClick={() => updateActiveRound(season.id, scoringTypes.join(','))}
+                              className="ds-btn ds-btn-xs bg-violet-700 text-white hover:bg-violet-600"
+                              title="Mở tất cả vòng cùng lúc"
+                            >
+                              ⚡ Mở Cả 3
+                            </button>
+                            <button
+                              onClick={() => updateActiveRound(season.id, 'none')}
+                              className="ds-btn ds-btn-xs bg-slate-900 text-rose-400 border border-rose-800 hover:bg-rose-900"
+                              title="Tắt tất cả vòng chấm"
+                            >
+                              🔒 Tắt Tất Cả
+                            </button>
+                          </div>
+                          {openRounds.length > 0 && (
+                            <p className="text-[10px] text-slate-500 mt-1">
+                              Đang mở: {openRounds.map(r => r === 'don' ? '📝 Đơn' : r === 'phongvan' ? '🎙️ PV' : '👥 TW').join(' → ')}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+       {/* Criteria Tab - grouped by round */}
+       {activeTab === 'criteria' && currentSeason && (isSuperAdmin || isAdmin || isHRHead || isDeptHead) && (() => {
+         const roundGroups = [
+           { key: 'don', label: '📝 Vòng Đơn', color: 'text-amber-400', border: 'border-amber-500/30', bg: 'bg-amber-500/5', badge: 'bg-amber-500/20 text-amber-300' },
+           { key: 'phongvan', label: '🎙️ Vòng Phỏng Vấn', color: 'text-blue-400', border: 'border-blue-500/30', bg: 'bg-blue-500/5', badge: 'bg-blue-500/20 text-blue-300' },
+           { key: 'teamwork', label: '👥 Vòng Teamwork', color: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-500/5', badge: 'bg-emerald-500/20 text-emerald-300' },
+         ];
+         const seasonScoringTypes = Array.isArray(currentSeason.scoring_type) ? currentSeason.scoring_type : [currentSeason.scoring_type || 'teamwork'];
+
+         return (
+           <div className="space-y-6">
+             <div className="flex justify-between items-center">
+               <h2 className="text-xl font-bold text-white">Câu Hỏi & Tiêu Chí - {currentSeason.name}</h2>
+               <button
+                 onClick={() => {
+                   setCriteriaForm({ criteria_name: '', max_score: 10, sort_order: 0, round_type: 'don' });
+                   setShowCriteriaModal(true);
+                 }}
+                 className="ds-btn ds-btn-primary"
+               >
+                 <Plus className="w-4 h-4" /> Thêm Câu Hỏi / Tiêu Chí
+               </button>
+             </div>
+
+             {roundGroups.filter(g => seasonScoringTypes.includes(g.key)).map(group => {
+               const groupCriteria = criteria.filter(c => (c.round_type || 'teamwork') === group.key);
+               return (
+                 <div key={group.key} className={`rounded-2xl border ${group.border} ${group.bg} p-5 space-y-3`}>
+                   <div className="flex items-center justify-between">
+                     <div className="flex items-center gap-2">
+                       <h3 className={`font-bold text-base ${group.color}`}>{group.label}</h3>
+                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${group.badge}`}>
+                         {groupCriteria.length} câu hỏi
+                       </span>
+                     </div>
+                     <button
+                       onClick={() => {
+                         setCriteriaForm({ criteria_name: '', max_score: 10, sort_order: 0, round_type: group.key });
+                         setShowCriteriaModal(true);
+                       }}
+                       className="ds-btn ds-btn-xs ds-btn-secondary border border-slate-600"
+                     >
+                       <Plus className="w-3.5 h-3.5" /> Thêm
+                     </button>
+                   </div>
+
+                   {groupCriteria.length === 0 ? (
+                     <p className="text-slate-500 text-sm italic py-2">Chưa có câu hỏi / tiêu chí nào cho vòng này.</p>
+                   ) : (
+                     <div className="space-y-2">
+                       {groupCriteria.map((c, idx) => (
+                         <div key={c.id} className="flex items-center justify-between gap-3 bg-[#0f172a] rounded-xl border border-[#1f2937] px-4 py-3">
+                           <div className="flex items-start gap-3 min-w-0">
+                             <span className="text-slate-500 text-xs font-mono mt-0.5 shrink-0">#{idx + 1}</span>
+                             <div className="min-w-0">
+                               <p className="font-semibold text-slate-100 text-sm leading-snug">{c.criteria_name}</p>
+                               <p className="text-slate-500 text-xs mt-0.5">Điểm tối đa: <span className="text-slate-300 font-medium">{c.max_score}</span></p>
+                             </div>
+                           </div>
                            <button
-                             onClick={() => updateActiveRound(season.id, 'don')}
-                             className={`ds-btn ds-btn-xs ${season.active_round === 'don' ? 'bg-blue-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-700'}`}
+                             onClick={() => deleteCriteria(c.id)}
+                             className="ds-btn ds-btn-danger ds-btn-xs shrink-0"
                            >
-                             Mở Chấm Đơn
+                             <Trash2 className="w-4 h-4" />
                            </button>
-                         )}
-                         {scoringTypes.includes('teamwork') && (
-                           <button
-                             onClick={() => updateActiveRound(season.id, 'teamwork')}
-                             className={`ds-btn ds-btn-xs ${season.active_round === 'teamwork' ? 'bg-blue-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-700'}`}
-                           >
-                             Mở Chấm Teamwork
-                           </button>
-                         )}
-                         {scoringTypes.includes('phongvan') && (
-                           <button
-                             onClick={() => updateActiveRound(season.id, 'phongvan')}
-                             className={`ds-btn ds-btn-xs ${season.active_round === 'phongvan' ? 'bg-blue-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-700'}`}
-                           >
-                             Mở Phỏng Vấn
-                           </button>
-                         )}
-                       </div>
+                         </div>
+                       ))}
                      </div>
                    )}
                  </div>
                );
              })}
            </div>
-         </div>
-       )}
-
-       {/* Criteria Tab - only for Trưởng Ban */}
-       {activeTab === 'criteria' && currentSeason && (isSuperAdmin || isAdmin || isHRHead || isDeptHead) && (
-         <div className="space-y-4">
-           <div className="flex justify-between items-center">
-             <h2 className="text-xl font-bold text-white">Tiêu Chí Chấm Điểm - {currentSeason.name}</h2>
-             <button
-               onClick={() => setShowCriteriaModal(true)}
-               className="ds-btn ds-btn-primary"
-             >
-               <Plus className="w-4 h-4" /> Thêm Tiêu Chí
-             </button>
-           </div>
-           <div className="grid gap-3">
-             {criteria.map(c => (
-               <div key={c.id} className="ds-card p-4 flex justify-between items-center">
-                 <div>
-                   <h3 className="font-bold text-white">{c.criteria_name}</h3>
-                   <p className="text-slate-400 text-sm">Điểm tối đa: {c.max_score}</p>
-                 </div>
-                 <button
-                   onClick={() => deleteCriteria(c.id)}
-                   className="ds-btn ds-btn-danger ds-btn-xs"
-                 >
-                   <Trash2 className="w-4 h-4" />
-                 </button>
-               </div>
-             ))}
-           </div>
-         </div>
-       )}
-
+         );
+       })()}
        {/* Candidates Tab */}
        {activeTab === 'candidates' && currentSeason && (
          <div className="space-y-4">
@@ -974,33 +1102,6 @@ export const InternalRecruitment = () => {
                         </div>
                       </div>
                       <div className="flex gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
-                        {(isAdmin || isHRHead) && (
-                          <div className="flex gap-1 flex-wrap">
-                            <button
-                              onClick={() => {
-                                setSelectedCandidate(c);
-                                setSelectedCandidateInterviewers(c.interviewer_ids || []);
-                                setLeadInterviewerId(c.lead_interviewer_id || null);
-                                setShowCandidateInterviewerModal(true);
-                                setShowCandidateTeamworkModal(false);
-                              }}
-                              className="ds-btn ds-btn-primary ds-btn-xs"
-                            >
-                              Phỏng vấn ({(c.interviewer_ids || []).length})
-                            </button>
-                            <button
-                              onClick={() => {
-                                setSelectedCandidate(c);
-                                setSelectedCandidateTeamworkScorers(c.teamwork_scorer_ids || []);
-                                setShowCandidateTeamworkModal(true);
-                                setShowCandidateInterviewerModal(false);
-                              }}
-                              className="ds-btn ds-btn-secondary ds-btn-xs"
-                            >
-                              Teamwork ({(c.teamwork_scorer_ids || []).length})
-                            </button>
-                          </div>
-                        )}
                       </div>
                     </div>
 
@@ -1048,8 +1149,95 @@ export const InternalRecruitment = () => {
          </div>
        )}
 
+       {/* App Answers Tab - Nhập Bài Đơn */}
+       {activeTab === 'appAnswers' && currentSeason && (isSuperAdmin || isAdmin || isHRHead || isDeptHead) && (() => {
+         const donCriteria = criteria.filter(c => (c.round_type || 'teamwork') === 'don');
+         return (
+           <div className="space-y-4">
+             <h2 className="text-xl font-bold text-white">Nhập Bài Đơn - {currentSeason.name}</h2>
+             <p className="text-sm text-slate-400">Nhập câu trả lời của từng ứng viên cho các câu hỏi vòng đơn.</p>
+             
+             {/* Candidate selector */}
+             <div className="flex flex-col sm:flex-row gap-3">
+               <div className="flex-1">
+                 <label className="ds-field-label mb-1">Chọn ứng viên</label>
+                 <select
+                   value={selectedCandidateForAnswers?.id || ''}
+                   onChange={(e) => {
+                     const found = candidates.find(c => c.id === e.target.value);
+                     setSelectedCandidateForAnswers(found || null);
+                     if (found) {
+                       try {
+                         const parsed = found.application_answers ? JSON.parse(found.application_answers) : {};
+                         setCandidateAnswersData(typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {});
+                       } catch (_) {
+                         setCandidateAnswersData({});
+                       }
+                     } else {
+                       setCandidateAnswersData({});
+                     }
+                   }}
+                   className="ds-input bg-slate-900 border border-slate-700 text-white"
+                 >
+                   <option value="">-- Chọn ứng viên --</option>
+                   {candidates.map(c => (
+                     <option key={c.id} value={c.id}>{c.full_name} ({c.id})</option>
+                   ))}
+                 </select>
+               </div>
+             </div>
+
+             {candidates.length === 0 && (
+               <div className="text-center py-10 text-slate-400 text-sm">Chưa có ứng viên nào trong mùa tuyển sinh này.</div>
+             )}
+
+             {selectedCandidateForAnswers && (
+               <div className="ds-card p-6 space-y-5">
+                 <div className="pb-3 border-b border-[#1f2937]">
+                   <h3 className="font-bold text-white text-lg">{selectedCandidateForAnswers.full_name}</h3>
+                   <p className="text-slate-400 text-xs mt-0.5">Mã: {selectedCandidateForAnswers.id} | Ban: {selectedCandidateForAnswers.desired_dept || 'N/A'}</p>
+                 </div>
+
+                 {donCriteria.length === 0 ? (
+                   <p className="text-slate-400 text-sm italic">Chưa có câu hỏi nào được thêm cho vòng đơn. Vui lòng thêm tiêu chí với loại "Vòng Đơn" ở tab Tiêu Chí.</p>
+                 ) : (
+                   <div className="space-y-4">
+                     {donCriteria.map(crit => (
+                       <div key={crit.id} className="space-y-1.5">
+                         <label className="text-sm font-semibold text-slate-200">{crit.criteria_name}</label>
+                         <textarea
+                           value={candidateAnswersData[crit.id] || ''}
+                           onChange={(e) => setCandidateAnswersData(prev => ({ ...prev, [crit.id]: e.target.value }))}
+                           placeholder="Nhập câu trả lời của ứng viên..."
+                           rows={4}
+                           className="ds-textarea w-full text-sm leading-relaxed"
+                         />
+                       </div>
+                     ))}
+                   </div>
+                 )}
+
+                 {donCriteria.length > 0 && (
+                   <div className="flex justify-end pt-2 border-t border-[#1f2937]">
+                     <button
+                       onClick={saveCandidateAnswers}
+                       disabled={loading}
+                       className="ds-btn ds-btn-primary"
+                     >
+                       <Save className="w-4 h-4 mr-1" />
+                       {loading ? 'Đang lưu...' : 'Lưu Bài Đơn'}
+                     </button>
+                   </div>
+                 )}
+               </div>
+             )}
+           </div>
+         );
+       })()}
+
         {/* Scoring Tab - redesigned with candidate search and single candidate form */}
         {activeTab === 'scoring' && (canScore || isSuperAdmin) && currentSeason && (() => {
+
           const userDept = (currentUser?.deptName || currentUser?.department || '').toLowerCase().trim();
           const seasonDept = (currentSeason.department || '').toLowerCase().trim();
           const isSeasonDeptHead = isDeptHead && userDept.includes(seasonDept);
@@ -1179,7 +1367,7 @@ export const InternalRecruitment = () => {
                  {/* Scoring form */}
                  {isAssignedToScore && !isSubmitted ? (
                    <div className="space-y-4">
-                     {criteria.map(crit => (
+                     {criteria.filter(crit => (crit.round_type || 'teamwork') === (scoringTypeFilter || 'teamwork')).map(crit => (
                        <div key={crit.id} className="flex items-center gap-4">
                          <div className="flex-1">
                            <label className="text-white font-medium block mb-1">{crit.criteria_name}</label>
