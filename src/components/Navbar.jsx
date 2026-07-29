@@ -38,7 +38,6 @@ export const Navbar = () => {
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const safeUser = currentUser || {
     name: 'Thành Viên VMC',
@@ -65,36 +64,35 @@ export const Navbar = () => {
   const handleNavClick = (id) => {
     setActiveTab(id);
     setIsMobileMenuOpen(false);
-    setIsSearchOpen(false);
     setIsUserDropdownOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-[#0b0f19]/90 backdrop-blur-md border-b border-[#1f2937] w-full">
+    <header className="sticky top-0 z-50 bg-[#0b0f19]/95 backdrop-blur-md border-b border-[#1f2937] w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 w-full gap-4">
+        <div className="flex items-center justify-between h-16 w-full gap-2 sm:gap-4">
 
           {/* BRAND LOGO & TITLE */}
           <div
             onClick={() => handleNavClick('dashboard')}
-            className="flex items-center gap-3 cursor-pointer group shrink-0"
+            className="flex items-center gap-2.5 cursor-pointer group shrink-0"
           >
-            <div className="w-9 h-9 rounded-xl bg-blue-600 border border-blue-500/30 flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-105 transition-transform">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-600 border border-blue-500/30 flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-105 transition-transform">
               <img src="/vmc-logo.jpg" alt="VMC Logo" className="w-full h-full object-cover" />
             </div>
             <div className="flex flex-col">
-              <span className="font-heading font-black text-sm tracking-tight text-slate-100 block leading-none">
+              <span className="font-heading font-black text-xs sm:text-sm tracking-tight text-slate-100 block leading-none">
                 VMC PORTAL
               </span>
-              <span className="text-[9px] block text-slate-400 font-medium mt-0.5 tracking-wider uppercase leading-none">
+              <span className="text-[8.5px] block text-slate-400 font-medium mt-0.5 tracking-wider uppercase leading-none">
                 THPT Vĩnh Bảo
               </span>
             </div>
           </div>
 
-          {/* DESKTOP NAVIGATION BAR (Grouped & Padded) */}
-          <nav className="hidden lg:flex items-center gap-1 bg-[#111827] px-3 py-1.5 rounded-xl border border-[#1f2937]">
+          {/* DESKTOP NAVIGATION BAR (Fits 1280px+ cleanly without overflow) */}
+          <nav className="hidden xl:flex items-center gap-1 bg-[#111827] px-2 py-1 rounded-xl border border-[#1f2937] shrink-0 max-w-full overflow-x-auto">
             {navItems.map(item => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -102,16 +100,16 @@ export const Navbar = () => {
                 <button
                   key={item.id}
                   onClick={() => handleNavClick(item.id)}
-                  className={`relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all whitespace-nowrap ${
+                  className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11.5px] font-semibold tracking-wide transition-all whitespace-nowrap ${
                     isActive
-                      ? 'bg-blue-600/15 text-blue-400 border border-blue-500/30'
+                      ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-[#1f2937] border border-transparent'
                   }`}
                 >
-                  <Icon className="w-3.5 h-3.5 shrink-0" />
+                  <Icon className="w-3.5 h-3.5 shrink-0 opacity-90" />
                   <span>{item.label}</span>
                   {item.badge > 0 && (
-                    <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-full leading-none ${
+                    <span className={`text-[9.5px] font-bold px-1.5 py-0.2 rounded-full leading-none ${
                       isActive ? 'bg-blue-500 text-white' : 'bg-amber-500/20 text-amber-300'
                     }`}>
                       {item.badge}
@@ -123,11 +121,11 @@ export const Navbar = () => {
           </nav>
 
           {/* RIGHT UTILITIES & USER PROFILE */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-[#1f2937] border border-[#1f2937] transition-all"
+              className="p-1.5 sm:p-2 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-[#1f2937] border border-[#1f2937] transition-all shrink-0"
               title="Chuyển chế độ giao diện"
               aria-label="Toggle Theme"
             >
@@ -135,19 +133,19 @@ export const Navbar = () => {
             </button>
 
             {/* User Dropdown Button */}
-            <div className="relative">
+            <div className="relative shrink-0">
               <button
                 onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl bg-[#111827] border border-[#1f2937] hover:border-slate-700 hover:bg-[#1f2937] transition-all"
+                className="flex items-center gap-2 px-2 py-1.5 rounded-xl bg-[#111827] border border-[#1f2937] hover:border-slate-700 hover:bg-[#1f2937] transition-all"
               >
                 <img
                   src={safeUser.avatar}
                   alt={safeUser.name}
-                  className="w-6 h-6 rounded-lg object-cover border border-slate-700"
+                  className="w-6 h-6 rounded-lg object-cover border border-slate-700 shrink-0"
                 />
-                <div className="text-left max-w-[110px] truncate hidden md:block">
+                <div className="text-left max-w-[90px] sm:max-w-[110px] truncate hidden md:block">
                   <div className="font-semibold text-slate-200 text-xs truncate leading-tight">{safeUser.name}</div>
-                  <div className="text-[10px] text-blue-400 font-medium truncate leading-tight">{safeUser.roleTitle}</div>
+                  <div className="text-[9.5px] text-blue-400 font-medium truncate leading-tight">{safeUser.roleTitle}</div>
                 </div>
                 <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${isUserDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
@@ -194,10 +192,10 @@ export const Navbar = () => {
               )}
             </div>
 
-            {/* Mobile Menu Toggle Button */}
+            {/* Mobile / Tablet Drawer Toggle Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-[#1f2937] border border-[#1f2937] transition-all shrink-0"
+              className="xl:hidden p-2 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-[#1f2937] border border-[#1f2937] transition-all shrink-0"
               aria-label="Toggle Menu"
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -206,9 +204,9 @@ export const Navbar = () => {
         </div>
       </div>
 
-      {/* MOBILE DRAWER */}
+      {/* MOBILE / TABLET DRAWER */}
       {isMobileMenuOpen && (
-        <div className="lg:hidden bg-[#111827] border-t border-[#1f2937] px-4 py-3 space-y-1">
+        <div className="xl:hidden bg-[#111827] border-t border-[#1f2937] px-4 py-3 space-y-1">
           {navItems.map(item => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;

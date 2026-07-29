@@ -231,14 +231,14 @@ export const InternalProfile = () => {
         <div className="lg:col-span-8 space-y-6 w-full min-w-0">
           
           {/* Card 1: Tech Info */}
-          <div className="ds-card p-5 sm:p-6 space-y-4 rounded-xl border border-gray-800 shadow-xl">
-            <div className="ds-card-header">
-              <div className="ds-card-header-icon bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                <Laptop className="w-5 h-5" />
+          <div className="ds-card p-5 sm:p-6 space-y-4 rounded-xl border border-gray-800 shadow-xl bg-[#111827]">
+            <div className="flex items-center gap-3 border-b border-[#1f2937] pb-3.5">
+              <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center shrink-0">
+                <Laptop className="w-4.5 h-4.5" />
               </div>
-              <div className="ds-card-header-content flex-1">
-                <div className="ds-card-title">Thông Tin Do Kỹ Thuật Quản Lý</div>
-                <div className="ds-card-subtitle">Các trường thông tin cố định do Tổ Kỹ thuật cấp</div>
+              <div className="min-w-0">
+                <h3 className="font-heading font-bold text-sm text-slate-100">Thông Tin Do Kỹ Thuật Quản Lý</h3>
+                <p className="text-xs text-slate-400">Các trường thông tin cố định do Tổ Kỹ thuật cấp</p>
               </div>
             </div>
 
@@ -264,16 +264,18 @@ export const InternalProfile = () => {
           </div>
 
           {/* Card 2: Self-Update Info */}
-          <div className="ds-card p-5 sm:p-6 space-y-4 rounded-xl border border-gray-800 shadow-xl">
-            <div className="ds-card-header">
-              <div className="ds-card-header-icon bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                <Edit3 className="w-5 h-5" />
+          <div className="ds-card p-5 sm:p-6 space-y-4 rounded-xl border border-gray-800 shadow-xl bg-[#111827]">
+            <div className="flex items-center justify-between gap-3 border-b border-[#1f2937] pb-3.5">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                  <Edit3 className="w-4.5 h-4.5" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-heading font-bold text-sm text-slate-100">Thông Tin Tự Cập Nhật</h3>
+                  <p className="text-xs text-slate-400 truncate">Số Điện Thoại, Email, Địa Chỉ & Facebook cá nhân</p>
+                </div>
               </div>
-              <div className="ds-card-header-content flex-1">
-                <div className="ds-card-title">Thông Tin Tự Cập Nhật</div>
-                <div className="ds-card-subtitle">Số Điện Thoại, Email, Địa Chỉ & Facebook cá nhân</div>
-              </div>
-              <span className="ds-badge ds-badge-emerald shrink-0">
+              <span className="ds-badge ds-badge-emerald shrink-0 text-xs">
                 ✏️ Cho phép sửa
               </span>
             </div>

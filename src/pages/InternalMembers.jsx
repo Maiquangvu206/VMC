@@ -287,27 +287,33 @@ export const InternalMembers = () => {
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-20">
 
       {/* Header */}
-      <div className="flex flex-col items-center justify-center text-center gap-3">
-        <Users className="w-8 h-8 text-blue-400" />
-        <h1 className="font-heading text-2xl sm:text-3xl font-extrabold text-slate-100">Danh Sách Thành Viên</h1>
-        <p className="text-sm text-slate-400 max-w-2xl">
-          Tất cả thành viên có quyền tìm kiếm thông tin thành viên qua từng thời kỳ từ khóa sáng lập đến đương nhiệm.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          <button
+            onClick={() => {
+              if (!isAdmin) {
+                showToast('⛔ Quyền bị từ chối! Chỉ có bộ phận kỹ thuật ban Đối Ngoại - Nhân Sự mới có quyền cấp tài khoản thành viên mới!', 'error');
+                return;
+              }
+              setIsNewAccountModalOpen(true);
+            }}
+            className={`ds-btn ds-btn-primary text-xs shrink-0 ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
+            title={isAdmin ? 'Cấp tài khoản mới (Admin)' : 'Chỉ Chủ Nhiệm CLB (Admin) mới có quyền cấp tài khoản mới'}
+          >
+            <UserPlus className="w-4 h-4 shrink-0" />
+            <span>Cấp Tài Khoản Mới</span>
+          </button>
 
-        <button
-          onClick={() => {
-            if (!isAdmin) {
-              showToast('⛔ Quyền bị từ chối! Chỉ có bộ phận kỹ thuật ban Đối Ngoại - Nhân Sự mới có quyền cấp tài khoản thành viên mới!', 'error');
-              return;
-            }
-            setIsNewAccountModalOpen(true);
-          }}
-          className={`ds-btn ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
-          title={isAdmin ? 'Cấp tài khoản mới (Admin)' : 'Chỉ Chủ Nhiệm CLB (Admin) mới có quyền cấp tài khoản mới'}
-        >
-          <UserPlus className="w-4 h-4" />
-          <span>Cấp Tài Khoản Mới</span>
-        </button>
+          <div className="min-w-0">
+            <h1 className="font-heading text-xl sm:text-2xl font-extrabold text-slate-100 flex items-center gap-2">
+              <Users className="w-6 h-6 text-blue-400 shrink-0" />
+              <span>Danh Sách Thành Viên</span>
+            </h1>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Tìm kiếm thông tin thành viên qua từng thời kỳ từ khóa sáng lập đến đương nhiệm.
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Toolbar / Filter Section */}

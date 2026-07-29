@@ -27,6 +27,7 @@ export const InternalTasks = () => {
   } = useClub();
 
   const [deptFilter, setDeptFilter] = useState('all');
+  const [selectedMemberDeadline, setSelectedMemberDeadline] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     department: 'production',
@@ -40,6 +41,35 @@ export const InternalTasks = () => {
   const todoTasks = useMemo(() => filteredTasks.filter(t => t.status === 'todo'), [filteredTasks]);
   const doingTasks = useMemo(() => filteredTasks.filter(t => t.status === 'doing'), [filteredTasks]);
   const doneTasks = useMemo(() => filteredTasks.filter(t => t.status === 'done'), [filteredTasks]);
+
+  const membersWithDeadlines = useMemo(() => {
+    const map = new Map();
+    tasks.forEach(task => {
+      const assigneeName = getTaskAssignee(task);
+      if (!assigneeName || assigneeName === 'Chưa phân công' || assigneeName === 'Thành viên còn thiếu') return;
+
+      const memberObj = members.find(m => 
+        m.name === assigneeName || 
+        String(m.id) === String(task.assigneeId || task.assignee_id) || 
+        String(m.memberCode) === String(task.assigneeId || task.assignee_id)
+      ) || {
+        id: assigneeName,
+        name: assigneeName,
+        roleTitle: 'Thành Viên VMC',
+        deptName: task.department || 'Ban Chuyên Môn',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400'
+      };
+
+      if (!map.has(memberObj.name)) {
+        map.set(memberObj.name, {
+          member: memberObj,
+          tasks: []
+        });
+      }
+      map.get(memberObj.name).tasks.push(task);
+    });
+    return Array.from(map.values());
+  }, [tasks, members]);
 
   const handleSubmitNewTask = (e) => {
     e.preventDefault();
@@ -112,6 +142,71 @@ export const InternalTasks = () => {
           <Plus className="w-4 h-4" />
           <span>Giao Công Việc Mới</span>
         </button>
+      </div>
+
+      {/* Member Deadline Tracker (Only shows members with deadlines) */}
+      <div className="ds-card p-5 border border-blue-500/30 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-heading text-sm font-bold text-white flex items-center gap-2">
+            <User className="w-4 h-4 text-blue-400" />
+            <span>Theo Dõi Deadline Theo Thành Viên (Chỉ Hiện TV Có Deadline)</span>
+          </h3>
+          <span className="text-xs text-blue-400 font-mono">
+            {membersWithDeadlines.length} thành viên đang có công việc
+          </span>
+        </div>
+
+        {membersWithDeadlines.length === 0 ? (
+          <p className="text-xs text-slate-400 italic">Hiện tại chưa có thành viên nào được phân công deadline.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {membersWithDeadlines.map(item => {
+              const pendingCount = item.tasks.filter(t => t.status !== 'done').length;
+              const overdueCount = item.tasks.filter(t => t.status !== 'done' && isOverdue(t.deadline)).length;
+
+              return (
+                <button
+                  key={item.member.id || item.member.name}
+                  onClick={() => setSelectedMemberDeadline(item)}
+                  className={`p-3 rounded-xl border flex items-center justify-between gap-3 text-left transition-all hover:border-blue-500/50 ${
+                    overdueCount > 0
+                      ? 'bg-rose-500/10 border-rose-500/30'
+                      : pendingCount > 0
+                      ? 'bg-blue-500/10 border-blue-500/30'
+                      : 'bg-emerald-500/10 border-emerald-500/30'
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <img
+                      src={item.member.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400'}
+                      alt={item.member.name}
+                      className="w-10 h-10 rounded-lg object-cover border border-slate-700 shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <div className="font-bold text-xs text-slate-100 truncate">{item.member.name}</div>
+                      <div className="text-[10px] text-slate-400 truncate">{item.member.deptName || item.member.department || 'Ban Chuyên Môn'}</div>
+                    </div>
+                  </div>
+
+                  <div className="shrink-0 text-right space-y-0.5">
+                    <span className="ds-badge ds-badge-blue text-[10px] block">
+                      {item.tasks.length} deadline
+                    </span>
+                    {overdueCount > 0 ? (
+                      <span className="ds-badge ds-badge-rose text-[9px] block">
+                        ⚠️ Trễ {overdueCount} việc
+                      </span>
+                    ) : (
+                      <span className="text-[9.5px] text-slate-400 block font-mono">
+                        {pendingCount} chưa xong
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Filter Tabs matching 4 exact departments */}
@@ -377,6 +472,117 @@ export const InternalTasks = () => {
                 </button>
               </div>
             </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* Member Deadline Detail Modal */}
+      {selectedMemberDeadline && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+          <div className="ds-card w-full max-w-2xl bg-[#111827] border border-[#1f2937] p-6 rounded-2xl shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+            
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-[#1f2937] pb-4">
+              <div className="flex items-center gap-3">
+                <img
+                  src={selectedMemberDeadline.member.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400'}
+                  alt={selectedMemberDeadline.member.name}
+                  className="w-12 h-12 rounded-xl object-cover border border-blue-500/30 shrink-0"
+                />
+                <div>
+                  <h3 className="font-heading font-bold text-lg text-slate-100">{selectedMemberDeadline.member.name}</h3>
+                  <div className="text-xs text-blue-400 font-medium">
+                    {selectedMemberDeadline.member.roleTitle} • {selectedMemberDeadline.member.deptName || selectedMemberDeadline.member.department}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedMemberDeadline(null)}
+                className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#1f2937] transition-all"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Deadlines List */}
+            <div className="space-y-3">
+              <h4 className="font-heading text-xs font-bold text-slate-400 uppercase tracking-wider">
+                Danh Sách Tất Cả Deadline Đã Giao ({selectedMemberDeadline.tasks.length})
+              </h4>
+
+              {selectedMemberDeadline.tasks.map(task => {
+                const overdue = task.status !== 'done' && isOverdue(task.deadline);
+                const deptInfo = getDeptBadge(task.department);
+
+                return (
+                  <div
+                    key={task.id}
+                    className={`p-4 rounded-xl border space-y-2 transition-all ${
+                      task.status === 'done'
+                        ? 'bg-emerald-500/5 border-emerald-500/20'
+                        : overdue
+                        ? 'bg-rose-500/10 border-rose-500/30'
+                        : 'bg-[#0f172a] border-[#1f2937]'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={deptInfo.class}>{deptInfo.label}</span>
+                          {overdue && (
+                            <span className="ds-badge ds-badge-rose text-[10px]">
+                              ⚠️ QUÁ HẠN
+                            </span>
+                          )}
+                          <span className={`ds-badge ${
+                            task.status === 'done'
+                              ? 'ds-badge-emerald'
+                              : task.status === 'doing'
+                              ? 'ds-badge-blue'
+                              : 'ds-badge-amber'
+                          }`}>
+                            {task.status === 'done' ? '✓ HOÀN THÀNH' : task.status === 'doing' ? '⏳ ĐANG LÀM' : '📋 CẦN LÀM'}
+                          </span>
+                        </div>
+                        <h5 className="font-bold text-sm text-slate-100">{task.title}</h5>
+                      </div>
+
+                      <select
+                        value={task.status}
+                        onChange={(e) => updateTaskStatus(task.id, e.target.value)}
+                        className="ds-input ds-select text-xs !py-1 !px-2 w-auto shrink-0"
+                      >
+                        <option value="todo">Cần Làm</option>
+                        <option value="doing">Đang Làm</option>
+                        <option value="done">Hoàn Thành</option>
+                      </select>
+                    </div>
+
+                    {task.desc && (
+                      <p className="text-xs text-slate-300 bg-[#111827] p-2.5 rounded-lg border border-[#1f2937]">
+                        {task.desc}
+                      </p>
+                    )}
+
+                    <div className="flex items-center justify-between text-xs text-slate-400 font-mono pt-1">
+                      <span>Hạn: <strong className={overdue ? 'text-rose-400' : 'text-slate-200'}>{task.deadline}</strong></span>
+                      <span>Ưu tiên: <strong className="text-amber-400">{task.priority || 'Trung bình'}</strong></span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="pt-4 border-t border-[#1f2937] flex justify-end">
+              <button
+                onClick={() => setSelectedMemberDeadline(null)}
+                className="ds-btn ds-btn-primary text-xs"
+              >
+                Đóng
+              </button>
+            </div>
 
           </div>
         </div>
