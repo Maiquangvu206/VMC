@@ -21,7 +21,7 @@ export const SeasonModal = ({ show, onClose, seasonForm, setSeasonForm, onSubmit
               type="text"
               value={seasonForm.name}
               onChange={(e) => setSeasonForm({ ...seasonForm, name: e.target.value })}
-              className="ds-input"
+              className="w-full bg-[#0f172a] border border-[#1f2937] focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-xl p-2.5 text-xs text-slate-100 placeholder:text-slate-500 transition-all mt-1"
               placeholder="VD: Tuyển Gen 6 - 2025"
             />
           </div>
@@ -32,7 +32,7 @@ export const SeasonModal = ({ show, onClose, seasonForm, setSeasonForm, onSubmit
               type="number"
               value={seasonForm.quota}
               onChange={(e) => setSeasonForm({ ...seasonForm, quota: parseInt(e.target.value) || 0 })}
-              className="ds-input"
+              className="w-full bg-[#0f172a] border border-[#1f2937] focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-xl p-2.5 text-xs text-slate-100 placeholder:text-slate-500 transition-all mt-1"
               placeholder="Số lượng thành viên"
             />
           </div>
@@ -42,7 +42,7 @@ export const SeasonModal = ({ show, onClose, seasonForm, setSeasonForm, onSubmit
             <select
               value={seasonForm.department}
               onChange={(e) => setSeasonForm({ ...seasonForm, department: e.target.value })}
-              className="ds-input ds-select"
+              className="w-full bg-[#0f172a] border border-[#1f2937] focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-xl p-2.5 text-xs text-slate-100 transition-all mt-1 cursor-pointer"
             >
               <option value="" disabled hidden>-- Chọn Ban Phụ Trách --</option>
               <option value="Ban Sản Xuất">Ban Sản Xuất</option>

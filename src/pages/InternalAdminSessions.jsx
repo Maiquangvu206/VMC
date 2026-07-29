@@ -239,8 +239,9 @@ export const InternalAdminSessions = () => {
                     String(m.username || '').toLowerCase() === String(s.username || '').toLowerCase()
                   );
 
-                  const displayCode = memberObj?.memberCode || memberObj?.member_code || ((s.username === 'admin' || s.member_id === 'ADMIN') ? 'VMC-8350' : (s.member_id || s.username || 'VMC-0000'));
-                  const displayRole = memberObj?.roleTitle || memberObj?.role_title || ((s.username === 'admin' || s.member_id === 'ADMIN') ? 'Cố Vấn CLB' : (s.role_title || 'Thành Viên VMC'));
+                  const displayCode = memberObj?.memberCode || memberObj?.member_code || ((s.username === 'admin' || s.member_id === 'ADMIN') ? 'ADMIN' : (s.member_id || s.username || 'VMC-0000'));
+                  const displayRole = memberObj?.roleTitle || memberObj?.role_title || ((s.username === 'admin' || s.member_id === 'ADMIN') ? 'Super Admin' : (s.role_title || 'Thành Viên VMC'));
+                  const displayDept = memberObj?.deptName || memberObj?.department || ((s.username === 'admin' || s.member_id === 'ADMIN') ? 'Super Admin' : 'Ban Chuyên Môn');
                   const displayName = s.name || memberObj?.name || 'Thành Viên VMC';
 
                   const lastActiveDate = s.last_active ? new Date(s.last_active) : null;
@@ -248,13 +249,14 @@ export const InternalAdminSessions = () => {
 
                   return (
                     <tr key={s.id} className={`hover:bg-slate-900/50 transition-colors ${isCurrent ? 'bg-cyan-500/10' : ''}`}>
-                      {/* Column 1: Member Info */}
+                      {/* Column 1: Member Info (4 Dòng riêng biệt) */}
                       <td className="py-3 px-3">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold font-heading shrink-0 border border-blue-500/30">
+                        <div className="flex items-start gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold font-heading shrink-0 border border-blue-500/30 mt-0.5">
                             {displayName.charAt(0).toUpperCase()}
                           </div>
                           <div className="min-w-0">
+                            {/* Dòng 1: Tên thành viên + Badge Bạn */}
                             <div className="font-bold text-white flex items-center gap-1.5 truncate">
                               <span className="truncate">{displayName}</span>
                               {isCurrent && (
@@ -263,26 +265,38 @@ export const InternalAdminSessions = () => {
                                 </span>
                               )}
                             </div>
-                            <div className="text-[10px] text-slate-400 font-mono flex items-center gap-1 truncate">
-                              <span className="text-cyan-400 font-bold shrink-0">{displayCode}</span>
-                              <span>•</span>
-                              <span className="text-purple-400 font-semibold truncate">{displayRole}</span>
+                            {/* Dòng 2: Mã thành viên font mono xanh cyan */}
+                            <div className="text-[10px] text-cyan-400 font-mono font-bold truncate mt-0.5">
+                              {displayCode}
+                            </div>
+                            {/* Dòng 3: Chức vụ */}
+                            <div className="text-[10px] text-slate-300 font-medium truncate mt-0.5">
+                              {displayRole}
+                            </div>
+                            {/* Dòng 4: Ban phụ trách màu tím */}
+                            <div className="text-[10px] text-purple-300 font-bold truncate mt-0.5">
+                              {displayDept}
                             </div>
                           </div>
                         </div>
                       </td>
 
-                      {/* Column 2: Device & IP (Xuống dòng) */}
+                      {/* Column 2: Device & IP (Tạm ẩn IP, rỏ chuột để xem) */}
                       <td className="py-3 px-3">
-                        <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex items-center gap-2 min-w-0 group cursor-pointer">
                           {isMobile ? (
                             <Smartphone className="w-4 h-4 text-pink-400 shrink-0" />
                           ) : (
                             <Monitor className="w-4 h-4 text-purple-400 shrink-0" />
                           )}
                           <div className="min-w-0">
-                            <div className="font-semibold text-slate-200 text-xs truncate">{s.device_type || 'Desktop / PC'}</div>
-                            <div className="text-[10px] text-cyan-400 font-mono truncate">{s.ip_address || '127.0.0.1'}</div>
+                            <div className="font-semibold text-slate-200 text-xs truncate">
+                              {s.device_type || 'Desktop / PC'}
+                            </div>
+                            <div className="text-[10px] font-mono transition-colors">
+                              <span className="group-hover:hidden text-slate-500 italic">IP: xem thêm</span>
+                              <span className="hidden group-hover:inline text-cyan-400 font-bold">{s.ip_address || '127.0.0.1'}</span>
+                            </div>
                           </div>
                         </div>
                       </td>

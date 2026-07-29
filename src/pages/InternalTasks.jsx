@@ -120,6 +120,21 @@ export const InternalTasks = () => {
     }
   };
 
+  const getPriorityInfo = (priority) => {
+    switch (priority) {
+      case 'High':
+      case 'Cao':
+        return { label: 'Cao', class: 'text-rose-400' };
+      case 'Low':
+      case 'Thấp':
+        return { label: 'Thấp', class: 'text-slate-400' };
+      case 'Medium':
+      case 'Trung bình':
+      default:
+        return { label: 'Trung bình', class: 'text-amber-400' };
+    }
+  };
+
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8 pb-20">
       
@@ -198,7 +213,7 @@ export const InternalTasks = () => {
                       </span>
                     ) : (
                       <span className="text-[9.5px] text-slate-400 block font-mono">
-                        {pendingCount} chưa xong
+                        Hoàn thành
                       </span>
                     )}
                   </div>
@@ -247,11 +262,12 @@ export const InternalTasks = () => {
             {todoTasks.map(task => {
               const deptInfo = getDeptBadge(task.department);
               const overdue = isOverdue(task.deadline);
+              const prio = getPriorityInfo(task.priority);
               return (
                 <div key={task.id} className={`ds-card p-5 space-y-4 transition-all ${overdue ? 'border-red-500/50 bg-red-950/20' : ''}`}>
                   <div className="flex justify-between items-center text-sm">
                     <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${deptInfo.class}`}>{deptInfo.label}</span>
-                    <span className={`font-mono flex items-center gap-1.5 ${overdue ? 'text-red-400 font-bold' : 'text-slate-400'}`}>
+                    <span className={`font-mono flex items-center gap-1.5 text-xs ${overdue ? 'text-rose-400 font-bold' : 'text-slate-400'}`}>
                       {overdue && <AlertTriangle className="w-4 h-4" />}
                       Hạn: {task.deadline}
                     </span>
@@ -263,7 +279,13 @@ export const InternalTasks = () => {
                     </span>
                   )}
 
-                  <h4 className="font-heading font-bold text-base text-slate-100">{task.title}</h4>
+                  <div>
+                    <h4 className="font-heading font-bold text-base text-slate-100">{task.title}</h4>
+                    <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-400">
+                      <span>Độ ưu tiên:</span>
+                      <span className={`font-bold ${prio.class}`}>{prio.label}</span>
+                    </div>
+                  </div>
                   <p className="text-sm text-slate-400 line-clamp-2">{task.desc}</p>
 
                   <div className="pt-4 border-t border-[var(--border-default)] flex items-center justify-between text-sm">
@@ -294,11 +316,12 @@ export const InternalTasks = () => {
             {doingTasks.map(task => {
               const deptInfo = getDeptBadge(task.department);
               const overdue = isOverdue(task.deadline);
+              const prio = getPriorityInfo(task.priority);
               return (
                 <div key={task.id} className={`ds-card p-5 space-y-4 transition-all ${overdue ? 'border-red-500/50 bg-red-950/20' : ''}`}>
                   <div className="flex justify-between items-center text-sm">
                     <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${deptInfo.class}`}>{deptInfo.label}</span>
-                    <span className={`font-mono flex items-center gap-1.5 ${overdue ? 'text-red-400 font-bold' : 'text-blue-400'}`}>
+                    <span className={`font-mono flex items-center gap-1.5 text-xs ${overdue ? 'text-rose-400 font-bold' : 'text-blue-400'}`}>
                       {overdue && <AlertTriangle className="w-4 h-4" />}
                       Hạn: {task.deadline}
                     </span>
@@ -310,7 +333,13 @@ export const InternalTasks = () => {
                     </span>
                   )}
 
-                  <h4 className="font-heading font-bold text-base text-slate-100">{task.title}</h4>
+                  <div>
+                    <h4 className="font-heading font-bold text-base text-slate-100">{task.title}</h4>
+                    <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-400">
+                      <span>Độ ưu tiên:</span>
+                      <span className={`font-bold ${prio.class}`}>{prio.label}</span>
+                    </div>
+                  </div>
                   <p className="text-sm text-slate-400 line-clamp-2">{task.desc}</p>
 
                   <div className="pt-4 border-t border-[var(--border-default)] flex items-center justify-between text-sm">
@@ -340,14 +369,21 @@ export const InternalTasks = () => {
           <div className="space-y-4">
             {doneTasks.map(task => {
               const deptInfo = getDeptBadge(task.department);
+              const prio = getPriorityInfo(task.priority);
               return (
                 <div key={task.id} className="ds-card p-5 space-y-4 opacity-75">
                   <div className="flex justify-between items-center text-sm">
                     <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${deptInfo.class}`}>{deptInfo.label}</span>
-                    <span className="text-emerald-400 font-mono">Xong</span>
+                    <span className="text-emerald-400 font-mono text-xs">Xong</span>
                   </div>
 
-                  <h4 className="font-heading font-bold text-base text-slate-100 line-through opacity-70">{task.title}</h4>
+                  <div>
+                    <h4 className="font-heading font-bold text-base text-slate-100 line-through opacity-70">{task.title}</h4>
+                    <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-400">
+                      <span>Độ ưu tiên:</span>
+                      <span className={`font-bold ${prio.class}`}>{prio.label}</span>
+                    </div>
+                  </div>
                   <p className="text-sm text-slate-400 line-clamp-1">{task.desc}</p>
 
                   <div className="pt-4 border-t border-[var(--border-default)] text-sm text-slate-400">
@@ -386,7 +422,7 @@ export const InternalTasks = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="ds-field-label">Giao cho Ban nào *</label>
                   <select
@@ -398,6 +434,19 @@ export const InternalTasks = () => {
                     <option value="content_radio">🎙️ Ban Nội Dung - Phát Thanh</option>
                     <option value="production">🎬 Ban Sản Xuất</option>
                     <option value="hr_external">🤝 Ban Đối Ngoại - Nhân Sự</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="ds-field-label">Độ ưu tiên *</label>
+                  <select
+                    value={formData.priority}
+                    onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                    className="ds-input ds-select"
+                  >
+                    <option value="High">🔴 Cao (High)</option>
+                    <option value="Medium">🟡 Trung bình (Medium)</option>
+                    <option value="Low">🔵 Thấp (Low)</option>
                   </select>
                 </div>
 
@@ -568,7 +617,7 @@ export const InternalTasks = () => {
 
                     <div className="flex items-center justify-between text-xs text-slate-400 font-mono pt-1">
                       <span>Hạn: <strong className={overdue ? 'text-rose-400' : 'text-slate-200'}>{task.deadline}</strong></span>
-                      <span>Ưu tiên: <strong className="text-amber-400">{task.priority || 'Trung bình'}</strong></span>
+                      <span>Ưu tiên: <strong className={getPriorityInfo(task.priority).class}>{getPriorityInfo(task.priority).label}</strong></span>
                     </div>
                   </div>
                 );
