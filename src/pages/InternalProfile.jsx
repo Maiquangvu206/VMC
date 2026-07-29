@@ -25,6 +25,7 @@ import {
   Check, 
   Camera, 
   Upload, 
+  AlertCircle,
   X 
 } from 'lucide-react';
 
@@ -134,68 +135,19 @@ export const InternalProfile = () => {
     { label: "Chức Vụ Trong CLB", value: cu.roleTitle, icon: ShieldCheck, isMono: false, color: "text-amber-400 font-bold" }
   ];
 
-  // Core Milestones: Lịch Sử Chức Vụ & Trạng Thái Thành Viên
-  const roleHistoryMilestones = [
-    {
-      id: 'm1',
-      date: '20/09/2024',
-      title: `Gia nhập VMC (Thành viên Ban Đối Ngoại - Nhân Sự)`,
-      badgeText: '[Gia nhập]',
-      badgeStyle: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
-      icon: UserPlus,
-      iconBorder: 'border-emerald-500 text-emerald-400'
-    },
-    {
-      id: 'm2',
-      date: '15/08/2025',
-      title: `Thăng chức: Phó Ban Kỹ Thuật (Ban Đối Ngoại - Nhân Sự)`,
-      badgeText: '[Chuyển chức vụ]',
-      badgeStyle: 'bg-blue-500/10 text-blue-400 border-blue-500/30',
-      icon: Award,
-      iconBorder: 'border-blue-500 text-blue-400'
-    },
-    {
-      id: 'm3',
-      date: '01/06/2026',
-      title: `Nhận nhiệm vụ: ${cu.roleTitle || 'Chủ Nhiệm CLB VMC'}`,
-      badgeText: '[Thăng chức]',
-      badgeStyle: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/30',
-      icon: Sparkles,
-      iconBorder: 'border-indigo-500 text-indigo-400'
-    },
-    {
-      id: 'm4',
-      date: '30/08/2027',
-      title: 'Dự kiến kết thúc nhiệm kỳ CLB',
-      badgeText: '[Dự kiến kết thúc]',
-      badgeStyle: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
-      icon: Calendar,
-      iconBorder: 'border-purple-500 text-purple-400'
-    },
-    {
-      id: 'm5',
-      date: '21/07/2026 (Hiện Tại)',
-      title: `Trạng Thái Hoạt Động: ${cu.status === 'Active' ? 'Đang Hoạt Động' : 'Tạm Nghỉ'}`,
-      badgeText: '[ĐANG HOẠT ĐỘNG]',
-      badgeStyle: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold',
-      icon: ShieldCheck,
-      iconBorder: 'border-emerald-400 text-emerald-300'
-    }
-  ];
-
   return (
-    <div className="page-wrap space-y-6 pb-20">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-20">
       
       {/* Header Banner */}
-      <div className="ds-card-glass p-6 sm:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex flex-col gap-1">
+      <div className="ds-card-glass p-5 sm:p-6 lg:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-xl border border-gray-800 shadow-xl min-w-0">
+        <div className="flex flex-col gap-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="ds-badge ds-badge-cyan flex items-center gap-1.5 text-[11px]">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+            <span className="ds-badge ds-badge-cyan flex items-center gap-1.5 text-[11px] shrink-0">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
               HỒ SƠ THÀNH VIÊN VMC
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight truncate">
             Thông Tin Cá Nhân & <span className="text-cyan-400">Tài Khoản VMC</span>
           </h1>
           <p className="text-xs text-slate-400">
@@ -205,24 +157,24 @@ export const InternalProfile = () => {
 
         <button
           onClick={logout}
-          className="ds-btn ds-btn-danger text-xs shrink-0"
+          className="ds-btn ds-btn-danger text-xs shrink-0 whitespace-nowrap"
         >
-          <LogOut className="w-4 h-4" />
+          <LogOut className="w-4 h-4 shrink-0" />
           <span>Đăng Xuất Tài Khoản</span>
         </button>
       </div>
 
-      {/* Main Layout Grid */}
-      <div className="ds-grid-12">
+      {/* Main Layout Grid - 1 Col Mobile/Tablet, 12 Cols Desktop (4/8 split) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full items-start">
         
-        {/* Left Column */}
-        <div className="ds-col-span-4 space-y-6">
+        {/* Left Column (4 cols on desktop) */}
+        <div className="lg:col-span-4 space-y-6 w-full min-w-0">
           
-           <div className="ds-card-glass p-6 flex flex-col items-center text-center gap-5">
+           <div className="ds-card-glass p-5 sm:p-6 flex flex-col items-center text-center gap-5 rounded-xl border border-gray-800 shadow-xl overflow-hidden min-w-0">
             
             {/* Avatar Circle with Interactive Edit Trigger */}
             <div 
-              className="relative group cursor-pointer"
+              className="relative group cursor-pointer shrink-0"
               onClick={() => setIsAvatarModalOpen(true)}
               title="Click để đổi ảnh đại diện"
             >
@@ -244,29 +196,29 @@ export const InternalProfile = () => {
             </div>
 
             {/* Profile Identity Details */}
-            <div className="flex flex-col items-center gap-2 w-full">
-              <h2 className="text-xl font-bold text-white tracking-tight">{cu.name}</h2>
-              <span className="ds-badge ds-badge-cyan flex items-center gap-1.5 text-[11px]">
+            <div className="flex flex-col items-center gap-2 w-full min-w-0">
+              <h2 className="text-xl font-bold text-white tracking-tight truncate w-full" title={cu.name}>{cu.name}</h2>
+              <span className="ds-badge ds-badge-cyan flex items-center gap-1.5 text-[11px] truncate max-w-full" title={cu.roleTitle}>
                 {cu.roleTitle}
               </span>
-              <p className="text-xs text-slate-400 font-medium pt-0.5">
+              <p className="text-xs text-slate-400 font-medium pt-0.5 truncate w-full">
                 Lớp {cu.class} • THPT Vĩnh Bảo
               </p>
             </div>
 
             {/* Member Code Block */}
-            <div className="ds-card p-4 w-full text-center flex flex-col items-center gap-1">
-              <span className="text-xs font-medium text-slate-400 uppercase tracking-wider">Mã Thành Viên</span>
+            <div className="ds-card p-4 w-full text-center flex flex-col items-center gap-1 rounded-lg bg-slate-900/60 border border-slate-800">
+              <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Mã Thành Viên</span>
               <span className="text-lg font-mono font-bold text-cyan-400 tracking-widest">{cu.memberCode}</span>
             </div>
 
             {/* Current Status Badge */}
-            <div className="ds-card p-4 w-full flex items-center justify-between text-xs border border-emerald-500/30">
-              <div className="flex items-center gap-2 text-emerald-400 font-bold">
-                <Check className="w-4 h-4" />
-                <span>Trạng Thái Hoạt Động</span>
+            <div className="ds-card p-4 w-full flex items-center justify-between text-xs border border-emerald-500/30 rounded-lg bg-slate-900/60">
+              <div className="flex items-center gap-2 text-emerald-400 font-bold shrink-0">
+                <Check className="w-4 h-4 shrink-0" />
+                <span>Trạng Thái</span>
               </div>
-              <span className="ds-badge ds-badge-emerald">
+              <span className="ds-badge ds-badge-emerald shrink-0">
                 {cu.status === 'Active' ? 'Đang Hoạt Động' : 'Tạm Nghỉ'}
               </span>
             </div>
@@ -275,11 +227,11 @@ export const InternalProfile = () => {
 
         </div>
 
-        {/* Right Column: Information & Timeline Cards */}
-        <div className="ds-col-span-8 space-y-6">
+        {/* Right Column: Information & Timeline Cards (8 cols on desktop) */}
+        <div className="lg:col-span-8 space-y-6 w-full min-w-0">
           
           {/* Card 1: Tech Info */}
-          <div className="ds-card p-6 space-y-4">
+          <div className="ds-card p-5 sm:p-6 space-y-4 rounded-xl border border-gray-800 shadow-xl">
             <div className="ds-card-header">
               <div className="ds-card-header-icon bg-blue-500/10 text-blue-400 border border-blue-500/20">
                 <Laptop className="w-5 h-5" />
@@ -290,13 +242,13 @@ export const InternalProfile = () => {
               </div>
             </div>
 
-             <div className="ds-grid-2">
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                {techOnlyFields.map((field, idx) => {
                  const Icon = field.icon;
                  return (
                    <div 
                      key={idx} 
-                     className="ds-card p-4 flex flex-col gap-1"
+                     className="ds-card p-4 flex flex-col gap-1 rounded-lg bg-slate-900/40 border border-slate-800/80"
                    >
                      <span className="text-xs font-medium text-slate-400 flex items-center gap-2 mb-1">
                        <Icon className="w-4 h-4 text-cyan-400 shrink-0" />
@@ -311,9 +263,8 @@ export const InternalProfile = () => {
              </div>
           </div>
 
-          {/* Card 2: Thông tin tự cập nhật */}
           {/* Card 2: Self-Update Info */}
-          <div className="ds-card p-6 space-y-4">
+          <div className="ds-card p-5 sm:p-6 space-y-4 rounded-xl border border-gray-800 shadow-xl">
             <div className="ds-card-header">
               <div className="ds-card-header-icon bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 <Edit3 className="w-5 h-5" />
@@ -336,7 +287,7 @@ export const InternalProfile = () => {
 
             <form onSubmit={handleSelfUpdate} className="space-y-4">
               
-              <div className="ds-grid-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="ds-field-label">Số Điện Thoại / Zalo *</label>
                   <div className="relative flex items-center w-full">
@@ -381,23 +332,6 @@ export const InternalProfile = () => {
                     />
                   </div>
                 </div>
-              </div>
-
-              <div className="ds-grid-2">
-                <div>
-                  <label className="ds-field-label">Địa Chỉ Thường Trú *</label>
-                  <div className="relative flex items-center w-full">
-                    <MapPin className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
-                    <input
-                      type="text"
-                      required
-                      value={selfData.address}
-                      onChange={(e) => setSelfData({ ...selfData, address: e.target.value })}
-                      placeholder="Khu 3, Thị trấn Vĩnh Bảo, Vĩnh Bảo, Hải Phòng..."
-                      className="ds-input pl-12"
-                    />
-                  </div>
-                </div>
 
                 <div>
                   <label className="ds-field-label">Liên Hệ Facebook Cá Nhân *</label>
@@ -415,6 +349,21 @@ export const InternalProfile = () => {
                 </div>
               </div>
 
+              <div>
+                <label className="ds-field-label">Địa Chỉ Thường Trú *</label>
+                <div className="relative flex items-center w-full">
+                  <MapPin className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
+                  <input
+                    type="text"
+                    required
+                    value={selfData.address}
+                    onChange={(e) => setSelfData({ ...selfData, address: e.target.value })}
+                    placeholder="Khu 3, Thị trấn Vĩnh Bảo, Vĩnh Bảo, Hải Phòng..."
+                    className="ds-input pl-12"
+                  />
+                </div>
+              </div>
+
               <div className="flex justify-end pt-2">
                 <button
                   type="submit"
@@ -428,7 +377,7 @@ export const InternalProfile = () => {
           </div>
 
            {/* Card 3: Lịch Sử Chức Vụ & Trạng Thái Thành Viên (Vertical Timeline) */}
-           <div className="ds-card ds-card-elevated p-6 space-y-6">
+           <div className="ds-card ds-card-elevated p-5 sm:p-6 space-y-6 rounded-xl border border-gray-800 shadow-xl">
              
              {/* Header Khối với Badge Phân Quyền */}
              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--border-default)] pb-4 gap-3">
@@ -446,7 +395,7 @@ export const InternalProfile = () => {
                {isHRMember && (
                  <button
                    onClick={() => setIsMilestoneModalOpen(true)}
-                   className="ds-btn ds-btn-primary"
+                   className="ds-btn ds-btn-primary shrink-0"
                  >
                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                    <span>Thêm Cột Mốc Mới</span>
@@ -474,7 +423,6 @@ export const InternalProfile = () => {
                        }
                      ];
 
-                 // Filter out previous status node if present to prevent duplicate status entries
                  const baseList = rawList.filter(m => {
                    const b = (m.badgeText || '').toLowerCase();
                    const t = (m.title || '').toLowerCase();
@@ -527,28 +475,22 @@ export const InternalProfile = () => {
 
                    return (
                      <div key={m.id || index} className="relative group">
-                       {/* Node Bullet Icon trên đường gạch nối */}
                        <div className={`absolute -left-[37px] top-0.5 p-1.5 rounded-full border-2 ${iconBorder} shadow-md transition-transform group-hover:scale-110`}>
                          <Icon className="w-3.5 h-3.5" />
                        </div>
 
-                       {/* Nội dung Mốc Thời Gian */}
-                       <div className="ds-card p-4 transition-all hover:border-slate-700 space-y-1.5">
+                       <div className="ds-card p-4 transition-all hover:border-slate-700 space-y-1.5 rounded-lg">
                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
-                           
-                           {/* Thời gian */}
                            <div className="flex items-center gap-2 text-xs font-mono font-semibold text-slate-400">
                              <Clock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                              <span>{m.date}</span>
                            </div>
 
-                           {/* Tag Trạng Thái (Right Badge) */}
                            <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-md border shrink-0 w-fit ${badgeStyle}`}>
                              {m.badgeText}
                            </span>
                          </div>
 
-                         {/* Tên Sự Kiện / Chức Vụ In Đậm */}
                          <h4 className="text-sm font-bold text-white leading-snug">
                            {m.title}
                          </h4>
@@ -568,7 +510,7 @@ export const InternalProfile = () => {
        {/* Modal: Chỉnh Sửa Ảnh Đại Diện Thành Viên */}
        {isAvatarModalOpen && (
          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md">
-           <div className="relative w-full max-w-md ds-card ds-card-elevated border border-blue-500/40 p-6 sm:p-8 shadow-2xl space-y-6 text-white animate-slide-up">
+           <div className="relative w-full max-w-md ds-card ds-card-elevated border border-blue-500/40 p-6 sm:p-8 shadow-2xl space-y-6 text-white animate-slide-up rounded-xl">
              
              <div className="flex items-center justify-between pb-4 border-b border-[var(--border-default)]">
                <div className="flex items-center gap-2">
@@ -585,7 +527,6 @@ export const InternalProfile = () => {
 
              <form onSubmit={handleSaveAvatar} className="space-y-5 text-xs">
                
-               {/* Live Preview Circle */}
                <div className="flex flex-col items-center gap-2">
                  <div className="w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-cyan-500 to-blue-600 shadow-md overflow-hidden">
                    <img 
@@ -597,7 +538,6 @@ export const InternalProfile = () => {
                  <span className="text-[11px] text-slate-400">Xem trước ảnh đại diện</span>
                </div>
 
-               {/* Upload File từ thiết bị */}
                <div className="space-y-2">
                  <label className="ds-field-label text-center">Tải Ảnh Mới Từ Thiết Bị</label>
                   <label className="w-full py-4 px-4 rounded-2xl bg-[var(--bg-primary)] hover:bg-[var(--bg-input)] border-2 border-dashed border-blue-500/50 hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center gap-2 text-slate-300 hover:text-white transition-all group">
@@ -642,7 +582,7 @@ export const InternalProfile = () => {
        {/* Modal: Thêm Cột Mốc Lịch Sử Chức Vụ (Ban ĐN-NS / Admin) */}
        {isMilestoneModalOpen && (
          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md">
-           <div className="relative w-full max-w-md ds-card ds-card-elevated border border-cyan-500/40 p-6 sm:p-8 shadow-2xl space-y-5 text-white animate-slide-up">
+           <div className="relative w-full max-w-md ds-card ds-card-elevated border border-cyan-500/40 p-6 sm:p-8 shadow-2xl space-y-5 text-white animate-slide-up rounded-xl">
              
              <div className="flex items-center justify-between pb-3 border-b border-[var(--border-default)]">
                <div className="flex items-center gap-2">

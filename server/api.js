@@ -73,7 +73,7 @@ router.post('/tasks', async (req, res) => {
       if (assId) {
         try {
           const assignees = await queryDatabase(
-            'SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? OR full_name = ? OR username = ? LIMIT 1',
+            'SELECT email, full_name FROM Members WHERE CAST(id AS CHAR) = ? OR member_code = ? OR full_name = ? OR username = ? LIMIT 1',
             [assId, assId, assId, assId]
           );
           if (assignees && assignees.length > 0 && assignees[0].email) {
@@ -134,8 +134,8 @@ router.put('/tasks/:id', async (req, res) => {
     // Gửi email thông báo hoàn thành nhiệm vụ nếu chuyển trạng thái sang 'done'
     if (oldTask && status === 'done' && oldTask.status !== 'done') {
       try {
-        const creatorEmailResult = await queryDatabase('SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? LIMIT 1', [oldTask.created_by, oldTask.created_by]);
-        const assigneeResult = await queryDatabase('SELECT full_name FROM Members WHERE id = ? OR member_code = ? LIMIT 1', [oldTask.assignee_id, oldTask.assignee_id]);
+        const creatorEmailResult = await queryDatabase('SELECT email, full_name FROM Members WHERE CAST(id AS CHAR) = ? OR member_code = ? LIMIT 1', [oldTask.created_by, oldTask.created_by]);
+        const assigneeResult = await queryDatabase('SELECT full_name FROM Members WHERE CAST(id AS CHAR) = ? OR member_code = ? LIMIT 1', [oldTask.assignee_id, oldTask.assignee_id]);
 
         const creator = creatorEmailResult && creatorEmailResult.length > 0 ? creatorEmailResult[0] : null;
         const assigneeName = assigneeResult && assigneeResult.length > 0 ? assigneeResult[0].full_name : 'Thành viên VMC';
@@ -1151,7 +1151,7 @@ router.post('/sessions/login', async (req, res) => {
 
     if (memberId || username) {
       const mems = await queryDatabase(
-        'SELECT full_name, role_title FROM Members WHERE id = ? OR username = ? OR member_code = ? LIMIT 1',
+        'SELECT full_name, role_title FROM Members WHERE CAST(id AS CHAR) = ? OR username = ? OR member_code = ? LIMIT 1',
         [String(memberId || ''), String(username || ''), String(username || '')]
       );
       if (mems && mems.length > 0 && mems[0].full_name && mems[0].full_name !== 'Quản Trị Viên') {

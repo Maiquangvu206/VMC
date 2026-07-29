@@ -899,15 +899,20 @@ setCurrentUser(acc);
       return;
     }
 
-    const member = db.members.find(m => m.id === id);
+    const member = (db.members || []).find(m =>
+      String(m.id) === String(id) ||
+      String(m.memberCode || m.member_code).toUpperCase() === String(id).toUpperCase() ||
+      String(m.username).toLowerCase() === String(id).toLowerCase()
+    );
     if (!member) return;
 
     const newStatus = member.status === 'Active' ? 'Suspended' : 'Active';
+    const targetCode = member.memberCode || member.member_code || member.id;
 
     try {
       // Gọi API cập nhật status vào DB trước (không optimistic update)
-      console.log('🔒 Đang gọi API cập nhật status:', member.memberCode, '->', newStatus);
-      const res = await updateMemberAPI(member.memberCode || member.member_code || member.id, {
+      console.log('🔒 Đang gọi API cập nhật status:', targetCode, '->', newStatus);
+      const res = await updateMemberAPI(targetCode, {
         status: newStatus,
         name: member.name
       });

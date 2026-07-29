@@ -490,16 +490,18 @@ export const InternalRecruitment = () => {
   }, [selectedSeasonForInterviewers, currentSeason, members]);
 
   return (
-    <div className="page-wrap space-y-8 pb-20">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex flex-col items-center justify-center text-center">
-          <UserPlus className="text-violet-400 w-8 h-8" />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <UserPlus className="text-violet-400 w-8 h-8 shrink-0" />
+          <div>
           <h1 className="font-heading text-3xl font-extrabold text-slate-100 mt-1">
             Quản Lý Tuyển Gen Nội Bộ
           </h1>
           <p className="text-sm text-slate-400 mt-2">
             Hệ thống chấm điểm mù, phân công phỏng vấn và tổng hợp kết quả tuyển gen.
           </p>
+          </div>
         </div>
 
         {isSuperAdmin && (

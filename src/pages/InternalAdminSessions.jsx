@@ -82,125 +82,125 @@ export const InternalAdminSessions = () => {
   });
 
   return (
-    <div className="page-wrap px-4 sm:px-6 py-6 space-y-6">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-20">
       
       {/* Header Banner */}
-      <div className="ds-card p-6 border border-cyan-500/30 relative overflow-hidden bg-[var(--bg-primary)]">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative z-10">
-          <div className="flex flex-col items-center justify-center text-center">
+      <div className="ds-card p-5 sm:p-6 border border-cyan-500/30 relative overflow-hidden bg-[var(--bg-primary)] rounded-xl shadow-lg">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative z-10 min-w-0">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3.5 min-w-0">
             <div className="w-12 h-12 rounded-2xl bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-400 shrink-0 shadow-lg shadow-cyan-500/20">
               <ShieldCheck className="w-6 h-6" />
             </div>
-            <div className="mt-3">
-              <div className="flex items-center justify-center gap-2">
-                <h1 className="font-heading font-black text-xl text-white tracking-tight">Quản Lý Phiên Làm Việc</h1>
-               <span className="ds-badge ds-badge-cyan text-[10px] font-mono font-bold px-2 py-0.5">
-                   Super Admin
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="font-heading font-black text-lg sm:text-xl text-white tracking-tight truncate">Quản Lý Phiên Làm Việc</h1>
+                <span className="ds-badge ds-badge-cyan text-[10px] font-mono font-bold px-2 py-0.5 shrink-0">
+                  Super Admin
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-1">
-                 Theo dõi toàn bộ các phiên đăng nhập, thiết bị di động/máy tính & cưỡng chế đăng xuất từ xa.
+              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                Theo dõi toàn bộ các phiên đăng nhập, thiết bị di động/máy tính & cưỡng chế đăng xuất từ xa.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 w-full sm:w-auto">
+          <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0">
             <button
               onClick={() => {
                 if (window.confirm('Bạn có chắc chắn muốn đăng xuất TẤT CẢ các phiên khác ngoại trừ phiên hiện tại?')) {
                   revokeAllSessions();
                 }
               }}
-              className="ds-btn ds-btn-danger ds-btn-xs w-full sm:w-auto"
+              className="ds-btn ds-btn-danger ds-btn-xs w-full sm:w-auto whitespace-nowrap"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-4 h-4 shrink-0" />
               <span>Đăng Xuất Tất Cả Phiên Trừ Tôi</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Analytics Metric Cards - 3 Distinct Statuses */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-         <div className="ds-card p-4 border border-emerald-500/30">
-          <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
-            <span>Đang Hoạt Động</span>
-            <Wifi className="w-4 h-4 text-emerald-400 animate-pulse" />
+      {/* Analytics Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+        <div className="ds-card p-5 border border-emerald-500/30 rounded-xl space-y-1">
+          <div className="flex items-center justify-between text-slate-400 text-xs">
+            <span className="font-semibold">Đang Hoạt Động</span>
+            <Wifi className="w-4 h-4 text-emerald-400 animate-pulse shrink-0" />
           </div>
           <div className="text-2xl font-black text-emerald-400 font-mono">{activeSessions.length}</div>
-          <div className="text-[10px] text-slate-400 mt-1">Phiên đang kết nối thực tế</div>
+          <div className="text-[11px] text-slate-400">Phiên đang kết nối thực tế</div>
         </div>
 
-         <div className="ds-card p-4 border border-slate-700">
-          <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
-            <span>Kết Thúc Phiên</span>
-            <Clock className="w-4 h-4 text-slate-400" />
+        <div className="ds-card p-5 border border-slate-700 rounded-xl space-y-1">
+          <div className="flex items-center justify-between text-slate-400 text-xs">
+            <span className="font-semibold">Kết Thúc Phiên</span>
+            <Clock className="w-4 h-4 text-slate-400 shrink-0" />
           </div>
           <div className="text-2xl font-black text-slate-300 font-mono">{endedSessions.length}</div>
-          <div className="text-[10px] text-slate-400 mt-1">Tự đăng xuất hoặc hết hạn</div>
+          <div className="text-[11px] text-slate-400">Tự đăng xuất hoặc hết hạn</div>
         </div>
 
-         <div className="ds-card p-4 border border-rose-500/30">
-          <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
-            <span>Bị Hủy</span>
-            <XCircle className="w-4 h-4 text-rose-400" />
+        <div className="ds-card p-5 border border-rose-500/30 rounded-xl space-y-1">
+          <div className="flex items-center justify-between text-slate-400 text-xs">
+            <span className="font-semibold">Bị Hủy</span>
+            <XCircle className="w-4 h-4 text-rose-400 shrink-0" />
           </div>
           <div className="text-2xl font-black text-rose-400 font-mono">{revokedSessions.length}</div>
-          <div className="text-[10px] text-slate-400 mt-1">Admin cưỡng chế thu hồi</div>
+          <div className="text-[11px] text-slate-400">Admin cưỡng chế thu hồi</div>
         </div>
 
-         <div className="ds-card p-4 border border-purple-500/30">
-          <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
-            <span>Thiết Bị</span>
-            <Monitor className="w-4 h-4 text-purple-400" />
+        <div className="ds-card p-5 border border-purple-500/30 rounded-xl space-y-1">
+          <div className="flex items-center justify-between text-slate-400 text-xs">
+            <span className="font-semibold">Thiết Bị</span>
+            <Monitor className="w-4 h-4 text-purple-400 shrink-0" />
           </div>
-          <div className="text-base font-bold text-white flex items-center gap-3 mt-1">
+          <div className="text-base font-bold text-white flex items-center gap-3 pt-0.5">
             <span className="flex items-center gap-1 text-xs text-purple-300 font-mono">
-              <Monitor className="w-3.5 h-3.5" /> {desktopCount} PC
+              <Monitor className="w-3.5 h-3.5 shrink-0" /> {desktopCount} PC
             </span>
             <span className="flex items-center gap-1 text-xs text-pink-300 font-mono">
-              <Smartphone className="w-3.5 h-3.5" /> {mobileCount} Mobile
+              <Smartphone className="w-3.5 h-3.5 shrink-0" /> {mobileCount} Mobile
             </span>
           </div>
-          <div className="text-[10px] text-slate-400 mt-1">Máy tính / Điện thoại</div>
+          <div className="text-[11px] text-slate-400">Máy tính / Điện thoại</div>
         </div>
       </div>
 
-      {/* Filter & Search Bar - 3 Status Filters */}
-      <div className="ds-card p-4 flex flex-col sm:flex-row gap-3 items-center justify-between">
-        <div className="relative flex items-center w-full">
-          <Search className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
+      {/* Filter & Search Bar */}
+      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-[#10172a] p-4 rounded-xl border border-gray-800 shadow-md w-full">
+        <div className="relative flex items-center w-full sm:flex-1 min-w-0">
+          <Search className="absolute left-3.5 w-4 h-4 text-slate-400 shrink-0 pointer-events-none" />
           <input
             type="text"
             placeholder="Tìm theo tên, mã TV, địa chỉ IP..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="ds-input pl-12"
+            className="ds-input pl-10 w-full bg-slate-900/80 border-slate-700/80 text-sm"
           />
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end overflow-x-auto">
-          <span className="text-xs text-slate-400 shrink-0">Lọc:</span>
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-start sm:justify-end overflow-x-auto shrink-0 pb-1 sm:pb-0">
+          <span className="text-xs text-slate-400 font-semibold shrink-0">Lọc:</span>
           <button
             onClick={() => setStatusFilter('all')}
-            className={`ds-btn ds-btn-xs ${
-              statusFilter === 'all' ? 'bg-cyan-600 text-white' : 'bg-slate-950 text-slate-400 hover:text-white'
+            className={`ds-btn ds-btn-xs shrink-0 ${
+              statusFilter === 'all' ? 'bg-cyan-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-700'
             }`}
           >
             Tất Cả ({sessions.length})
           </button>
           <button
             onClick={() => setStatusFilter('active')}
-            className={`ds-btn ds-btn-xs ${
-              statusFilter === 'active' ? 'bg-emerald-600 text-white' : 'bg-slate-950 text-slate-400 hover:text-white'
+            className={`ds-btn ds-btn-xs shrink-0 ${
+              statusFilter === 'active' ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-700'
             }`}
           >
             🟢 Đang Hoạt Động ({activeSessions.length})
           </button>
           <button
             onClick={() => setStatusFilter('ended')}
-            className={`ds-btn ds-btn-xs ${
-              statusFilter === 'ended' ? 'bg-slate-700 text-white' : 'bg-slate-950 text-slate-400 hover:text-white'
+            className={`ds-btn ds-btn-xs shrink-0 ${
+              statusFilter === 'ended' ? 'bg-slate-700 text-white' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-700'
             }`}
           >
             ⏸️ Kết Thúc Phiên ({endedSessions.length})
@@ -209,20 +209,20 @@ export const InternalAdminSessions = () => {
       </div>
 
       {/* Sessions Table */}
-      <div className="ds-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="ds-table">
+      <div className="ds-card rounded-xl border border-gray-800 overflow-hidden shadow-xl min-w-0 w-full">
+        <div className="overflow-x-auto w-full scrollbar-thin">
+          <table className="ds-table w-full min-w-[700px]">
             <thead>
-              <tr>
-                <th>Thành Viên</th>
-                <th>Thiết Bị & IP</th>
-                <th>Đăng Nhập</th>
-                <th>Hoạt Động Gần Nhất</th>
-                <th className="text-center">Trạng Thái</th>
-                <th className="text-right">Thao Tác</th>
+              <tr className="bg-slate-900/90 text-xs text-slate-400 border-b border-gray-800">
+                <th className="py-3.5 px-4 text-left font-semibold">Thành Viên</th>
+                <th className="py-3.5 px-4 text-left font-semibold">Thiết Bị & IP</th>
+                <th className="py-3.5 px-4 text-left font-semibold">Đăng Nhập</th>
+                <th className="py-3.5 px-4 text-left font-semibold">Hoạt Động Gần Nhất</th>
+                <th className="py-3.5 px-4 text-center font-semibold">Trạng Thái</th>
+                <th className="py-3.5 px-4 text-right font-semibold">Thao Tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-slate-800/60 text-sm">
               {filteredSessions.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="text-center py-8 text-slate-500 italic">
@@ -249,58 +249,58 @@ export const InternalAdminSessions = () => {
                   const isRecent = lastActiveDate && ((now - lastActiveDate) / (1000 * 60)) <= 5;
 
                   return (
-                    <tr key={s.id} className={isCurrent ? 'bg-cyan-500/10' : ''}>
-                      <td>
-                        <div className="flex items-center gap-3">
+                    <tr key={s.id} className={`hover:bg-slate-900/50 transition-colors ${isCurrent ? 'bg-cyan-500/10' : ''}`}>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-3 min-w-0">
                           <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold font-heading shrink-0 border border-blue-500/30">
                             {displayName.charAt(0).toUpperCase()}
                           </div>
-                          <div>
-                            <div className="font-bold text-white flex items-center gap-1.5">
-                              <span>{displayName}</span>
+                          <div className="min-w-0">
+                            <div className="font-bold text-white flex items-center gap-1.5 truncate">
+                              <span className="truncate">{displayName}</span>
                               {isCurrent && (
-                                <span className="ds-badge ds-badge-cyan text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border border-cyan-500/30">
-                                  Bạn (Phiên này)
+                                <span className="ds-badge ds-badge-cyan text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border border-cyan-500/30 shrink-0">
+                                  Bạn
                                 </span>
                               )}
                             </div>
-                            <div className="text-[10px] text-slate-400 font-mono flex items-center gap-1">
-                              <span className="text-cyan-400 font-bold">{displayCode}</span>
+                            <div className="text-[10px] text-slate-400 font-mono flex items-center gap-1 truncate">
+                              <span className="text-cyan-400 font-bold shrink-0">{displayCode}</span>
                               <span>•</span>
-                              <span className="text-purple-400 font-semibold">{displayRole}</span>
+                              <span className="text-purple-400 font-semibold truncate">{displayRole}</span>
                             </div>
                           </div>
                         </div>
                       </td>
 
-                      <td>
-                        <div className="flex items-center gap-2">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2 min-w-0">
                           {isMobile ? (
                             <Smartphone className="w-4 h-4 text-pink-400 shrink-0" />
                           ) : (
                             <Monitor className="w-4 h-4 text-purple-400 shrink-0" />
                           )}
-                          <div>
-                            <div className="font-semibold text-slate-200">{s.device_type || 'Desktop / PC'}</div>
-                            <div className="text-[10px] text-slate-400 font-mono">{s.ip_address || '127.0.0.1'}</div>
+                          <div className="min-w-0">
+                            <div className="font-semibold text-slate-200 text-xs truncate">{s.device_type || 'Desktop / PC'}</div>
+                            <div className="text-[10px] text-slate-400 font-mono truncate">{s.ip_address || '127.0.0.1'}</div>
                           </div>
                         </div>
                       </td>
 
-                      <td className="font-mono text-[11px] text-slate-300">
+                      <td className="py-3 px-4 font-mono text-xs text-slate-300 whitespace-nowrap">
                         {s.login_time ? new Date(s.login_time).toLocaleString('vi-VN') : 'Mới đây'}
                       </td>
 
-                      <td className="font-mono text-[11px]">
+                      <td className="py-3 px-4 font-mono text-xs whitespace-nowrap">
                         <div className="flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                           <span className={isRecent ? 'text-emerald-400 font-bold' : 'text-slate-300'}>
                             {s.last_active ? new Date(s.last_active).toLocaleTimeString('vi-VN') : 'N/A'}
                           </span>
                         </div>
                       </td>
 
-                      <td className="text-center">
+                      <td className="py-3 px-4 text-center whitespace-nowrap">
                         {isActive ? (
                           <span className="ds-badge ds-badge-emerald">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Đang Hoạt Động
@@ -316,7 +316,7 @@ export const InternalAdminSessions = () => {
                         )}
                       </td>
 
-                      <td className="text-right">
+                      <td className="py-3 px-4 text-right whitespace-nowrap">
                         {isActive && !isCurrent && (
                           <button
                             onClick={() => {
@@ -326,7 +326,7 @@ export const InternalAdminSessions = () => {
                             }}
                             className="ds-btn ds-btn-danger ds-btn-xs"
                           >
-                            <LogOut className="w-3.5 h-3.5" />
+                            <LogOut className="w-3.5 h-3.5 shrink-0" />
                             <span>Thu Hồi</span>
                           </button>
                         )}

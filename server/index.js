@@ -355,7 +355,7 @@ app.post('/api/members/reset-password', async (req, res) => {
 
     // 1. Cập nhật CSDL: Mật khẩu mặc định và đánh dấu is_first_login = 1
     await queryDatabase(
-      'UPDATE Members SET password = ?, is_first_login = 1 WHERE id = ? OR member_code = ? OR username = ?',
+      'UPDATE Members SET password = ?, is_first_login = 1 WHERE CAST(id AS CHAR) = ? OR UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?)',
       [hashedPwd, String(memberId || ''), String(memberId || ''), String(memberId || '')]
     );
 
@@ -604,7 +604,7 @@ app.put('/api/members/:id', async (req, res) => {
   } = req.body;
 
   try {
-    const membersList = await queryDatabase('SELECT id, member_code FROM Members WHERE id = ? OR member_code = ? OR username = ?', [id, id, id]);
+    const membersList = await queryDatabase('SELECT id, member_code FROM Members WHERE CAST(id AS CHAR) = ? OR UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?)', [id, id, id]);
     const targetMember = membersList && membersList.length > 0 ? membersList[0] : null;
 
     const isFirstLoginVal = is_first_login !== undefined
@@ -636,7 +636,7 @@ app.put('/api/members/:id', async (req, res) => {
         password = COALESCE(?, password),
         is_first_login = COALESCE(?, is_first_login),
         milestones = COALESCE(?, milestones)
-      WHERE (id = ? OR UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?))
+      WHERE (CAST(id AS CHAR) = ? OR UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?))
     `;
 
     // Chỉ hash password khi được cung cấp dưới dạng string không rỗng
@@ -713,7 +713,7 @@ app.delete('/api/members/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const members = await queryDatabase(
-      'SELECT id, member_code, username FROM Members WHERE (id = ? OR UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?))',
+      'SELECT id, member_code, username FROM Members WHERE (CAST(id AS CHAR) = ? OR UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?))',
       [id, id, id]
     );
 
