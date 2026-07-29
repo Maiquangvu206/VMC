@@ -282,12 +282,12 @@ export const InternalMembers = () => {
   }, [nonAdminMembers, searchQuery, selectedTerm, selectedDept]);
 
   return (
-    <div className="page-wrap space-y-8 pb-20">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-20">
 
       {/* Header */}
-      <div className="flex flex-col items-center justify-center text-center gap-4">
+      <div className="flex flex-col items-center justify-center text-center gap-3">
         <Users className="w-8 h-8 text-blue-400" />
-        <h1 className="font-heading text-3xl font-extrabold text-slate-100 mt-1">Danh Sách Thành Viên</h1>
+        <h1 className="font-heading text-2xl sm:text-3xl font-extrabold text-slate-100">Danh Sách Thành Viên</h1>
         <p className="text-sm text-slate-400 max-w-2xl">
           Tất cả thành viên có quyền tìm kiếm thông tin thành viên qua từng thời kỳ từ khóa sáng lập đến đương nhiệm.
         </p>
@@ -308,42 +308,43 @@ export const InternalMembers = () => {
         </button>
       </div>
 
-      {/* Toolbar */}
-      <div className="ds-card-glass p-5 flex flex-col md:flex-row items-center gap-5 justify-between">
+      {/* Toolbar / Filter Section */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 w-full bg-[#10172a] p-4 rounded-xl border border-gray-800 shadow-md">
 
         {/* Search Input Box */}
-        <div className="relative flex items-center w-full md:w-96 shrink-0">
-          <Search className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
+        <div className="relative flex items-center w-full md:flex-1 min-w-0">
+          <Search className="absolute left-3.5 w-4 h-4 text-slate-400 shrink-0 pointer-events-none" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Tìm kiếm theo Tên, Mã TV, Lớp, SĐT..."
-            className="ds-input pl-12 pr-10"
+            className="ds-input pl-10 pr-9 w-full bg-slate-900/80 border-slate-700/80 text-sm"
           />
           {searchQuery && (
-            <div className="absolute right-3 inset-y-0 flex items-center">
-              <button onClick={() => setSearchQuery('')} className="text-slate-400 hover:text-white">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 text-slate-400 hover:text-white transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
           )}
         </div>
 
         {/* Filter Dropdowns */}
-        <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto shrink-0">
 
           {/* Period / Term Selector */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-slate-400 whitespace-nowrap flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-purple-400" /> Thế Hệ:
+          <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+            <span className="text-sm font-semibold text-gray-400 whitespace-nowrap flex items-center gap-1.5 shrink-0">
+              <Calendar className="w-4 h-4 text-purple-400 shrink-0" /> Thế Hệ:
             </span>
             <select
               value={selectedTerm}
               onChange={(e) => setSelectedTerm(e.target.value)}
-              className="ds-input ds-select"
+              className="ds-input ds-select w-full sm:w-auto min-w-[150px] bg-slate-900/80 border-slate-700/80 text-sm"
             >
-              <option value="ALL">🌐 Tất Cả Thế Hệ (All Gen)</option>
+              <option value="ALL">🌐 Tất Cả Thế Hệ</option>
               {generations.map(g => (
                 <option key={g.id} value={g.name}>{g.description || g.name}</option>
               ))}
@@ -351,14 +352,14 @@ export const InternalMembers = () => {
           </div>
 
           {/* Department Selector */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold text-slate-400 whitespace-nowrap flex items-center gap-2">
-              <Filter className="w-4 h-4 text-cyan-400" /> Ban:
+          <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+            <span className="text-sm font-semibold text-gray-400 whitespace-nowrap flex items-center gap-1.5 shrink-0">
+              <Filter className="w-4 h-4 text-cyan-400 shrink-0" /> Ban:
             </span>
             <select
               value={selectedDept}
               onChange={(e) => setSelectedDept(e.target.value)}
-              className="ds-input ds-select"
+              className="ds-input ds-select w-full sm:w-auto min-w-[170px] bg-slate-900/80 border-slate-700/80 text-sm"
             >
               <option value="ALL">Tất Cả Các Ban</option>
               <option value="Ban Chủ Nhiệm">Ban Chủ Nhiệm</option>
@@ -378,71 +379,91 @@ export const InternalMembers = () => {
         {(searchQuery || selectedTerm !== 'ALL' || selectedDept !== 'ALL') && (
           <button
             onClick={() => { setSearchQuery(''); setSelectedTerm('ALL'); setSelectedDept('ALL'); }}
-            className="text-blue-400 hover:underline flex items-center gap-2 text-sm"
+            className="text-blue-400 hover:underline flex items-center gap-1.5 text-sm"
           >
-            <X className="w-3 h-3" /> Xóa bộ lọc
+            <X className="w-3.5 h-3.5" /> Xóa bộ lọc
           </button>
         )}
       </div>
 
       {/* Account Roster Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full items-stretch">
         {filteredMembers.map(m => (
           <div
             key={m.id}
-            className="ds-card-glass p-6 flex flex-col h-full justify-between hover:border-blue-500/40 transition-all shadow-xl"
+            className="ds-card-glass bg-[#10172a]/95 p-5 sm:p-6 rounded-xl border border-gray-800 flex flex-col h-full justify-between hover:border-blue-500/40 transition-all shadow-xl overflow-hidden min-w-0"
           >
             {/* Upper Content Box */}
-            <div className="flex-1 flex flex-col justify-between space-y-5 mb-4">
+            <div className="flex-1 flex flex-col justify-between space-y-4 mb-4 min-w-0">
 
               {/* Header: Avatar + Identity Info */}
-              <div className="flex items-center gap-4 min-w-0">
-                <img src={m.avatar} alt={m.name} className="w-14 h-14 rounded-xl object-cover border-2 border-blue-500/50 shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-1 mb-0.5">
-                    <h3 className="font-heading font-bold text-lg text-slate-100 truncate leading-snug">{m.name}</h3>
-                  </div>
-                  <span className="text-sm text-blue-400 font-semibold block truncate leading-tight">{m.roleTitle}</span>
-                  <span className="text-xs text-slate-400 font-mono block truncate leading-tight">Mã TV: {m.memberCode} • Lớp {m.class}</span>
+              <div className="flex items-center gap-3.5 min-w-0">
+                <img
+                  src={m.avatar}
+                  alt={m.name}
+                  className="w-14 h-14 rounded-xl object-cover border-2 border-blue-500/50 shrink-0 shadow-md"
+                />
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <h3 className="font-heading font-bold text-base sm:text-lg text-slate-100 truncate min-w-0 leading-snug" title={m.name}>
+                    {m.name}
+                  </h3>
+                  <span className="text-xs sm:text-sm text-blue-400 font-semibold block truncate min-w-0 leading-tight mt-0.5" title={m.roleTitle}>
+                    {m.roleTitle}
+                  </span>
+                  <span className="text-xs text-slate-400 font-mono block truncate min-w-0 leading-tight mt-0.5">
+                    Mã TV: {m.memberCode} • Lớp {m.class}
+                  </span>
                 </div>
               </div>
 
               {/* Quick Info Preview Card */}
-              <div className="ds-card p-4 space-y-2 text-sm text-slate-300">
-                <div className="flex justify-between items-center gap-2">
-                  <span className="text-slate-400 shrink-0">Thế hệ:</span>
-                  <span className="ds-badge ds-badge-purple truncate">
+              <div className="bg-slate-900/60 p-3.5 rounded-lg border border-slate-800/80 space-y-1 text-sm min-w-0">
+                <div className="flex items-center justify-between gap-2 py-1 text-sm min-w-0">
+                  <span className="text-gray-400 shrink-0">Thế hệ:</span>
+                  <span className="ds-badge ds-badge-purple font-medium truncate text-right shrink-0">
                     {formatGen(m.term)}
                   </span>
                 </div>
-                <div className="flex justify-between items-center gap-2">
-                  <span className="text-slate-400 shrink-0">Ban chuyên môn:</span>
-                  <strong className="text-slate-100 truncate text-right">{m.deptName}</strong>
+
+                <div className="flex items-center justify-between gap-2 py-1 text-sm min-w-0">
+                  <span className="text-gray-400 shrink-0">Ban chuyên môn:</span>
+                  <span className="text-slate-100 font-medium truncate text-right min-w-0" title={m.deptName}>
+                    {m.deptName}
+                  </span>
                 </div>
-                <div className="flex justify-between items-center gap-2">
-                  <span className="text-slate-400 shrink-0">SĐT / Zalo:</span>
-                  <strong className="text-slate-100 font-mono truncate text-right">{m.phone || 'Chưa có'}</strong>
+
+                <div className="flex items-center justify-between gap-2 py-1 text-sm min-w-0">
+                  <span className="text-gray-400 shrink-0">SĐT / Zalo:</span>
+                  <span className="text-slate-100 font-mono font-medium truncate text-right min-w-0" title={m.phone || 'Chưa có'}>
+                    {m.phone || 'Chưa có'}
+                  </span>
                 </div>
-                <div className="flex justify-between items-center gap-2">
-                  <span className="text-slate-400 shrink-0">Ngày sinh:</span>
-                  <strong className="text-amber-300 font-mono shrink-0">{m.dob || 'Chưa có'}</strong>
+
+                <div className="flex items-center justify-between gap-2 py-1 text-sm min-w-0">
+                  <span className="text-gray-400 shrink-0">Ngày sinh:</span>
+                  <span className="text-amber-300 font-mono font-medium truncate text-right shrink-0">
+                    {m.dob || 'Chưa có'}
+                  </span>
                 </div>
               </div>
 
             </div>
 
-            {/* Pinned Card Footer */}
-            <div className="mt-auto pt-4 border-t border-[var(--border-default)] flex items-center justify-between gap-2 shrink-0">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setSelectedMember(m)}
-                  className="ds-btn ds-btn-primary ds-btn-sm"
-                  title="Xem chi tiết 10 thông tin thành viên"
-                >
-                  <Eye className="w-4 h-4" />
-                  <span>Xem Chi Tiết</span>
-                </button>
+            {/* Pinned Card Action Buttons Footer */}
+            <div className="mt-auto pt-3 border-t border-gray-800/80 flex items-center justify-between gap-1.5 w-full min-w-0 shrink-0">
+              {/* Xem Chi Tiết Button */}
+              <button
+                onClick={() => setSelectedMember(m)}
+                className="ds-btn ds-btn-primary px-2.5 sm:px-3 py-1.5 text-xs flex-1 min-w-0 h-9 rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-md shrink-0"
+                title="Xem chi tiết thông tin thành viên"
+              >
+                <Eye className="w-4 h-4 shrink-0" />
+                <span className="truncate font-semibold min-w-0">Xem Chi Tiết</span>
+              </button>
 
+              {/* Icon Action Buttons */}
+              <div className="flex items-center gap-1 shrink-0">
+                {/* Edit Button */}
                 <button
                   onClick={() => {
                     if (!isHRMember) {
@@ -467,31 +488,38 @@ export const InternalMembers = () => {
                     ];
                     setEditingMember({ ...m, milestones: msList });
                   }}
-                  className={`ds-btn ${isHRMember ? 'ds-btn-secondary' : 'ds-btn-ghost opacity-60 cursor-not-allowed'}`}
-                  title={isHRMember ? 'Chỉnh sửa ngày sinh & thông tin (Ban Đối Ngoại - Nhân Sự / Admin)' : 'Chỉ Ban Đối Ngoại - Nhân Sự mới được sửa'}
+                  className={`w-9 h-9 shrink-0 rounded-xl flex items-center justify-center transition-all ${
+                    isHRMember 
+                      ? 'bg-slate-800/80 text-slate-200 border border-slate-700/70 hover:bg-blue-600 hover:text-white hover:border-blue-500' 
+                      : 'bg-slate-800/40 text-slate-500 border border-slate-800 opacity-50 cursor-not-allowed'
+                  }`}
+                  title={isHRMember ? 'Chỉnh sửa thông tin thành viên' : 'Chỉ Ban Đối Ngoại - Nhân Sự mới được sửa'}
                 >
-                  <Edit className="w-4 h-4" />
-                  <span>Sửa</span>
+                  <Edit className="w-4 h-4 shrink-0" />
                 </button>
-              </div>
 
-              <div className="flex items-center gap-2">
                 {isAdmin && (
                   <>
+                    {/* Reset Password */}
                     <button
                       onClick={() => resetAccountPassword(m.username)}
-                      className="ds-btn ds-btn-ghost ds-btn-xs"
-                      title="Reset mật khẩu mặc định (Kỹ Thuật / Trưởng Ban ĐN-NS)"
+                      className="w-9 h-9 shrink-0 rounded-xl bg-slate-800/80 text-slate-300 border border-slate-700/70 hover:bg-slate-700 hover:text-white transition-all flex items-center justify-center"
+                      title="Reset mật khẩu mặc định"
                     >
-                      <RefreshCw className="w-4 h-4" />
+                      <RefreshCw className="w-4 h-4 shrink-0" />
                     </button>
 
+                    {/* Lock / Unlock */}
                     <button
                       onClick={() => toggleAccountStatus(m.id)}
-                      className={`ds-btn ds-btn-xs ${m.status === 'Active' ? 'ds-btn-secondary' : 'ds-btn-success'}`}
+                      className={`w-9 h-9 shrink-0 rounded-xl flex items-center justify-center transition-all border ${
+                        m.status === 'Active'
+                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500 hover:text-slate-950'
+                          : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500 hover:text-slate-950'
+                      }`}
                       title={m.status === 'Active' ? 'Tạm khóa tài khoản' : 'Mở khóa'}
                     >
-                      <Lock className="w-4 h-4" />
+                      <Lock className="w-4 h-4 shrink-0" />
                     </button>
                   </>
                 )}
@@ -499,10 +527,10 @@ export const InternalMembers = () => {
                 {isSuperAdmin && (
                   <button
                     onClick={() => deleteMemberAccount(m.id)}
-                    className="ds-btn ds-btn-danger ds-btn-xs"
-                    title="Xóa vĩnh viễn tài khoản thành viên (Super Admin)"
+                    className="w-9 h-9 shrink-0 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/30 hover:bg-rose-600 hover:text-white hover:border-rose-600 transition-all flex items-center justify-center"
+                    title="Xóa vĩnh viễn tài khoản thành viên"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4 shrink-0" />
                   </button>
                 )}
               </div>
