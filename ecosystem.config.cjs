@@ -6,9 +6,9 @@ module.exports = {
             args: "start",
         },
         {
-            name: "cloudflare-tunnel",
-            script: "cloudflared",
-            args: "tunnel --url http://localhost:5000",
+            name: "localtunnel",
+            script: "npx",
+            args: "localtunnel --port 5000 --subdomain vmc",
         }
     ]
 };
