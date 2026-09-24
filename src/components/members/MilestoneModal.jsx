@@ -32,12 +32,12 @@ export const MilestoneModal = ({ show, onClose, msTitle, setMsTitle, msDate, set
            <div>
              <label className="ds-field-label">Ngày đạt được</label>
              <div className="relative flex items-center w-full">
-               <Calendar className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
+               <Calendar className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
                <input
                  type="text"
                  value={msDate}
                  onChange={(e) => setMsDate(e.target.value)}
-                 className="ds-input pl-12"
+                 className="ds-input w-full" style={{ paddingLeft: '2.75rem' }}
                  placeholder="DD/MM/YYYY"
                />
              </div>
@@ -46,12 +46,12 @@ export const MilestoneModal = ({ show, onClose, msTitle, setMsTitle, msDate, set
            <div>
              <label className="ds-field-label">Hiển thị huy hiệu</label>
              <div className="relative flex items-center w-full">
-               <Award className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
+               <Award className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
                <input
                  type="text"
                  value={msBadge}
                  onChange={(e) => setMsBadge(e.target.value)}
-                 className="ds-input pl-12"
+                 className="ds-input w-full" style={{ paddingLeft: '2.75rem' }}
                  placeholder="VD: [Cột mốc], [Thành tích]..."
                />
              </div>

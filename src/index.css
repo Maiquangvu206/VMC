@@ -249,7 +249,10 @@ h1, h2, h3, h4, h5, h6 {
 /* ========== DESIGN SYSTEM: FORM INPUTS ========== */
 .ds-input {
   height: 2.5rem;
-  padding: 0.5rem 0.75rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-right: 0.75rem;
+  padding-left: 0.75rem;
   background: var(--bg-input);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
@@ -276,23 +279,15 @@ h1, h2, h3, h4, h5, h6 {
 .ds-input.pl-14, input.pl-14 { padding-left: 3.5rem !important; }
 .ds-input.pl-16, input.pl-16 { padding-left: 4rem !important; }
 
-/* Auto-detect relative input wrappers with left icons */
-.relative:has(> .absolute.left-3) input,
-.relative:has(> .absolute.left-3\.5) input,
-.relative:has(> .absolute.left-4) input,
-.relative:has(> .absolute.left-3) select,
-.relative:has(> .absolute.left-3\.5) select,
-.relative:has(> .absolute.left-4) select,
-.relative:has(> .absolute[class*="left-"]) input,
-.relative:has(> .absolute[class*="left-"]) select {
+/* Force padding-left on ANY input inside a .relative wrapper containing an absolute icon */
+.relative > .absolute + input,
+.relative > .absolute + select,
+.relative > .absolute ~ input,
+.relative > .absolute ~ select {
   padding-left: 2.75rem !important;
 }
 
-.relative > .absolute.left-3,
-.relative > .absolute.left-3\.5,
-.relative > .absolute.left-4,
-.relative > .absolute.left-5,
-.relative > .absolute[class*="left-"] {
+.relative > .absolute {
   pointer-events: none !important;
   z-index: 10 !important;
 }

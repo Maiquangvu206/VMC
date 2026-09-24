@@ -22,24 +22,24 @@ export const EditMemberModal = ({ show, onClose, member, formData, setFormData, 
              <div>
                <label className="ds-field-label">Mã thành viên</label>
                <div className="relative flex items-center w-full">
-                 <Hash className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
+                 <Hash className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
                  <input
                    type="text"
                    value={formData.memberCode}
                    onChange={(e) => setFormData({ ...formData, memberCode: e.target.value })}
-                   className="ds-input pl-12"
+                   className="ds-input w-full" style={{ paddingLeft: '2.75rem' }}
                  />
                </div>
              </div>
              <div>
                <label className="ds-field-label">Họ và tên</label>
                <div className="relative flex items-center w-full">
-                 <User className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
+                 <User className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
                  <input
                    type="text"
                    value={formData.name}
                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                   className="ds-input pl-12"
+                   className="ds-input w-full" style={{ paddingLeft: '2.75rem' }}
                  />
                </div>
              </div>
@@ -49,24 +49,24 @@ export const EditMemberModal = ({ show, onClose, member, formData, setFormData, 
              <div>
                <label className="ds-field-label">Email</label>
                <div className="relative flex items-center w-full">
-                 <Mail className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
+                 <Mail className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
                  <input
                    type="email"
                    value={formData.email}
                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                   className="ds-input pl-12"
+                   className="ds-input w-full" style={{ paddingLeft: '2.75rem' }}
                  />
                </div>
              </div>
              <div>
                <label className="ds-field-label">Lớp</label>
                <div className="relative flex items-center w-full">
-                 <GraduationCap className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
+                 <GraduationCap className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
                  <input
                    type="text"
                    value={formData.class}
                    onChange={(e) => setFormData({ ...formData, class: e.target.value })}
-                   className="ds-input pl-12"
+                   className="ds-input w-full" style={{ paddingLeft: '2.75rem' }}
                  />
                </div>
              </div>
@@ -75,12 +75,12 @@ export const EditMemberModal = ({ show, onClose, member, formData, setFormData, 
            <div>
              <label className="ds-field-label">Ban</label>
              <div className="relative flex items-center w-full">
-               <Briefcase className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
+               <Briefcase className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
                <input
                  type="text"
                  value={formData.deptName}
                  onChange={(e) => setFormData({ ...formData, deptName: e.target.value })}
-                 className="ds-input pl-12"
+                 className="ds-input w-full" style={{ paddingLeft: '2.75rem' }}
                />
              </div>
            </div>
@@ -89,24 +89,24 @@ export const EditMemberModal = ({ show, onClose, member, formData, setFormData, 
              <div>
                <label className="ds-field-label">Số điện thoại</label>
                <div className="relative flex items-center w-full">
-                 <Phone className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
+                 <Phone className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
                  <input
                    type="text"
                    value={formData.phone}
                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                   className="ds-input pl-12"
+                   className="ds-input w-full" style={{ paddingLeft: '2.75rem' }}
                  />
                </div>
              </div>
              <div>
                <label className="ds-field-label">Ngày sinh</label>
                <div className="relative flex items-center w-full">
-                 <Calendar className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
+                 <Calendar className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
                  <input
                    type="text"
                    value={formData.dob}
                    onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
-                   className="ds-input pl-12"
+                   className="ds-input w-full" style={{ paddingLeft: '2.75rem' }}
                  />
                </div>
              </div>
@@ -115,12 +115,12 @@ export const EditMemberModal = ({ show, onClose, member, formData, setFormData, 
            <div>
              <label className="ds-field-label">Địa chỉ</label>
              <div className="relative flex items-center w-full">
-               <MapPin className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
+               <MapPin className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
                <input
                  type="text"
                  value={formData.address}
                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                 className="ds-input pl-12"
+                 className="ds-input w-full" style={{ paddingLeft: '2.75rem' }}
                />
              </div>
            </div>
@@ -128,12 +128,12 @@ export const EditMemberModal = ({ show, onClose, member, formData, setFormData, 
            <div>
              <label className="ds-field-label">Facebook</label>
              <div className="relative flex items-center w-full">
-               <Globe className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
+               <Globe className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
                <input
                  type="text"
                  value={formData.facebook}
                  onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
-                 className="ds-input pl-12"
+                 className="ds-input w-full" style={{ paddingLeft: '2.75rem' }}
                />
              </div>
            </div>
