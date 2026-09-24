@@ -1953,9 +1953,9 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
         ROUND(AVG(s.score), 2) AS round_avg,
         ROUND(SUM(s.score), 2) AS round_sum
       FROM Recruitment_Scores s
-      JOIN Recruitment_Criteria cr ON s.criteria_id = cr.id
+      LEFT JOIN Recruitment_Criteria cr ON s.criteria_id = cr.id
       WHERE s.season_id = ?
-      GROUP BY s.candidate_id, cr.round_type
+      GROUP BY s.candidate_id, COALESCE(cr.round_type, 'teamwork')
     `, [req.params.seasonId]);
 
     // Fetch comments left by interviewers for each candidate
@@ -1992,7 +1992,7 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
       }
       const avgVal = parseFloat(r.round_avg) || 0;
       roundScoresMap[r.candidate_id][r.round_type] = avgVal;
-      totalScoreMap[r.candidate_id] = (totalScoreMap[r.candidate_id] || 0) + (parseFloat(r.round_sum) || 0);
+      totalScoreMap[r.candidate_id] = parseFloat(((totalScoreMap[r.candidate_id] || 0) + avgVal).toFixed(2));
     });
 
     const data = candidates.map(c => {

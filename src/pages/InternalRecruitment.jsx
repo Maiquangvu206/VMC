@@ -1735,15 +1735,45 @@ export const InternalRecruitment = () => {
 
        {/* Results Tab - for all department members */}
        {activeTab === 'results' && currentSeason && (() => {
-         const scoringTypes = Array.isArray(currentSeason.scoring_type)
-           ? currentSeason.scoring_type
-           : [currentSeason.scoring_type || 'teamwork'];
-         
-         const hasDon = scoringTypes.includes('don');
-         const hasPv = scoringTypes.includes('phongvan');
-         const hasTw = scoringTypes.includes('teamwork');
-         const hasTtQuatrinh = scoringTypes.includes('thuthach_quatrinh') || scoringTypes.includes('thuthach');
-         const hasTtKetqua = scoringTypes.includes('thuthach_ketqua') || scoringTypes.includes('thuthach');
+         const scoringTypes = (() => {
+           if (!currentSeason || !currentSeason.scoring_type) return [];
+           const raw = currentSeason.scoring_type;
+           if (Array.isArray(raw)) return raw;
+           if (typeof raw === 'string') {
+             try {
+               const parsed = JSON.parse(raw);
+               if (Array.isArray(parsed)) return parsed;
+             } catch (e) {}
+             return [raw];
+           }
+           return [];
+         })();
+
+         const hasDon = scoringTypes.includes('don') || scoresSummary.some(s => s.round_scores?.don !== undefined);
+         const hasPv = scoringTypes.includes('phongvan') || scoresSummary.some(s => s.round_scores?.phongvan !== undefined);
+         const hasTw = scoringTypes.includes('teamwork') || scoresSummary.some(s => s.round_scores?.teamwork !== undefined);
+         const hasTtQuatrinh = scoringTypes.includes('thuthach_quatrinh') || scoringTypes.includes('thuthach') || scoresSummary.some(s => s.round_scores?.thuthach_quatrinh !== undefined);
+         const hasTtKetqua = scoringTypes.includes('thuthach_ketqua') || scoringTypes.includes('thuthach') || scoresSummary.some(s => s.round_scores?.thuthach_ketqua !== undefined);
+
+         // Build summary list: use scoresSummary if available, else fallback to candidates list
+         let summaryList = scoresSummary;
+         if ((!summaryList || summaryList.length === 0) && Array.isArray(candidates) && candidates.length > 0) {
+           summaryList = candidates.map((c, idx) => ({
+             candidate_id: c.id,
+             interview_code: c.interview_code || c.id,
+             full_name: c.full_name,
+             class_name: c.class_name,
+             desired_dept: c.desired_dept || currentSeason.department || 'N/A',
+             status: c.status || 'pending',
+             notes: c.notes || '',
+             comments: [],
+             round_scores: {},
+             avg_score: 0,
+             total_score: 0,
+             result_status: c.status || 'pending',
+             rank: idx + 1
+           }));
+         }
 
          return (
            <div className="space-y-4">
@@ -1752,6 +1782,12 @@ export const InternalRecruitment = () => {
                  <h2 className="text-xl font-bold text-white">Bảng Tổng Hợp Kết Quả - {currentSeason.name}</h2>
                  <p className="text-xs text-slate-400 mt-0.5">Hiển thị chi tiết điểm trung bình từng phần, tổng điểm và xếp hạng ứng viên.</p>
                </div>
+               <button
+                 onClick={() => fetchScoresSummary(currentSeason.id)}
+                 className="ds-btn ds-btn-secondary text-xs"
+               >
+                 🔄 Cập Nhật Kết Quả
+               </button>
              </div>
 
              <div className="ds-card overflow-x-auto">
@@ -1773,14 +1809,14 @@ export const InternalRecruitment = () => {
                    </tr>
                  </thead>
                  <tbody className="divide-y divide-slate-800/60 text-xs">
-                   {scoresSummary.length === 0 ? (
+                   {summaryList.length === 0 ? (
                      <tr>
                        <td colSpan={12} className="text-center py-8 text-slate-500 italic">
-                         Chưa có dữ liệu điểm cho mùa tuyển sinh này.
+                         Chưa có ứng viên nào trong mùa tuyển sinh này.
                        </td>
                      </tr>
                    ) : (
-                     scoresSummary.map((s, idx) => {
+                     summaryList.map((s, idx) => {
                         const code = s.interview_code || s.candidate_code || (candidates.find(c => c.id === s.candidate_id)?.interview_code) || s.candidate_id;
                        const rScores = s.round_scores || {};
                        
