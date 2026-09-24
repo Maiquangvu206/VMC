@@ -55,10 +55,14 @@ queryDatabase('ALTER TABLE Members ADD COLUMN milestones LONGTEXT').catch(err =>
 });
 queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN active_round VARCHAR(50) DEFAULT "don"').catch(() => {});
 queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN teamwork_scorer_ids TEXT').catch(() => {});
+queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN challenge_process_scorer_ids TEXT').catch(() => {});
+queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN challenge_result_scorer_ids TEXT').catch(() => {});
 queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN lead_interviewer_id VARCHAR(100)').catch(() => {});
 queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN selected_questions TEXT').catch(() => {});
 queryDatabase('ALTER TABLE Recruitment_Criteria ADD COLUMN round_type VARCHAR(50) DEFAULT "teamwork"').catch(() => {});
 queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN application_answers TEXT').catch(() => {});
+queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN challenge_process_scorer_ids TEXT').catch(() => {});
+queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN challenge_result_scorer_ids TEXT').catch(() => {});
 queryDatabase(`
   CREATE TABLE IF NOT EXISTS Birthday_Mail_Logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
