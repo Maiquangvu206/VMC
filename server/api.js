@@ -1945,7 +1945,7 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
       ORDER BY c.created_at ASC
     `, [req.params.seasonId]);
 
-    // Fetch average scores for each candidate per round_type
+    // Fetch average scores for each candidate per round_type (excluding 0 scores for rounds other than don & thuthach_ketqua)
     const roundScoresRows = await queryDatabase(`
       SELECT 
         s.candidate_id,
@@ -1955,6 +1955,7 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
       FROM Recruitment_Scores s
       LEFT JOIN Recruitment_Criteria cr ON s.criteria_id = cr.id
       WHERE s.season_id = ?
+        AND (COALESCE(cr.round_type, 'teamwork') IN ('don', 'thuthach_ketqua') OR s.score > 0)
       GROUP BY s.candidate_id, COALESCE(cr.round_type, 'teamwork')
     `, [req.params.seasonId]);
 

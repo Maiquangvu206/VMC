@@ -252,6 +252,26 @@ export const InternalRecruitment = () => {
     }
   }, [candidates, scoringTypeFilter, candidateSearchQuery, currentSeason, currentUser]);
 
+  // Sync candidateAnswersData when selectedCandidate changes
+  useEffect(() => {
+    if (selectedCandidate && selectedCandidate.application_answers) {
+      try {
+        const parsed = typeof selectedCandidate.application_answers === 'string'
+          ? JSON.parse(selectedCandidate.application_answers)
+          : selectedCandidate.application_answers;
+        if (typeof parsed === 'object' && parsed !== null) {
+          setCandidateAnswersData(parsed);
+        } else {
+          setCandidateAnswersData({ general: String(selectedCandidate.application_answers) });
+        }
+      } catch (e) {
+        setCandidateAnswersData({ general: String(selectedCandidate.application_answers) });
+      }
+    } else {
+      setCandidateAnswersData({});
+    }
+  }, [selectedCandidate?.id, selectedCandidate?.application_answers]);
+
   // Fetch data
   useEffect(() => {
     fetchSeasons();
@@ -668,6 +688,21 @@ export const InternalRecruitment = () => {
         return;
       }
 
+      // Save application_answers if user typed/edited answers for 'don'
+      if (scoringTypeFilter === 'don' && Object.keys(candidateAnswersData).length > 0) {
+        try {
+          await fetch(`/api/recruitment/candidates/${selectedCandidate.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+            body: JSON.stringify({
+              application_answers: JSON.stringify(candidateAnswersData)
+            })
+          });
+        } catch (e) {
+          console.error('Error saving application answers:', e);
+        }
+      }
+
       const scoresArray = scoredCriteria.map(c => ({
         criteria_id: c.id,
         score: scoringData[c.id] || 0,
@@ -695,6 +730,7 @@ export const InternalRecruitment = () => {
         setSubmittedCandidates([...submittedCandidates, selectedCandidate.id]);
         fetchSubmittedCandidates(currentSeason.id);
         fetchCandidates(currentSeason.id);
+        fetchScoresSummary(currentSeason.id);
         
         // Navigate to next candidate in filtered list
         if (filteredCandidates.length > 0 && currentScoringCandidateIndex < filteredCandidates.length - 1) {
@@ -1655,37 +1691,60 @@ export const InternalRecruitment = () => {
                          </div>
 
                          <div className="bg-slate-900/90 rounded-lg p-3 border border-slate-700/70">
-                           <div className="text-xs font-semibold text-blue-400 mb-1.5 flex items-center gap-1.5">
-                             <FileText className="w-4 h-4 text-blue-400 shrink-0" />
-                             <span>Bài làm / Câu trả lời của ứng viên:</span>
-                           </div>
-                           {(() => {
-                             let candidateAnsText = '';
-                             if (c.application_answers) {
-                               try {
-                                 const parsed = typeof c.application_answers === 'string' ? JSON.parse(c.application_answers) : c.application_answers;
-                                 if (typeof parsed === 'object' && parsed !== null) {
-                                   candidateAnsText = parsed[crit.id] || parsed[crit.criteria_name] || '';
-                                 } else if (typeof parsed === 'string') {
-                                   candidateAnsText = parsed;
-                                 }
-                               } catch (_) {
-                                 candidateAnsText = c.application_answers;
-                               }
-                             }
-                             return candidateAnsText ? (
-                               <p className="text-slate-200 text-sm whitespace-pre-wrap leading-relaxed pl-5">
-                                 {candidateAnsText}
-                               </p>
-                             ) : (
-                               <p className="text-slate-500 text-xs italic pl-5">
-                                 (Chưa có câu trả lời trong CSDL)
-                               </p>
-                             );
-                           })()}
-                         </div>
-                       </div>
-                     ))}
+                            <div className="text-xs font-semibold text-blue-400 mb-1.5 flex items-center justify-between">
+                              <span className="flex items-center gap-1.5">
+                                <FileText className="w-4 h-4 text-blue-400 shrink-0" />
+                                <span>Bài làm / Câu trả lời của ứng viên:</span>
+                              </span>
+                              {scoringTypeFilter === 'don' && (
+                                <span className="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 font-medium">
+                                  ✏️ Nhập / sửa trực tiếp
+                                </span>
+                              )}
+                            </div>
+                            {scoringTypeFilter === 'don' ? (
+                              <textarea
+                                rows={3}
+                                value={candidateAnswersData[crit.id] ?? candidateAnswersData[crit.criteria_name] ?? (typeof c.application_answers === 'string' && !c.application_answers.startsWith('{') ? c.application_answers : '')}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setCandidateAnswersData(prev => ({
+                                    ...prev,
+                                    [crit.id]: val
+                                  }));
+                                }}
+                                placeholder="Nhập trực tiếp câu trả lời / bài làm của ứng viên cho tiêu chí này..."
+                                className="ds-textarea text-xs bg-slate-950 text-slate-100 border-slate-700/80 focus:border-blue-500 w-full"
+                              />
+                            ) : (
+                              (() => {
+                                let candidateAnsText = '';
+                                if (c.application_answers) {
+                                  try {
+                                    const parsed = typeof c.application_answers === 'string' ? JSON.parse(c.application_answers) : c.application_answers;
+                                    if (typeof parsed === 'object' && parsed !== null) {
+                                      candidateAnsText = parsed[crit.id] || parsed[crit.criteria_name] || '';
+                                    } else if (typeof parsed === 'string') {
+                                      candidateAnsText = parsed;
+                                    }
+                                  } catch (_) {
+                                    candidateAnsText = c.application_answers;
+                                  }
+                                }
+                                return candidateAnsText ? (
+                                  <p className="text-slate-200 text-sm whitespace-pre-wrap leading-relaxed pl-5">
+                                    {candidateAnsText}
+                                  </p>
+                                ) : (
+                                  <p className="text-slate-500 text-xs italic pl-5">
+                                    (Chưa có câu trả lời trong CSDL)
+                                  </p>
+                                );
+                              })()
+                            )}
+                          </div>
+                        </div>
+                      ))}
                      
                      {/* Comments field */}
                      <div>
@@ -1700,20 +1759,45 @@ export const InternalRecruitment = () => {
                      </div>
 
                      {/* Total score */}
-                     <div className="flex justify-between items-center pt-4 border-t border-[var(--border-default)]">
-                       <div className="text-white font-bold text-lg">
-                         Tổng điểm: {criteria.reduce((sum, crit) => sum + (scoringData[crit.id] || 0), 0)}
-                       </div>
-                       <button
-                         onClick={() => {
-                           setSelectedCandidate(c);
-                           setShowScoringModal(true);
-                         }}
-                         className="ds-btn ds-btn-primary"
-                       >
-                         Lưu Điểm
-                       </button>
-                     </div>
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-4 border-t border-[var(--border-default)]">
+                        <div className="text-white font-bold text-base">
+                          {(() => {
+                            const activeCritList = scoringTypeFilter === 'phongvan'
+                              ? activeCriteria.filter(crit => selectedQuestions[crit.id])
+                              : activeCriteria;
+                            const isDonOrTtKetqua = scoringTypeFilter === 'don' || scoringTypeFilter === 'thuthach_ketqua';
+                            let sum = 0;
+                            let count = 0;
+                            activeCritList.forEach(crit => {
+                              const val = parseFloat(scoringData[crit.id]) || 0;
+                              if (isDonOrTtKetqua) {
+                                sum += val;
+                                count += 1;
+                              } else {
+                                if (val > 0) {
+                                  sum += val;
+                                  count += 1;
+                                }
+                              }
+                            });
+                            const avg = count > 0 ? (sum / count).toFixed(2) : '0';
+                            return (
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span>Tổng điểm: <strong className="text-emerald-400 text-lg">{sum}</strong></span>
+                                <span className="text-xs text-slate-400 font-normal">
+                                  (ĐTB {scoringTypeFilter === 'don' ? 'Đơn' : scoringTypeFilter === 'thuthach_ketqua' ? 'TT Kết quả' : 'vòng'}: <strong className="text-blue-400">{avg}</strong> tính trên {count} tiêu chí{isDonOrTtKetqua ? '' : ' > 0đ'})
+                                </span>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                        <button
+                          onClick={() => submitScores()}
+                          className="ds-btn ds-btn-primary shrink-0"
+                        >
+                          Lưu Điểm
+                        </button>
+                      </div>
                    </div>
                  ) : (
                    <div className="text-center py-8">
