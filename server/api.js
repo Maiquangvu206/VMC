@@ -1783,7 +1783,7 @@ router.get('/recruitment/candidates/:seasonId', async (req, res) => {
 router.post('/recruitment/candidates', async (req, res) => {
   try {
     const { id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, notes, application_answers, lead_interviewer_id, selected_questions } = req.body;
-    const cid = id || ('cand-' + Date.now());
+    const cid = (id && typeof id === 'string' && id.trim()) ? id.trim() : ('cand-' + Date.now());
     const interviewerIdsVal = interviewer_ids !== undefined
       ? (Array.isArray(interviewer_ids) ? JSON.stringify(interviewer_ids) : interviewer_ids)
       : null;
