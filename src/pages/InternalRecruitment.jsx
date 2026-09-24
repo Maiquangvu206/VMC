@@ -1377,7 +1377,7 @@ export const InternalRecruitment = () => {
                                 {candComments.map((cmt, cIdx) => (
                                   <div key={cIdx} className="bg-[#111827] p-3 rounded-lg border border-slate-800 text-slate-300 text-xs">
                                     <div className="flex justify-between items-center text-[10px] text-slate-400 mb-1">
-                                      <span className="font-bold text-blue-300">👤 {cmt.interviewer_name}</span>
+                                      <span className="font-bold text-blue-300">👤 Giám khảo {cIdx + 1}</span>
                                       <span className="ds-badge ds-badge-secondary py-0 px-1.5 text-[9px] uppercase">
                                         {cmt.round_type === 'don' ? '📝 Vòng Đơn' : cmt.round_type === 'phongvan' ? '🎙️ Phỏng Vấn' : cmt.round_type === 'teamwork' ? '👥 Teamwork' : cmt.round_type === 'thuthach_quatrinh' ? '⚡ TT Quá trình' : '🏆 TT Kết quả'}
                                       </span>
@@ -1849,7 +1849,7 @@ export const InternalRecruitment = () => {
                                       {s.comments.map((cmt, cIdx) => (
                                         <div key={cIdx} className="bg-[#0f172a] p-2.5 rounded-lg border border-slate-800 text-slate-200 text-xs leading-relaxed space-y-1">
                                           <div className="flex justify-between items-center text-[10px] text-slate-400">
-                                            <span className="font-bold text-blue-300">👤 {cmt.interviewer_name}</span>
+                                            <span className="font-bold text-blue-300">👤 Giám khảo {cIdx + 1}</span>
                                             <span className="ds-badge ds-badge-secondary py-0 px-1.5 text-[9px] uppercase">
                                               {cmt.round_type === 'don' ? '📝 Đơn' : cmt.round_type === 'phongvan' ? '🎙️ PV' : cmt.round_type === 'teamwork' ? '👥 TW' : cmt.round_type === 'thuthach_quatrinh' ? '⚡ TT Quá trình' : '🏆 TT Kết quả'}
                                             </span>
