@@ -12,6 +12,7 @@ import { InterviewerModal } from '../components/recruitment/InterviewerModal';
 import { ScoringModal } from '../components/recruitment/ScoringModal';
 import { CandidateInterviewerModal } from '../components/recruitment/CandidateInterviewerModal';
 import { CandidateTeamworkModal } from '../components/recruitment/CandidateTeamworkModal';
+import { CandidateChallengeModal } from '../components/recruitment/CandidateChallengeModal';
 
 export const InternalRecruitment = () => {
   const { 
@@ -89,6 +90,9 @@ export const InternalRecruitment = () => {
   const [selectedCandidateTeamworkScorers, setSelectedCandidateTeamworkScorers] = useState([]);
   const [showCandidateInterviewerModal, setShowCandidateInterviewerModal] = useState(false);
   const [showCandidateTeamworkModal, setShowCandidateTeamworkModal] = useState(false);
+  const [showCandidateChallengeModal, setShowCandidateChallengeModal] = useState(false);
+  const [selectedCandidateChallengeProcessScorers, setSelectedCandidateChallengeProcessScorers] = useState([]);
+  const [selectedCandidateChallengeResultScorers, setSelectedCandidateChallengeResultScorers] = useState([]);
   const [scoringTypeFilter, setScoringTypeFilter] = useState(null);
   const [candidateSearchQuery, setCandidateSearchQuery] = useState('');
   const [filteredCandidates, setFilteredCandidates] = useState([]);
@@ -115,7 +119,6 @@ export const InternalRecruitment = () => {
     
     // Check if user can score based on any enabled scoring type
     const canScoreDon = scoringTypes.includes('don') && (isBCN || isAdvisor || isDeptMember);
-    // For teamwork, check if user is assigned as scorer for any candidate OR in season's interviewer_ids
     const canScoreTeamwork = scoringTypes.includes('teamwork') && (
       (currentSeason?.interviewer_ids || []).includes(currentUser?.id) ||
       (Array.isArray(candidates) && candidates.some(c => 
@@ -123,7 +126,6 @@ export const InternalRecruitment = () => {
         (c.interviewer_ids || []).includes(currentUser?.id)
       ))
     );
-    // For phỏng vấn, check if user is BCN, advisor, dept member, or assigned interviewer
     const canScorePhongvan = scoringTypes.includes('phongvan') && (
       isBCN || isAdvisor || isDeptMember ||
       (currentSeason?.interviewer_ids || []).includes(currentUser?.id) ||
@@ -131,9 +133,22 @@ export const InternalRecruitment = () => {
         (c.interviewer_ids || []).includes(currentUser?.id)
       ))
     );
+    const canScoreChallengeProcess = scoringTypes.includes('thuthach_quatrinh') && (
+      isBCN || isAdvisor || isDeptMember ||
+      (Array.isArray(candidates) && candidates.some(c => 
+        (c.challenge_process_scorer_ids || []).includes(currentUser?.id)
+      ))
+    );
+    const canScoreChallengeResult = scoringTypes.includes('thuthach_ketqua') && (
+      isBCN || isAdvisor || isDeptMember ||
+      (Array.isArray(candidates) && candidates.some(c => 
+        (c.challenge_result_scorer_ids || []).includes(currentUser?.id)
+      ))
+    );
     
-    return canScoreDon || canScoreTeamwork || canScorePhongvan;
+    return canScoreDon || canScoreTeamwork || canScorePhongvan || canScoreChallengeProcess || canScoreChallengeResult;
   }, [currentSeason, currentUser, candidates]);
+
 
   // Form states
   const [seasonForm, setSeasonForm] = useState({ name: '', quota: 0, department: '', scoring_type: [] });
@@ -192,9 +207,14 @@ export const InternalRecruitment = () => {
         list = list.filter(c => (c.teamwork_scorer_ids || []).includes(currentUser?.id));
       } else if (filterType === 'phongvan') {
         list = list.filter(c => (c.interviewer_ids || []).includes(currentUser?.id));
+      } else if (filterType === 'thuthach_quatrinh') {
+        list = list.filter(c => (c.challenge_process_scorer_ids || []).includes(currentUser?.id));
+      } else if (filterType === 'thuthach_ketqua') {
+        list = list.filter(c => (c.challenge_result_scorer_ids || []).includes(currentUser?.id));
       }
       // For 'don', any member of the department can score, so no candidate-level filtering is applied.
     }
+
 
     setFilteredCandidates(list);
     setCurrentScoringCandidateIndex(0);
@@ -514,6 +534,28 @@ export const InternalRecruitment = () => {
       showToast('❌ Lỗi phân công!', 'error');
     }
   };
+
+  const assignCandidateChallengeScorers = async (candidateId, processScorerIds, resultScorerIds) => {
+    try {
+      const res = await fetch(`/api/recruitment/candidates/${candidateId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+        body: JSON.stringify({
+          challenge_process_scorer_ids: processScorerIds,
+          challenge_result_scorer_ids: resultScorerIds
+        })
+      });
+      if (res.ok) {
+        showToast('✅ Đã phân công Vòng Thử Thách thành công!', 'success');
+        fetchCandidates(currentSeason.id);
+        setSelectedCandidateChallengeProcessScorers([]);
+        setSelectedCandidateChallengeResultScorers([]);
+      }
+    } catch (e) {
+      showToast('❌ Lỗi phân công!', 'error');
+    }
+  };
+
 
   const saveCandidateAnswers = async () => {
     if (!selectedCandidateForAnswers) return;
@@ -1103,7 +1145,49 @@ export const InternalRecruitment = () => {
                         </div>
                       </div>
                       <div className="flex gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
+                        {(isSuperAdmin || isAdmin || isHRHead || isDeptHead) && (
+                          <>
+                            <button
+                              onClick={() => {
+                                setSelectedCandidate(c);
+                                setSelectedCandidateInterviewers(c.interviewer_ids || []);
+                                setLeadInterviewerId(c.lead_interviewer_id || null);
+                                setShowCandidateInterviewerModal(true);
+                              }}
+                              className="ds-btn ds-btn-xs ds-btn-primary"
+                              title="Phân công Phỏng Vấn cho ứng viên này"
+                            >
+                              <Users className="w-3.5 h-3.5 mr-1" /> PV
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                setSelectedCandidate(c);
+                                setSelectedCandidateTeamworkScorers(c.teamwork_scorer_ids || []);
+                                setShowCandidateTeamworkModal(true);
+                              }}
+                              className="ds-btn ds-btn-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30"
+                              title="Phân công Teamwork cho ứng viên này"
+                            >
+                              <Users className="w-3.5 h-3.5 mr-1" /> TW
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                setSelectedCandidate(c);
+                                setSelectedCandidateChallengeProcessScorers(c.challenge_process_scorer_ids || []);
+                                setSelectedCandidateChallengeResultScorers(c.challenge_result_scorer_ids || []);
+                                setShowCandidateChallengeModal(true);
+                              }}
+                              className="ds-btn ds-btn-xs bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30"
+                              title="Phân công Vòng Thử Thách cho ứng viên này"
+                            >
+                              ⚡ Thử Thách
+                            </button>
+                          </>
+                        )}
                       </div>
+
                     </div>
 
                     {/* Collapsible Candidate Info Detail block (No application answers) */}
@@ -1255,16 +1339,16 @@ export const InternalRecruitment = () => {
                 Chấm Điểm Ứng Viên - {currentSeason.name}
               </h2>
               
-              {/* Filter by scoring type if both are enabled */}
+              {/* Filter by scoring type if multiple are enabled */}
               {Array.isArray(currentSeason.scoring_type) && currentSeason.scoring_type.length > 1 && (
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {currentSeason.scoring_type.map(type => (
                     <button
                       key={type}
                       onClick={() => setScoringTypeFilter(type)}
                       className={`ds-btn ds-btn-xs ${scoringTypeFilter === type ? 'ds-btn-primary' : 'ds-btn-secondary'}`}
                     >
-                      {type === 'don' ? 'Đơn' : type === 'phongvan' ? 'Phỏng vấn' : 'Teamwork'}
+                      {type === 'don' ? '📝 Vòng Đơn' : type === 'phongvan' ? '🎙️ Phỏng vấn' : type === 'teamwork' ? '👥 Teamwork' : type === 'thuthach_quatrinh' ? '⚡ Thử thách - Quá trình' : '🏆 Thử thách - Kết quả'}
                     </button>
                   ))}
                 </div>
@@ -1305,20 +1389,31 @@ export const InternalRecruitment = () => {
              const isAssignedToScore = (() => {
                const scoringTypes = Array.isArray(currentSeason.scoring_type) ? currentSeason.scoring_type : [currentSeason.scoring_type || 'teamwork'];
                const filterType = scoringTypeFilter || scoringTypes[0];
+               const userRoleTitle = (currentUser?.roleTitle || '').toLowerCase();
+               const isBCN = userRoleTitle.includes('chủ nhiệm') || userRoleTitle.includes('phó chủ nhiệm');
+               const isAdvisor = userRoleTitle.includes('cố vấn') || userRoleTitle.includes('advisor');
+
+               if (isBCN || isAdvisor || isSuperAdmin || isAdmin || isHRHead) return true;
+
                if (filterType === 'don') {
                  const seasonDept = currentSeason.department?.toLowerCase() || '';
                  const userDept = (currentUser?.deptName || currentUser?.department || '').toLowerCase();
-                 const userRoleTitle = (currentUser?.roleTitle || '').toLowerCase();
-                 const isBCN = userRoleTitle.includes('chủ nhiệm') || userRoleTitle.includes('phó chủ nhiệm');
-                 const isAdvisor = userRoleTitle.includes('cố vấn') || userRoleTitle.includes('advisor');
                  const isDeptMember = seasonDept && userDept.includes(seasonDept);
-                 return isBCN || isAdvisor || isDeptMember;
-               } else {
+                 return isDeptMember;
+               } else if (filterType === 'teamwork') {
                  return (c.teamwork_scorer_ids || []).includes(currentUser?.id) || 
-                        (c.interviewer_ids || []).includes(currentUser?.id) ||
                         (currentSeason?.interviewer_ids || []).includes(currentUser?.id);
+               } else if (filterType === 'phongvan') {
+                 return (c.interviewer_ids || []).includes(currentUser?.id) || 
+                        (currentSeason?.interviewer_ids || []).includes(currentUser?.id);
+               } else if (filterType === 'thuthach_quatrinh') {
+                 return (c.challenge_process_scorer_ids || []).includes(currentUser?.id);
+               } else if (filterType === 'thuthach_ketqua') {
+                 return (c.challenge_result_scorer_ids || []).includes(currentUser?.id);
                }
+               return false;
              })();
+
              
              const isSubmitted = submittedCandidates.includes(c.id);
              
@@ -1602,6 +1697,31 @@ export const InternalRecruitment = () => {
         loading={loading}
       />
 
+      <CandidateChallengeModal
+        show={showCandidateChallengeModal}
+        onClose={() => {
+          setShowCandidateChallengeModal(false);
+          setSelectedCandidate(null);
+          setSelectedCandidateChallengeProcessScorers([]);
+          setSelectedCandidateChallengeResultScorers([]);
+        }}
+        candidate={selectedCandidate}
+        availableInterviewers={availableInterviewers}
+        selectedProcessScorers={selectedCandidateChallengeProcessScorers}
+        setSelectedProcessScorers={setSelectedCandidateChallengeProcessScorers}
+        selectedResultScorers={selectedCandidateChallengeResultScorers}
+        setSelectedResultScorers={setSelectedCandidateChallengeResultScorers}
+        onSubmit={() => {
+          assignCandidateChallengeScorers(
+            selectedCandidate.id,
+            selectedCandidateChallengeProcessScorers,
+            selectedCandidateChallengeResultScorers
+          );
+        }}
+        loading={loading}
+      />
+
     </div>
   );
 };
+

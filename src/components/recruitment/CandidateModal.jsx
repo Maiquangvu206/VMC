@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, X, User, Hash, BookOpen, Phone, Mail, Building, FileText } from 'lucide-react';
+import { X, User, Hash, BookOpen, Phone, Mail, Building, FileText } from 'lucide-react';
 
 export const CandidateModal = ({ show, onClose, candidateForm, setCandidateForm, onSubmit, loading, currentSeason }) => {
   if (!show) return null;
@@ -27,13 +27,14 @@ export const CandidateModal = ({ show, onClose, candidateForm, setCandidateForm,
             <div className="sm:col-span-2">
               <label className="ds-field-label">Họ và tên *</label>
               <div className="relative flex items-center w-full">
-                <User className="absolute left-3 w-4 h-4 text-slate-400 shrink-0" />
+                <User className="absolute left-3 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
                 <input
                   type="text"
                   required
                   value={candidateForm.full_name || ''}
                   onChange={(e) => setCandidateForm({ ...candidateForm, full_name: e.target.value })}
-                  className="ds-input pl-10"
+                  className="ds-input w-full"
+                  style={{ paddingLeft: '2.5rem' }}
                   placeholder="Nguyễn Văn A"
                 />
               </div>
@@ -42,13 +43,14 @@ export const CandidateModal = ({ show, onClose, candidateForm, setCandidateForm,
             <div>
               <label className="ds-field-label">Mã Phỏng Vấn *</label>
               <div className="relative flex items-center w-full">
-                <Hash className="absolute left-3 w-4 h-4 text-cyan-400 shrink-0" />
+                <Hash className="absolute left-3 w-4 h-4 text-cyan-400 shrink-0 pointer-events-none z-10" />
                 <input
                   type="text"
                   required
-                  value={candidateForm.interview_code || ''}
-                  onChange={(e) => setCandidateForm({ ...candidateForm, interview_code: e.target.value.toUpperCase() })}
-                  className="ds-input pl-10 font-mono font-bold text-cyan-300 uppercase"
+                  value={candidateForm.interview_code || candidateForm.id || ''}
+                  onChange={(e) => setCandidateForm({ ...candidateForm, interview_code: e.target.value.toUpperCase(), id: e.target.value.toUpperCase() })}
+                  className="ds-input font-mono font-bold text-cyan-300 uppercase w-full"
+                  style={{ paddingLeft: '2.5rem' }}
                   placeholder="PV-01"
                 />
               </div>
@@ -60,12 +62,13 @@ export const CandidateModal = ({ show, onClose, candidateForm, setCandidateForm,
             <div>
               <label className="ds-field-label">Lớp học</label>
               <div className="relative flex items-center w-full">
-                <BookOpen className="absolute left-3 w-4 h-4 text-slate-400 shrink-0" />
+                <BookOpen className="absolute left-3 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
                 <input
                   type="text"
                   value={candidateForm.class_name || ''}
                   onChange={(e) => setCandidateForm({ ...candidateForm, class_name: e.target.value })}
-                  className="ds-input pl-10"
+                  className="ds-input w-full"
+                  style={{ paddingLeft: '2.5rem' }}
                   placeholder="VD: 10A1, 11B2..."
                 />
               </div>
@@ -74,12 +77,13 @@ export const CandidateModal = ({ show, onClose, candidateForm, setCandidateForm,
             <div>
               <label className="ds-field-label">Số điện thoại</label>
               <div className="relative flex items-center w-full">
-                <Phone className="absolute left-3 w-4 h-4 text-slate-400 shrink-0" />
+                <Phone className="absolute left-3 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
                 <input
                   type="text"
                   value={candidateForm.phone || ''}
                   onChange={(e) => setCandidateForm({ ...candidateForm, phone: e.target.value })}
-                  className="ds-input pl-10"
+                  className="ds-input w-full"
+                  style={{ paddingLeft: '2.5rem' }}
                   placeholder="0987654321"
                 />
               </div>
@@ -91,12 +95,13 @@ export const CandidateModal = ({ show, onClose, candidateForm, setCandidateForm,
             <div>
               <label className="ds-field-label">Email liên hệ</label>
               <div className="relative flex items-center w-full">
-                <Mail className="absolute left-3 w-4 h-4 text-slate-400 shrink-0" />
+                <Mail className="absolute left-3 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
                 <input
                   type="email"
                   value={candidateForm.email || ''}
                   onChange={(e) => setCandidateForm({ ...candidateForm, email: e.target.value })}
-                  className="ds-input pl-10"
+                  className="ds-input w-full"
+                  style={{ paddingLeft: '2.5rem' }}
                   placeholder="ungvien@gmail.com"
                 />
               </div>
@@ -105,12 +110,13 @@ export const CandidateModal = ({ show, onClose, candidateForm, setCandidateForm,
             <div>
               <label className="ds-field-label">Ban mong muốn</label>
               <div className="relative flex items-center w-full">
-                <Building className="absolute left-3 w-4 h-4 text-slate-400 shrink-0" />
+                <Building className="absolute left-3 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
                 <input
                   type="text"
                   value={candidateForm.desired_dept || ''}
                   onChange={(e) => setCandidateForm({ ...candidateForm, desired_dept: e.target.value })}
-                  className="ds-input pl-10"
+                  className="ds-input w-full"
+                  style={{ paddingLeft: '2.5rem' }}
                   placeholder={currentSeason?.department || 'Ban mong muốn tham gia'}
                 />
               </div>
@@ -127,23 +133,8 @@ export const CandidateModal = ({ show, onClose, candidateForm, setCandidateForm,
               value={candidateForm.notes || ''}
               onChange={(e) => setCandidateForm({ ...candidateForm, notes: e.target.value })}
               className="w-full bg-[#0f172a] border border-[#1f2937] focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-xl p-3 text-xs text-slate-100 placeholder:text-slate-500 leading-relaxed resize-y transition-all"
-              rows={2}
+              rows={3}
               placeholder="Nhập nhận xét sơ bộ, kinh nghiệm cá nhân hoặc ghi chú đặc biệt..."
-            />
-          </div>
-
-          {/* Row 5: Bài làm vòng đơn - Clean Full-width Textarea Layout */}
-          <div className="pt-1">
-            <label className="ds-field-label flex items-center gap-1.5 mb-1.5">
-              <FileText className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-              <span>Bài làm vòng đơn (Câu hỏi & Câu trả lời)</span>
-            </label>
-            <textarea
-              value={candidateForm.application_answers || ''}
-              onChange={(e) => setCandidateForm({ ...candidateForm, application_answers: e.target.value })}
-              className="w-full bg-[#0f172a] border border-[#1f2937] focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-xl p-3 text-xs text-slate-100 placeholder:text-slate-500 leading-relaxed resize-y transition-all"
-              rows={4}
-              placeholder="Nhập các câu hỏi và câu trả lời vòng đơn của ứng viên..."
             />
           </div>
 

@@ -53,8 +53,8 @@ export const SeasonModal = ({ show, onClose, seasonForm, setSeasonForm, onSubmit
 
           <div>
             <label className="ds-field-label">Loại chấm điểm *</label>
-            <div className="flex flex-wrap gap-2 pt-1">
-              <label className="ds-card p-3 flex items-center gap-2 cursor-pointer bg-[#0f172a] border border-[#1f2937] hover:border-slate-700 rounded-xl flex-1 justify-center">
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <label className="ds-card p-2.5 flex items-center gap-2 cursor-pointer bg-[#0f172a] border border-[#1f2937] hover:border-slate-700 rounded-xl justify-center">
                 <input
                   type="checkbox"
                   checked={seasonForm.scoring_type.includes('don')}
@@ -66,10 +66,10 @@ export const SeasonModal = ({ show, onClose, seasonForm, setSeasonForm, onSubmit
                     }
                   }}
                 />
-                <span className="text-xs font-semibold text-slate-200">Đơn</span>
+                <span className="text-xs font-semibold text-slate-200">📝 Vòng Đơn</span>
               </label>
 
-              <label className="ds-card p-3 flex items-center gap-2 cursor-pointer bg-[#0f172a] border border-[#1f2937] hover:border-slate-700 rounded-xl flex-1 justify-center">
+              <label className="ds-card p-2.5 flex items-center gap-2 cursor-pointer bg-[#0f172a] border border-[#1f2937] hover:border-slate-700 rounded-xl justify-center">
                 <input
                   type="checkbox"
                   checked={seasonForm.scoring_type.includes('teamwork')}
@@ -81,10 +81,10 @@ export const SeasonModal = ({ show, onClose, seasonForm, setSeasonForm, onSubmit
                     }
                   }}
                 />
-                <span className="text-xs font-semibold text-slate-200">Teamwork</span>
+                <span className="text-xs font-semibold text-slate-200">👥 Teamwork</span>
               </label>
 
-              <label className="ds-card p-3 flex items-center gap-2 cursor-pointer bg-[#0f172a] border border-[#1f2937] hover:border-slate-700 rounded-xl flex-1 justify-center">
+              <label className="ds-card p-2.5 flex items-center gap-2 cursor-pointer bg-[#0f172a] border border-[#1f2937] hover:border-slate-700 rounded-xl justify-center">
                 <input
                   type="checkbox"
                   checked={seasonForm.scoring_type.includes('phongvan')}
@@ -96,10 +96,41 @@ export const SeasonModal = ({ show, onClose, seasonForm, setSeasonForm, onSubmit
                     }
                   }}
                 />
-                <span className="text-xs font-semibold text-slate-200">Phỏng vấn</span>
+                <span className="text-xs font-semibold text-slate-200">🎙️ Phỏng vấn</span>
+              </label>
+
+              <label className="ds-card p-2.5 flex items-center gap-2 cursor-pointer bg-[#0f172a] border border-[#1f2937] hover:border-amber-500/50 rounded-xl justify-center">
+                <input
+                  type="checkbox"
+                  checked={seasonForm.scoring_type.includes('thuthach_quatrinh')}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSeasonForm({ ...seasonForm, scoring_type: [...seasonForm.scoring_type, 'thuthach_quatrinh'] });
+                    } else {
+                      setSeasonForm({ ...seasonForm, scoring_type: seasonForm.scoring_type.filter(t => t !== 'thuthach_quatrinh') });
+                    }
+                  }}
+                />
+                <span className="text-xs font-semibold text-amber-300">⚡ TT - Quá Trình</span>
+              </label>
+
+              <label className="ds-card p-2.5 flex items-center gap-2 cursor-pointer bg-[#0f172a] border border-[#1f2937] hover:border-purple-500/50 rounded-xl justify-center col-span-2">
+                <input
+                  type="checkbox"
+                  checked={seasonForm.scoring_type.includes('thuthach_ketqua')}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSeasonForm({ ...seasonForm, scoring_type: [...seasonForm.scoring_type, 'thuthach_ketqua'] });
+                    } else {
+                      setSeasonForm({ ...seasonForm, scoring_type: seasonForm.scoring_type.filter(t => t !== 'thuthach_ketqua') });
+                    }
+                  }}
+                />
+                <span className="text-xs font-semibold text-purple-300">🏆 TT - Kết Quả</span>
               </label>
             </div>
           </div>
+
         </div>
 
         <div className="flex gap-3 pt-4 border-t border-[#1f2937]">

@@ -254,6 +254,10 @@ async function init() {
     await queryDatabase('ALTER TABLE Recruitment_Seasons MODIFY COLUMN interviewer_ids LONGTEXT').catch(() => {});
     await queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN interviewer_ids TEXT').catch(() => {});
     await queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN teamwork_scorer_ids TEXT').catch(() => {});
+    await queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN challenge_process_scorer_ids TEXT').catch(() => {});
+    await queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN challenge_result_scorer_ids TEXT').catch(() => {});
+    await queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN challenge_process_scorer_ids TEXT').catch(() => {});
+    await queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN challenge_result_scorer_ids TEXT').catch(() => {});
     await queryDatabase('ALTER TABLE Recruitment_Scores ADD COLUMN comments TEXT').catch(() => {});
 
     // Tạo file SQL Dump trọn bộ để Import trực tiếp vào phpMyAdmin nếu muốn

@@ -1,0 +1,144 @@
+import React, { useState } from 'react';
+import { X, Zap, Trophy } from 'lucide-react';
+
+export const CandidateChallengeModal = ({ 
+  show, 
+  onClose, 
+  candidate, 
+  availableInterviewers, 
+  selectedProcessScorers, 
+  setSelectedProcessScorers, 
+  selectedResultScorers, 
+  setSelectedResultScorers, 
+  onSubmit, 
+  loading 
+}) => {
+  const [activeSubTab, setActiveSubTab] = useState('process');
+
+  if (!show || !candidate) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+      <div className="ds-card p-6 w-full max-w-lg max-h-[90vh] flex flex-col bg-[#111827] border border-[#1f2937] rounded-2xl shadow-2xl space-y-4 overflow-hidden">
+        
+        {/* Header */}
+        <div className="flex justify-between items-center pb-2 border-b border-[#1f2937] shrink-0">
+          <div>
+            <h3 className="font-heading text-lg font-bold text-white flex items-center gap-2">
+              🔥 Phân Công Vòng Thử Thách
+            </h3>
+            <p className="text-xs text-amber-400 font-medium mt-0.5">
+              Ứng viên: {candidate.full_name}
+            </p>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-white p-1">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Sub-tab selection */}
+        <div className="flex gap-2 p-1 bg-slate-900 rounded-xl border border-slate-800 shrink-0 text-xs">
+          <button
+            onClick={() => setActiveSubTab('process')}
+            className={`flex-1 py-2 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all ${
+              activeSubTab === 'process'
+                ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Zap className="w-4 h-4 text-amber-400" />
+            1. Chấm Quá Trình ({selectedProcessScorers.length})
+          </button>
+
+          <button
+            onClick={() => setActiveSubTab('result')}
+            className={`flex-1 py-2 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all ${
+              activeSubTab === 'result'
+                ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <Trophy className="w-4 h-4 text-purple-400" />
+            2. Chấm Kết Quả ({selectedResultScorers.length})
+          </button>
+        </div>
+
+        {/* Member List */}
+        <div className="space-y-2.5 overflow-y-auto flex-1 pr-1 max-h-[55vh]">
+          {availableInterviewers.length === 0 ? (
+            <div className="text-center py-6 text-slate-500 text-xs italic">
+              Chưa có thành viên nào khả dụng.
+            </div>
+          ) : (
+            availableInterviewers.map(m => {
+              const currentList = activeSubTab === 'process' ? selectedProcessScorers : selectedResultScorers;
+              const setList = activeSubTab === 'process' ? setSelectedProcessScorers : setSelectedResultScorers;
+              const isChecked = currentList.includes(m.id);
+
+              return (
+                <div 
+                  key={m.id} 
+                  className={`p-3 rounded-xl border flex items-center justify-between gap-3 transition-all ${
+                    isChecked 
+                      ? (activeSubTab === 'process' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-purple-500/10 border-purple-500/30')
+                      : 'bg-[#0f172a] border-[#1f2937]'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <img 
+                      src={m.avatar || '/default-avatar.png'} 
+                      alt={m.name} 
+                      className="w-9 h-9 rounded-full object-cover border border-[#1f2937] shrink-0"
+                      onError={(e) => { e.target.src = '/default-avatar.png'; }}
+                    />
+                    <div className="min-w-0">
+                      <div className="font-bold text-white text-xs truncate">{m.name}</div>
+                      <div className="text-[10px] text-slate-400 truncate">
+                        {m.roleTitle || 'Thành viên'} • {m.deptName || m.department || 'Ban Chuyên Môn'}
+                      </div>
+                    </div>
+                  </div>
+
+                  <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                    <input 
+                      type="checkbox" 
+                      checked={isChecked} 
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setList([...currentList, m.id]);
+                        } else {
+                          setList(currentList.filter(id => id !== m.id));
+                        }
+                      }}
+                      className="sr-only peer" 
+                    />
+                    <div className={`w-10 h-5 bg-slate-700 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all ${
+                      activeSubTab === 'process' ? 'peer-checked:bg-amber-500' : 'peer-checked:bg-purple-500'
+                    }`}></div>
+                  </label>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex gap-3 pt-4 border-t border-[#1f2937] shrink-0">
+          <button 
+            onClick={onClose}
+            className="ds-btn ds-btn-secondary text-xs flex-1"
+          >
+            Hủy
+          </button>
+          <button 
+            onClick={onSubmit}
+            disabled={loading}
+            className="ds-btn ds-btn-primary text-xs flex-1"
+          >
+            {loading ? 'Đang lưu...' : 'Lưu Phân Công Thử Thách'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};

@@ -249,6 +249,10 @@ queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN department VARCHAR(100
 queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN scoring_type TEXT').catch(() => {});
 queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN interviewer_ids TEXT').catch(() => {});
 queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN teamwork_scorer_ids TEXT').catch(() => {});
+queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN challenge_process_scorer_ids TEXT').catch(() => {});
+queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN challenge_result_scorer_ids TEXT').catch(() => {});
+queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN challenge_process_scorer_ids TEXT').catch(() => {});
+queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN challenge_result_scorer_ids TEXT').catch(() => {});
 queryDatabase('ALTER TABLE Recruitment_Scores ADD COLUMN comments TEXT').catch(() => {});
 
 // Tự động khởi tạo bảng System_Settings
