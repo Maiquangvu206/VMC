@@ -1218,6 +1218,16 @@ export const InternalRecruitment = () => {
                             <span className="text-slate-200 font-medium">{c.desired_dept || 'N/A'}</span>
                           </div>
                           <div>
+                            <span className="text-slate-400 block mb-0.5">Facebook:</span>
+                            {c.facebook ? (
+                              <a href={c.facebook.startsWith('http') ? c.facebook : `https://${c.facebook}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline font-medium flex items-center gap-1">
+                                🔗 Xem trang Facebook
+                              </a>
+                            ) : (
+                              <span className="text-slate-500 italic">Chưa cập nhật</span>
+                            )}
+                          </div>
+                          <div>
                             <span className="text-slate-400 block mb-0.5">Trạng thái:</span>
                             <span className="text-slate-200 font-medium capitalize">{c.status}</span>
                           </div>

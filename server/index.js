@@ -65,6 +65,7 @@ queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN challenge_process_s
 queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN challenge_result_scorer_ids TEXT').catch(() => {});
 queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN lead_interviewer_id VARCHAR(100)').catch(() => {});
 queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN selected_questions TEXT').catch(() => {});
+queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN facebook TEXT').catch(() => {});
 queryDatabase(`
   CREATE TABLE IF NOT EXISTS Birthday_Mail_Logs (
     id INT AUTO_INCREMENT PRIMARY KEY,

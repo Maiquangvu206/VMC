@@ -258,6 +258,7 @@ async function init() {
     await queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN challenge_result_scorer_ids TEXT').catch(() => {});
     await queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN lead_interviewer_id VARCHAR(100)').catch(() => {});
     await queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN selected_questions TEXT').catch(() => {});
+    await queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN facebook TEXT').catch(() => {});
     await queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN challenge_process_scorer_ids TEXT').catch(() => {});
     await queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN challenge_result_scorer_ids TEXT').catch(() => {});
     await queryDatabase('ALTER TABLE Recruitment_Scores ADD COLUMN comments TEXT').catch(() => {});

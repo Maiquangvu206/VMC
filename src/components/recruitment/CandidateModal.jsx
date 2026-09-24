@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, User, Hash, BookOpen, Phone, Mail, Building, FileText } from 'lucide-react';
+import { X, User, Hash, BookOpen, Phone, Mail, Building, Globe } from 'lucide-react';
 
 export const CandidateModal = ({ show, onClose, candidateForm, setCandidateForm, onSubmit, loading, currentSeason }) => {
   if (!show) return null;
@@ -123,19 +123,20 @@ export const CandidateModal = ({ show, onClose, candidateForm, setCandidateForm,
             </div>
           </div>
 
-          {/* Row 4: Ghi chú - Clean Full-width Textarea Layout */}
-          <div className="pt-1">
-            <label className="ds-field-label flex items-center gap-1.5 mb-1.5">
-              <FileText className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-              <span>Ghi chú về ứng viên</span>
-            </label>
-            <textarea
-              value={candidateForm.notes || ''}
-              onChange={(e) => setCandidateForm({ ...candidateForm, notes: e.target.value })}
-              className="w-full bg-[#0f172a] border border-[#1f2937] focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-xl p-3 text-xs text-slate-100 placeholder:text-slate-500 leading-relaxed resize-y transition-all"
-              rows={3}
-              placeholder="Nhập nhận xét sơ bộ, kinh nghiệm cá nhân hoặc ghi chú đặc biệt..."
-            />
+          {/* Row 4: Link Facebook */}
+          <div>
+            <label className="ds-field-label">Link Facebook ứng viên</label>
+            <div className="relative flex items-center w-full">
+              <Globe className="absolute left-3 w-4 h-4 text-blue-400 shrink-0 pointer-events-none z-10" />
+              <input
+                type="text"
+                value={candidateForm.facebook || ''}
+                onChange={(e) => setCandidateForm({ ...candidateForm, facebook: e.target.value })}
+                className="ds-input w-full"
+                style={{ paddingLeft: '2.5rem' }}
+                placeholder="https://facebook.com/profile.id..."
+              />
+            </div>
           </div>
 
         </div>
