@@ -96,6 +96,7 @@ export const InternalRecruitment = () => {
   const [showCandidateChallengeModal, setShowCandidateChallengeModal] = useState(false);
   const [selectedCandidateChallengeProcessScorers, setSelectedCandidateChallengeProcessScorers] = useState([]);
   const [selectedCandidateChallengeResultScorers, setSelectedCandidateChallengeResultScorers] = useState([]);
+  const [selectedCandidateChallengeTopic, setSelectedCandidateChallengeTopic] = useState('');
   const [showSeasonChallengeModal, setShowSeasonChallengeModal] = useState(false);
   const [selectedSeasonForChallenge, setSelectedSeasonForChallenge] = useState(null);
   const [selectedSeasonChallengeProcessScorers, setSelectedSeasonChallengeProcessScorers] = useState([]);
@@ -583,21 +584,23 @@ export const InternalRecruitment = () => {
     }
   };
 
-  const assignCandidateChallengeScorers = async (candidateId, processScorerIds, resultScorerIds) => {
+  const assignCandidateChallengeScorers = async (candidateId, processScorerIds, resultScorerIds, topicVal) => {
     try {
       const res = await fetch(`/api/recruitment/candidates/${candidateId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
         body: JSON.stringify({
           challenge_process_scorer_ids: processScorerIds,
-          challenge_result_scorer_ids: resultScorerIds
+          challenge_result_scorer_ids: resultScorerIds,
+          challenge_topic: topicVal !== undefined ? topicVal : selectedCandidateChallengeTopic
         })
       });
       if (res.ok) {
-        showToast('✅ Đã phân công Vòng Thử Thách thành công!', 'success');
+        showToast('✅ Đã phân công Vòng Thử Thách & đề thi thành công!', 'success');
         fetchCandidates(currentSeason.id);
         setSelectedCandidateChallengeProcessScorers([]);
         setSelectedCandidateChallengeResultScorers([]);
+        setSelectedCandidateChallengeTopic('');
       }
     } catch (e) {
       showToast('❌ Lỗi phân công!', 'error');
@@ -1224,6 +1227,13 @@ export const InternalRecruitment = () => {
                         <p className="text-slate-400 text-sm">Mùa tuyển sinh: {currentSeason.name} | Mã ứng viên: <strong className="text-cyan-400 font-mono text-xs">{c.id}</strong></p>
 
                         <p className="text-slate-500 text-xs mt-1">Ban nguyện vọng: {c.desired_dept || 'Tất cả'} (Click để xem chi tiết)</p>
+                        {c.challenge_topic && (
+                          <div className="mt-1.5 flex items-center gap-1.5">
+                            <span className="ds-badge bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px]">
+                              🎯 Đề TT: {c.challenge_topic}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-2 mt-2">
                           {c.status === 'passed' && <span className="ds-badge ds-badge-emerald">✅ Đậu</span>}
                           {c.status === 'failed' && <span className="ds-badge ds-badge-rose">❌ Rớt</span>}
@@ -1263,6 +1273,7 @@ export const InternalRecruitment = () => {
                             <button
                               onClick={() => {
                                 setSelectedCandidate(c);
+                                setSelectedCandidateChallengeTopic(c.challenge_topic || '');
                                 setSelectedCandidateChallengeProcessScorers(c.challenge_process_scorer_ids || []);
                                 setSelectedCandidateChallengeResultScorers(c.challenge_result_scorer_ids || []);
                                 setShowCandidateChallengeModal(true);
@@ -1518,7 +1529,32 @@ export const InternalRecruitment = () => {
              return (
                <div className="ds-card p-6">
                  {/* Candidate info */}
-                 <div className="flex justify-between items-start mb-6 pb-4 border-b border-[var(--border-default)]">
+                 {(scoringTypeFilter === 'thuthach_quatrinh' || scoringTypeFilter === 'thuthach_ketqua') && (
+                    <div className="mb-6 p-4 bg-[#0f172a] border border-amber-500/30 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">🎯 Đề Thử Thách Thực Hiện:</span>
+                        </div>
+                        <p className="text-sm font-semibold text-white">
+                          {c.challenge_topic || <span className="text-slate-400 italic">Chưa gán đề thử thách cho ứng viên này</span>}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setSelectedCandidate(c);
+                          setSelectedCandidateChallengeTopic(c.challenge_topic || '');
+                          setSelectedCandidateChallengeProcessScorers(c.challenge_process_scorer_ids || []);
+                          setSelectedCandidateChallengeResultScorers(c.challenge_result_scorer_ids || []);
+                          setShowCandidateChallengeModal(true);
+                        }}
+                        className="ds-btn ds-btn-xs bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 shrink-0 self-start sm:self-center"
+                      >
+                        {c.challenge_topic ? '✏️ Đổi Đề / Phân Người Chấm' : '⚡ Chọn Đề & Tự Nhận Chấm Quá Trình'}
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-start mb-6 pb-4 border-b border-[var(--border-default)]">
                    <div>
                      <h3 className="text-2xl font-bold text-white">{c.full_name}</h3>
                      <p className="text-slate-400">Mã: {c.id} | Lớp: {c.class_name}</p>
@@ -1865,6 +1901,7 @@ export const InternalRecruitment = () => {
           setSelectedCandidate(null);
           setSelectedCandidateChallengeProcessScorers([]);
           setSelectedCandidateChallengeResultScorers([]);
+          setSelectedCandidateChallengeTopic('');
         }}
         candidate={selectedCandidate}
         availableInterviewers={availableInterviewers}
@@ -1872,11 +1909,16 @@ export const InternalRecruitment = () => {
         setSelectedProcessScorers={setSelectedCandidateChallengeProcessScorers}
         selectedResultScorers={selectedCandidateChallengeResultScorers}
         setSelectedResultScorers={setSelectedCandidateChallengeResultScorers}
+        challengeTopic={selectedCandidateChallengeTopic}
+        setChallengeTopic={setSelectedCandidateChallengeTopic}
+        sampleTopics={criteria.filter(crit => crit.round_type === 'thuthach_quatrinh' || crit.round_type === 'thuthach_ketqua')}
+        currentUser={currentUser}
         onSubmit={() => {
           assignCandidateChallengeScorers(
             selectedCandidate.id,
             selectedCandidateChallengeProcessScorers,
-            selectedCandidateChallengeResultScorers
+            selectedCandidateChallengeResultScorers,
+            selectedCandidateChallengeTopic
           );
         }}
         loading={loading}

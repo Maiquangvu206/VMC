@@ -10,13 +10,27 @@ export const CandidateChallengeModal = ({
   selectedProcessScorers, 
   setSelectedProcessScorers, 
   selectedResultScorers, 
-  setSelectedResultScorers, 
+  setSelectedResultScorers,
+  challengeTopic,
+  setChallengeTopic,
+  sampleTopics = [],
+  currentUser,
   onSubmit, 
   loading 
 }) => {
   const [activeSubTab, setActiveSubTab] = useState('process');
 
   if (!show || (!candidate && !season)) return null;
+
+  const handleTopicSelect = (topic) => {
+    if (setChallengeTopic) {
+      setChallengeTopic(topic);
+    }
+    // Auto add currentUser as process scorer if selecting topic for candidate
+    if (currentUser?.id && !selectedProcessScorers.includes(currentUser.id)) {
+      setSelectedProcessScorers([...selectedProcessScorers, currentUser.id]);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
@@ -36,6 +50,56 @@ export const CandidateChallengeModal = ({
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Candidate Topic Assignment Box */}
+        {candidate && setChallengeTopic && (
+          <div className="p-3 bg-[#0f172a] border border-amber-500/30 rounded-xl space-y-2 shrink-0">
+            <div className="flex justify-between items-center">
+              <label className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                🎯 Chọn Đề Thử Thách Cho Ứng Viên:
+              </label>
+              {currentUser?.id && !selectedProcessScorers.includes(currentUser.id) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!selectedProcessScorers.includes(currentUser.id)) {
+                      setSelectedProcessScorers([...selectedProcessScorers, currentUser.id]);
+                    }
+                  }}
+                  className="text-[10px] text-amber-400 hover:underline font-semibold"
+                >
+                  + Tự động chọn tôi làm người chấm quá trình
+                </button>
+              )}
+            </div>
+
+            {sampleTopics.length > 0 && (
+              <select
+                value={challengeTopic || ''}
+                onChange={(e) => handleTopicSelect(e.target.value)}
+                className="w-full bg-[#111827] border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-amber-500"
+              >
+                <option value="">-- Chọn đề thử thách mẫu từ danh sách --</option>
+                {sampleTopics.map((t, idx) => (
+                  <option key={t.id || idx} value={t.criteria_name || t}>
+                    Đề {idx + 1}: {t.criteria_name || t}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            <input
+              type="text"
+              value={challengeTopic || ''}
+              onChange={(e) => handleTopicSelect(e.target.value)}
+              placeholder="Hoặc nhập đề thử thách tùy chỉnh cho ứng viên..."
+              className="w-full bg-[#111827] border border-slate-700 rounded-lg p-2 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-amber-500"
+            />
+            <p className="text-[10px] text-slate-400 italic">
+              💡 Người chọn đề cho ứng viên sẽ tự động được gán làm Người Chấm Quá Trình (`1. Chấm Quá Trình`).
+            </p>
+          </div>
+        )}
 
         {/* Sub-tab selection */}
         <div className="flex gap-2 p-1 bg-slate-900 rounded-xl border border-slate-800 shrink-0 text-xs">
