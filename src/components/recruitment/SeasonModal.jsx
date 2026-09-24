@@ -102,31 +102,20 @@ export const SeasonModal = ({ show, onClose, seasonForm, setSeasonForm, onSubmit
               <label className="ds-card p-2.5 flex items-center gap-2 cursor-pointer bg-[#0f172a] border border-[#1f2937] hover:border-amber-500/50 rounded-xl justify-center">
                 <input
                   type="checkbox"
-                  checked={seasonForm.scoring_type.includes('thuthach_quatrinh')}
+                  checked={seasonForm.scoring_type.includes('thuthach_quatrinh') || seasonForm.scoring_type.includes('thuthach_ketqua') || seasonForm.scoring_type.includes('thuthach')}
                   onChange={(e) => {
                     if (e.target.checked) {
-                      setSeasonForm({ ...seasonForm, scoring_type: [...seasonForm.scoring_type, 'thuthach_quatrinh'] });
+                      const newTypes = Array.from(new Set([...seasonForm.scoring_type, 'thuthach_quatrinh', 'thuthach_ketqua']));
+                      setSeasonForm({ ...seasonForm, scoring_type: newTypes });
                     } else {
-                      setSeasonForm({ ...seasonForm, scoring_type: seasonForm.scoring_type.filter(t => t !== 'thuthach_quatrinh') });
+                      setSeasonForm({
+                        ...seasonForm,
+                        scoring_type: seasonForm.scoring_type.filter(t => t !== 'thuthach' && t !== 'thuthach_quatrinh' && t !== 'thuthach_ketqua')
+                      });
                     }
                   }}
                 />
-                <span className="text-xs font-semibold text-amber-300">⚡ TT - Quá Trình</span>
-              </label>
-
-              <label className="ds-card p-2.5 flex items-center gap-2 cursor-pointer bg-[#0f172a] border border-[#1f2937] hover:border-purple-500/50 rounded-xl justify-center col-span-2">
-                <input
-                  type="checkbox"
-                  checked={seasonForm.scoring_type.includes('thuthach_ketqua')}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setSeasonForm({ ...seasonForm, scoring_type: [...seasonForm.scoring_type, 'thuthach_ketqua'] });
-                    } else {
-                      setSeasonForm({ ...seasonForm, scoring_type: seasonForm.scoring_type.filter(t => t !== 'thuthach_ketqua') });
-                    }
-                  }}
-                />
-                <span className="text-xs font-semibold text-purple-300">🏆 TT - Kết Quả</span>
+                <span className="text-xs font-semibold text-amber-300">⚡ Vòng Thử Thách</span>
               </label>
             </div>
           </div>
