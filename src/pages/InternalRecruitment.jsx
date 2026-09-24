@@ -33,7 +33,10 @@ export const InternalRecruitment = () => {
   const currentUserDeptName = String(currentUser?.deptName || currentUser?.department || '').toLowerCase();
 
   const isDeptHead = Boolean(
-    currentUserRoleTitle.includes('trưởng ban')
+    currentUserRoleTitle.includes('trưởng ban') ||
+    currentUserRoleTitle.includes('chủ nhiệm') ||
+    currentUserRoleTitle.includes('cố vấn') ||
+    currentUserRoleTitle.includes('advisor')
   );
 
   // Helper to check if a user is permitted to access a given season
@@ -1464,22 +1467,59 @@ export const InternalRecruitment = () => {
                  {isAssignedToScore && !isSubmitted ? (
                    <div className="space-y-4">
                      {criteria.filter(crit => (crit.round_type || 'teamwork') === (scoringTypeFilter || 'teamwork')).map(crit => (
-                       <div key={crit.id} className="flex items-center gap-4">
-                         <div className="flex-1">
-                           <label className="text-white font-medium block mb-1">{crit.criteria_name}</label>
-                           <p className="text-slate-400 text-xs">Thang điểm: 0 - {crit.max_score}</p>
+                       <div key={crit.id} className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/80 space-y-3 shadow-sm">
+                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-700/50">
+                           <div className="flex-1 min-w-0">
+                             <label className="text-slate-100 font-bold text-base block leading-snug break-words">{crit.criteria_name}</label>
+                             <span className="inline-block mt-1 px-2 py-0.5 rounded bg-slate-700/60 text-slate-300 text-xs font-medium">Thang điểm: 0 - {crit.max_score}</span>
+                           </div>
+                           <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
+                             <span className="text-xs text-slate-400 font-medium">Điểm:</span>
+                             <input
+                               type="number"
+                               min="0"
+                               max={crit.max_score}
+                               value={scoringData[crit.id] ?? ''}
+                               onChange={(e) => setScoringData(prev => ({
+                                 ...prev,
+                                 [crit.id]: parseFloat(e.target.value) || 0
+                               }))}
+                               placeholder="0"
+                               className="ds-input w-24 text-center font-bold text-lg text-emerald-400 bg-slate-900 border-slate-600 focus:border-emerald-500"
+                             />
+                           </div>
                          </div>
-                         <input
-                           type="number"
-                           min="0"
-                           max={crit.max_score}
-                           value={scoringData[crit.id] || ''}
-                           onChange={(e) => setScoringData(prev => ({
-                             ...prev,
-                             [crit.id]: parseFloat(e.target.value) || 0
-                           }))}
-                           className="ds-input w-24 text-center"
-                         />
+
+                         <div className="bg-slate-900/90 rounded-lg p-3 border border-slate-700/70">
+                           <div className="text-xs font-semibold text-blue-400 mb-1.5 flex items-center gap-1.5">
+                             <FileText className="w-4 h-4 text-blue-400 shrink-0" />
+                             <span>Bài làm / Câu trả lời của ứng viên:</span>
+                           </div>
+                           {(() => {
+                             let candidateAnsText = '';
+                             if (c.application_answers) {
+                               try {
+                                 const parsed = typeof c.application_answers === 'string' ? JSON.parse(c.application_answers) : c.application_answers;
+                                 if (typeof parsed === 'object' && parsed !== null) {
+                                   candidateAnsText = parsed[crit.id] || parsed[crit.criteria_name] || '';
+                                 } else if (typeof parsed === 'string') {
+                                   candidateAnsText = parsed;
+                                 }
+                               } catch (_) {
+                                 candidateAnsText = c.application_answers;
+                               }
+                             }
+                             return candidateAnsText ? (
+                               <p className="text-slate-200 text-sm whitespace-pre-wrap leading-relaxed pl-5">
+                                 {candidateAnsText}
+                               </p>
+                             ) : (
+                               <p className="text-slate-500 text-xs italic pl-5">
+                                 (Chưa có câu trả lời trong CSDL)
+                               </p>
+                             );
+                           })()}
+                         </div>
                        </div>
                      ))}
                      
