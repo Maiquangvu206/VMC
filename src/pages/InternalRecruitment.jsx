@@ -1540,19 +1540,35 @@ export const InternalRecruitment = () => {
               </h2>
               
               {/* Filter by scoring type if multiple are enabled */}
-              {Array.isArray(currentSeason.scoring_type) && currentSeason.scoring_type.length > 1 && (
-                <div className="flex flex-wrap gap-2">
-                  {currentSeason.scoring_type.map(type => (
-                    <button
-                      key={type}
-                      onClick={() => setScoringTypeFilter(type)}
-                      className={`ds-btn ds-btn-xs ${scoringTypeFilter === type ? 'ds-btn-primary' : 'ds-btn-secondary'}`}
-                    >
-                      {type === 'don' ? '📝 Vòng Đơn' : type === 'phongvan' ? '🎙️ Phỏng vấn' : type === 'teamwork' ? '👥 Teamwork' : type === 'thuthach_quatrinh' ? '⚡ Thử thách - Quá trình' : '🏆 Thử thách - Kết quả'}
-                    </button>
-                  ))}
-                </div>
-              )}
+              {(() => {
+                const rawTypes = currentSeason.scoring_type;
+                let typesArr = [];
+                if (Array.isArray(rawTypes)) typesArr = rawTypes;
+                else if (typeof rawTypes === 'string') {
+                  try {
+                    const p = JSON.parse(rawTypes);
+                    if (Array.isArray(p)) typesArr = p;
+                    else typesArr = [rawTypes];
+                  } catch { typesArr = [rawTypes]; }
+                }
+                const uniqueTypes = Array.from(new Set(typesArr));
+
+                if (uniqueTypes.length <= 1) return null;
+
+                return (
+                  <div className="flex flex-wrap gap-2">
+                    {uniqueTypes.map(type => (
+                      <button
+                        key={type}
+                        onClick={() => setScoringTypeFilter(type)}
+                        className={`ds-btn ds-btn-xs ${scoringTypeFilter === type ? 'ds-btn-primary' : 'ds-btn-secondary'}`}
+                      >
+                        {type === 'don' ? '📝 Vòng Đơn' : type === 'phongvan' ? '🎙️ Phỏng Vấn' : type === 'teamwork' ? '👥 Teamwork' : type === 'thuthach_quatrinh' ? '⚡ TT Quá Trình' : '🏆 TT Kết Quả'}
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
 
               {!isRoundOpen ? (
                 <div className="text-center py-12 ds-card bg-[#0f172a]/50 border border-slate-800 rounded-2xl">
@@ -1622,12 +1638,16 @@ export const InternalRecruitment = () => {
                  {/* Candidate info */}
                  
 
-                  <div className="flex justify-between items-start mb-6 pb-4 border-b border-[var(--border-default)]">
-                   <div>
-                     <h3 className="text-2xl font-bold text-white">{c.full_name}</h3>
-                     <p className="text-slate-400">Mã: {c.interview_code || c.id} | Lớp: {c.class_name}</p>
-                     <p className="text-slate-400">Ban mong muốn: {c.desired_dept}</p>
-                   </div>
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-[var(--border-default)]">
+                    <div>
+                      <h3 className="text-xl sm:text-2xl font-extrabold text-white leading-tight">{c.full_name}</h3>
+                      <p className="text-xs sm:text-sm text-slate-300 mt-1">
+                        Mã: <span className="font-mono font-bold text-cyan-400">{c.interview_code || c.id}</span> | Lớp: <span className="font-medium text-slate-200">{c.class_name}</span>
+                      </p>
+                      <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
+                        Ban mong muốn: <span className="font-medium text-slate-200">{c.desired_dept}</span>
+                      </p>
+                    </div>
                    <div className="flex gap-2">
                      <button
                        onClick={() => {
@@ -1667,27 +1687,31 @@ export const InternalRecruitment = () => {
                    <div className="space-y-4">
                      {sortCriteria(criteria.filter(crit => (crit.round_type || 'teamwork') === (scoringTypeFilter || 'teamwork'))).map(crit => (
                        <div key={crit.id} className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/80 space-y-3 shadow-sm">
-                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-700/50">
-                           <div className="flex-1 min-w-0">
-                             <label className="text-slate-100 font-bold text-base block leading-snug break-words">{crit.criteria_name}</label>
-                             <span className="inline-block mt-1 px-2 py-0.5 rounded bg-slate-700/60 text-slate-300 text-xs font-medium">Thang điểm: 0 - {crit.max_score}</span>
-                           </div>
-                           <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
-                             <span className="text-xs text-slate-400 font-medium">Điểm:</span>
-                             <input
-                               type="number"
-                               min="0"
-                               max={crit.max_score}
-                               value={scoringData[crit.id] ?? ''}
-                               onChange={(e) => setScoringData(prev => ({
-                                 ...prev,
-                                 [crit.id]: parseFloat(e.target.value) || 0
-                               }))}
-                               placeholder="0"
-                               className="ds-input w-24 text-center font-bold text-lg text-emerald-400 bg-slate-900 border-slate-600 focus:border-emerald-500"
-                             />
-                           </div>
-                         </div>
+                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-700/60 w-full">
+                            <div className="flex-1 min-w-0 w-full">
+                              <label className="text-slate-100 font-bold text-sm sm:text-base block leading-normal tracking-wide text-left w-full whitespace-normal break-words">
+                                {crit.criteria_name}
+                              </label>
+                              <span className="inline-block mt-1.5 px-2.5 py-0.5 rounded bg-slate-700/60 text-slate-300 text-[11px] font-medium border border-slate-600/40">
+                                Thang điểm: 0 - {crit.max_score}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-700/60">
+                              <span className="text-xs text-slate-300 font-medium">Điểm:</span>
+                              <input
+                                type="number"
+                                min="0"
+                                max={crit.max_score}
+                                value={scoringData[crit.id] ?? ''}
+                                onChange={(e) => setScoringData(prev => ({
+                                  ...prev,
+                                  [crit.id]: parseFloat(e.target.value) || 0
+                                }))}
+                                placeholder="0"
+                                className="ds-input w-20 sm:w-24 text-center font-bold text-base sm:text-lg text-emerald-400 bg-slate-950 border-slate-700 focus:border-emerald-500 py-1"
+                              />
+                            </div>
+                          </div>
 
                          {/* Answer / Response Section based on round type */}
                           {scoringTypeFilter === 'don' && (
