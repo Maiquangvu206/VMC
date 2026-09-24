@@ -1689,34 +1689,14 @@ export const InternalRecruitment = () => {
                            </div>
                          </div>
 
-                         <div className="bg-slate-900/90 rounded-lg p-3 border border-slate-700/70">
-                            <div className="text-xs font-semibold text-blue-400 mb-1.5 flex items-center justify-between">
-                              <span className="flex items-center gap-1.5">
+                         {/* Answer / Response Section based on round type */}
+                          {scoringTypeFilter === 'don' && (
+                            <div className="bg-slate-900/90 rounded-lg p-3 border border-slate-700/70">
+                              <div className="text-xs font-semibold text-blue-400 mb-1.5 flex items-center gap-1.5">
                                 <FileText className="w-4 h-4 text-blue-400 shrink-0" />
-                                <span>Bài làm / Câu trả lời của ứng viên:</span>
-                              </span>
-                              {scoringTypeFilter === 'don' && (
-                                <span className="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 font-medium">
-                                  ✏️ Nhập / sửa trực tiếp
-                                </span>
-                              )}
-                            </div>
-                            {scoringTypeFilter === 'don' ? (
-                              <textarea
-                                rows={3}
-                                value={candidateAnswersData[crit.id] ?? candidateAnswersData[crit.criteria_name] ?? (typeof c.application_answers === 'string' && !c.application_answers.startsWith('{') ? c.application_answers : '')}
-                                onChange={(e) => {
-                                  const val = e.target.value;
-                                  setCandidateAnswersData(prev => ({
-                                    ...prev,
-                                    [crit.id]: val
-                                  }));
-                                }}
-                                placeholder="Nhập trực tiếp câu trả lời / bài làm của ứng viên cho tiêu chí này..."
-                                className="ds-textarea text-xs bg-slate-950 text-slate-100 border-slate-700/80 focus:border-blue-500 w-full"
-                              />
-                            ) : (
-                              (() => {
+                                <span>Bài làm / Câu trả lời của ứng viên (từ Đơn CSDL):</span>
+                              </div>
+                              {(() => {
                                 let candidateAnsText = '';
                                 if (c.application_answers) {
                                   try {
@@ -1739,9 +1719,34 @@ export const InternalRecruitment = () => {
                                     (Chưa có câu trả lời trong CSDL)
                                   </p>
                                 );
-                              })()
-                            )}
-                          </div>
+                              })()}
+                            </div>
+                          )}
+
+                          {(scoringTypeFilter === 'phongvan' || scoringTypeFilter === 'thuthach_quatrinh') && (
+                            <div className="bg-slate-900/90 rounded-lg p-3 border border-slate-700/70">
+                              <div className="text-xs font-semibold text-blue-400 mb-1.5 flex items-center justify-between">
+                                <span className="flex items-center gap-1.5">
+                                  <FileText className="w-4 h-4 text-blue-400 shrink-0" />
+                                  <span>Ghi chú câu trả lời / Bài làm ứng viên:</span>
+                                </span>
+                                <span className="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 font-medium">
+                                  ✏️ Người chấm điền
+                                </span>
+                              </div>
+                              <textarea
+                                rows={3}
+                                value={questionComments[crit.id] ?? candidateAnswersData[crit.id] ?? ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setQuestionComments(prev => ({ ...prev, [crit.id]: val }));
+                                  setCandidateAnswersData(prev => ({ ...prev, [crit.id]: val }));
+                                }}
+                                placeholder="Nhập câu trả lời / ghi chú bài làm của ứng viên..."
+                                className="ds-textarea text-xs bg-slate-950 text-slate-100 border-slate-700/80 focus:border-blue-500 w-full"
+                              />
+                            </div>
+                          )}
                         </div>
                       ))}
                      
