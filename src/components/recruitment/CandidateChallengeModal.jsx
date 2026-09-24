@@ -5,6 +5,7 @@ export const CandidateChallengeModal = ({
   show, 
   onClose, 
   candidate, 
+  season,
   availableInterviewers, 
   selectedProcessScorers, 
   setSelectedProcessScorers, 
@@ -15,7 +16,7 @@ export const CandidateChallengeModal = ({
 }) => {
   const [activeSubTab, setActiveSubTab] = useState('process');
 
-  if (!show || !candidate) return null;
+  if (!show || (!candidate && !season)) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
@@ -28,7 +29,7 @@ export const CandidateChallengeModal = ({
               🔥 Phân Công Vòng Thử Thách
             </h3>
             <p className="text-xs text-amber-400 font-medium mt-0.5">
-              Ứng viên: {candidate.full_name}
+              {candidate ? `Ứng viên: ${candidate.full_name}` : season ? `Mùa tuyển: ${season.name}` : ''}
             </p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white p-1">

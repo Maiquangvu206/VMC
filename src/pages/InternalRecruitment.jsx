@@ -96,6 +96,10 @@ export const InternalRecruitment = () => {
   const [showCandidateChallengeModal, setShowCandidateChallengeModal] = useState(false);
   const [selectedCandidateChallengeProcessScorers, setSelectedCandidateChallengeProcessScorers] = useState([]);
   const [selectedCandidateChallengeResultScorers, setSelectedCandidateChallengeResultScorers] = useState([]);
+  const [showSeasonChallengeModal, setShowSeasonChallengeModal] = useState(false);
+  const [selectedSeasonForChallenge, setSelectedSeasonForChallenge] = useState(null);
+  const [selectedSeasonChallengeProcessScorers, setSelectedSeasonChallengeProcessScorers] = useState([]);
+  const [selectedSeasonChallengeResultScorers, setSelectedSeasonChallengeResultScorers] = useState([]);
   const [scoringTypeFilter, setScoringTypeFilter] = useState(null);
   const [candidateSearchQuery, setCandidateSearchQuery] = useState('');
   const [filteredCandidates, setFilteredCandidates] = useState([]);
@@ -423,6 +427,47 @@ export const InternalRecruitment = () => {
       }
     } catch (e) {
       showToast('❌ Lỗi phân công Phỏng vấn!', 'error');
+    }
+  };
+
+  const assignTeamworkScorers = async (seasonId, scorerIds) => {
+    try {
+      const res = await fetch(`/api/recruitment/seasons/${seasonId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+        body: JSON.stringify({ teamwork_scorer_ids: scorerIds })
+      });
+      if (res.ok) {
+        showToast('✅ Đã phân công Teamwork!', 'success');
+        fetchSeasons();
+        setShowTeamworkModal(false);
+        setSelectedTeamworkScorers([]);
+      }
+    } catch (e) {
+      showToast('❌ Lỗi phân công Teamwork!', 'error');
+    }
+  };
+
+  const assignSeasonChallengeScorers = async (seasonId, processScorerIds, resultScorerIds) => {
+    try {
+      const res = await fetch(`/api/recruitment/seasons/${seasonId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+        body: JSON.stringify({
+          challenge_process_scorer_ids: processScorerIds,
+          challenge_result_scorer_ids: resultScorerIds
+        })
+      });
+      if (res.ok) {
+        showToast('✅ Đã phân công Vòng Thử Thách thành công!', 'success');
+        fetchSeasons();
+        setShowSeasonChallengeModal(false);
+        setSelectedSeasonForChallenge(null);
+        setSelectedSeasonChallengeProcessScorers([]);
+        setSelectedSeasonChallengeResultScorers([]);
+      }
+    } catch (e) {
+      showToast('❌ Lỗi phân công Vòng Thử Thách!', 'error');
     }
   };
 
@@ -857,7 +902,19 @@ export const InternalRecruitment = () => {
                          )}
                          <span className="text-slate-600">|</span>
                          <span className="text-blue-400 font-bold text-xs">
-                           Vòng đang mở: {season.active_round === 'don' ? '📝 Chấm Đơn' : season.active_round === 'teamwork' ? '👥 Chấm Teamwork' : '🎙️ Chấm Phỏng Vấn'}
+                           Vòng đang mở: {(() => {
+                            const act = season.active_round || 'none';
+                            if (act === 'none') return '🔒 Chưa mở vòng nào';
+                            const list = act === 'all' ? scoringTypes : act.split(',');
+                            return list.map(r => 
+                              r === 'don' ? '📝 Đơn' 
+                              : r === 'phongvan' ? '🎙️ PV' 
+                              : r === 'teamwork' ? '👥 TW' 
+                              : r === 'thuthach_quatrinh' ? '⚡ TT Quá Trình' 
+                              : r === 'thuthach_ketqua' ? '🏆 TT Kết Quả' 
+                              : r
+                            ).join(', ');
+                          })()}
                          </span>
                        </div>
                      </div>
@@ -895,6 +952,18 @@ export const InternalRecruitment = () => {
                               title="Phân công Teamwork"
                             >
                               <Users className="w-3.5 h-3.5 mr-0.5" />TW
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedSeasonForChallenge(season);
+                                setSelectedSeasonChallengeProcessScorers(season.challenge_process_scorer_ids || []);
+                                setSelectedSeasonChallengeResultScorers(season.challenge_result_scorer_ids || []);
+                                setShowSeasonChallengeModal(true);
+                              }}
+                              className="ds-btn ds-btn-xs bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30"
+                              title="Phân công Vòng Thử Thách (Chấm Quá trình & Kết quả)"
+                            >
+                              <Users className="w-3.5 h-3.5 mr-0.5" />TT
                             </button>
                           </div>
                         )}
@@ -935,10 +1004,12 @@ export const InternalRecruitment = () => {
                     {/* Control active round for head of department / admins */}
                     {season.is_active === 1 && canManageSeason && (() => {
                       const active = season.active_round || 'none';
-                      const openRounds = active === 'all' ? ['don', 'phongvan', 'teamwork'] : (active === 'none' ? [] : active.split(','));
+                      const openRounds = active === 'all' ? scoringTypes : (active === 'none' ? [] : active.split(','));
                       const donOpen = openRounds.includes('don');
                       const pvOpen = openRounds.includes('phongvan');
                       const twOpen = openRounds.includes('teamwork');
+                      const ttQuatrinhOpen = openRounds.includes('thuthach_quatrinh');
+                      const ttKetquaOpen = openRounds.includes('thuthach_ketqua');
 
                       // Toggle a round on or off with sequential rules:
                       // - OPEN: only allowed if the PREVIOUS round is currently open
@@ -999,9 +1070,21 @@ export const InternalRecruitment = () => {
                             )}
                             {scoringTypes.includes('teamwork') && roundBtn(
                               'teamwork', '👥', 'TW', twOpen,
-                              !twOpen && !pvOpen, // can't open teamwork if phongvan not open
+                              !twOpen && !pvOpen,
                               'Cần mở Vòng Phỏng Vấn trước',
                               'bg-emerald-600'
+                            )}
+                            {(scoringTypes.includes('thuthach_quatrinh') || scoringTypes.includes('thuthach')) && roundBtn(
+                              'thuthach_quatrinh', '⚡', 'TT Quá Trình', ttQuatrinhOpen,
+                              false,
+                              '',
+                              'bg-amber-500'
+                            )}
+                            {(scoringTypes.includes('thuthach_ketqua') || scoringTypes.includes('thuthach')) && roundBtn(
+                              'thuthach_ketqua', '🏆', 'TT Kết Quả', ttKetquaOpen,
+                              false,
+                              '',
+                              'bg-purple-600'
                             )}
                             <div className="h-5 border-l border-slate-700 mx-0.5" />
                             <button
@@ -1009,7 +1092,7 @@ export const InternalRecruitment = () => {
                               className="ds-btn ds-btn-xs bg-violet-700 text-white hover:bg-violet-600"
                               title="Mở tất cả vòng cùng lúc"
                             >
-                              ⚡ Mở Cả 3
+                              ⚡ Mở Cả (${scoringTypes.length})
                             </button>
                             <button
                               onClick={() => updateActiveRound(season.id, 'none')}
@@ -1021,7 +1104,7 @@ export const InternalRecruitment = () => {
                           </div>
                           {openRounds.length > 0 && (
                             <p className="text-[10px] text-slate-500 mt-1">
-                              Đang mở: {openRounds.map(r => r === 'don' ? '📝 Đơn' : r === 'phongvan' ? '🎙️ PV' : '👥 TW').join(' → ')}
+                              Đang mở: {openRounds.map(r => r === 'don' ? '📝 Đơn' : r === 'phongvan' ? '🎙️ PV' : r === 'teamwork' ? '👥 TW' : r === 'thuthach_quatrinh' ? '⚡ TT Quá Trình' : r === 'thuthach_ketqua' ? '🏆 TT Kết Quả' : r).join(' → ')}
                             </p>
                           )}
                         </div>
@@ -1040,6 +1123,8 @@ export const InternalRecruitment = () => {
            { key: 'don', label: '📝 Vòng Đơn', color: 'text-amber-400', border: 'border-amber-500/30', bg: 'bg-amber-500/5', badge: 'bg-amber-500/20 text-amber-300' },
            { key: 'phongvan', label: '🎙️ Vòng Phỏng Vấn', color: 'text-blue-400', border: 'border-blue-500/30', bg: 'bg-blue-500/5', badge: 'bg-blue-500/20 text-blue-300' },
            { key: 'teamwork', label: '👥 Vòng Teamwork', color: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-500/5', badge: 'bg-emerald-500/20 text-emerald-300' },
+           { key: 'thuthach_quatrinh', label: '⚡ Vòng Thử Thách - Quá Trình', color: 'text-amber-400', border: 'border-amber-500/30', bg: 'bg-amber-500/5', badge: 'bg-amber-500/20 text-amber-300' },
+           { key: 'thuthach_ketqua', label: '🏆 Vòng Thử Thách - Kết Quả', color: 'text-purple-400', border: 'border-purple-500/30', bg: 'bg-purple-500/5', badge: 'bg-purple-500/20 text-purple-300' },
          ];
          // Always show all rounds in criteria tab - admin can add questions to any round
 
@@ -1743,6 +1828,32 @@ export const InternalRecruitment = () => {
         onSubmit={() => {
           assignCandidateTeamworkScorers(selectedCandidate.id, selectedCandidateTeamworkScorers);
           setShowCandidateTeamworkModal(false);
+        }}
+        loading={loading}
+      />
+
+      <CandidateChallengeModal
+        show={showSeasonChallengeModal}
+        onClose={() => {
+          setShowSeasonChallengeModal(false);
+          setSelectedSeasonForChallenge(null);
+          setSelectedSeasonChallengeProcessScorers([]);
+          setSelectedSeasonChallengeResultScorers([]);
+        }}
+        season={selectedSeasonForChallenge}
+        availableInterviewers={availableInterviewers}
+        selectedProcessScorers={selectedSeasonChallengeProcessScorers}
+        setSelectedProcessScorers={setSelectedSeasonChallengeProcessScorers}
+        selectedResultScorers={selectedSeasonChallengeResultScorers}
+        setSelectedResultScorers={setSelectedSeasonChallengeResultScorers}
+        onSubmit={() => {
+          if (selectedSeasonForChallenge) {
+            assignSeasonChallengeScorers(
+              selectedSeasonForChallenge.id,
+              selectedSeasonChallengeProcessScorers,
+              selectedSeasonChallengeResultScorers
+            );
+          }
         }}
         loading={loading}
       />

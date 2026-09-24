@@ -1617,6 +1617,8 @@ router.get('/recruitment/seasons', async (req, res) => {
       ...r,
       interviewer_ids: (() => { try { return r.interviewer_ids ? JSON.parse(r.interviewer_ids) : []; } catch { return []; } })(),
       teamwork_scorer_ids: (() => { try { return r.teamwork_scorer_ids ? JSON.parse(r.teamwork_scorer_ids) : []; } catch { return []; } })(),
+      challenge_process_scorer_ids: (() => { try { return r.challenge_process_scorer_ids ? JSON.parse(r.challenge_process_scorer_ids) : []; } catch { return []; } })(),
+      challenge_result_scorer_ids: (() => { try { return r.challenge_result_scorer_ids ? JSON.parse(r.challenge_result_scorer_ids) : []; } catch { return []; } })(),
       selected_questions: (() => { try { return r.selected_questions ? JSON.parse(r.selected_questions) : []; } catch { return []; } })(),
       scoring_type: (() => { 
         try { 
@@ -1661,7 +1663,7 @@ router.post('/recruitment/seasons', async (req, res) => {
 
 router.put('/recruitment/seasons/:id', async (req, res) => {
   try {
-    const { name, quota, department, scoring_type, is_active, interviewer_ids, active_round, teamwork_scorer_ids, lead_interviewer_id, selected_questions } = req.body;
+    const { name, quota, department, scoring_type, is_active, interviewer_ids, active_round, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, lead_interviewer_id, selected_questions } = req.body;
     
     // Fetch old season data for assignment email notifications
     const current = await queryDatabase('SELECT name, interviewer_ids, teamwork_scorer_ids FROM Recruitment_Seasons WHERE id = ?', [req.params.id]);
@@ -1684,6 +1686,12 @@ router.put('/recruitment/seasons/:id', async (req, res) => {
     const teamworkScorerIdsVal = teamwork_scorer_ids !== undefined
       ? (Array.isArray(teamwork_scorer_ids) ? JSON.stringify(teamwork_scorer_ids) : teamwork_scorer_ids)
       : null;
+    const challengeProcessScorerIdsVal = challenge_process_scorer_ids !== undefined
+      ? (Array.isArray(challenge_process_scorer_ids) ? JSON.stringify(challenge_process_scorer_ids) : challenge_process_scorer_ids)
+      : null;
+    const challengeResultScorerIdsVal = challenge_result_scorer_ids !== undefined
+      ? (Array.isArray(challenge_result_scorer_ids) ? JSON.stringify(challenge_result_scorer_ids) : challenge_result_scorer_ids)
+      : null;
     const selectedQuestionsVal = selected_questions !== undefined
       ? (Array.isArray(selected_questions) ? JSON.stringify(selected_questions) : selected_questions)
       : null;
@@ -1692,8 +1700,8 @@ router.put('/recruitment/seasons/:id', async (req, res) => {
       : null;
 
     await queryDatabase(
-      'UPDATE Recruitment_Seasons SET name = COALESCE(?, name), quota = COALESCE(?, quota), department = COALESCE(?, department), scoring_type = COALESCE(?, scoring_type), is_active = COALESCE(?, is_active), interviewer_ids = COALESCE(?, interviewer_ids), active_round = COALESCE(?, active_round), teamwork_scorer_ids = COALESCE(?, teamwork_scorer_ids), lead_interviewer_id = COALESCE(?, lead_interviewer_id), selected_questions = COALESCE(?, selected_questions) WHERE id = ?',
-      [name ?? null, quota ?? null, department ?? null, scoringTypeVal, is_active !== undefined ? (is_active ? 1 : 0) : null, interviewerIdsVal, active_round ?? null, teamworkScorerIdsVal, lead_interviewer_id ?? null, selectedQuestionsVal, req.params.id]
+      'UPDATE Recruitment_Seasons SET name = COALESCE(?, name), quota = COALESCE(?, quota), department = COALESCE(?, department), scoring_type = COALESCE(?, scoring_type), is_active = COALESCE(?, is_active), interviewer_ids = COALESCE(?, interviewer_ids), active_round = COALESCE(?, active_round), teamwork_scorer_ids = COALESCE(?, teamwork_scorer_ids), challenge_process_scorer_ids = COALESCE(?, challenge_process_scorer_ids), challenge_result_scorer_ids = COALESCE(?, challenge_result_scorer_ids), lead_interviewer_id = COALESCE(?, lead_interviewer_id), selected_questions = COALESCE(?, selected_questions) WHERE id = ?',
+      [name ?? null, quota ?? null, department ?? null, scoringTypeVal, is_active !== undefined ? (is_active ? 1 : 0) : null, interviewerIdsVal, active_round ?? null, teamworkScorerIdsVal, challengeProcessScorerIdsVal, challengeResultScorerIdsVal, lead_interviewer_id ?? null, selectedQuestionsVal, req.params.id]
     );
 
     // Call assignment mail helper in background for global season level assignments
