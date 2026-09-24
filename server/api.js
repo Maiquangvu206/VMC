@@ -1958,6 +1958,31 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
       GROUP BY s.candidate_id, cr.round_type
     `, [req.params.seasonId]);
 
+    // Fetch comments left by interviewers for each candidate
+    const commentsRows = await queryDatabase(`
+      SELECT DISTINCT s.candidate_id, s.interviewer_id, s.comments, u.full_name AS interviewer_name, COALESCE(cr.round_type, 'teamwork') AS round_type
+      FROM Recruitment_Scores s
+      LEFT JOIN Users u ON s.interviewer_id = u.id
+      LEFT JOIN Recruitment_Criteria cr ON s.criteria_id = cr.id
+      WHERE s.season_id = ? AND s.comments IS NOT NULL AND TRIM(s.comments) != ''
+    `, [req.params.seasonId]);
+
+    const commentsMap = {};
+    commentsRows.forEach(r => {
+      if (!commentsMap[r.candidate_id]) commentsMap[r.candidate_id] = [];
+      const exists = commentsMap[r.candidate_id].some(
+        c => c.interviewer_id === r.interviewer_id && c.comments === r.comments
+      );
+      if (!exists) {
+        commentsMap[r.candidate_id].push({
+          interviewer_id: r.interviewer_id,
+          interviewer_name: r.interviewer_name || r.interviewer_id,
+          round_type: r.round_type,
+          comments: r.comments
+        });
+      }
+    });
+
     const roundScoresMap = {};
     const totalScoreMap = {};
     roundScoresRows.forEach(r => {
@@ -1995,6 +2020,7 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
         desired_dept: c.desired_dept,
         status: c.status,
         notes: c.notes,
+        comments: commentsMap[c.candidate_id] || [],
         round_scores: rScores,
         avg_score: overallAvg,
         total_score: total,
