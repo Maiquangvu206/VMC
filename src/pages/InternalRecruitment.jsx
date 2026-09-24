@@ -187,6 +187,22 @@ export const InternalRecruitment = () => {
   }, [activeTab, currentSeason]);
   const [scoringData, setScoringData] = useState({});
 
+  // Helper for natural alphanumeric candidate sorting by interview_code / id
+  const sortCandidatesByCode = (list) => {
+    if (!Array.isArray(list)) return [];
+    return [...list].sort((a, b) => {
+      const codeA = (a.interview_code || a.id || '').toString();
+      const codeB = (b.interview_code || b.id || '').toString();
+      return codeA.localeCompare(codeB, undefined, { numeric: true, sensitivity: 'base' });
+    });
+  };
+
+  // Helper for sorting criteria deterministically by sort_order ASC, id ASC
+  const sortCriteria = (list) => {
+    if (!Array.isArray(list)) return [];
+    return [...list].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0) || String(a.id || '').localeCompare(String(b.id || ''), undefined, { numeric: true }));
+  };
+
   // Client-side candidate filtering based on role, round, and search query
   useEffect(() => {
     if (!currentSeason || !Array.isArray(candidates)) {
@@ -199,6 +215,7 @@ export const InternalRecruitment = () => {
 
     // Filter by query first
     let list = candidates.filter(c => 
+      (c.interview_code || '').toLowerCase().includes(query) ||
       (c.id || '').toLowerCase().includes(query) ||
       (c.full_name || '').toLowerCase().includes(query) ||
       (c.class_name || '').toLowerCase().includes(query)
@@ -220,14 +237,13 @@ export const InternalRecruitment = () => {
       } else if (filterType === 'thuthach_ketqua') {
         list = list.filter(c => (c.challenge_result_scorer_ids || []).includes(currentUser?.id));
       }
-      // For 'don', any member of the department can score, so no candidate-level filtering is applied.
     }
 
-
-    setFilteredCandidates(list);
+    const sortedList = sortCandidatesByCode(list);
+    setFilteredCandidates(sortedList);
     setCurrentScoringCandidateIndex(0);
-    if (list.length > 0) {
-      setSelectedCandidate(list[0]);
+    if (sortedList.length > 0) {
+      setSelectedCandidate(sortedList[0]);
     } else {
       setSelectedCandidate(null);
     }
@@ -283,7 +299,7 @@ export const InternalRecruitment = () => {
       const res = await fetch(`/api/recruitment/criteria/${seasonId}`, { headers: { 'ngrok-skip-browser-warning': 'true' } });
       const data = await res.json();
       if (data.success && Array.isArray(data.data)) {
-        setCriteria(data.data);
+        setCriteria(sortCriteria(data.data));
       } else {
         setCriteria([]);
       }
@@ -298,7 +314,7 @@ export const InternalRecruitment = () => {
       const res = await fetch(`/api/recruitment/candidates/${seasonId}`, { headers: { 'ngrok-skip-browser-warning': 'true' } });
       const data = await res.json();
       if (data.success && Array.isArray(data.data)) {
-        setCandidates(data.data);
+        setCandidates(sortCandidatesByCode(data.data));
       } else {
         setCandidates([]);
       }
@@ -1224,7 +1240,7 @@ export const InternalRecruitment = () => {
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="font-bold text-white text-lg">{c.full_name}</h3>
-                        <p className="text-slate-400 text-sm">Mùa tuyển sinh: {currentSeason.name} | Mã ứng viên: <strong className="text-cyan-400 font-mono text-xs">{c.id}</strong></p>
+                        <p className="text-slate-400 text-sm">Mùa tuyển sinh: {currentSeason.name} | Mã ứng viên: <strong className="text-cyan-400 font-mono text-xs">{c.interview_code || c.id}</strong></p>
 
                         <p className="text-slate-500 text-xs mt-1">Ban nguyện vọng: {c.desired_dept || 'Tất cả'} (Click để xem chi tiết)</p>
                         {c.challenge_topic && (
@@ -1299,7 +1315,7 @@ export const InternalRecruitment = () => {
                           </div>
                           <div>
                             <span className="text-slate-400 block mb-0.5">Mã ứng viên:</span>
-                            <span className="text-slate-200 font-medium font-mono">{c.id}</span>
+                            <span className="text-slate-200 font-medium font-mono">{c.interview_code || c.id}</span>
                           </div>
                           <div>
                             <span className="text-slate-400 block mb-0.5">Số điện thoại:</span>
@@ -1345,7 +1361,7 @@ export const InternalRecruitment = () => {
 
        {/* App Answers Tab - Nhập Bài Đơn */}
        {activeTab === 'appAnswers' && currentSeason && (isSuperAdmin || isAdmin || isHRHead || isDeptHead) && (() => {
-         const donCriteria = criteria.filter(c => (c.round_type || 'teamwork') === 'don');
+         const donCriteria = sortCriteria(criteria.filter(c => (c.round_type || 'teamwork') === 'don'));
          return (
            <div className="space-y-4">
              <h2 className="text-xl font-bold text-white">Nhập Bài Đơn - {currentSeason.name}</h2>
@@ -1374,8 +1390,8 @@ export const InternalRecruitment = () => {
                    className="ds-input bg-slate-900 border border-slate-700 text-white"
                  >
                    <option value="">-- Chọn ứng viên --</option>
-                   {candidates.map(c => (
-                     <option key={c.id} value={c.id}>{c.full_name} ({c.id})</option>
+                   {sortCandidatesByCode(candidates).map(c => (
+                     <option key={c.id} value={c.id}>{c.full_name} ({c.interview_code || c.id})</option>
                    ))}
                  </select>
                </div>
@@ -1389,7 +1405,7 @@ export const InternalRecruitment = () => {
                <div className="ds-card p-6 space-y-5">
                  <div className="pb-3 border-b border-[#1f2937]">
                    <h3 className="font-bold text-white text-lg">{selectedCandidateForAnswers.full_name}</h3>
-                   <p className="text-slate-400 text-xs mt-0.5">Mã: {selectedCandidateForAnswers.id} | Ban: {selectedCandidateForAnswers.desired_dept || 'N/A'}</p>
+                   <p className="text-slate-400 text-xs mt-0.5">Mã: {selectedCandidateForAnswers.interview_code || selectedCandidateForAnswers.id} | Ban: {selectedCandidateForAnswers.desired_dept || 'N/A'}</p>
                  </div>
 
                  {donCriteria.length === 0 ? (
@@ -1557,7 +1573,7 @@ export const InternalRecruitment = () => {
                   <div className="flex justify-between items-start mb-6 pb-4 border-b border-[var(--border-default)]">
                    <div>
                      <h3 className="text-2xl font-bold text-white">{c.full_name}</h3>
-                     <p className="text-slate-400">Mã: {c.id} | Lớp: {c.class_name}</p>
+                     <p className="text-slate-400">Mã: {c.interview_code || c.id} | Lớp: {c.class_name}</p>
                      <p className="text-slate-400">Ban mong muốn: {c.desired_dept}</p>
                    </div>
                    <div className="flex gap-2">
@@ -1597,7 +1613,7 @@ export const InternalRecruitment = () => {
                  {/* Scoring form */}
                  {isAssignedToScore && !isSubmitted ? (
                    <div className="space-y-4">
-                     {criteria.filter(crit => (crit.round_type || 'teamwork') === (scoringTypeFilter || 'teamwork')).map(crit => (
+                     {sortCriteria(criteria.filter(crit => (crit.round_type || 'teamwork') === (scoringTypeFilter || 'teamwork'))).map(crit => (
                        <div key={crit.id} className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/80 space-y-3 shadow-sm">
                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-700/50">
                            <div className="flex-1 min-w-0">
@@ -1748,7 +1764,7 @@ export const InternalRecruitment = () => {
                      </tr>
                    ) : (
                      scoresSummary.map((s, idx) => {
-                       const code = s.interview_code || s.candidate_code || (candidates.find(c => c.id === s.candidate_id)?.interview_code) || `PV-${String(idx + 1).padStart(2, '0')}`;
+                        const code = s.interview_code || s.candidate_code || (candidates.find(c => c.id === s.candidate_id)?.interview_code) || s.candidate_id;
                        const rScores = s.round_scores || {};
                        
                        const getRankBadge = (rank) => {

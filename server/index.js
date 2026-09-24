@@ -67,6 +67,8 @@ queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN lead_interviewer_id
 queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN selected_questions TEXT').catch(() => {});
 queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN facebook TEXT').catch(() => {});
 queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN challenge_topic TEXT').catch(() => {});
+queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN interview_code VARCHAR(100)').catch(() => {});
+queryDatabase("UPDATE Recruitment_Candidates SET interview_code = id WHERE interview_code IS NULL OR interview_code = ''").catch(() => {});
 queryDatabase(`
   CREATE TABLE IF NOT EXISTS Birthday_Mail_Logs (
     id INT AUTO_INCREMENT PRIMARY KEY,

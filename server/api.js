@@ -1726,7 +1726,7 @@ router.delete('/recruitment/seasons/:id', async (req, res) => {
 router.get('/recruitment/criteria/:seasonId', async (req, res) => {
   try {
     const rows = await queryDatabase(
-      'SELECT * FROM Recruitment_Criteria WHERE season_id = ? ORDER BY sort_order ASC',
+      'SELECT * FROM Recruitment_Criteria WHERE season_id = ? ORDER BY sort_order ASC, id ASC',
       [req.params.seasonId]
     );
     res.json({ success: true, data: rows });
@@ -1767,7 +1767,7 @@ router.delete('/recruitment/criteria/:id', async (req, res) => {
 router.get('/recruitment/candidates/:seasonId', async (req, res) => {
   try {
     const { interviewer_id } = req.query;
-    let sql = 'SELECT id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, status, notes, application_answers, lead_interviewer_id, selected_questions, facebook, challenge_topic, created_at FROM Recruitment_Candidates WHERE season_id = ?';
+    let sql = 'SELECT id, interview_code, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, status, notes, application_answers, lead_interviewer_id, selected_questions, facebook, challenge_topic, created_at FROM Recruitment_Candidates WHERE season_id = ?';
     const params = [req.params.seasonId];
     // Interviewer chỉ thấy ứng viên được gán cho mình
     if (interviewer_id) { 
@@ -1778,6 +1778,7 @@ router.get('/recruitment/candidates/:seasonId', async (req, res) => {
     const rows = await queryDatabase(sql, params);
     const data = rows.map(r => ({
       ...r,
+      interview_code: r.interview_code || r.id,
       interviewer_ids: (() => { try { return r.interviewer_ids ? JSON.parse(r.interviewer_ids) : []; } catch { return []; } })(),
       teamwork_scorer_ids: (() => { try { return r.teamwork_scorer_ids ? JSON.parse(r.teamwork_scorer_ids) : []; } catch { return []; } })(),
       challenge_process_scorer_ids: (() => { try { return r.challenge_process_scorer_ids ? JSON.parse(r.challenge_process_scorer_ids) : []; } catch { return []; } })(),
@@ -1790,8 +1791,9 @@ router.get('/recruitment/candidates/:seasonId', async (req, res) => {
 
 router.post('/recruitment/candidates', async (req, res) => {
   try {
-    const { id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, notes, application_answers, lead_interviewer_id, selected_questions, facebook, challenge_topic } = req.body;
+    const { id, interview_code, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, notes, application_answers, lead_interviewer_id, selected_questions, facebook, challenge_topic } = req.body;
     const cid = (id && typeof id === 'string' && id.trim()) ? id.trim() : ('cand-' + Date.now());
+    const codeVal = (interview_code && typeof interview_code === 'string' && interview_code.trim()) ? interview_code.trim() : cid;
     const interviewerIdsVal = interviewer_ids !== undefined
       ? (Array.isArray(interviewer_ids) ? JSON.stringify(interviewer_ids) : interviewer_ids)
       : null;
@@ -1808,16 +1810,16 @@ router.post('/recruitment/candidates', async (req, res) => {
       ? (Array.isArray(selected_questions) ? JSON.stringify(selected_questions) : selected_questions)
       : null;
     await queryDatabase(
-      'INSERT INTO Recruitment_Candidates (id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, notes, application_answers, lead_interviewer_id, selected_questions, facebook, challenge_topic) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [cid, season_id, full_name, class_name || null, phone || null, email || null, desired_dept || null, interviewer_id || null, interviewerIdsVal, teamworkScorerIdsVal, challengeProcessScorerIdsVal, challengeResultScorerIdsVal, notes || null, application_answers || null, lead_interviewer_id || null, selectedQuestionsVal, facebook || null, challenge_topic || null]
+      'INSERT INTO Recruitment_Candidates (id, interview_code, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, notes, application_answers, lead_interviewer_id, selected_questions, facebook, challenge_topic) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [cid, codeVal, season_id, full_name, class_name || null, phone || null, email || null, desired_dept || null, interviewer_id || null, interviewerIdsVal, teamworkScorerIdsVal, challengeProcessScorerIdsVal, challengeResultScorerIdsVal, notes || null, application_answers || null, lead_interviewer_id || null, selectedQuestionsVal, facebook || null, challenge_topic || null]
     );
-    res.json({ success: true, data: { id: cid, season_id, full_name, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, facebook, challenge_topic, status: 'pending' } });
+    res.json({ success: true, data: { id: cid, interview_code: codeVal, season_id, full_name, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, facebook, challenge_topic, status: 'pending' } });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
 router.put('/recruitment/candidates/:id', async (req, res) => {
   try {
-    const { full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, status, notes, application_answers, lead_interviewer_id, selected_questions, facebook, challenge_topic } = req.body;
+    const { full_name, interview_code, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, status, notes, application_answers, lead_interviewer_id, selected_questions, facebook, challenge_topic } = req.body;
     
     // Fetch old data for logs and comparison
     const current = await queryDatabase('SELECT full_name, interviewer_ids, teamwork_scorer_ids FROM Recruitment_Candidates WHERE id = ?', [req.params.id]);
@@ -1852,7 +1854,9 @@ router.put('/recruitment/candidates/:id', async (req, res) => {
 
     await queryDatabase(
       `UPDATE Recruitment_Candidates SET
-        full_name = COALESCE(?, full_name), class_name = COALESCE(?, class_name),
+        full_name = COALESCE(?, full_name),
+        interview_code = COALESCE(?, interview_code),
+        class_name = COALESCE(?, class_name),
         phone = COALESCE(?, phone), email = COALESCE(?, email),
         desired_dept = COALESCE(?, desired_dept), interviewer_id = COALESCE(?, interviewer_id),
         interviewer_ids = COALESCE(?, interviewer_ids),
@@ -1866,7 +1870,7 @@ router.put('/recruitment/candidates/:id', async (req, res) => {
         facebook = COALESCE(?, facebook),
         challenge_topic = COALESCE(?, challenge_topic)
        WHERE id = ?`,
-      [full_name??null, class_name??null, phone??null, email??null, desired_dept??null, interviewer_id??null, interviewerIdsVal, teamworkScorerIdsVal, challengeProcessScorerIdsVal, challengeResultScorerIdsVal, status??null, notes??null, application_answers??null, lead_interviewer_id??null, selectedQuestionsVal, facebook??null, challenge_topic??null, req.params.id]
+      [full_name??null, interview_code??null, class_name??null, phone??null, email??null, desired_dept??null, interviewer_id??null, interviewerIdsVal, teamworkScorerIdsVal, challengeProcessScorerIdsVal, challengeResultScorerIdsVal, status??null, notes??null, application_answers??null, lead_interviewer_id??null, selectedQuestionsVal, facebook??null, challenge_topic??null, req.params.id]
     );
 
     // Call assignment mail helper in background
@@ -1933,9 +1937,9 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
     const seasonRow = await queryDatabase('SELECT quota FROM Recruitment_Seasons WHERE id = ?', [req.params.seasonId]);
     const quota = seasonRow[0]?.quota || 0;
     
-    // Fetch candidates
+    // Fetch candidates including interview_code
     const candidates = await queryDatabase(`
-      SELECT c.id AS candidate_id, c.full_name, c.class_name, c.desired_dept, c.status, c.notes
+      SELECT c.id AS candidate_id, c.interview_code, c.full_name, c.class_name, c.desired_dept, c.status, c.notes
       FROM Recruitment_Candidates c
       WHERE c.season_id = ?
       ORDER BY c.created_at ASC
@@ -1985,6 +1989,7 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
 
       return {
         candidate_id: c.candidate_id,
+        interview_code: c.interview_code || c.candidate_id,
         full_name: c.full_name,
         class_name: c.class_name,
         desired_dept: c.desired_dept,
@@ -1998,8 +2003,8 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
       };
     });
 
-    // Sort by total_score descending to assign rank
-    data.sort((a, b) => b.total_score - a.total_score || b.avg_score - a.avg_score);
+    // Sort by total_score descending to assign rank, with natural alphanumeric tie-breaker
+    data.sort((a, b) => b.total_score - a.total_score || b.avg_score - a.avg_score || (a.interview_code || a.candidate_id || '').localeCompare((b.interview_code || b.candidate_id || ''), undefined, { numeric: true, sensitivity: 'base' }));
     data.forEach((item, idx) => {
       item.rank = idx + 1;
     });
