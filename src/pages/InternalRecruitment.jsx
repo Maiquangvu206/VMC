@@ -508,7 +508,7 @@ export const InternalRecruitment = () => {
       if (data.success) {
         showToast('✅ Đã thêm tiêu chí chấm điểm!', 'success');
         setShowCriteriaModal(false);
-        setCriteriaForm({ criteria_name: '', max_score: 10, sort_order: 0, round_type: 'teamwork' });
+        setCriteriaForm({ criteria_name: '', max_score: 10, sort_order: 0, round_type: 'don', difficulty: 'Trung bình' });
         fetchCriteria(currentSeason.id);
       } else {
         showToast('❌ Lỗi thêm tiêu chí!', 'error');
@@ -1138,82 +1138,100 @@ export const InternalRecruitment = () => {
 
        {/* Criteria Tab - grouped by round */}
        {activeTab === 'criteria' && currentSeason && (isSuperAdmin || isAdmin || isHRHead || isDeptHead) && (() => {
-         const roundGroups = [
-           { key: 'don', label: '📝 Vòng Đơn', color: 'text-amber-400', border: 'border-amber-500/30', bg: 'bg-amber-500/5', badge: 'bg-amber-500/20 text-amber-300' },
-           { key: 'phongvan', label: '🎙️ Vòng Phỏng Vấn', color: 'text-blue-400', border: 'border-blue-500/30', bg: 'bg-blue-500/5', badge: 'bg-blue-500/20 text-blue-300' },
-           { key: 'teamwork', label: '👥 Vòng Teamwork', color: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-500/5', badge: 'bg-emerald-500/20 text-emerald-300' },
-           { key: 'thuthach_quatrinh', label: '⚡ Vòng Thử Thách - Quá Trình', color: 'text-amber-400', border: 'border-amber-500/30', bg: 'bg-amber-500/5', badge: 'bg-amber-500/20 text-amber-300' },
-           { key: 'thuthach_ketqua', label: '🏆 Vòng Thử Thách - Kết Quả', color: 'text-purple-400', border: 'border-purple-500/30', bg: 'bg-purple-500/5', badge: 'bg-purple-500/20 text-purple-300' },
-         ];
-         // Always show all rounds in criteria tab - admin can add questions to any round
+          const roundGroups = [
+            { key: 'don', label: '📝 Vòng Đơn', color: 'text-amber-400', border: 'border-amber-500/30', bg: 'bg-amber-500/5', badge: 'bg-amber-500/20 text-amber-300' },
+            { key: 'phongvan', label: '🎙️ Vòng Phỏng Vấn', color: 'text-blue-400', border: 'border-blue-500/30', bg: 'bg-blue-500/5', badge: 'bg-blue-500/20 text-blue-300' },
+            { key: 'teamwork', label: '👥 Vòng Teamwork', color: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-500/5', badge: 'bg-emerald-500/20 text-emerald-300' },
+            { key: 'thuthach', label: '⚡ Kho Đề Thử Thách', color: 'text-amber-400', border: 'border-amber-500/30', bg: 'bg-amber-500/5', badge: 'bg-amber-500/20 text-amber-300' },
+          ];
 
+          return (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold text-white">Câu Hỏi & Tiêu Chí - {currentSeason.name}</h2>
+                <button
+                  onClick={() => {
+                    setCriteriaForm({ criteria_name: '', max_score: 10, sort_order: 0, round_type: 'don', difficulty: 'Trung bình' });
+                    setShowCriteriaModal(true);
+                  }}
+                  className="ds-btn ds-btn-primary"
+                >
+                  <Plus className="w-4 h-4" /> Thêm Câu Hỏi / Tiêu Chí
+                </button>
+              </div>
 
-         return (
-           <div className="space-y-6">
-             <div className="flex justify-between items-center">
-               <h2 className="text-xl font-bold text-white">Câu Hỏi & Tiêu Chí - {currentSeason.name}</h2>
-               <button
-                 onClick={() => {
-                   setCriteriaForm({ criteria_name: '', max_score: 10, sort_order: 0, round_type: 'don' });
-                   setShowCriteriaModal(true);
-                 }}
-                 className="ds-btn ds-btn-primary"
-               >
-                 <Plus className="w-4 h-4" /> Thêm Câu Hỏi / Tiêu Chí
-               </button>
-             </div>
+              {roundGroups.map(group => {
+                const groupCriteria = sortCriteria(criteria.filter(c => {
+                  const rt = c.round_type || 'teamwork';
+                  if (group.key === 'thuthach') return rt.startsWith('thuthach');
+                  return rt === group.key;
+                }));
 
-             {roundGroups.map(group => {
-               const groupCriteria = criteria.filter(c => (c.round_type || 'teamwork') === group.key);
-               return (
-                 <div key={group.key} className={`rounded-2xl border ${group.border} ${group.bg} p-5 space-y-3`}>
-                   <div className="flex items-center justify-between">
-                     <div className="flex items-center gap-2">
-                       <h3 className={`font-bold text-base ${group.color}`}>{group.label}</h3>
-                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${group.badge}`}>
-                         {groupCriteria.length} câu hỏi
-                       </span>
-                     </div>
-                     <button
-                       onClick={() => {
-                         setCriteriaForm({ criteria_name: '', max_score: 10, sort_order: 0, round_type: group.key });
-                         setShowCriteriaModal(true);
-                       }}
-                       className="ds-btn ds-btn-xs ds-btn-secondary border border-slate-600"
-                     >
-                       <Plus className="w-3.5 h-3.5" /> Thêm
-                     </button>
-                   </div>
+                return (
+                  <div key={group.key} className={`rounded-2xl border ${group.border} ${group.bg} p-5 space-y-3`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <h3 className={`font-bold text-base ${group.color}`}>{group.label}</h3>
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${group.badge}`}>
+                          {groupCriteria.length} {group.key === 'thuthach' ? 'đề thử thách' : 'câu hỏi'}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setCriteriaForm({ criteria_name: '', max_score: 10, sort_order: 0, round_type: group.key, difficulty: 'Trung bình' });
+                          setShowCriteriaModal(true);
+                        }}
+                        className="ds-btn ds-btn-xs ds-btn-secondary border border-slate-600"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Thêm
+                      </button>
+                    </div>
 
-                   {groupCriteria.length === 0 ? (
-                     <p className="text-slate-500 text-sm italic py-2">Chưa có câu hỏi / tiêu chí nào cho vòng này.</p>
-                   ) : (
-                     <div className="space-y-2">
-                       {groupCriteria.map((c, idx) => (
-                         <div key={c.id} className="flex items-center justify-between gap-3 bg-[#0f172a] rounded-xl border border-[#1f2937] px-4 py-3">
-                           <div className="flex items-start gap-3 min-w-0">
-                             <span className="text-slate-500 text-xs font-mono mt-0.5 shrink-0">#{idx + 1}</span>
-                             <div className="min-w-0">
-                               <p className="font-semibold text-slate-100 text-sm leading-snug">{c.criteria_name}</p>
-                               <p className="text-slate-500 text-xs mt-0.5">Điểm tối đa: <span className="text-slate-300 font-medium">{c.max_score}</span></p>
-                             </div>
-                           </div>
-                           <button
-                             onClick={() => deleteCriteria(c.id)}
-                             className="ds-btn ds-btn-danger ds-btn-xs shrink-0"
-                           >
-                             <Trash2 className="w-4 h-4" />
-                           </button>
-                         </div>
-                       ))}
-                     </div>
-                   )}
-                 </div>
-               );
-             })}
-           </div>
-         );
-       })()}
+                    {groupCriteria.length === 0 ? (
+                      <p className="text-slate-500 text-sm italic py-2">
+                        {group.key === 'thuthach' ? 'Chưa có đề thử thách nào trong kho đề.' : 'Chưa có câu hỏi / tiêu chí nào cho vòng này.'}
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {groupCriteria.map((c, idx) => (
+                          <div key={c.id} className="flex items-center justify-between gap-3 bg-[#0f172a] rounded-xl border border-[#1f2937] px-4 py-3">
+                            <div className="flex items-start gap-3 min-w-0">
+                              <span className="text-slate-500 text-xs font-mono mt-0.5 shrink-0">#{idx + 1}</span>
+                              <div className="min-w-0">
+                                <p className="font-semibold text-slate-100 text-sm leading-snug">{c.criteria_name}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  {group.key === 'thuthach' ? (
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                                      c.difficulty === 'Dễ' 
+                                        ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' 
+                                        : c.difficulty === 'Khó' 
+                                        ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' 
+                                        : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                                    }`}>
+                                      Mức độ: {c.difficulty === 'Dễ' ? '🟢 Dễ' : c.difficulty === 'Khó' ? '🔴 Khó' : '🟡 Trung bình'}
+                                    </span>
+                                  ) : (
+                                    <p className="text-slate-500 text-xs">Điểm tối đa: <span className="text-slate-300 font-medium">{c.max_score}</span></p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <button
+                              onClick={() => deleteCriteria(c.id)}
+                              className="ds-btn ds-btn-danger ds-btn-xs shrink-0"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
        {/* Candidates Tab */}
        {activeTab === 'candidates' && currentSeason && (
          <div className="space-y-4">

@@ -60,6 +60,7 @@ queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN challenge_result_score
 queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN lead_interviewer_id VARCHAR(100)').catch(() => {});
 queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN selected_questions TEXT').catch(() => {});
 queryDatabase('ALTER TABLE Recruitment_Criteria ADD COLUMN round_type VARCHAR(50) DEFAULT "teamwork"').catch(() => {});
+queryDatabase('ALTER TABLE Recruitment_Criteria ADD COLUMN difficulty VARCHAR(50) DEFAULT "Trung bình"').catch(() => {});
 queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN application_answers TEXT').catch(() => {});
 queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN challenge_process_scorer_ids TEXT').catch(() => {});
 queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN challenge_result_scorer_ids TEXT').catch(() => {});

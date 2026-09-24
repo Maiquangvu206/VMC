@@ -63,12 +63,17 @@ export const CandidateChallengeModal = ({
               onChange={(e) => handleTopicSelect(e.target.value)}
               className="w-full bg-[#111827] border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-amber-500"
             >
-              <option value="">-- Chọn đề từ kho đề (Vòng thử thách) --</option>
-              {sampleTopics.map((t, idx) => (
-                <option key={t.id || idx} value={t.criteria_name || t}>
-                  Đề {idx + 1}: {t.criteria_name || t}
-                </option>
-              ))}
+              <option value="">-- Chọn đề từ kho đề thử thách --</option>
+              {sampleTopics.map((t, idx) => {
+                const name = typeof t === 'string' ? t : t.criteria_name;
+                const diff = typeof t === 'object' && t.difficulty ? t.difficulty : 'Trung bình';
+                const badge = diff === 'Dễ' ? '🟢 Dễ' : diff === 'Khó' ? '🔴 Khó' : '🟡 Trung bình';
+                return (
+                  <option key={t.id || idx} value={name}>
+                    Đề {idx + 1}: {name} [{badge}]
+                  </option>
+                );
+              })}
             </select>
 
             <input

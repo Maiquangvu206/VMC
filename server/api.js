@@ -1735,22 +1735,22 @@ router.get('/recruitment/criteria/:seasonId', async (req, res) => {
 
 router.post('/recruitment/criteria', async (req, res) => {
   try {
-    const { id, season_id, criteria_name, max_score, sort_order, round_type } = req.body;
+    const { id, season_id, criteria_name, max_score, sort_order, round_type, difficulty } = req.body;
     const cid = id || ('crit-' + Date.now());
     await queryDatabase(
-      'INSERT INTO Recruitment_Criteria (id, season_id, criteria_name, max_score, sort_order, round_type) VALUES (?, ?, ?, ?, ?, ?)',
-      [cid, season_id, criteria_name, max_score || 10, sort_order || 0, round_type || 'teamwork']
+      'INSERT INTO Recruitment_Criteria (id, season_id, criteria_name, max_score, sort_order, round_type, difficulty) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [cid, season_id, criteria_name, max_score || 10, sort_order || 0, round_type || 'teamwork', difficulty || 'Trung bình']
     );
-    res.json({ success: true, data: { id: cid, season_id, criteria_name, max_score: max_score || 10, round_type: round_type || 'teamwork' } });
+    res.json({ success: true, data: { id: cid, season_id, criteria_name, max_score: max_score || 10, round_type: round_type || 'teamwork', difficulty: difficulty || 'Trung bình' } });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
 router.put('/recruitment/criteria/:id', async (req, res) => {
   try {
-    const { criteria_name, max_score, round_type } = req.body;
+    const { criteria_name, max_score, round_type, difficulty } = req.body;
     await queryDatabase(
-      'UPDATE Recruitment_Criteria SET criteria_name = COALESCE(?, criteria_name), max_score = COALESCE(?, max_score), round_type = COALESCE(?, round_type) WHERE id = ?',
-      [criteria_name ?? null, max_score ?? null, round_type ?? null, req.params.id]
+      'UPDATE Recruitment_Criteria SET criteria_name = COALESCE(?, criteria_name), max_score = COALESCE(?, max_score), round_type = COALESCE(?, round_type), difficulty = COALESCE(?, difficulty) WHERE id = ?',
+      [criteria_name ?? null, max_score ?? null, round_type ?? null, difficulty ?? null, req.params.id]
     );
     res.json({ success: true });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
