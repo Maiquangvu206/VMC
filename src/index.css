@@ -267,6 +267,36 @@ h1, h2, h3, h4, h5, h6 {
   border-color: var(--accent-blue);
 }
 
+/* ========== UNIVERSAL FIX: INPUT PADDING FOR ICONS ========== */
+.ds-input.pl-8, input.pl-8 { padding-left: 2rem !important; }
+.ds-input.pl-9, input.pl-9 { padding-left: 2.25rem !important; }
+.ds-input.pl-10, input.pl-10 { padding-left: 2.5rem !important; }
+.ds-input.pl-11, input.pl-11 { padding-left: 2.75rem !important; }
+.ds-input.pl-12, input.pl-12 { padding-left: 3rem !important; }
+.ds-input.pl-14, input.pl-14 { padding-left: 3.5rem !important; }
+.ds-input.pl-16, input.pl-16 { padding-left: 4rem !important; }
+
+/* Auto-detect relative input wrappers with left icons */
+.relative:has(> .absolute.left-3) input,
+.relative:has(> .absolute.left-3\.5) input,
+.relative:has(> .absolute.left-4) input,
+.relative:has(> .absolute.left-3) select,
+.relative:has(> .absolute.left-3\.5) select,
+.relative:has(> .absolute.left-4) select,
+.relative:has(> .absolute[class*="left-"]) input,
+.relative:has(> .absolute[class*="left-"]) select {
+  padding-left: 2.75rem !important;
+}
+
+.relative > .absolute.left-3,
+.relative > .absolute.left-3\.5,
+.relative > .absolute.left-4,
+.relative > .absolute.left-5,
+.relative > .absolute[class*="left-"] {
+  pointer-events: none !important;
+  z-index: 10 !important;
+}
+
 .ds-select {
   appearance: none;
   -webkit-appearance: none;
