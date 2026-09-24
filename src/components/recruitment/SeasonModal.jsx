@@ -16,14 +16,24 @@ export const SeasonModal = ({ show, onClose, seasonForm, setSeasonForm, onSubmit
 
         <div className="space-y-4 text-xs">
           <div>
-            <label className="ds-field-label">Tên mùa tuyển *</label>
-            <input
-              type="text"
+            <label className="ds-field-label">Tên mùa tuyển (Gen) *</label>
+            <select
               value={seasonForm.name}
               onChange={(e) => setSeasonForm({ ...seasonForm, name: e.target.value })}
-              className="w-full bg-[#0f172a] border border-[#1f2937] focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-xl p-2.5 text-xs text-slate-100 placeholder:text-slate-500 transition-all mt-1"
-              placeholder="VD: Tuyển Gen 6 - 2025"
-            />
+              className="w-full bg-[#0f172a] border border-[#1f2937] focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-xl p-2.5 text-xs text-slate-100 transition-all mt-1 cursor-pointer"
+            >
+              <option value="">-- Chọn Mùa Tuyển (Gen) --</option>
+              <option value="Tuyển Gen 1 - 2020">Tuyển Gen 1 - 2020</option>
+              <option value="Tuyển Gen 2 - 2021">Tuyển Gen 2 - 2021</option>
+              <option value="Tuyển Gen 3 - 2022">Tuyển Gen 3 - 2022</option>
+              <option value="Tuyển Gen 4 - 2023">Tuyển Gen 4 - 2023</option>
+              <option value="Tuyển Gen 5 - 2024">Tuyển Gen 5 - 2024</option>
+              <option value="Tuyển Gen 6 - 2025">Tuyển Gen 6 - 2025</option>
+              <option value="Tuyển Gen 7 - 2026">Tuyển Gen 7 - 2026</option>
+              <option value="Tuyển Gen 8 - 2027">Tuyển Gen 8 - 2027</option>
+              <option value="Tuyển Gen 9 - 2028">Tuyển Gen 9 - 2028</option>
+              <option value="Tuyển Gen 10 - 2029">Tuyển Gen 10 - 2029</option>
+            </select>
           </div>
 
           <div>
@@ -45,9 +55,11 @@ export const SeasonModal = ({ show, onClose, seasonForm, setSeasonForm, onSubmit
               className="w-full bg-[#0f172a] border border-[#1f2937] focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-xl p-2.5 text-xs text-slate-100 transition-all mt-1 cursor-pointer"
             >
               <option value="" disabled hidden>-- Chọn Ban Phụ Trách --</option>
-              <option value="Ban Sản Xuất">Ban Sản Xuất</option>
+              <option value="Ban Sản Xuất Media">Ban Sản Xuất Media</option>
               <option value="Ban Nội Dung - Phát Thanh">Ban Nội Dung - Phát Thanh</option>
               <option value="Ban Đối Ngoại - Nhân Sự">Ban Đối Ngoại - Nhân Sự</option>
+              <option value="Ban Chủ Nhiệm">Ban Chủ Nhiệm</option>
+              <option value="Ban Cố Vấn">Ban Cố Vấn</option>
             </select>
           </div>
 

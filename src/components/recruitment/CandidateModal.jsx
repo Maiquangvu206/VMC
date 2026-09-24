@@ -108,17 +108,22 @@ export const CandidateModal = ({ show, onClose, candidateForm, setCandidateForm,
             </div>
 
             <div>
-              <label className="ds-field-label">Ban mong muốn</label>
+              <label className="ds-field-label">Ban mong muốn *</label>
               <div className="relative flex items-center w-full">
                 <Building className="absolute left-3 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
-                <input
-                  type="text"
-                  value={candidateForm.desired_dept || ''}
+                <select
+                  value={candidateForm.desired_dept || currentSeason?.department || ''}
                   onChange={(e) => setCandidateForm({ ...candidateForm, desired_dept: e.target.value })}
-                  className="ds-input w-full"
+                  className="ds-input ds-select w-full cursor-pointer"
                   style={{ paddingLeft: '2.5rem' }}
-                  placeholder={currentSeason?.department || 'Ban mong muốn tham gia'}
-                />
+                >
+                  <option value="">-- Chọn Ban Mong Muốn --</option>
+                  <option value="Ban Sản Xuất Media">Ban Sản Xuất Media</option>
+                  <option value="Ban Nội Dung - Phát Thanh">Ban Nội Dung - Phát Thanh</option>
+                  <option value="Ban Đối Ngoại - Nhân Sự">Ban Đối Ngoại - Nhân Sự</option>
+                  <option value="Ban Chủ Nhiệm">Ban Chủ Nhiệm</option>
+                  <option value="Ban Cố Vấn">Ban Cố Vấn</option>
+                </select>
               </div>
             </div>
           </div>

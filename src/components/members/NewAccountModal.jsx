@@ -74,19 +74,25 @@ export const NewAccountModal = ({ show, onClose, formData, setFormData, onSubmit
              </div>
            </div>
            
-           <div>
-             <label className="ds-field-label">Ban</label>
-             <div className="relative flex items-center">
-               <Briefcase className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
-               <input
-                 type="text"
-                 value={formData.deptName}
-                 onChange={(e) => setFormData({ ...formData, deptName: e.target.value })}
-                 className="ds-input w-full" style={{ paddingLeft: '2.75rem' }}
-                 placeholder="VD: Ban Sản Xuất Media"
-               />
-             </div>
-           </div>
+                       <div>
+              <label className="ds-field-label">Ban *</label>
+              <div className="relative flex items-center w-full">
+                <Briefcase className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
+                <select
+                  value={formData.deptName || ''}
+                  onChange={(e) => setFormData({ ...formData, deptName: e.target.value })}
+                  className="ds-input ds-select w-full cursor-pointer"
+                  style={{ paddingLeft: '2.75rem' }}
+                >
+                  <option value="">-- Chọn Ban --</option>
+                  <option value="Ban Sản Xuất Media">Ban Sản Xuất Media</option>
+                  <option value="Ban Nội Dung - Phát Thanh">Ban Nội Dung - Phát Thanh</option>
+                  <option value="Ban Đối Ngoại - Nhân Sự">Ban Đối Ngoại - Nhân Sự</option>
+                  <option value="Ban Chủ Nhiệm">Ban Chủ Nhiệm</option>
+                  <option value="Ban Cố Vấn">Ban Cố Vấn</option>
+                </select>
+              </div>
+            </div>
            
            <div>
              <label className="ds-field-label">Số điện thoại</label>
