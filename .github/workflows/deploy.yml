@@ -22,7 +22,7 @@ jobs:
       # 3. Cài dependencies và Build Frontend (React + Vite → dist/)
       - name: Install & Build Frontend
         run: |
-          npm ci
+          npm install
           npm run build
 
       # 4. Cài dependencies cho Backend Server
@@ -31,12 +31,17 @@ jobs:
           cd server
           npm install
 
-      # 5. Khởi động lại Server với PM2 (serve cả API lẫn frontend từ dist/)
+      # 5. Khởi động lại Server với PM2 (nạp PATH để chắc chắn tìm thấy pm2)
       - name: Restart Server with PM2
         run: |
-          pm2 delete vmc-server || true
-          pm2 start server/index.js --name "vmc-server" --cwd "$(pwd)"
-          pm2 save
+          export PATH=$PATH:$HOME/.nvm/versions/node/$(node -v)/bin:$HOME/.npm-global/bin:/usr/local/bin
+          if command -v pm2 &> /dev/null; then
+            pm2 restart vmc-server || pm2 start server/index.js --name "vmc-server" --cwd "$(pwd)"
+            pm2 save
+          else
+            npx pm2 restart vmc-server || npx pm2 start server/index.js --name "vmc-server" --cwd "$(pwd)"
+            npx pm2 save
+          fi
           echo "=========================================="
           echo "🎉 Deploy thành công! Server đang chạy."
           echo "=========================================="
@@ -44,11 +49,12 @@ jobs:
       # 6. Kiểm tra log PM2 sau deploy
       - name: Check PM2 logs
         run: |
+          export PATH=$PATH:$HOME/.nvm/versions/node/$(node -v)/bin:$HOME/.npm-global/bin:/usr/local/bin
           sleep 5
-          pm2 logs vmc-server --lines 30 --nostream
+          (pm2 logs vmc-server --lines 30 --nostream || npx pm2 logs vmc-server --lines 30 --nostream) || true
 
       # 7. Kiểm tra server có phản hồi không
       - name: Health check
         run: |
           sleep 3
-          curl -f http://localhost:5000/api/members || echo "⚠️ Server chưa phản hồi được /api/members"
+          curl -f http://localhost:5000/api/members || echo "⚠️ Server chưa phản hồi được /api/members"
