@@ -1568,30 +1568,7 @@ export const InternalRecruitment = () => {
              return (
                <div className="ds-card p-6">
                  {/* Candidate info */}
-                 {(scoringTypeFilter === 'thuthach_quatrinh' || scoringTypeFilter === 'thuthach_ketqua') && (
-                    <div className="mb-6 p-4 bg-[#0f172a] border border-amber-500/30 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">🎯 Đề Thử Thách Thực Hiện:</span>
-                        </div>
-                        <p className="text-sm font-semibold text-white">
-                          {c.challenge_topic || <span className="text-slate-400 italic">Chưa gán đề thử thách cho ứng viên này</span>}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => {
-                          setSelectedCandidate(c);
-                          setSelectedCandidateChallengeTopic(c.challenge_topic || '');
-                          setSelectedCandidateChallengeProcessScorers(c.challenge_process_scorer_ids || []);
-                          setSelectedCandidateChallengeResultScorers(c.challenge_result_scorer_ids || []);
-                          setShowCandidateChallengeModal(true);
-                        }}
-                        className="ds-btn ds-btn-xs bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 shrink-0 self-start sm:self-center"
-                      >
-                        {c.challenge_topic ? '✏️ Đổi Đề / Phân Người Chấm' : '⚡ Chọn Đề & Tự Nhận Chấm Quá Trình'}
-                      </button>
-                    </div>
-                  )}
+                 
 
                   <div className="flex justify-between items-start mb-6 pb-4 border-b border-[var(--border-default)]">
                    <div>
@@ -2041,7 +2018,7 @@ export const InternalRecruitment = () => {
         setSelectedResultScorers={setSelectedCandidateChallengeResultScorers}
         challengeTopic={selectedCandidateChallengeTopic}
         setChallengeTopic={setSelectedCandidateChallengeTopic}
-        sampleTopics={criteria.filter(crit => crit.round_type === 'thuthach_quatrinh' || crit.round_type === 'thuthach_ketqua')}
+        sampleTopics={criteria.filter(crit => (crit.round_type || '').includes('thuthach'))}
         currentUser={currentUser}
         onSubmit={() => {
           assignCandidateChallengeScorers(

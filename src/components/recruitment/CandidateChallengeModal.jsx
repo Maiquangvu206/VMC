@@ -54,39 +54,22 @@ export const CandidateChallengeModal = ({
         {/* Candidate Topic Assignment Box */}
         {candidate && setChallengeTopic && (
           <div className="p-3 bg-[#0f172a] border border-amber-500/30 rounded-xl space-y-2 shrink-0">
-            <div className="flex justify-between items-center">
-              <label className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
-                🎯 Chọn Đề Thử Thách Cho Ứng Viên:
-              </label>
-              {currentUser?.id && !selectedProcessScorers.includes(currentUser.id) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!selectedProcessScorers.includes(currentUser.id)) {
-                      setSelectedProcessScorers([...selectedProcessScorers, currentUser.id]);
-                    }
-                  }}
-                  className="text-[10px] text-amber-400 hover:underline font-semibold"
-                >
-                  + Tự động chọn tôi làm người chấm quá trình
-                </button>
-              )}
-            </div>
+            <label className="text-xs font-bold text-amber-300 block mb-1">
+              🎯 Chọn Đề Thử Thách Cho Ứng Viên:
+            </label>
 
-            {sampleTopics.length > 0 && (
-              <select
-                value={challengeTopic || ''}
-                onChange={(e) => handleTopicSelect(e.target.value)}
-                className="w-full bg-[#111827] border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-amber-500"
-              >
-                <option value="">-- Chọn đề thử thách mẫu từ danh sách --</option>
-                {sampleTopics.map((t, idx) => (
-                  <option key={t.id || idx} value={t.criteria_name || t}>
-                    Đề {idx + 1}: {t.criteria_name || t}
-                  </option>
-                ))}
-              </select>
-            )}
+            <select
+              value={challengeTopic || ''}
+              onChange={(e) => handleTopicSelect(e.target.value)}
+              className="w-full bg-[#111827] border border-slate-700 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-amber-500"
+            >
+              <option value="">-- Chọn đề từ kho đề (Vòng thử thách) --</option>
+              {sampleTopics.map((t, idx) => (
+                <option key={t.id || idx} value={t.criteria_name || t}>
+                  Đề {idx + 1}: {t.criteria_name || t}
+                </option>
+              ))}
+            </select>
 
             <input
               type="text"
@@ -95,9 +78,6 @@ export const CandidateChallengeModal = ({
               placeholder="Hoặc nhập đề thử thách tùy chỉnh cho ứng viên..."
               className="w-full bg-[#111827] border border-slate-700 rounded-lg p-2 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-amber-500"
             />
-            <p className="text-[10px] text-slate-400 italic">
-              💡 Người chọn đề cho ứng viên sẽ tự động được gán làm Người Chấm Quá Trình (`1. Chấm Quá Trình`).
-            </p>
           </div>
         )}
 
