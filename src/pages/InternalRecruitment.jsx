@@ -1408,14 +1408,13 @@ export const InternalRecruitment = () => {
                           const candComments = summaryItem?.comments || [];
                           return candComments.length > 0 ? (
                             <div className="pt-3 border-t border-slate-800/80">
-                              <span className="text-amber-400 font-semibold block mb-1.5 text-xs flex items-center gap-1.5">💬 Nhận xét của Giám khảo ({candComments.length}):</span>
+                              <span className="text-amber-400 font-semibold block mb-1.5 text-xs flex items-center gap-1.5">💬 Nhận xét theo vòng ({candComments.length}):</span>
                               <div className="space-y-2">
                                 {candComments.map((cmt, cIdx) => (
                                   <div key={cIdx} className="bg-[#111827] p-3 rounded-lg border border-slate-800 text-slate-300 text-xs">
-                                    <div className="flex justify-between items-center text-[10px] text-slate-400 mb-1">
-                                      <span className="font-bold text-blue-300">👤 Giám khảo {cIdx + 1}</span>
-                                      <span className="ds-badge ds-badge-secondary py-0 px-1.5 text-[9px] uppercase">
-                                        {cmt.round_type === 'don' ? '📝 Vòng Đơn' : cmt.round_type === 'phongvan' ? '🎙️ Phỏng Vấn' : cmt.round_type === 'teamwork' ? '👥 Teamwork' : cmt.round_type === 'thuthach_quatrinh' ? '⚡ TT Quá trình' : '🏆 TT Kết quả'}
+                                    <div className="flex items-center text-[10px] text-slate-400 mb-1.5">
+                                      <span className="ds-badge ds-badge-secondary py-0.5 px-2 text-[9.5px] uppercase font-semibold">
+                                        {cmt.round_type === 'don' ? '📝 Vòng Đơn' : cmt.round_type === 'phongvan' ? '🎙️ Vòng Phỏng Vấn' : cmt.round_type === 'teamwork' ? '👥 Vòng Teamwork' : cmt.round_type === 'thuthach_quatrinh' ? '⚡ Thử Thách Quá Trình' : '🏆 Thử Thách Kết Quả'}
                                       </span>
                                     </div>
                                     <p className="italic leading-relaxed text-slate-200">"{cmt.comments}"</p>
@@ -1963,15 +1962,14 @@ export const InternalRecruitment = () => {
                                 <td colSpan={12} className="py-2.5 px-4 text-xs">
                                   <div className="space-y-1.5">
                                     <span className="text-[11px] font-semibold text-amber-400 flex items-center gap-1">
-                                      💬 Nhận xét của Giám khảo ({s.comments.length}):
+                                      💬 Nhận xét theo vòng ({s.comments.length}):
                                     </span>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                       {s.comments.map((cmt, cIdx) => (
                                         <div key={cIdx} className="bg-[#0f172a] p-2.5 rounded-lg border border-slate-800 text-slate-200 text-xs leading-relaxed space-y-1">
-                                          <div className="flex justify-between items-center text-[10px] text-slate-400">
-                                            <span className="font-bold text-blue-300">👤 Giám khảo {cIdx + 1}</span>
-                                            <span className="ds-badge ds-badge-secondary py-0 px-1.5 text-[9px] uppercase">
-                                              {cmt.round_type === 'don' ? '📝 Đơn' : cmt.round_type === 'phongvan' ? '🎙️ PV' : cmt.round_type === 'teamwork' ? '👥 TW' : cmt.round_type === 'thuthach_quatrinh' ? '⚡ TT Quá trình' : '🏆 TT Kết quả'}
+                                          <div className="flex items-center text-[10px] text-slate-400 mb-1">
+                                            <span className="ds-badge ds-badge-secondary py-0.5 px-2 text-[9.5px] uppercase font-semibold">
+                                              {cmt.round_type === 'don' ? '📝 Vòng Đơn' : cmt.round_type === 'phongvan' ? '🎙️ Vòng Phỏng Vấn' : cmt.round_type === 'teamwork' ? '👥 Vòng Teamwork' : cmt.round_type === 'thuthach_quatrinh' ? '⚡ Thử Thách Quá Trình' : '🏆 Thử Thách Kết Quả'}
                                             </span>
                                           </div>
                                           <p className="text-slate-300 italic">"{cmt.comments}"</p>
