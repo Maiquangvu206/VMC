@@ -1789,10 +1789,11 @@ export const InternalRecruitment = () => {
                      {/* Total score */}
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-4 border-t border-[var(--border-default)]">
                         <div className="text-white font-bold text-base">
-                          {(() => {
-                            const activeCritList = scoringTypeFilter === 'phongvan'
-                              ? activeCriteria.filter(crit => selectedQuestions[crit.id])
-                              : activeCriteria;
+                                                     {(() => {
+                             const activeCriteria = criteria.filter(crit => (crit.round_type || 'teamwork') === (scoringTypeFilter || 'teamwork'));
+                             const activeCritList = scoringTypeFilter === 'phongvan'
+                               ? activeCriteria.filter(crit => selectedQuestions[crit.id])
+                               : activeCriteria;
                             const isDonOrTtKetqua = scoringTypeFilter === 'don' || scoringTypeFilter === 'thuthach_ketqua';
                             let sum = 0;
                             let count = 0;
