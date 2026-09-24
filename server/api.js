@@ -1933,52 +1933,77 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
     const seasonRow = await queryDatabase('SELECT quota FROM Recruitment_Seasons WHERE id = ?', [req.params.seasonId]);
     const quota = seasonRow[0]?.quota || 0;
     
-    const rows = await queryDatabase(`
-      SELECT
-        c.id AS candidate_id,
-        c.full_name,
-        c.class_name,
-        c.desired_dept,
-        c.status,
-        c.notes,
-        COUNT(DISTINCT s.interviewer_id) AS interviewer_count,
-        ROUND(AVG(s.score), 2) AS avg_score,
-        ROUND(SUM(s.score), 2) AS total_score
+    // Fetch candidates
+    const candidates = await queryDatabase(`
+      SELECT c.id AS candidate_id, c.full_name, c.class_name, c.desired_dept, c.status, c.notes
       FROM Recruitment_Candidates c
-      LEFT JOIN Recruitment_Scores s ON s.candidate_id = c.id
       WHERE c.season_id = ?
-      GROUP BY c.id, c.full_name, c.class_name, c.desired_dept, c.status, c.notes
-      ORDER BY total_score DESC
+      ORDER BY c.created_at ASC
     `, [req.params.seasonId]);
 
-    const data = rows.map((r, idx) => {
-      const avg = parseFloat(r.avg_score) || 0;
-      const total = parseFloat(r.total_score) || 0;
+    // Fetch average scores for each candidate per round_type
+    const roundScoresRows = await queryDatabase(`
+      SELECT 
+        s.candidate_id,
+        COALESCE(cr.round_type, 'teamwork') AS round_type,
+        ROUND(AVG(s.score), 2) AS round_avg,
+        ROUND(SUM(s.score), 2) AS round_sum
+      FROM Recruitment_Scores s
+      JOIN Recruitment_Criteria cr ON s.criteria_id = cr.id
+      WHERE s.season_id = ?
+      GROUP BY s.candidate_id, cr.round_type
+    `, [req.params.seasonId]);
+
+    const roundScoresMap = {};
+    const totalScoreMap = {};
+    roundScoresRows.forEach(r => {
+      if (!roundScoresMap[r.candidate_id]) {
+        roundScoresMap[r.candidate_id] = {};
+        totalScoreMap[r.candidate_id] = 0;
+      }
+      const avgVal = parseFloat(r.round_avg) || 0;
+      roundScoresMap[r.candidate_id][r.round_type] = avgVal;
+      totalScoreMap[r.candidate_id] = (totalScoreMap[r.candidate_id] || 0) + (parseFloat(r.round_sum) || 0);
+    });
+
+    const data = candidates.map(c => {
+      const rScores = roundScoresMap[c.candidate_id] || {};
+      const total = totalScoreMap[c.candidate_id] || 0;
+
+      const roundVals = Object.values(rScores);
+      const overallAvg = roundVals.length > 0 ? parseFloat((roundVals.reduce((a, b) => a + b, 0) / roundVals.length).toFixed(2)) : 0;
+
       let result_status = 'pending';
-      if (r.status === 'passed') result_status = 'passed';
-      else if (r.status === 'failed') result_status = 'failed';
-      else if (r.status === 'reserve') result_status = 'reserve';
+      if (c.status === 'passed') result_status = 'passed';
+      else if (c.status === 'failed') result_status = 'failed';
+      else if (c.status === 'reserve') result_status = 'reserve';
       else if (threshold > 0) {
-        if (avg >= threshold) result_status = 'passed';
-        else if (avg >= threshold * 0.8) result_status = 'reserve';
+        if (overallAvg >= threshold) result_status = 'passed';
+        else if (overallAvg >= threshold * 0.8) result_status = 'reserve';
         else result_status = 'failed';
       }
-      // Blind: chỉ trả avg/total — không trả điểm từng tiêu chí hay từng interviewer
+
       return {
-        candidate_id: r.candidate_id,
-        full_name: r.full_name,
-        class_name: r.class_name,
-        desired_dept: r.desired_dept,
-        status: r.status,
-        notes: r.notes,
-        interviewer_count: Number(r.interviewer_count) || 0,
-        avg_score: avg,
-        total_score: parseFloat(r.total_score) || 0,
+        candidate_id: c.candidate_id,
+        full_name: c.full_name,
+        class_name: c.class_name,
+        desired_dept: c.desired_dept,
+        status: c.status,
+        notes: c.notes,
+        round_scores: rScores,
+        avg_score: overallAvg,
+        total_score: total,
         result_status,
-        rank: idx + 1,
-        quota: quota
+        quota
       };
     });
+
+    // Sort by total_score descending to assign rank
+    data.sort((a, b) => b.total_score - a.total_score || b.avg_score - a.avg_score);
+    data.forEach((item, idx) => {
+      item.rank = idx + 1;
+    });
+
     res.json({ success: true, data });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });

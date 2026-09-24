@@ -1701,53 +1701,118 @@ export const InternalRecruitment = () => {
         })()}
 
        {/* Results Tab - for all department members */}
-       {activeTab === 'results' && currentSeason && (
-         <div className="space-y-4">
-           <h2 className="text-xl font-bold text-white">Bảng Tổng Hợp Kết Quả - {currentSeason.name}</h2>
-           <div className="ds-card overflow-hidden">
-             <table className="ds-table">
-               <thead>
-                 <tr>
-                   <th>Mã Phỏng Vấn</th>
-                   <th>Họ Tên</th>
-                   <th>Lớp</th>
-                   <th>Ban Mong Muốn</th>
-                   <th>Số Giám Khảo</th>
-                   <th>Điểm TB</th>
-                   <th>Tổng Điểm</th>
-                   <th>Kết Quả</th>
-                 </tr>
-               </thead>
-                <tbody>
-                  {scoresSummary.map((s, idx) => {
-                    const code = s.interview_code || s.candidate_code || (candidates.find(c => c.id === s.candidate_id)?.interview_code) || `PV-${String(idx + 1).padStart(2, '0')}`;
-                    return (
-                      <tr key={s.candidate_id}>
-                        <td>
-                          <span className="ds-badge ds-badge-cyan font-mono font-bold text-xs py-1 px-2.5">
-                            {code}
-                          </span>
-                        </td>
-                        <td className="font-bold text-slate-100">{s.full_name}</td>
-                        <td className="text-slate-300">{s.class_name}</td>
-                        <td className="text-slate-300">{s.desired_dept}</td>
-                        <td className="text-slate-400 font-mono">{s.interviewer_count} GK</td>
-                        <td className="text-emerald-400 font-bold font-mono">{s.avg_score}</td>
-                        <td className="text-white font-mono">{s.total_score}</td>
-                        <td>
-                          {s.result_status === 'passed' && <span className="ds-badge ds-badge-emerald">✅ Đậu</span>}
-                          {s.result_status === 'failed' && <span className="ds-badge ds-badge-rose">❌ Rớt</span>}
-                          {s.result_status === 'reserve' && <span className="ds-badge ds-badge-amber">⏳ Dự bị</span>}
-                          {s.result_status === 'pending' && <span className="ds-badge ds-badge-secondary">⏳ Chờ</span>}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-             </table>
+       {activeTab === 'results' && currentSeason && (() => {
+         const scoringTypes = Array.isArray(currentSeason.scoring_type)
+           ? currentSeason.scoring_type
+           : [currentSeason.scoring_type || 'teamwork'];
+         
+         const hasDon = scoringTypes.includes('don');
+         const hasPv = scoringTypes.includes('phongvan');
+         const hasTw = scoringTypes.includes('teamwork');
+         const hasTtQuatrinh = scoringTypes.includes('thuthach_quatrinh') || scoringTypes.includes('thuthach');
+         const hasTtKetqua = scoringTypes.includes('thuthach_ketqua') || scoringTypes.includes('thuthach');
+
+         return (
+           <div className="space-y-4">
+             <div className="flex justify-between items-center flex-wrap gap-3">
+               <div>
+                 <h2 className="text-xl font-bold text-white">Bảng Tổng Hợp Kết Quả - {currentSeason.name}</h2>
+                 <p className="text-xs text-slate-400 mt-0.5">Hiển thị chi tiết điểm trung bình từng phần, tổng điểm và xếp hạng ứng viên.</p>
+               </div>
+             </div>
+
+             <div className="ds-card overflow-x-auto">
+               <table className="ds-table w-full text-left">
+                 <thead>
+                   <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
+                     <th className="py-3 px-3">Xếp Hạng</th>
+                     <th className="py-3 px-3">Mã PV</th>
+                     <th className="py-3 px-3">Họ Tên</th>
+                     <th className="py-3 px-3">Lớp</th>
+                     <th className="py-3 px-3">Ban Mong Muốn</th>
+                     {hasDon && <th className="py-3 px-3 text-center">📝 TB Đơn</th>}
+                     {hasPv && <th className="py-3 px-3 text-center">🎙️ TB PV</th>}
+                     {hasTw && <th className="py-3 px-3 text-center">👥 TB TW</th>}
+                     {hasTtQuatrinh && <th className="py-3 px-3 text-center text-amber-300">⚡ TT Quá Trình</th>}
+                     {hasTtKetqua && <th className="py-3 px-3 text-center text-purple-300">🏆 TT Kết Quả</th>}
+                     <th className="py-3 px-3 text-center">Tổng Điểm</th>
+                     <th className="py-3 px-3 text-center">Kết Quả</th>
+                   </tr>
+                 </thead>
+                 <tbody className="divide-y divide-slate-800/60 text-xs">
+                   {scoresSummary.length === 0 ? (
+                     <tr>
+                       <td colSpan={12} className="text-center py-8 text-slate-500 italic">
+                         Chưa có dữ liệu điểm cho mùa tuyển sinh này.
+                       </td>
+                     </tr>
+                   ) : (
+                     scoresSummary.map((s, idx) => {
+                       const code = s.interview_code || s.candidate_code || (candidates.find(c => c.id === s.candidate_id)?.interview_code) || `PV-${String(idx + 1).padStart(2, '0')}`;
+                       const rScores = s.round_scores || {};
+                       
+                       const getRankBadge = (rank) => {
+                         if (rank === 1) return <span className="ds-badge bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold px-2 py-0.5">🥇 #1</span>;
+                         if (rank === 2) return <span className="ds-badge bg-slate-300/20 text-slate-200 border border-slate-400/40 font-bold px-2 py-0.5">🥈 #2</span>;
+                         if (rank === 3) return <span className="ds-badge bg-amber-700/20 text-amber-500 border border-amber-700/40 font-bold px-2 py-0.5">🥉 #3</span>;
+                         return <span className="font-mono text-slate-400 font-semibold px-2">#{rank}</span>;
+                       };
+
+                       return (
+                         <tr key={s.candidate_id} className="hover:bg-slate-800/40 transition-colors">
+                           <td className="py-3 px-3">{getRankBadge(s.rank || idx + 1)}</td>
+                           <td className="py-3 px-3">
+                             <span className="ds-badge ds-badge-cyan font-mono font-bold text-xs py-1 px-2">
+                               {code}
+                             </span>
+                           </td>
+                           <td className="py-3 px-3 font-bold text-slate-100">{s.full_name}</td>
+                           <td className="py-3 px-3 text-slate-300">{s.class_name}</td>
+                           <td className="py-3 px-3 text-slate-300">{s.desired_dept}</td>
+                           {hasDon && (
+                             <td className="py-3 px-3 text-center font-mono text-slate-200">
+                               {rScores.don !== undefined ? rScores.don : <span className="text-slate-600">-</span>}
+                             </td>
+                           )}
+                           {hasPv && (
+                             <td className="py-3 px-3 text-center font-mono text-blue-300">
+                               {rScores.phongvan !== undefined ? rScores.phongvan : <span className="text-slate-600">-</span>}
+                             </td>
+                           )}
+                           {hasTw && (
+                             <td className="py-3 px-3 text-center font-mono text-emerald-300">
+                               {rScores.teamwork !== undefined ? rScores.teamwork : <span className="text-slate-600">-</span>}
+                             </td>
+                           )}
+                           {hasTtQuatrinh && (
+                             <td className="py-3 px-3 text-center font-mono text-amber-300">
+                               {rScores.thuthach_quatrinh !== undefined ? rScores.thuthach_quatrinh : <span className="text-slate-600">-</span>}
+                             </td>
+                           )}
+                           {hasTtKetqua && (
+                             <td className="py-3 px-3 text-center font-mono text-purple-300">
+                               {rScores.thuthach_ketqua !== undefined ? rScores.thuthach_ketqua : <span className="text-slate-600">-</span>}
+                             </td>
+                           )}
+                           <td className="py-3 px-3 text-center font-bold text-white font-mono text-sm">
+                             {s.total_score}
+                           </td>
+                           <td className="py-3 px-3 text-center">
+                             {s.result_status === 'passed' && <span className="ds-badge ds-badge-emerald">✅ Đậu</span>}
+                             {s.result_status === 'failed' && <span className="ds-badge ds-badge-rose">❌ Rớt</span>}
+                             {s.result_status === 'reserve' && <span className="ds-badge ds-badge-amber">⏳ Dự bị</span>}
+                             {s.result_status === 'pending' && <span className="ds-badge ds-badge-secondary">⏳ Chờ</span>}
+                           </td>
+                         </tr>
+                       );
+                     })
+                   )}
+                 </tbody>
+               </table>
+             </div>
            </div>
-         </div>
-       )}
+         );
+       })()}
 
       <SeasonModal
         show={showSeasonModal}
