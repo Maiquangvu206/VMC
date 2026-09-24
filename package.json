@@ -8,6 +8,7 @@
     "dev:server": "node --env-file=server/.env server/index.js",
     "dev:all": "start /B npm run dev:server && npm run dev",
     "build": "vite build",
+    "deploy": "npm run build && git add . && git commit -m \"auto deploy update\" && git push origin main",
     "lint": "oxlint",
     "preview": "vite preview"
   },
