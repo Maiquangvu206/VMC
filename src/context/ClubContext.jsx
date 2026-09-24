@@ -56,6 +56,34 @@ export const ClubProvider = ({ children }) => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
+  // Check recruitment season status on mount
+  useEffect(() => {
+    let isMounted = true;
+    const checkRecruitmentSeasonStatus = async () => {
+      try {
+        const resSettings = await fetch('/api/admin/system-settings', { headers: { 'ngrok-skip-browser-warning': 'true' } });
+        const dataSettings = await resSettings.json();
+        if (isMounted && dataSettings.success && dataSettings.data) {
+          if (dataSettings.data.recruitment_season_active === '1') {
+            setIsRecruitmentSeasonActive(true);
+            return;
+          }
+        }
+        
+        const resSeasons = await fetch('/api/recruitment/seasons', { headers: { 'ngrok-skip-browser-warning': 'true' } });
+        const dataSeasons = await resSeasons.json();
+        if (isMounted && dataSeasons.success && Array.isArray(dataSeasons.data)) {
+          const hasActive = dataSeasons.data.some(s => s.is_active === 1);
+          setIsRecruitmentSeasonActive(hasActive);
+        }
+      } catch (e) {
+        console.warn('Failed to fetch recruitment season status:', e);
+      }
+    };
+    checkRecruitmentSeasonStatus();
+    return () => { isMounted = false; };
+  }, []);
+
 
   // Load Members from SQL Database API on Mount
   useEffect(() => {

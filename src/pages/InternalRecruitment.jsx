@@ -48,26 +48,29 @@ export const InternalRecruitment = () => {
     const seasonDept = (season.department || '').toLowerCase().trim();
     const userRoleTitle = (currentUser?.roleTitle || '').toLowerCase();
     
-    // 1. Check if member of the department in charge
-    const isDeptMember = seasonDept && userDept.includes(seasonDept);
+    // 1. BCN / Advisor always have access
+    const isBCN = userRoleTitle.includes('chủ nhiệm') || userRoleTitle.includes('phó chủ nhiệm');
+    const isAdvisor = userRoleTitle.includes('cố vấn') || userRoleTitle.includes('advisor');
+    if (isBCN || isAdvisor) return true;
+
+    // 2. Department member or season for all departments
+    const isDeptMember = !seasonDept || seasonDept === 'tất cả' || seasonDept === 'tất cả ban' || (userDept && (userDept.includes(seasonDept) || seasonDept.includes(userDept)));
     
-    // 2. Check if Advisor or anyone explicitly assigned in season.interviewer_ids
+    // 3. Assigned scorer/interviewer
     const getInterviewerIds = (interviewerIdsVal) => {
       if (!interviewerIdsVal) return [];
       if (Array.isArray(interviewerIdsVal)) return interviewerIdsVal;
-      try {
-        return JSON.parse(interviewerIdsVal);
-      } catch (e) {
-        return [];
-      }
+      try { return JSON.parse(interviewerIdsVal); } catch (e) { return []; }
     };
-    const isAssignedScorer = getInterviewerIds(season.interviewer_ids).includes(currentUser?.id);
+    const isAssignedScorer = getInterviewerIds(season.interviewer_ids).includes(currentUser?.id) ||
+      (Array.isArray(candidates) && candidates.some(c => 
+        (c.interviewer_ids || []).includes(currentUser?.id) ||
+        (c.teamwork_scorer_ids || []).includes(currentUser?.id) ||
+        (c.challenge_process_scorer_ids || []).includes(currentUser?.id) ||
+        (c.challenge_result_scorer_ids || []).includes(currentUser?.id)
+      ));
 
-    // 3. BCN / Advisor who is assigned can access
-    const isBCN = userRoleTitle.includes('chủ nhiệm') || userRoleTitle.includes('phó chủ nhiệm');
-    const isAdvisor = userRoleTitle.includes('cố vấn') || userRoleTitle.includes('advisor');
-
-    return isDeptMember || isAssignedScorer || ((isBCN || isAdvisor) && isAssignedScorer);
+    return isDeptMember || isAssignedScorer;
   };
 
   const [activeTab, setActiveTab] = useState('seasons');
@@ -258,33 +261,29 @@ export const InternalRecruitment = () => {
     if (currentSeason) {
       fetchCriteria(currentSeason.id);
       fetchCandidates(currentSeason.id);
-      if (isAdmin || isHRHead) {
-        fetchScoresSummary(currentSeason.id);
-      }
-      if (!isAdmin && !isHRHead) {
+      fetchScoresSummary(currentSeason.id);
+      if (currentUser?.id) {
         fetchSubmittedCandidates(currentSeason.id);
       }
     }
-  }, [currentSeason, isAdmin, isHRHead]);
+  }, [currentSeason, currentUser]);
 
   const fetchSeasons = async () => {
     try {
       const res = await fetch('/api/recruitment/seasons', { headers: { 'ngrok-skip-browser-warning': 'true' } });
       const data = await res.json();
       if (data.success && Array.isArray(data.data)) {
-        // Filter seasons by user's department (Super Admin sees all)
-        const userDept = (currentUser?.deptName || currentUser?.department || '').toLowerCase().trim();
-        const filteredSeasons = isSuperAdmin 
-          ? data.data 
-          : data.data.filter(s => {
-              const seasonDept = (s.department || '').toLowerCase().trim();
-              return !seasonDept || seasonDept === userDept;
-            });
+        // Filter seasons accessible by user
+        const filteredSeasons = data.data.filter(s => canAccessSeason(s));
         
         setSeasons(filteredSeasons);
         const active = filteredSeasons.find(s => s.is_active === 1);
-        if (active && (isSuperAdmin || isAdmin || isHRHead)) {
+        if (active) {
           setCurrentSeason(active);
+        } else if (filteredSeasons.length > 0) {
+          setCurrentSeason(filteredSeasons[0]);
+        } else {
+          setCurrentSeason(null);
         }
       } else {
         console.error('Invalid seasons data:', data);
