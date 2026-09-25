@@ -14,10 +14,19 @@ export const CandidateProgressModal = ({
 }) => {
   if (!show || !candidate) return null;
 
-  // Find summary entry for this candidate if available
-  const summary = scoresSummary.find(s => String(s.candidate_id) === String(candidate.id) || String(s.interview_code) === String(candidate.interview_code)) || {};
+  // Find summary entry for this candidate if available (matching by ID or interview_code)
+  const summary = scoresSummary.find(s => 
+    String(s.candidate_id) === String(candidate.id) || 
+    String(s.candidate_id) === String(candidate.interview_code) ||
+    String(s.interview_code) === String(candidate.interview_code) ||
+    String(s.interview_code) === String(candidate.id)
+  ) || {};
+
   const rScores = summary.round_scores || candidate.round_scores || {};
   const comments = summary.comments || candidate.comments || [];
+  const submittedScorersMap = summary.submitted_scorers || candidate.submitted_scorers || {};
+  const activeRound = currentSeason?.active_round || 'don';
+  const isRound1Closed = activeRound !== 'don' || currentSeason?.status === 'closed' || currentSeason?.status === 'completed';
 
   // Helper to resolve member names by ID
   const getMemberNames = (idsVal) => {
@@ -33,10 +42,78 @@ export const CandidateProgressModal = ({
     });
   };
 
-  const interviewers = getMemberNames(candidate.interviewer_ids);
-  const teamworkScorers = getMemberNames(candidate.teamwork_scorer_ids);
-  const challengeProcessScorers = getMemberNames(candidate.challenge_process_scorer_ids);
-  const challengeResultScorers = getMemberNames(candidate.challenge_result_scorer_ids);
+  const interviewers = getMemberNames(candidate.interviewer_ids || summary.interviewer_ids);
+  const teamworkScorers = getMemberNames(candidate.teamwork_scorer_ids || summary.teamwork_scorer_ids);
+  const challengeProcessScorers = getMemberNames(candidate.challenge_process_scorer_ids || summary.challenge_process_scorer_ids);
+  const challengeResultScorers = getMemberNames(candidate.challenge_result_scorer_ids || summary.challenge_result_scorer_ids);
+
+  // Helper function to check if round is fully graded by ALL assigned scorers
+  const checkRoundCompletion = (rawAssignedIds, roundKey, minRoundStage) => {
+    let assigned = [];
+    if (Array.isArray(rawAssignedIds)) assigned = rawAssignedIds;
+    else {
+      try { assigned = JSON.parse(rawAssignedIds); } catch (e) { assigned = []; }
+    }
+    const submitted = (submittedScorersMap[roundKey] || []).map(String);
+
+    if (assigned.length > 0) {
+      const allDone = assigned.every(id => submitted.includes(String(id)));
+      if (allDone) {
+        return { isDone: true, statusText: 'Đã chấm', badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' };
+      } else if (submitted.length > 0) {
+        return { isDone: false, statusText: `Đang chấm (${submitted.length}/${assigned.length})`, badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/30 animate-pulse' };
+      } else {
+        return { isDone: false, statusText: 'Đang chấm', badgeClass: 'bg-blue-500/20 text-blue-300 border-blue-500/30' };
+      }
+    }
+
+    // Fallback if no specific assigned list
+    const hasScore = rScores[roundKey] !== undefined || submitted.length > 0;
+    if (hasScore) {
+      return { isDone: true, statusText: 'Đã chấm', badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' };
+    }
+
+    // If active round has reached or passed this round stage
+    const roundOrder = { don: 1, phongvan: 2, thuthach: 3, thuthach_quatrinh: 3, thuthach_ketqua: 3, teamwork: 4, all: 5 };
+    const currentOrder = roundOrder[activeRound] || 1;
+    const minOrder = roundOrder[minRoundStage] || 1;
+
+    if (currentOrder >= minOrder) {
+      return { isDone: false, statusText: 'Đang chấm', badgeClass: 'bg-blue-500/20 text-blue-300 border-blue-500/30' };
+    }
+
+    return { isDone: false, statusText: 'Chưa mở', badgeClass: 'bg-slate-800 text-slate-400 border-slate-700' };
+  };
+
+  // Vòng 1 (Bài Đơn): Đang chấm until round 1 is closed/stopped
+  const v1Status = (() => {
+    const hasScore = rScores.don !== undefined;
+    if (isRound1Closed || hasScore) {
+      return { isDone: true, statusText: 'Đã chấm', badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' };
+    }
+    return { isDone: false, statusText: 'Đang chấm', badgeClass: 'bg-blue-500/20 text-blue-300 border-blue-500/30 animate-pulse' };
+  })();
+
+  // Vòng 2 (Phỏng Vấn)
+  const v2Assigned = candidate.interviewer_ids || summary.interviewer_ids || [];
+  const v2Status = checkRoundCompletion(v2Assigned, 'phongvan', 'phongvan');
+
+  // Vòng 3 (Thử Thách)
+  const v3ProcessAssigned = candidate.challenge_process_scorer_ids || summary.challenge_process_scorer_ids || [];
+  const v3ResultAssigned = candidate.challenge_result_scorer_ids || summary.challenge_result_scorer_ids || [];
+  const v3ProcessStatus = checkRoundCompletion(v3ProcessAssigned, 'thuthach_quatrinh', 'thuthach');
+  const v3ResultStatus = checkRoundCompletion(v3ResultAssigned, 'thuthach_ketqua', 'thuthach');
+  const isV3Done = v3ProcessStatus.isDone && v3ResultStatus.isDone;
+  const isV3InProgress = !isV3Done && (v3ProcessStatus.statusText.includes('Đang chấm') || v3ResultStatus.statusText.includes('Đang chấm') || activeRound.includes('thuthach'));
+  const v3Status = {
+    isDone: isV3Done,
+    statusText: isV3Done ? 'Đã chấm' : (isV3InProgress ? 'Đang chấm' : 'Chưa mở'),
+    badgeClass: isV3Done ? 'bg-purple-500/20 text-purple-300 border-purple-500/30' : (isV3InProgress ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : 'bg-slate-800 text-slate-400')
+  };
+
+  // Vòng 4 (Teamwork)
+  const v4Assigned = candidate.teamwork_scorer_ids || summary.teamwork_scorer_ids || [];
+  const v4Status = checkRoundCompletion(v4Assigned, 'teamwork', 'teamwork');
 
   // Define recruitment steps
   const steps = [
@@ -46,7 +123,8 @@ export const CandidateProgressModal = ({
       title: 'Vòng 1: Đơn Đăng Ký',
       icon: FileText,
       score: rScores.don,
-      isCompleted: rScores.don !== undefined,
+      isCompleted: v1Status.isDone,
+      statusText: v1Status.statusText,
       comments: comments.filter(c => c.round_type === 'don'),
       scorers: []
     },
@@ -56,7 +134,8 @@ export const CandidateProgressModal = ({
       title: 'Vòng 2: Phỏng Vấn',
       icon: Users,
       score: rScores.phongvan,
-      isCompleted: rScores.phongvan !== undefined,
+      isCompleted: v2Status.isDone,
+      statusText: v2Status.statusText,
       comments: comments.filter(c => c.round_type === 'phongvan'),
       scorers: interviewers
     },
@@ -68,7 +147,8 @@ export const CandidateProgressModal = ({
       score: rScores.thuthach,
       scoreProcess: rScores.thuthach_quatrinh ?? rScores.thuthach,
       scoreResult: rScores.thuthach_ketqua ?? rScores.thuthach,
-      isCompleted: rScores.thuthach_quatrinh !== undefined || rScores.thuthach_ketqua !== undefined || rScores.thuthach !== undefined,
+      isCompleted: v3Status.isDone,
+      statusText: v3Status.statusText,
       comments: comments.filter(c => c.round_type === 'thuthach_quatrinh' || c.round_type === 'thuthach_ketqua' || c.round_type === 'thuthach'),
       scorersProcess: challengeProcessScorers,
       scorersResult: challengeResultScorers
@@ -79,7 +159,8 @@ export const CandidateProgressModal = ({
       title: 'Vòng 4: Teamwork',
       icon: Sparkles,
       score: rScores.teamwork,
-      isCompleted: rScores.teamwork !== undefined,
+      isCompleted: v4Status.isDone,
+      statusText: v4Status.statusText,
       comments: comments.filter(c => c.round_type === 'teamwork'),
       scorers: teamworkScorers
     }
@@ -92,7 +173,8 @@ export const CandidateProgressModal = ({
     if (currentStatus === 'passed') return { text: '🎉 Đã Trúng Tuyển', bg: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40' };
     if (currentStatus === 'failed') return { text: '❌ Không Trúng Tuyển', bg: 'bg-rose-500/20 text-rose-300 border-rose-500/40' };
     if (currentStatus === 'reserve') return { text: '⏳ Dự Bị Tuyển Sinh', bg: 'bg-amber-500/20 text-amber-300 border-amber-500/40' };
-    if (currentStatus === 'scored') return { text: '📝 Đã Chấm Điểm', bg: 'bg-blue-500/20 text-blue-300 border-blue-500/40' };
+    const allRoundsDone = v1Status.isDone && v2Status.isDone && v3Status.isDone && v4Status.isDone;
+    if (currentStatus === 'scored' || allRoundsDone) return { text: '📝 Đã Chấm Điểm', bg: 'bg-blue-500/20 text-blue-300 border-blue-500/40' };
     return { text: '⏳ Đang Đánh Giá', bg: 'bg-slate-700/60 text-slate-300 border-slate-600' };
   };
 
@@ -159,7 +241,7 @@ export const CandidateProgressModal = ({
                     {st.title.replace('Vòng ', 'V').split(':')[0]}
                   </span>
                   <span className="text-[10px] text-slate-400 mt-0.5 truncate max-w-[75px]">
-                    {st.score !== undefined ? `${st.score}đ` : (isCompleted ? 'Hoàn thành' : (isCurrent ? 'Đang xét' : 'Chưa mở'))}
+                    {st.score !== undefined ? `${st.score}đ` : st.statusText}
                   </span>
                 </div>
               );
@@ -180,10 +262,8 @@ export const CandidateProgressModal = ({
                 <FileText className="w-4 h-4 text-blue-400" />
                 <span className="font-bold text-slate-200 text-sm">Vòng 1: Bài Đơn Đăng Ký</span>
               </div>
-              <span className={`ds-badge text-xs font-mono font-bold ${
-                rScores.don !== undefined ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'
-              }`}>
-                {rScores.don !== undefined ? `${rScores.don} điểm` : 'Chưa chấm'}
+              <span className={`ds-badge text-xs font-mono font-bold ${v1Status.badgeClass}`}>
+                {rScores.don !== undefined ? `${rScores.don} điểm` : v1Status.statusText}
               </span>
             </div>
             {candidate.desired_dept && (
@@ -203,10 +283,8 @@ export const CandidateProgressModal = ({
                 <Users className="w-4 h-4 text-purple-400" />
                 <span className="font-bold text-slate-200 text-sm">Vòng 2: Phỏng Vấn</span>
               </div>
-              <span className={`ds-badge text-xs font-mono font-bold ${
-                rScores.phongvan !== undefined ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-slate-800 text-slate-400'
-              }`}>
-                {rScores.phongvan !== undefined ? `${rScores.phongvan} điểm` : 'Chưa chấm'}
+              <span className={`ds-badge text-xs font-mono font-bold ${v2Status.badgeClass}`}>
+                {rScores.phongvan !== undefined ? `${rScores.phongvan} điểm` : v2Status.statusText}
               </span>
             </div>
             {interviewers.length > 0 && (
@@ -244,9 +322,9 @@ export const CandidateProgressModal = ({
                     Kết quả: {rScores.thuthach_ketqua}đ
                   </span>
                 )}
-                {rScores.thuthach_quatrinh === undefined && rScores.thuthach_ketqua === undefined && rScores.thuthach === undefined && (
-                  <span className="ds-badge text-xs font-mono text-slate-400 bg-slate-800">Chưa chấm</span>
-                )}
+                <span className={`ds-badge text-xs font-mono font-bold ${v3Status.badgeClass}`}>
+                  {v3Status.statusText}
+                </span>
               </div>
             </div>
             {candidate.challenge_topic && (
@@ -266,10 +344,8 @@ export const CandidateProgressModal = ({
                 <Sparkles className="w-4 h-4 text-emerald-400" />
                 <span className="font-bold text-slate-200 text-sm">Vòng 4: Teamwork</span>
               </div>
-              <span className={`ds-badge text-xs font-mono font-bold ${
-                rScores.teamwork !== undefined ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'
-              }`}>
-                {rScores.teamwork !== undefined ? `${rScores.teamwork} điểm` : 'Chưa chấm'}
+              <span className={`ds-badge text-xs font-mono font-bold ${v4Status.badgeClass}`}>
+                {rScores.teamwork !== undefined ? `${rScores.teamwork} điểm` : v4Status.statusText}
               </span>
             </div>
             {teamworkScorers.length > 0 && (
@@ -288,7 +364,9 @@ export const CandidateProgressModal = ({
           <div className="p-4 rounded-xl bg-gradient-to-r from-blue-950/60 to-purple-950/60 border border-blue-500/30 flex items-center justify-between">
             <div>
               <span className="text-xs text-slate-400 font-medium block">Tổng điểm tích lũy</span>
-              <span className="text-2xl font-black font-mono text-cyan-300">{summary.total_score || candidate.total_score || 0} PTS</span>
+              <span className="text-2xl font-black font-mono text-cyan-300">
+                {summary.total_score !== undefined ? summary.total_score : (candidate.total_score || 0)} PTS
+              </span>
             </div>
             {summary.rank && (
               <div className="text-right">

@@ -1957,9 +1957,10 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
     const seasonRow = await queryDatabase('SELECT quota FROM Recruitment_Seasons WHERE id = ?', [req.params.seasonId]);
     const quota = seasonRow[0]?.quota || 0;
     
-    // Fetch candidates including interview_code
+    // Fetch candidates including interview_code and assigned scorer columns
     const candidates = await queryDatabase(`
-      SELECT c.id AS candidate_id, c.interview_code, c.full_name, c.class_name, c.desired_dept, c.status, c.notes
+      SELECT c.id AS candidate_id, c.interview_code, c.full_name, c.class_name, c.desired_dept, c.status, c.notes,
+             c.interviewer_ids, c.teamwork_scorer_ids, c.challenge_process_scorer_ids, c.challenge_result_scorer_ids
       FROM Recruitment_Candidates c
       WHERE c.season_id = ?
       ORDER BY c.created_at ASC
@@ -1978,6 +1979,17 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
       GROUP BY s.candidate_id, COALESCE(cr.round_type, 'teamwork')
     `, [req.params.seasonId]);
 
+    // Fetch distinct submitted scorers for each candidate per round_type
+    const submittedScorersRows = await queryDatabase(`
+      SELECT DISTINCT 
+        s.candidate_id, 
+        s.interviewer_id, 
+        COALESCE(cr.round_type, 'teamwork') AS round_type
+      FROM Recruitment_Scores s
+      LEFT JOIN Recruitment_Criteria cr ON s.criteria_id = cr.id
+      WHERE s.season_id = ?
+    `, [req.params.seasonId]);
+
     // Fetch comments left by interviewers for each candidate
     const commentsRows = await queryDatabase(`
       SELECT DISTINCT s.candidate_id, s.interviewer_id, s.comments, u.full_name AS interviewer_name, COALESCE(cr.round_type, 'teamwork') AS round_type
@@ -1989,39 +2001,76 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
 
     const commentsMap = {};
     commentsRows.forEach(r => {
-      if (!commentsMap[r.candidate_id]) commentsMap[r.candidate_id] = [];
-      const exists = commentsMap[r.candidate_id].some(
-        c => c.interviewer_id === r.interviewer_id && c.comments === r.comments
-      );
-      if (!exists) {
-        commentsMap[r.candidate_id].push({
-          interviewer_id: r.interviewer_id,
-          interviewer_name: r.interviewer_name || r.interviewer_id,
-          round_type: r.round_type,
-          comments: r.comments
-        });
+      const cand = candidates.find(c => String(c.candidate_id) === String(r.candidate_id) || String(c.interview_code) === String(r.candidate_id));
+      const keys = [String(r.candidate_id)];
+      if (cand) {
+        if (cand.candidate_id) keys.push(String(cand.candidate_id));
+        if (cand.interview_code) keys.push(String(cand.interview_code));
       }
+      keys.forEach(k => {
+        if (!commentsMap[k]) commentsMap[k] = [];
+        const exists = commentsMap[k].some(
+          c => c.interviewer_id === r.interviewer_id && c.comments === r.comments
+        );
+        if (!exists) {
+          commentsMap[k].push({
+            interviewer_id: r.interviewer_id,
+            interviewer_name: r.interviewer_name || r.interviewer_id,
+            round_type: r.round_type,
+            comments: r.comments
+          });
+        }
+      });
+    });
+
+    const submittedScorersMap = {};
+    submittedScorersRows.forEach(r => {
+      const cand = candidates.find(c => String(c.candidate_id) === String(r.candidate_id) || String(c.interview_code) === String(r.candidate_id));
+      const keys = [String(r.candidate_id)];
+      if (cand) {
+        if (cand.candidate_id) keys.push(String(cand.candidate_id));
+        if (cand.interview_code) keys.push(String(cand.interview_code));
+      }
+      keys.forEach(k => {
+        if (!submittedScorersMap[k]) submittedScorersMap[k] = {};
+        if (!submittedScorersMap[k][r.round_type]) submittedScorersMap[k][r.round_type] = [];
+        if (!submittedScorersMap[k][r.round_type].includes(r.interviewer_id)) {
+          submittedScorersMap[k][r.round_type].push(r.interviewer_id);
+        }
+      });
     });
 
     const roundScoresMap = {};
     const totalScoreMap = {};
     roundScoresRows.forEach(r => {
-      if (!roundScoresMap[r.candidate_id]) {
-        roundScoresMap[r.candidate_id] = {};
-        totalScoreMap[r.candidate_id] = 0;
+      const cand = candidates.find(c => String(c.candidate_id) === String(r.candidate_id) || String(c.interview_code) === String(r.candidate_id));
+      const keys = [String(r.candidate_id)];
+      if (cand) {
+        if (cand.candidate_id) keys.push(String(cand.candidate_id));
+        if (cand.interview_code) keys.push(String(cand.interview_code));
       }
       const avgVal = parseFloat(r.round_avg) || 0;
-      roundScoresMap[r.candidate_id][r.round_type] = avgVal;
-      if (r.round_type === 'thuthach') {
-        roundScoresMap[r.candidate_id]['thuthach_quatrinh'] = avgVal;
-        roundScoresMap[r.candidate_id]['thuthach_ketqua'] = avgVal;
-      }
-      totalScoreMap[r.candidate_id] = parseFloat(((totalScoreMap[r.candidate_id] || 0) + avgVal).toFixed(2));
+      keys.forEach(k => {
+        if (!roundScoresMap[k]) roundScoresMap[k] = {};
+        roundScoresMap[k][r.round_type] = avgVal;
+        if (r.round_type === 'thuthach') {
+          roundScoresMap[k]['thuthach_quatrinh'] = avgVal;
+          roundScoresMap[k]['thuthach_ketqua'] = avgVal;
+        }
+      });
+    });
+
+    // Compute total score per candidate (sum of averages of distinct round types)
+    Object.keys(roundScoresMap).forEach(k => {
+      const rMap = roundScoresMap[k];
+      const sum = Object.values(rMap).reduce((a, b) => a + (parseFloat(b) || 0), 0);
+      totalScoreMap[k] = parseFloat(sum.toFixed(2));
     });
 
     const data = candidates.map(c => {
-      const rScores = roundScoresMap[c.candidate_id] || {};
-      const total = totalScoreMap[c.candidate_id] || 0;
+      const rScores = roundScoresMap[c.candidate_id] || roundScoresMap[c.interview_code] || {};
+      const total = totalScoreMap[c.candidate_id] || totalScoreMap[c.interview_code] || 0;
+      const submittedScorers = submittedScorersMap[c.candidate_id] || submittedScorersMap[c.interview_code] || {};
 
       const roundVals = Object.values(rScores);
       const overallAvg = roundVals.length > 0 ? parseFloat((roundVals.reduce((a, b) => a + b, 0) / roundVals.length).toFixed(2)) : 0;
@@ -2036,6 +2085,12 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
         else result_status = 'failed';
       }
 
+      const parseScorerIds = (val) => {
+        if (!val) return [];
+        if (Array.isArray(val)) return val;
+        try { return JSON.parse(val); } catch (e) { return []; }
+      };
+
       return {
         candidate_id: c.candidate_id,
         interview_code: c.interview_code || c.candidate_id,
@@ -2044,8 +2099,13 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
         desired_dept: c.desired_dept,
         status: c.status,
         notes: c.notes,
-        comments: commentsMap[c.candidate_id] || [],
+        interviewer_ids: parseScorerIds(c.interviewer_ids),
+        teamwork_scorer_ids: parseScorerIds(c.teamwork_scorer_ids),
+        challenge_process_scorer_ids: parseScorerIds(c.challenge_process_scorer_ids),
+        challenge_result_scorer_ids: parseScorerIds(c.challenge_result_scorer_ids),
+        comments: commentsMap[c.candidate_id] || commentsMap[c.interview_code] || [],
         round_scores: rScores,
+        submitted_scorers: submittedScorers,
         avg_score: overallAvg,
         total_score: total,
         result_status,
