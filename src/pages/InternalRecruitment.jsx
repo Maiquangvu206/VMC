@@ -2080,24 +2080,48 @@ export const InternalRecruitment = () => {
          const hasTtKetqua = scoringTypes.includes('thuthach_ketqua') || scoringTypes.includes('thuthach') || scoresSummary.some(s => s.round_scores?.thuthach_ketqua !== undefined);
 
          // Build summary list: use scoresSummary if available, else fallback to candidates list
-         let summaryList = scoresSummary;
-         if ((!summaryList || summaryList.length === 0) && Array.isArray(candidates) && candidates.length > 0) {
-           summaryList = candidates.map((c, idx) => ({
-             candidate_id: c.id,
-             interview_code: c.interview_code || c.id,
-             full_name: c.full_name,
-             class_name: c.class_name,
-             desired_dept: c.desired_dept || currentSeason.department || 'N/A',
-             status: c.status || 'pending',
-             notes: c.notes || '',
-             comments: [],
-             round_scores: {},
-             avg_score: 0,
-             total_score: 0,
-             result_status: c.status || 'pending',
-             rank: idx + 1
-           }));
+         let summaryList = [];
+         if (Array.isArray(candidates) && candidates.length > 0) {
+           summaryList = candidates.map((c, idx) => {
+             const matchSummary = (scoresSummary || []).find(s => 
+               String(s.candidate_id) === String(c.id) || 
+               String(s.candidate_id) === String(c.interview_code) ||
+               String(s.interview_code) === String(c.interview_code) ||
+               String(s.interview_code) === String(c.id)
+             );
+             if (matchSummary) {
+               return {
+                 ...c,
+                 ...matchSummary,
+                 candidate_id: c.id,
+                 interview_code: c.interview_code || matchSummary.interview_code || c.id,
+                 full_name: c.full_name || matchSummary.full_name,
+                 class_name: c.class_name || matchSummary.class_name,
+                 desired_dept: c.desired_dept || matchSummary.desired_dept || currentSeason.department || 'N/A'
+               };
+             }
+             return {
+               candidate_id: c.id,
+               interview_code: c.interview_code || c.id,
+               full_name: c.full_name,
+               class_name: c.class_name,
+               desired_dept: c.desired_dept || currentSeason.department || 'N/A',
+               status: c.status || 'pending',
+               notes: c.notes || '',
+               comments: [],
+               round_scores: {},
+               avg_score: 0,
+               total_score: 0,
+               result_status: c.status || 'pending',
+               rank: idx + 1
+             };
+           });
+           summaryList.sort((a, b) => b.total_score - a.total_score || b.avg_score - a.avg_score || (a.interview_code || '').localeCompare(b.interview_code || '', undefined, { numeric: true, sensitivity: 'base' }));
+           summaryList.forEach((item, idx) => { item.rank = idx + 1; });
+         } else if (Array.isArray(scoresSummary) && scoresSummary.length > 0) {
+           summaryList = scoresSummary;
          }
+
 
          return (
            <div className="space-y-4">
