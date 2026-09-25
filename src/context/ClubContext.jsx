@@ -990,9 +990,6 @@ setCurrentUser(acc);
           String(m.username || '').toLowerCase() === String(id).toLowerCase()
         ) ? { ...m, status: newStatus } : m)
       }));
-
-      showToast(`✅ Đã ${newStatus === 'Suspended' ? 'khóa' : 'mở khóa'} tài khoản thành công!`, 'success');
-      return newStatus;
     } catch (err) {
       console.error('❌ Lỗi toggleAccountStatus:', err);
       showToast(`❌ Lỗi kết nối server! ${err.message}`, 'error');
@@ -1039,7 +1036,7 @@ setCurrentUser(acc);
     updateDb(prev => ({
       ...prev,
       members: prev.members.map(m => {
-        if (m.id === id) {
+        if (m.id === id || m.id === member.id || (m.memberCode && m.memberCode === member.memberCode)) {
           return { ...m, status: newStatus, milestones: [...(m.milestones || []), newMilestone] };
         }
         return m;
@@ -1052,6 +1049,8 @@ setCurrentUser(acc);
         : `🔓 Đã mở khóa tài khoản ${member.name} thành công!`,
       newStatus === 'Suspended' ? 'warning' : 'success'
     );
+
+    return newStatus;
   };
 
   // Update Task Status

@@ -523,9 +523,9 @@ export const InternalMembers = () => {
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
+                        setActiveMenuId(null);
                         if (!isHRMember && !isAdmin) {
                           showToast('⛔ Quyền bị từ chối! Chỉ có thành viên Ban Đối Ngoại - Nhân Sự hoặc Admin mới có quyền chỉnh sửa thông tin thành viên!', 'error');
-                          setActiveMenuId(null);
                           return;
                         }
                         const msList = (Array.isArray(m.milestones) && m.milestones.length > 0) ? m.milestones : [
@@ -545,7 +545,6 @@ export const InternalMembers = () => {
                           roleTitle: m.roleTitle || m.role_title || '',
                           milestones: msList
                         });
-                        setActiveMenuId(null);
                       }}
                       className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors cursor-pointer"
                     >
@@ -553,64 +552,69 @@ export const InternalMembers = () => {
                       <span className="pointer-events-none">Chỉnh Sửa Thẻ</span>
                     </button>
 
-                    {isAdmin && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={async (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const codeOrId = m.memberCode || m.member_code || m.username || m.id;
-                            setActiveMenuId(null);
-                            if (typeof resetAccountPassword === 'function') {
-                              await resetAccountPassword(codeOrId);
-                            } else if (typeof resetMemberPassword === 'function') {
-                              await resetMemberPassword(m.id);
-                            }
-                          }}
-                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors cursor-pointer"
-                        >
-                          <RefreshCw className="w-3.5 h-3.5 text-amber-400 pointer-events-none" />
-                          <span className="pointer-events-none">Reset Mật Khẩu</span>
-                        </button>
+                    {/* Reset Password Option */}
+                    <button
+                      type="button"
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setActiveMenuId(null);
+                        const targetId = m.id || m.memberCode || m.member_code;
+                        if (typeof resetAccountPassword === 'function') {
+                          await resetAccountPassword(targetId);
+                        } else if (typeof resetMemberPassword === 'function') {
+                          await resetMemberPassword(m.id);
+                        }
+                      }}
+                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors cursor-pointer"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5 text-amber-400 pointer-events-none" />
+                      <span className="pointer-events-none">Reset Mật Khẩu</span>
+                    </button>
 
+                    {/* Lock / Unlock Option */}
+                    {(() => {
+                      const isItemLocked = m.status === 'Locked' || m.status === 'Suspended';
+                      return (
                         <button
                           type="button"
                           onClick={async (e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            const codeOrId = m.id || m.memberCode || m.member_code;
                             setActiveMenuId(null);
+                            const targetId = m.id || m.memberCode || m.member_code;
                             if (typeof toggleAccountStatus === 'function') {
-                              await toggleAccountStatus(codeOrId);
+                              const newSt = await toggleAccountStatus(targetId);
+                              if (newSt && selectedMember && (selectedMember.id === m.id || selectedMember.memberCode === m.memberCode)) {
+                                setSelectedMember(prev => prev ? { ...prev, status: newSt } : null);
+                              }
                             }
                           }}
                           className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors cursor-pointer"
                         >
-                          <Lock className="w-3.5 h-3.5 text-emerald-400 pointer-events-none" />
-                          <span className="pointer-events-none">{m.status === 'Active' ? 'Khóa Tài Khoản' : 'Mở Khóa'}</span>
+                          <Lock className={`w-3.5 h-3.5 pointer-events-none ${isItemLocked ? 'text-emerald-400' : 'text-rose-400'}`} />
+                          <span className="pointer-events-none">{isItemLocked ? 'Mở Khóa' : 'Khóa Tài Khoản'}</span>
                         </button>
-                      </>
-                    )}
+                      );
+                    })()}
 
-                    {isSuperAdmin && (
-                      <button
-                        type="button"
-                        onClick={async (e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          const codeOrId = m.id || m.memberCode || m.member_code;
-                          setActiveMenuId(null);
-                          if (typeof deleteMemberAccount === 'function') {
-                            await deleteMemberAccount(codeOrId);
-                          }
-                        }}
-                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                      >
-                        <Trash2 className="w-3.5 h-3.5 text-rose-400 pointer-events-none" />
-                        <span className="pointer-events-none">Xóa Vĩnh Viễn</span>
-                      </button>
-                    )}
+                    {/* Delete Option */}
+                    <button
+                      type="button"
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setActiveMenuId(null);
+                        const targetId = m.id || m.memberCode || m.member_code;
+                        if (typeof deleteMemberAccount === 'function') {
+                          await deleteMemberAccount(targetId);
+                        }
+                      }}
+                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-rose-400 pointer-events-none" />
+                      <span className="pointer-events-none">Xóa Vĩnh Viễn</span>
+                    </button>
                   </div>
                 )}
               </div>
