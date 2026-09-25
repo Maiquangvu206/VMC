@@ -1795,22 +1795,6 @@ export const InternalRecruitment = () => {
 
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-[var(--border-default)]">
                     <div>
-                      {isDraftSaved && (
-                        <div className="flex items-center justify-between bg-blue-500/10 border border-blue-500/30 px-3 py-1.5 rounded-lg text-xs text-blue-300 mb-2 animate-fade-in">
-                          <div className="flex items-center gap-1.5">
-                            <Save className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                            <span>💾 <strong>Bộ nhớ đệm tự động:</strong> {draftInfo || 'Đã tự động lưu nháp'}</span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={clearCurrentCandidateDraft}
-                            className="text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 px-2 py-0.5 rounded transition-colors text-[11px] font-semibold cursor-pointer ml-3"
-                            title="Xóa nháp và nhập lại từ đầu"
-                          >
-                            🧹 Xóa nháp
-                          </button>
-                        </div>
-                      )}
                       <h3 className="text-xl sm:text-2xl font-extrabold text-white leading-tight">{c.full_name}</h3>
                       <p className="text-xs sm:text-sm text-slate-300 mt-1">
                         Mã: <span className="font-mono font-bold text-cyan-400">{c.interview_code || c.id}</span> | Lớp: <span className="font-medium text-slate-200">{c.class_name}</span>
