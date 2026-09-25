@@ -455,17 +455,8 @@ app.post('/api/auth/login', async (req, res) => {
     return res.status(400).json({ success: false, message: 'Vui lòng nhập đầy đủ mã thành viên và mật khẩu!' });
   }
 
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
-  const now = Date.now();
-  const attemptInfo = failedLoginTracker.get(ip) || { count: 0, lockUntil: 0 };
-
-  if (attemptInfo.lockUntil > now) {
-    const remainingMins = Math.ceil((attemptInfo.lockUntil - now) / 60000);
-    return res.status(429).json({
-      success: false,
-      message: `🚫 Bạn đã nhập sai mật khẩu quá 5 lần. Vui lòng thử lại sau ${remainingMins} phút để bảo vệ hệ thống!`
-    });
-  }
+  // Clear any legacy IP lockouts
+  failedLoginTracker.clear();
 
   try {
     const sql = `
@@ -477,11 +468,6 @@ app.post('/api/auth/login', async (req, res) => {
     `;
     const rows = await queryDatabase(sql, [memberCode, memberCode]);
     if (!rows || rows.length === 0) {
-      attemptInfo.count += 1;
-      if (attemptInfo.count >= 5) {
-        attemptInfo.lockUntil = now + 15 * 60 * 1000; // Khóa 15 phút
-      }
-      failedLoginTracker.set(ip, attemptInfo);
       return res.status(401).json({ success: false, message: 'Mã Thành Viên hoặc Mật khẩu không chính xác!' });
     }
 
@@ -502,16 +488,8 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     if (!isValidPassword) {
-      attemptInfo.count += 1;
-      if (attemptInfo.count >= 5) {
-        attemptInfo.lockUntil = now + 15 * 60 * 1000; // Khóa 15 phút
-      }
-      failedLoginTracker.set(ip, attemptInfo);
       return res.status(401).json({ success: false, message: 'Mã Thành Viên hoặc Mật khẩu không chính xác!' });
     }
-
-    // Reset tracker on successful login
-    failedLoginTracker.delete(ip);
 
     if (user.status === 'Suspended') {
       return res.status(403).json({ success: false, message: 'Tài khoản này đã bị tạm khóa bởi Bộ Phận Kỹ Thuật!' });
