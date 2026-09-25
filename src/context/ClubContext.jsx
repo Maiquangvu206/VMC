@@ -904,7 +904,7 @@ setCurrentUser(acc);
   };
 
   // Delete Member Account (SUPER ADMIN & TRƯỞNG BAN ĐỐI NGOẠI - NHÂN SỰ ONLY)
-  const deleteMemberAccount = async (id) => {
+  const deleteMemberAccount = async (id, skipConfirm = false) => {
     if (!canManageAccounts) {
       showToast('⛔ Quyền bị từ chối! Chỉ có Kỹ Thuật Ban Đối Ngoại - Nhân Sự mới có quyền xóa tài khoản thành viên khỏi hệ thống!', 'error');
       return false;
@@ -922,7 +922,7 @@ setCurrentUser(acc);
 
     const targetCode = memberToDelete?.memberCode || memberToDelete?.id || id;
 
-    if (!window.confirm(`⚠️ XÁC NHẬN BẢO MẬT (QUYỀN ADMIN):\n\nBạn có chắc chắn muốn XÓA VĨNH VIỄN tài khoản thành viên [${memberToDelete?.name || targetCode}] khỏi hệ thống CSDL?`)) {
+    if (!skipConfirm && !window.confirm(`⚠️ XÁC NHẬN BẢO MẬT (QUYỀN ADMIN):\n\nBạn có chắc chắn muốn XÓA VĨNH VIỄN tài khoản thành viên [${memberToDelete?.name || targetCode}] khỏi hệ thống CSDL?`)) {
       return false;
     }
 
@@ -943,7 +943,7 @@ setCurrentUser(acc);
     }));
 
     triggerConfetti();
-    showToast('🎉 Đã xóa vĩnh viễn tài khoản thành viên khỏi CSDL MySQL thành công!', 'success');
+    showToast(`🎉 Đã xóa vĩnh viễn tài khoản ${memberToDelete?.name || targetCode} khỏi CSDL MySQL thành công!`, 'success');
     return true;
   };
 

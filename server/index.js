@@ -740,16 +740,22 @@ app.delete('/api/members/:id', async (req, res) => {
     const m = members[0];
     const mId = String(m.id);
     const mCode = String(m.member_code || '');
+    const mUser = String(m.username || '');
 
-    // Xóa dữ liệu con liên quan ở các bảng (Milestones, Birthday_Assignments, etc.) để tránh lỗi Foreign Key
+    // Xóa toàn bộ dữ liệu liên quan ở các bảng (Milestones, Birthday_Assignments, Sessions, Logins, Attendance, etc.)
     await queryDatabase('DELETE FROM Member_Milestones WHERE member_id = ? OR member_id = ?', [mId, mCode]).catch(() => { });
     await queryDatabase('DELETE FROM Birthday_Assignments WHERE member_id = ? OR member_id = ?', [mId, mCode]).catch(() => { });
+    await queryDatabase('DELETE FROM Birthday_Mail_Logs WHERE member_id = ? OR member_id = ?', [mId, mCode]).catch(() => { });
+    await queryDatabase('DELETE FROM Meeting_Attendance WHERE member_id = ? OR member_id = ?', [mId, mCode]).catch(() => { });
+    await queryDatabase('DELETE FROM User_Sessions WHERE member_id = ? OR member_id = ? OR username = ?', [mId, mCode, mUser]).catch(() => { });
+    await queryDatabase('DELETE FROM User_Logins WHERE member_id = ? OR member_id = ? OR username = ?', [mId, mCode, mUser]).catch(() => { });
+    await queryDatabase('DELETE FROM Tasks WHERE assignee_id = ? OR created_by = ?', [mId, mId]).catch(() => { });
 
     // Xóa chính thành viên khỏi bảng Members
     await queryDatabase('DELETE FROM Members WHERE id = ?', [m.id]);
 
-    console.log(`✅ Đã xóa vĩnh viễn thành viên khỏi CSDL MySQL: [${mCode || mId}]`);
-    res.json({ success: true, message: 'Đã xóa vĩnh viễn thành viên khỏi CSDL MySQL!' });
+    console.log(`✅ Đã xóa vĩnh viễn toàn bộ dữ liệu thành viên khỏi CSDL MySQL: [${mCode || mId}]`);
+    res.json({ success: true, message: 'Đã xóa vĩnh viễn toàn bộ dữ liệu thành viên khỏi CSDL MySQL!' });
   } catch (error) {
     console.error('❌ Lỗi API /api/members/:id DELETE:', error.message);
     res.status(500).json({ success: false, message: 'Lỗi xóa thành viên khỏi CSDL!', error: error.message });

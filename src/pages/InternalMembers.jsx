@@ -34,6 +34,7 @@ import { NewAccountModal } from '../components/members/NewAccountModal';
 import { MemberDetailModal } from '../components/members/MemberDetailModal';
 import { EditMemberModal } from '../components/members/EditMemberModal';
 import { MilestoneModal } from '../components/members/MilestoneModal';
+import { ConfirmDeleteModal } from '../components/members/ConfirmDeleteModal';
 
 const formatGen = (termStr) => {
   if (!termStr) return 'Gen 6';
@@ -109,6 +110,8 @@ export const InternalMembers = () => {
 
   const [selectedMember, setSelectedMember] = useState(null);
   const [editingMember, setEditingMember] = useState(null);
+  const [memberToDelete, setMemberToDelete] = useState(null);
+  const [isDeletingMember, setIsDeletingMember] = useState(false);
   const [activeMenuId, setActiveMenuId] = useState(null);
   React.useEffect(() => {
     const handleDocumentClick = (e) => {
@@ -601,14 +604,11 @@ export const InternalMembers = () => {
                     {/* Delete Option */}
                     <button
                       type="button"
-                      onClick={async (e) => {
+                      onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         setActiveMenuId(null);
-                        const targetId = m.id || m.memberCode || m.member_code;
-                        if (typeof deleteMemberAccount === 'function') {
-                          await deleteMemberAccount(targetId);
-                        }
+                        setMemberToDelete(m);
                       }}
                       className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
                     >
@@ -671,6 +671,26 @@ export const InternalMembers = () => {
         setMsBadge={setMsBadge}
         onSubmit={handleCreateMilestone}
         loading={false}
+      />
+
+      <ConfirmDeleteModal
+        show={!!memberToDelete}
+        onClose={() => setMemberToDelete(null)}
+        member={memberToDelete}
+        loading={isDeletingMember}
+        onConfirm={async () => {
+          if (!memberToDelete) return;
+          setIsDeletingMember(true);
+          const targetId = memberToDelete.id || memberToDelete.memberCode || memberToDelete.member_code;
+          const ok = await deleteMemberAccount(targetId, true);
+          setIsDeletingMember(false);
+          if (ok !== false) {
+            setMemberToDelete(null);
+            if (selectedMember && (selectedMember.id === memberToDelete.id || selectedMember.memberCode === memberToDelete.memberCode)) {
+              setSelectedMember(null);
+            }
+          }
+        }}
       />
 
     </div>
