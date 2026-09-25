@@ -1960,6 +1960,35 @@ router.post('/recruitment/scores', async (req, res) => {
         );
       }
     }
+
+    // Upsert into dedicated Recruitment_Evaluations database table
+    try {
+      const firstCritId = scores[0]?.criteria_id;
+      let rType = 'teamwork';
+      if (firstCritId) {
+        const critRows = await queryDatabase('SELECT round_type FROM Recruitment_Criteria WHERE id = ? LIMIT 1', [firstCritId]);
+        if (critRows.length > 0 && critRows[0].round_type) {
+          rType = critRows[0].round_type;
+        }
+      }
+      const totalSum = scores.reduce((sum, item) => sum + (parseFloat(item.score) || 0), 0);
+      const avgScore = parseFloat((totalSum / scores.length).toFixed(2));
+      const evalId = 'eval-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+
+      await queryDatabase(`
+        INSERT INTO Recruitment_Evaluations (id, season_id, candidate_id, interview_code, interviewer_id, round_type, total_score, avg_score, scores_json, comments)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          total_score = VALUES(total_score),
+          avg_score = VALUES(avg_score),
+          scores_json = VALUES(scores_json),
+          comments = VALUES(comments),
+          updated_at = CURRENT_TIMESTAMP
+      `, [evalId, season_id, targetId, targetCode, interviewer_id, rType, totalSum, avgScore, JSON.stringify(scores), comments || null]);
+    } catch (evalErr) {
+      console.warn('⚠️ Recruitment_Evaluations upsert warning:', evalErr.message);
+    }
+
     await queryDatabase(
       "UPDATE Recruitment_Candidates SET status = 'scored' WHERE id = ? OR interview_code = ?",
       [targetId, targetCode]
@@ -1968,7 +1997,7 @@ router.post('/recruitment/scores', async (req, res) => {
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
-// --- Scores: Aggregated summary (HR Head only — chỉ trả điểm TB tổng hợp, KHÔNG trả chi tiết từng interviewer) ---
+// --- Scores: Aggregated summary ---
 router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
   try {
     const threshold = parseFloat(req.query.threshold) || 0;
@@ -1997,7 +2026,7 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
       ORDER BY c.created_at ASC
     `, [seasonId]);
 
-    // Fetch average scores for each candidate per round_type (matching by season_id OR candidate presence in season)
+    // Fetch average scores for each candidate per round_type
     const roundScoresRows = await queryDatabase(`
       SELECT 
         s.candidate_id,
@@ -2013,6 +2042,17 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
          OR s.candidate_id IN (SELECT interview_code FROM Recruitment_Candidates WHERE season_id = ?)
       GROUP BY s.candidate_id, COALESCE(NULLIF(cr.round_type, ''), 'teamwork')
     `, [seasonId, seasonId, seasonId]);
+
+    // Also fetch from dedicated Recruitment_Evaluations database table if present
+    const evalRows = await queryDatabase(`
+      SELECT candidate_id, interview_code, interviewer_id, round_type, total_score, avg_score, comments
+      FROM Recruitment_Evaluations
+      WHERE season_id = ?
+         OR season_id IS NULL
+         OR season_id = ''
+         OR candidate_id IN (SELECT id FROM Recruitment_Candidates WHERE season_id = ?)
+         OR candidate_id IN (SELECT interview_code FROM Recruitment_Candidates WHERE season_id = ?)
+    `, [seasonId, seasonId, seasonId]).catch(() => []);
 
     // Fetch distinct submitted scorers for each candidate per round_type
     const submittedScorersRows = await queryDatabase(`
@@ -2043,7 +2083,7 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
     const detailedScoresRows = await queryDatabase(`
       SELECT s.candidate_id, s.interviewer_id, s.criteria_id, s.score, s.comments, s.created_at,
              u.full_name AS interviewer_name,
-             cr.title AS criteria_title,
+             cr.criteria_name AS criteria_title,
              COALESCE(NULLIF(cr.round_type, ''), 'teamwork') AS round_type
       FROM Recruitment_Scores s
       LEFT JOIN Users u ON s.interviewer_id = u.id

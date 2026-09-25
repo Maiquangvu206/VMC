@@ -244,6 +244,25 @@ async function init() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `);
 
+    console.log('🔟.4️⃣ Khởi tạo bảng Recruitment_Evaluations (Realtime Scores Table)...');
+    await queryDatabase(`
+      CREATE TABLE IF NOT EXISTS Recruitment_Evaluations (
+        id VARCHAR(100) PRIMARY KEY,
+        season_id VARCHAR(100) NOT NULL,
+        candidate_id VARCHAR(100) NOT NULL,
+        interview_code VARCHAR(100),
+        interviewer_id VARCHAR(100) NOT NULL,
+        round_type VARCHAR(50) NOT NULL,
+        total_score DECIMAL(5,2) DEFAULT 0,
+        avg_score DECIMAL(5,2) DEFAULT 0,
+        scores_json LONGTEXT,
+        comments TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY candidate_interviewer_round (candidate_id, interviewer_id, round_type)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
     // Add columns if they don't exist (for existing tables)
     await queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN interviewer_ids TEXT').catch(() => {});
     await queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN department VARCHAR(100)').catch(() => {});

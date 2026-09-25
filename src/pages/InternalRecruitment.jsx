@@ -2494,18 +2494,55 @@ export const InternalRecruitment = () => {
 
          return (
            <div className="space-y-4">
-             <div className="flex justify-between items-center flex-wrap gap-3">
-               <div>
-                 <h2 className="text-xl font-bold text-white">Bảng Tổng Hợp Kết Quả - {currentSeason.name}</h2>
-                 <p className="text-xs text-slate-400 mt-0.5">Hiển thị chi tiết điểm trung bình từng phần, tổng điểm và xếp hạng ứng viên.</p>
-               </div>
-               <button
-                 onClick={() => fetchScoresSummary(currentSeason.id)}
-                 className="ds-btn ds-btn-secondary text-xs"
-               >
-                 🔄 Cập Nhật Kết Quả
-               </button>
-             </div>
+             <div className="ds-card p-5 bg-gradient-to-r from-[#0f172a] via-[#111827] to-[#0f172a] border border-slate-800 rounded-2xl">
+                <div className="flex justify-between items-center flex-wrap gap-3">
+                  <div>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="relative flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                      </span>
+                      <h2 className="text-xl font-bold text-white">Bảng Tổng Hợp Kết Quả - {currentSeason.name}</h2>
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-950 text-emerald-300 border border-emerald-700/50">
+                        🟢 Đồng bộ tự động (4s)
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Điểm số và xếp hạng tự động đồng bộ trực tiếp từ bảng cơ sở dữ liệu `Recruitment_Evaluations`.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (currentSeason?.id) {
+                        fetchCandidates(currentSeason.id);
+                        fetchScoresSummary(currentSeason.id);
+                      }
+                    }}
+                    className="ds-btn ds-btn-secondary text-xs flex items-center gap-2"
+                  >
+                    <span>🔄 Cập Nhật Kết Quả</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-slate-800/80">
+                  <div className="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/80 text-center">
+                    <div className="text-slate-400 text-[11px]">👥 Tổng Ứng Viên</div>
+                    <div className="text-lg font-bold text-white mt-0.5">{summaryList.length}</div>
+                  </div>
+                  <div className="bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-800/50 text-center">
+                    <div className="text-emerald-400 text-[11px] font-medium">🟢 Đã Có Điểm</div>
+                    <div className="text-lg font-bold text-emerald-300 mt-0.5">
+                      {summaryList.filter(item => (item.total_score && item.total_score > 0) || (item.avg_score && item.avg_score > 0) || Object.keys(item.round_scores || {}).length > 0).length}
+                    </div>
+                  </div>
+                  <div className="bg-amber-950/40 p-2.5 rounded-xl border border-amber-800/50 text-center">
+                    <div className="text-amber-400 text-[11px] font-medium">⚪ Chưa Có Điểm</div>
+                    <div className="text-lg font-bold text-amber-300 mt-0.5">
+                      {summaryList.length - summaryList.filter(item => (item.total_score && item.total_score > 0) || (item.avg_score && item.avg_score > 0) || Object.keys(item.round_scores || {}).length > 0).length}
+                    </div>
+                  </div>
+                </div>
+              </div>
 
              <div className="ds-card overflow-x-auto">
                <table className="ds-table w-full text-left">
