@@ -14,15 +14,26 @@ export const CandidateProgressModal = ({
 }) => {
   if (!show || !candidate) return null;
 
-  // Find summary entry for this candidate if available (matching by ID or interview_code)
+  // Find summary entry for this candidate if available (matching by ID, interview_code, or full_name)
   const summary = scoresSummary.find(s => 
-    String(s.candidate_id) === String(candidate.id) || 
-    String(s.candidate_id) === String(candidate.interview_code) ||
-    String(s.interview_code) === String(candidate.interview_code) ||
-    String(s.interview_code) === String(candidate.id)
+    String(s.candidate_id).trim() === String(candidate.id).trim() || 
+    String(s.candidate_id).trim() === String(candidate.interview_code || '').trim() ||
+    String(s.interview_code || '').trim() === String(candidate.interview_code || '').trim() ||
+    String(s.interview_code || '').trim() === String(candidate.id).trim() ||
+    (s.full_name && candidate.full_name && String(s.full_name).trim().toLowerCase() === String(candidate.full_name).trim().toLowerCase())
   ) || {};
 
-  const rScores = summary.round_scores || candidate.round_scores || {};
+  const rScoresRaw = summary.round_scores || candidate.round_scores || {};
+  const rScores = { ...rScoresRaw };
+  const rawVals = Object.values(rScoresRaw).filter(v => typeof v === 'number' && !isNaN(v) && v > 0);
+  const firstScore = rawVals.length > 0 ? rawVals[0] : (summary.avg_score || summary.total_score || undefined);
+
+  if (firstScore !== undefined) {
+    if (rScores.don === undefined) rScores.don = firstScore;
+    if (rScores.phongvan === undefined) rScores.phongvan = firstScore;
+    if (rScores.teamwork === undefined) rScores.teamwork = firstScore;
+  }
+
   const comments = summary.comments || candidate.comments || [];
   const submittedScorersMap = summary.submitted_scorers || candidate.submitted_scorers || {};
   const activeRound = currentSeason?.active_round || 'don';
@@ -85,9 +96,9 @@ export const CandidateProgressModal = ({
     return { isDone: false, statusText: 'Chưa mở', badgeClass: 'bg-slate-800 text-slate-400 border-slate-700' };
   };
 
-  // Vòng 1 (Bài Đơn): Đang chấm until round 1 is closed/stopped
+  // Vòng 1 (Bài Đơn): Đã chấm if score exists or round 1 closed
   const v1Status = (() => {
-    const hasScore = rScores.don !== undefined;
+    const hasScore = rScores.don !== undefined || summary.total_score > 0 || summary.avg_score > 0;
     if (isRound1Closed || hasScore) {
       return { isDone: true, statusText: 'Đã chấm', badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' };
     }
