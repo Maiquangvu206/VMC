@@ -116,10 +116,18 @@ export const InternalRecruitment = () => {
   const [draftInfo, setDraftInfo] = useState('');
 
   const getCandidateStageInfo = (c) => {
-    if (!c) return { label: '⏳ Chờ chấm', round: 'Chưa mở', badgeClass: 'bg-slate-800 text-slate-400' };
-    const summary = scoresSummary.find(s => String(s.candidate_id) === String(c.id) || String(s.interview_code) === String(c.interview_code)) || {};
+    if (!c) return { label: '⏳ Đang đánh giá', round: 'Chưa mở', badgeClass: 'bg-slate-800 text-slate-400' };
+    const summary = scoresSummary.find(s => 
+      String(s.candidate_id) === String(c.id) || 
+      String(s.candidate_id) === String(c.interview_code) ||
+      String(s.interview_code) === String(c.interview_code) ||
+      String(s.interview_code) === String(c.id)
+    ) || {};
     const rScores = summary.round_scores || c.round_scores || {};
     const status = c.status || summary.result_status || 'pending';
+    const submittedScorersMap = summary.submitted_scorers || c.submitted_scorers || {};
+    const activeRound = currentSeason?.active_round || 'don';
+    const isRound1Closed = activeRound !== 'don' || currentSeason?.status === 'closed' || currentSeason?.status === 'completed';
 
     if (status === 'passed') {
       return { label: '🎉 Đã Trúng Tuyển', round: 'Trúng Tuyển', badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30' };
@@ -131,40 +139,56 @@ export const InternalRecruitment = () => {
       return { label: '⏳ Danh Sách Dự Bị', round: 'Dự Bị', badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30' };
     }
 
-    const activeRound = currentSeason?.active_round || 'don';
+    const checkFullyGraded = (rawAssignedIds, roundKey) => {
+      let assigned = [];
+      if (Array.isArray(rawAssignedIds)) assigned = rawAssignedIds;
+      else { try { assigned = JSON.parse(rawAssignedIds); } catch (e) { assigned = []; } }
+      const submitted = (submittedScorersMap[roundKey] || []).map(String);
+      if (assigned.length > 0) {
+        return assigned.every(id => submitted.includes(String(id)));
+      }
+      return rScores[roundKey] !== undefined || submitted.length > 0;
+    };
 
-    if (rScores.teamwork !== undefined || activeRound.includes('teamwork')) {
-      const isScored = rScores.teamwork !== undefined;
+    if (activeRound.includes('teamwork') || rScores.teamwork !== undefined) {
+      const v4Assigned = c.teamwork_scorer_ids || summary.teamwork_scorer_ids || [];
+      const isDone = checkFullyGraded(v4Assigned, 'teamwork');
       return {
-        label: `👥 Vòng 4: Teamwork (${isScored ? 'Đã chấm' : 'Chờ chấm'})`,
+        label: `👥 Vòng 4: Teamwork (${isDone ? 'Đã chấm' : 'Đang chấm'})`,
         round: 'Vòng 4: Teamwork',
-        badgeClass: isScored ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30' : 'bg-blue-500/20 text-blue-300 border-blue-500/40 hover:bg-blue-500/30 animate-pulse'
+        badgeClass: isDone ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30' : 'bg-blue-500/20 text-blue-300 border-blue-500/40 hover:bg-blue-500/30 animate-pulse'
       };
     }
 
-    if (rScores.thuthach_quatrinh !== undefined || rScores.thuthach_ketqua !== undefined || rScores.thuthach !== undefined || activeRound.includes('thuthach')) {
-      const isScored = rScores.thuthach_quatrinh !== undefined || rScores.thuthach_ketqua !== undefined || rScores.thuthach !== undefined;
+    if (activeRound.includes('thuthach') || rScores.thuthach_quatrinh !== undefined || rScores.thuthach_ketqua !== undefined || rScores.thuthach !== undefined) {
+      const v3Proc = c.challenge_process_scorer_ids || summary.challenge_process_scorer_ids || [];
+      const v3Res = c.challenge_result_scorer_ids || summary.challenge_result_scorer_ids || [];
+      const isProcDone = checkFullyGraded(v3Proc, 'thuthach_quatrinh') || checkFullyGraded(v3Proc, 'thuthach');
+      const isResDone = checkFullyGraded(v3Res, 'thuthach_ketqua') || checkFullyGraded(v3Res, 'thuthach');
+      const isDone = isProcDone && isResDone;
       return {
-        label: `⚡ Vòng 3: Thử Thách (${isScored ? 'Đã chấm' : 'Chờ chấm'})`,
+        label: `⚡ Vòng 3: Thử Thách (${isDone ? 'Đã chấm' : 'Đang chấm'})`,
         round: 'Vòng 3: Thử Thách',
-        badgeClass: isScored ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 hover:bg-purple-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30 animate-pulse'
+        badgeClass: isDone ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 hover:bg-purple-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30 animate-pulse'
       };
     }
 
-    if (rScores.phongvan !== undefined || activeRound.includes('phongvan')) {
-      const isScored = rScores.phongvan !== undefined;
+    if (activeRound.includes('phongvan') || rScores.phongvan !== undefined) {
+      const v2Assigned = c.interviewer_ids || summary.interviewer_ids || [];
+      const isDone = checkFullyGraded(v2Assigned, 'phongvan');
       return {
-        label: `🎙️ Vòng 2: Phỏng Vấn (${isScored ? 'Đã chấm' : 'Chờ chấm'})`,
+        label: `🎙️ Vòng 2: Phỏng Vấn (${isDone ? 'Đã chấm' : 'Đang chấm'})`,
         round: 'Vòng 2: Phỏng Vấn',
-        badgeClass: isScored ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 hover:bg-indigo-500/30' : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 hover:bg-cyan-500/30 animate-pulse'
+        badgeClass: isDone ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 hover:bg-indigo-500/30' : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 hover:bg-cyan-500/30 animate-pulse'
       };
     }
 
-    const isScored = rScores.don !== undefined || status === 'scored';
+    // Default Vòng 1 (Bài Đơn): Đang chấm until Vòng 1 is stopped / closed
+    const isV1Done = isRound1Closed || rScores.don !== undefined;
     return {
-      label: `📝 Vòng 1: Bài Đơn (${isScored ? 'Đã chấm' : 'Chờ chấm'})`,
+      label: `📝 Vòng 1: Bài Đơn (${isV1Done ? 'Đã chấm' : 'Đang chấm'})`,
       round: 'Vòng 1: Bài Đơn',
-      badgeClass: isScored ? 'bg-blue-500/20 text-blue-300 border-blue-500/40 hover:bg-blue-500/30' : 'bg-slate-700/60 text-slate-300 border-slate-600 hover:bg-slate-700'
+      badgeClass: isV1Done ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30' : 'bg-blue-500/20 text-blue-300 border-blue-500/40 hover:bg-blue-500/30 animate-pulse'
     };
   };
 
