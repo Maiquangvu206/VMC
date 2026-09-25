@@ -15,7 +15,6 @@ import {
   UserCheck,
   ShieldCheck,
   UserPlus,
-  Search,
   Sparkles,
 } from 'lucide-react';
 
@@ -41,14 +40,15 @@ export const Navbar = () => {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
+  // Xử lý click outside chuẩn xác bằng mousedown
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsUserDropdownOpen(false);
       }
     };
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const safeUser = currentUser || {
@@ -59,8 +59,8 @@ export const Navbar = () => {
     class: '10A1',
   };
 
-  const pendingTasksCount = tasks.filter(t => t.status !== 'done').length;
-  const pendingDraftsCount = drafts.filter(d => d.status === 'pending').length;
+  const pendingTasksCount = tasks?.filter(t => t.status !== 'done')?.length || 0;
+  const pendingDraftsCount = drafts?.filter(d => d.status === 'pending')?.length || 0;
 
   const navItems = [
     { id: 'dashboard', label: 'Tổng Quan', icon: LayoutDashboard, badge: 0 },
@@ -78,6 +78,30 @@ export const Navbar = () => {
     setIsMobileMenuOpen(false);
     setIsUserDropdownOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleAttendanceClick = (e) => {
+    e.stopPropagation();
+    setIsUserDropdownOpen(false);
+    handleNavClick('hr_dashboard');
+    if (typeof checkinAttendance === 'function') {
+      checkinAttendance();
+    } else if (typeof setIsAttendanceModalOpen === 'function') {
+      setIsAttendanceModalOpen(true);
+    }
+  };
+
+  const handleProfileClick = (e) => {
+    e.stopPropagation();
+    handleNavClick('profile');
+  };
+
+  const handleLogoutClick = (e) => {
+    e.stopPropagation();
+    setIsUserDropdownOpen(false);
+    if (typeof logout === 'function') {
+      logout();
+    }
   };
 
   return (
@@ -103,7 +127,7 @@ export const Navbar = () => {
             </div>
           </div>
 
-          {/* DESKTOP NAVIGATION BAR (Fits 1280px+ cleanly without overflow) */}
+          {/* DESKTOP NAVIGATION BAR */}
           <nav className="hidden xl:flex items-center gap-1 bg-[#111827] px-2 py-1 rounded-xl border border-[#1f2937] shrink-0 max-w-full overflow-x-auto">
             {navItems.map(item => {
               const Icon = item.icon;
@@ -112,18 +136,16 @@ export const Navbar = () => {
                 <button
                   key={item.id}
                   onClick={() => handleNavClick(item.id)}
-                  className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11.5px] font-semibold tracking-wide transition-all whitespace-nowrap ${
-                    isActive
+                  className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11.5px] font-semibold tracking-wide transition-all whitespace-nowrap ${isActive
                       ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-[#1f2937] border border-transparent'
-                  }`}
+                    }`}
                 >
                   <Icon className="w-3.5 h-3.5 shrink-0 opacity-90" />
                   <span>{item.label}</span>
                   {item.badge > 0 && (
-                    <span className={`text-[9.5px] font-bold px-1.5 py-0.2 rounded-full leading-none ${
-                      isActive ? 'bg-blue-500 text-white' : 'bg-amber-500/20 text-amber-300'
-                    }`}>
+                    <span className={`text-[9.5px] font-bold px-1.5 py-0.2 rounded-full leading-none ${isActive ? 'bg-blue-500 text-white' : 'bg-amber-500/20 text-amber-300'
+                      }`}>
                       {item.badge}
                     </span>
                   )}
@@ -148,7 +170,10 @@ export const Navbar = () => {
             <div ref={dropdownRef} className="relative shrink-0">
               <button
                 type="button"
-                onClick={() => setIsUserDropdownOpen(prev => !prev)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsUserDropdownOpen(prev => !prev);
+                }}
                 className="user-dropdown-toggle flex items-center gap-2 px-2 py-1.5 rounded-xl bg-[#111827] border border-[#1f2937] hover:border-slate-700 hover:bg-[#1f2937] transition-all cursor-pointer"
               >
                 <img
@@ -175,15 +200,7 @@ export const Navbar = () => {
                   {(isHRMember || isAdmin || isSuperAdmin) && (
                     <button
                       type="button"
-                      onClick={() => {
-                        setIsUserDropdownOpen(false);
-                        handleNavClick('hr_dashboard');
-                        if (typeof checkinAttendance === 'function') {
-                          checkinAttendance();
-                        } else if (typeof setIsAttendanceModalOpen === 'function') {
-                          setIsAttendanceModalOpen(true);
-                        }
-                      }}
+                      onClick={handleAttendanceClick}
                       className="w-full flex items-center justify-between p-2.5 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 hover:bg-emerald-600 hover:text-white font-semibold text-xs transition-all cursor-pointer"
                     >
                       <div className="flex items-center gap-2 pointer-events-none">
@@ -195,10 +212,7 @@ export const Navbar = () => {
 
                   <button
                     type="button"
-                    onClick={() => {
-                      setIsUserDropdownOpen(false);
-                      handleNavClick('profile');
-                    }}
+                    onClick={handleProfileClick}
                     className="w-full flex items-center gap-2 p-2.5 rounded-lg hover:bg-[#1f2937] text-slate-300 hover:text-slate-100 transition-all text-xs font-medium cursor-pointer"
                   >
                     <User className="w-4 h-4 pointer-events-none" />
@@ -209,12 +223,7 @@ export const Navbar = () => {
 
                   <button
                     type="button"
-                    onClick={() => {
-                      setIsUserDropdownOpen(false);
-                      if (typeof logout === 'function') {
-                        logout();
-                      }
-                    }}
+                    onClick={handleLogoutClick}
                     className="w-full flex items-center justify-center gap-2 p-2.5 rounded-lg bg-rose-500/10 hover:bg-rose-600 text-rose-300 hover:text-white font-semibold text-xs transition-all cursor-pointer"
                   >
                     <LogOut className="w-4 h-4 pointer-events-none" />
@@ -246,11 +255,10 @@ export const Navbar = () => {
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg font-semibold text-xs transition-all ${
-                  isActive
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg font-semibold text-xs transition-all ${isActive
                     ? 'bg-blue-600/15 text-blue-300 border border-blue-500/30'
                     : 'text-slate-300 hover:bg-[#1f2937] border border-transparent'
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-2.5">
                   <Icon className="w-4 h-4" />
