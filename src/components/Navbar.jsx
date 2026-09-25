@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useClub } from '../context/ClubContext';
 import {
   LayoutDashboard,
@@ -27,6 +27,7 @@ export const Navbar = () => {
     setActiveTab,
     currentUser,
     checkinAttendance,
+    setIsAttendanceModalOpen,
     logout,
     tasks,
     drafts,
@@ -38,6 +39,17 @@ export const Navbar = () => {
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsUserDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const safeUser = currentUser || {
     name: 'Thành Viên VMC',
@@ -133,10 +145,10 @@ export const Navbar = () => {
             </button>
 
             {/* User Dropdown Button */}
-            <div className="relative shrink-0">
+            <div ref={dropdownRef} className="relative shrink-0">
               <button
-                onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
-                className="flex items-center gap-2 px-2 py-1.5 rounded-xl bg-[#111827] border border-[#1f2937] hover:border-slate-700 hover:bg-[#1f2937] transition-all"
+                onClick={() => setIsUserDropdownOpen(prev => !prev)}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-xl bg-[#111827] border border-[#1f2937] hover:border-slate-700 hover:bg-[#1f2937] transition-all cursor-pointer"
               >
                 <img
                   src={safeUser.avatar}
@@ -161,8 +173,17 @@ export const Navbar = () => {
 
                   {isHRMember && (
                     <button
-                      onClick={() => { checkinAttendance(); setIsUserDropdownOpen(false); }}
-                      className="w-full flex items-center justify-between p-2.5 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 hover:bg-emerald-600 hover:text-white font-semibold text-xs transition-all"
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsUserDropdownOpen(false);
+                        if (typeof checkinAttendance === 'function') {
+                          checkinAttendance();
+                        } else if (typeof setIsAttendanceModalOpen === 'function') {
+                          setIsAttendanceModalOpen(true);
+                        }
+                      }}
+                      className="w-full flex items-center justify-between p-2.5 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 hover:bg-emerald-600 hover:text-white font-semibold text-xs transition-all cursor-pointer"
                     >
                       <div className="flex items-center gap-2">
                         <UserCheck className="w-4 h-4" />
@@ -172,8 +193,13 @@ export const Navbar = () => {
                   )}
 
                   <button
-                    onClick={() => { setActiveTab('profile'); setIsUserDropdownOpen(false); }}
-                    className="w-full flex items-center gap-2 p-2.5 rounded-lg hover:bg-[#1f2937] text-slate-300 hover:text-slate-100 transition-all text-xs font-medium"
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsUserDropdownOpen(false);
+                      handleNavClick('profile');
+                    }}
+                    className="w-full flex items-center gap-2 p-2.5 rounded-lg hover:bg-[#1f2937] text-slate-300 hover:text-slate-100 transition-all text-xs font-medium cursor-pointer"
                   >
                     <User className="w-4 h-4" />
                     <span>Xem Hồ Sơ Cá Nhân</span>
@@ -182,8 +208,15 @@ export const Navbar = () => {
                   <div className="border-t border-[#1f2937] my-1" />
 
                   <button
-                    onClick={() => { setIsUserDropdownOpen(false); logout(); }}
-                    className="w-full flex items-center justify-center gap-2 p-2.5 rounded-lg bg-rose-500/10 hover:bg-rose-600 text-rose-300 hover:text-white font-semibold text-xs transition-all"
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsUserDropdownOpen(false);
+                      if (typeof logout === 'function') {
+                        logout();
+                      }
+                    }}
+                    className="w-full flex items-center justify-center gap-2 p-2.5 rounded-lg bg-rose-500/10 hover:bg-rose-600 text-rose-300 hover:text-white font-semibold text-xs transition-all cursor-pointer"
                   >
                     <LogOut className="w-4 h-4" />
                     <span>Đăng Xuất</span>
