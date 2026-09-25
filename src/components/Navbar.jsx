@@ -81,7 +81,10 @@ export const Navbar = () => {
   };
 
   const handleAttendanceClick = (e) => {
-    e.stopPropagation();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setIsUserDropdownOpen(false);
     handleNavClick('hr_dashboard');
     if (typeof checkinAttendance === 'function') {
@@ -92,12 +95,19 @@ export const Navbar = () => {
   };
 
   const handleProfileClick = (e) => {
-    e.stopPropagation();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setIsUserDropdownOpen(false);
     handleNavClick('profile');
   };
 
   const handleLogoutClick = (e) => {
-    e.stopPropagation();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setIsUserDropdownOpen(false);
     if (typeof logout === 'function') {
       logout();
@@ -190,7 +200,10 @@ export const Navbar = () => {
 
               {/* User Dropdown Menu */}
               {isUserDropdownOpen && (
-                <div className="user-dropdown-menu absolute right-0 top-full mt-2 w-64 bg-[#111827] border border-[#1f2937] rounded-xl p-2.5 shadow-xl z-50 space-y-1 animate-slide-up">
+                <div
+                  className="user-dropdown-menu absolute right-0 top-full mt-2 w-64 bg-[#111827] border border-[#1f2937] rounded-xl p-2.5 shadow-xl z-50 space-y-1 animate-slide-up"
+                  onMouseDown={(e) => e.stopPropagation()}
+                >
                   <div className="p-2.5 rounded-lg bg-[#0f172a] border border-[#1f2937] space-y-1">
                     <div className="font-bold text-slate-100 text-xs truncate">{safeUser.name}</div>
                     <div className="text-[11px] text-blue-400 font-medium truncate">{safeUser.roleTitle}</div>

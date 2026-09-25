@@ -455,8 +455,18 @@ export const InternalRecruitment = () => {
       if (currentUser?.id) {
         fetchSubmittedCandidates(currentSeason.id, scoringTypeFilter);
       }
+
+      // Auto Polling every 4 seconds to sync live scores across evaluators & admin
+      const intervalId = setInterval(() => {
+        if (currentSeason?.id) {
+          fetchCandidates(currentSeason.id);
+          fetchScoresSummary(currentSeason.id);
+        }
+      }, 4000);
+
+      return () => clearInterval(intervalId);
     }
-  }, [currentSeason, currentUser, scoringTypeFilter]);
+  }, [currentSeason?.id, currentUser?.id, scoringTypeFilter]);
 
   const fetchSeasons = async () => {
     try {
