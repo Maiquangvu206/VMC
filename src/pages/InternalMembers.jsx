@@ -158,7 +158,7 @@ export const InternalMembers = () => {
     name: '',
     class: '10A1',
     role: 'member',
-    roleTitle: 'Thành Viên VMC',
+    roleTitle: 'Thành viên',
     department: 'production',
     deptName: 'Ban Sản Xuất',
     term: 'Gen 6',

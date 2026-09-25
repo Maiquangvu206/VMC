@@ -98,31 +98,19 @@ export const NewAccountModal = ({ show, onClose, formData, setFormData, onSubmit
               <label className="ds-field-label">Chức vụ *</label>
               <div className="relative flex items-center w-full">
                 <ShieldCheck className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
-                <input
-                  type="text"
-                  value={formData.roleTitle || ''}
+                <select
+                  value={formData.roleTitle || 'Thành viên'}
                   onChange={(e) => setFormData({ ...formData, roleTitle: e.target.value })}
-                  className="ds-input w-full"
+                  className="ds-input ds-select w-full cursor-pointer"
                   style={{ paddingLeft: '2.75rem' }}
-                  placeholder="VD: Thành Viên VMC, Trưởng Ban, Phó Ban..."
-                  list="newAccountRoleTitleOptions"
-                />
-                <datalist id="newAccountRoleTitleOptions">
-                  <option value="Thành Viên VMC" />
-                  <option value="Trưởng Ban Sản Xuất" />
-                  <option value="Phó Ban Sản Xuất" />
-                  <option value="Thành Viên Ban Sản Xuất" />
-                  <option value="Trưởng Ban Nội Dung - Phát Thanh" />
-                  <option value="Phó Ban Nội Dung - Phát Thanh" />
-                  <option value="Thành Viên Ban Nội Dung - Phát Thanh" />
-                  <option value="Trưởng Ban Đối Ngoại - Nhân Sự" />
-                  <option value="Phó Ban Đối Ngoại - Nhân Sự" />
-                  <option value="Kỹ Thuật Ban Đối Ngoại - Nhân Sự" />
-                  <option value="Thành Viên Ban Đối Ngoại - Nhân Sự" />
-                  <option value="Chủ Nhiệm CLB" />
-                  <option value="Phó Chủ Nhiệm CLB" />
-                  <option value="Cố Vấn CLB" />
-                </datalist>
+                >
+                  <option value="Chủ Nhiệm">Chủ Nhiệm</option>
+                  <option value="Phó Chủ Nhiệm">Phó Chủ Nhiệm</option>
+                  <option value="Trưởng Ban">Trưởng Ban</option>
+                  <option value="Phó Ban">Phó Ban</option>
+                  <option value="Thành viên">Thành viên</option>
+                  <option value="Kỹ thuật">Kỹ thuật</option>
+                </select>
               </div>
             </div>
            
