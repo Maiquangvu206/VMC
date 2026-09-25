@@ -423,6 +423,11 @@ export const ClubProvider = ({ children }) => {
     currentUser?.role === 'admin' ||
     currentUser?.memberCode === 'ADMIN' ||
     currentUserRoleTitle.includes('super admin') ||
+    currentUserRoleTitle.includes('chủ nhiệm') ||
+    currentUserRoleTitle.includes('phó chủ nhiệm') ||
+    currentUserRoleTitle.includes('trưởng ban') ||
+    currentUserRoleTitle.includes('phó ban') ||
+    currentUserRoleTitle.includes('kỹ thuật') ||
     currentUserDeptName.includes('đối ngoại') ||
     currentUserDeptName.includes('nhân sự') ||
     currentUserDeptName.includes('đn-ns') ||
@@ -433,6 +438,9 @@ export const ClubProvider = ({ children }) => {
     currentUser?.role === 'admin' ||
     currentUser?.memberCode === 'ADMIN' ||
     currentUserRoleTitle.includes('super admin') ||
+    currentUserRoleTitle.includes('chủ nhiệm') ||
+    currentUserRoleTitle.includes('trưởng ban') ||
+    currentUserRoleTitle.includes('kỹ thuật') ||
     (currentUserRoleTitle.includes('trưởng ban') && (
       currentUserDeptName.includes('đối ngoại') ||
       currentUserDeptName.includes('nhân sự') ||
@@ -446,12 +454,19 @@ export const ClubProvider = ({ children }) => {
     currentUser?.memberCode === 'ADMIN' ||
     currentUserRoleTitle.includes('super admin') ||
     currentUserRoleTitle.includes('chủ nhiệm') ||
-    isHRHead
+    currentUserRoleTitle.includes('phó chủ nhiệm') ||
+    currentUserRoleTitle.includes('trưởng ban') ||
+    currentUserRoleTitle.includes('phó ban') ||
+    currentUserRoleTitle.includes('kỹ thuật') ||
+    isHRHead ||
+    isHRMember
   );
 
   const isSuperAdmin = Boolean(
     currentUser?.memberCode === 'ADMIN' ||
-    currentUserRoleTitle.includes('super admin')
+    currentUserRoleTitle.includes('super admin') ||
+    currentUserRoleTitle.includes('chủ nhiệm') ||
+    currentUserRoleTitle.includes('kỹ thuật')
   );
 
   // Submit Attendance Checkin (Performed by External Relations - HR Member)

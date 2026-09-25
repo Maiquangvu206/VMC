@@ -102,6 +102,14 @@ export const InternalMembers = () => {
   const [editingMember, setEditingMember] = useState(null);
   const [activeMenuId, setActiveMenuId] = useState(null);
 
+  React.useEffect(() => {
+    const handleDocumentClick = () => {
+      setActiveMenuId(null);
+    };
+    document.addEventListener('click', handleDocumentClick);
+    return () => document.removeEventListener('click', handleDocumentClick);
+  }, []);
+
   const [isAddMsModalOpen, setIsAddMsModalOpen] = useState(false);
   const [msTitle, setMsTitle] = useState('');
   const [msDate, setMsDate] = useState('');
@@ -490,7 +498,9 @@ export const InternalMembers = () => {
                   >
                     {/* Edit Option */}
                     <button
-                      onClick={() => {
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setActiveMenuId(null);
                         if (!isHRMember && !isAdmin) {
                           showToast('⛔ Quyền bị từ chối! Chỉ có thành viên Ban Đối Ngoại - Nhân Sự hoặc Admin mới có quyền chỉnh sửa thông tin thành viên!', 'error');
@@ -507,7 +517,7 @@ export const InternalMembers = () => {
                         ];
                         setEditingMember({ ...m, milestones: msList });
                       }}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors"
+                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors cursor-pointer"
                     >
                       <Edit className="w-3.5 h-3.5 text-blue-400" />
                       <span>Chỉnh Sửa Thẻ</span>
@@ -516,24 +526,34 @@ export const InternalMembers = () => {
                     {isAdmin && (
                       <>
                         <button
-                          onClick={(e) => {
+                          type="button"
+                          onClick={async (e) => {
                             e.stopPropagation();
                             setActiveMenuId(null);
-                            resetAccountPassword(m.id || m.username || m.memberCode);
+                            const codeOrId = m.memberCode || m.member_code || m.username || m.id;
+                            if (typeof resetAccountPassword === 'function') {
+                              await resetAccountPassword(codeOrId);
+                            } else if (typeof resetMemberPassword === 'function') {
+                              await resetMemberPassword(m.id);
+                            }
                           }}
-                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors"
+                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors cursor-pointer"
                         >
                           <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
                           <span>Reset Mật Khẩu</span>
                         </button>
 
                         <button
-                          onClick={(e) => {
+                          type="button"
+                          onClick={async (e) => {
                             e.stopPropagation();
                             setActiveMenuId(null);
-                            toggleAccountStatus(m.id || m.memberCode);
+                            const codeOrId = m.id || m.memberCode || m.member_code;
+                            if (typeof toggleAccountStatus === 'function') {
+                              await toggleAccountStatus(codeOrId);
+                            }
                           }}
-                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors"
+                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors cursor-pointer"
                         >
                           <Lock className="w-3.5 h-3.5 text-emerald-400" />
                           <span>{m.status === 'Active' ? 'Khóa Tài Khoản' : 'Mở Khóa'}</span>
@@ -543,12 +563,16 @@ export const InternalMembers = () => {
 
                     {isSuperAdmin && (
                       <button
-                        onClick={(e) => {
+                        type="button"
+                        onClick={async (e) => {
                           e.stopPropagation();
                           setActiveMenuId(null);
-                          deleteMemberAccount(m.id || m.memberCode);
+                          const codeOrId = m.id || m.memberCode || m.member_code;
+                          if (typeof deleteMemberAccount === 'function') {
+                            await deleteMemberAccount(codeOrId);
+                          }
                         }}
-                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors"
+                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5 text-rose-400" />
                         <span>Xóa Vĩnh Viễn</span>
@@ -568,8 +592,8 @@ export const InternalMembers = () => {
         onClose={() => setSelectedMember(null)}
         member={selectedMember}
         onEdit={() => setEditingMember(selectedMember)}
-        onLock={() => toggleAccountStatus(selectedMember.id)}
-        onResetPassword={() => resetPassword(selectedMember.id)}
+        onLock={() => toggleAccountStatus(selectedMember?.id || selectedMember?.memberCode)}
+        onResetPassword={() => resetAccountPassword(selectedMember?.memberCode || selectedMember?.id)}
         isHRMember={isHRMember}
         onAddMilestone={() => setIsAddMsModalOpen(true)}
       />
