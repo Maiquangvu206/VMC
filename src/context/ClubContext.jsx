@@ -463,10 +463,10 @@ export const ClubProvider = ({ children }) => {
   );
 
   const isSuperAdmin = Boolean(
+    currentUser?.role === 'super_admin' ||
     currentUser?.memberCode === 'ADMIN' ||
     currentUserRoleTitle.includes('super admin') ||
-    currentUserRoleTitle.includes('chủ nhiệm') ||
-    currentUserRoleTitle.includes('kỹ thuật')
+    (currentUserRoleTitle.includes('chủ nhiệm') && !currentUserRoleTitle.includes('phó chủ nhiệm'))
   );
 
   // Submit Attendance Checkin (Performed by External Relations - HR Member)
