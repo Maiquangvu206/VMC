@@ -133,21 +133,21 @@ export const InternalRecruitment = () => {
 
     const activeRound = currentSeason?.active_round || 'don';
 
-    if (rScores.thuthach_quatrinh !== undefined || rScores.thuthach_ketqua !== undefined || activeRound.includes('thuthach')) {
-      const isScored = rScores.thuthach_quatrinh !== undefined || rScores.thuthach_ketqua !== undefined;
-      return {
-        label: `⚡ Vòng 4: Thử Thách (${isScored ? 'Đã chấm' : 'Chờ chấm'})`,
-        round: 'Vòng 4: Thử Thách',
-        badgeClass: isScored ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 hover:bg-purple-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30 animate-pulse'
-      };
-    }
-
     if (rScores.teamwork !== undefined || activeRound.includes('teamwork')) {
       const isScored = rScores.teamwork !== undefined;
       return {
-        label: `👥 Vòng 3: Teamwork (${isScored ? 'Đã chấm' : 'Chờ chấm'})`,
-        round: 'Vòng 3: Teamwork',
+        label: `👥 Vòng 4: Teamwork (${isScored ? 'Đã chấm' : 'Chờ chấm'})`,
+        round: 'Vòng 4: Teamwork',
         badgeClass: isScored ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30' : 'bg-blue-500/20 text-blue-300 border-blue-500/40 hover:bg-blue-500/30 animate-pulse'
+      };
+    }
+
+    if (rScores.thuthach_quatrinh !== undefined || rScores.thuthach_ketqua !== undefined || activeRound.includes('thuthach')) {
+      const isScored = rScores.thuthach_quatrinh !== undefined || rScores.thuthach_ketqua !== undefined;
+      return {
+        label: `⚡ Vòng 3: Thử Thách (${isScored ? 'Đã chấm' : 'Chờ chấm'})`,
+        round: 'Vòng 3: Thử Thách',
+        badgeClass: isScored ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 hover:bg-purple-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30 animate-pulse'
       };
     }
 
@@ -1706,7 +1706,12 @@ export const InternalRecruitment = () => {
                     else typesArr = [rawTypes];
                   } catch { typesArr = [rawTypes]; }
                 }
-                const uniqueTypes = Array.from(new Set(typesArr));
+                const roundOrder = ['don', 'phongvan', 'thuthach_quatrinh', 'thuthach_ketqua', 'teamwork'];
+                const uniqueTypes = Array.from(new Set(typesArr)).sort((a, b) => {
+                  const ia = roundOrder.indexOf(a) !== -1 ? roundOrder.indexOf(a) : 99;
+                  const ib = roundOrder.indexOf(b) !== -1 ? roundOrder.indexOf(b) : 99;
+                  return ia - ib;
+                });
 
                 if (uniqueTypes.length <= 1) return null;
 
@@ -1718,7 +1723,7 @@ export const InternalRecruitment = () => {
                         onClick={() => setScoringTypeFilter(type)}
                         className={`ds-btn ds-btn-xs ${scoringTypeFilter === type ? 'ds-btn-primary' : 'ds-btn-secondary'}`}
                       >
-                        {type === 'don' ? '📝 Vòng Đơn' : type === 'phongvan' ? '🎙️ Phỏng Vấn' : type === 'teamwork' ? '👥 Teamwork' : type === 'thuthach_quatrinh' ? '⚡ TT Quá Trình' : '🏆 TT Kết Quả'}
+                        {type === 'don' ? '📝 Vòng Đơn' : type === 'phongvan' ? '🎙️ Phỏng Vấn' : type === 'thuthach_quatrinh' ? '⚡ TT Quá Trình' : type === 'thuthach_ketqua' ? '🏆 TT Kết Quả' : type === 'teamwork' ? '👥 Teamwork' : type}
                       </button>
                     ))}
                   </div>

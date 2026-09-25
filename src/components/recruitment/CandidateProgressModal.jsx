@@ -61,19 +61,9 @@ export const CandidateProgressModal = ({
       scorers: interviewers
     },
     {
-      key: 'teamwork',
-      stepNum: 3,
-      title: 'Vòng 3: Teamwork',
-      icon: Sparkles,
-      score: rScores.teamwork,
-      isCompleted: rScores.teamwork !== undefined,
-      comments: comments.filter(c => c.round_type === 'teamwork'),
-      scorers: teamworkScorers
-    },
-    {
       key: 'thuthach',
-      stepNum: 4,
-      title: 'Vòng 4: Thử Thách',
+      stepNum: 3,
+      title: 'Vòng 3: Thử Thách',
       icon: Zap,
       scoreProcess: rScores.thuthach_quatrinh,
       scoreResult: rScores.thuthach_ketqua,
@@ -81,6 +71,16 @@ export const CandidateProgressModal = ({
       comments: comments.filter(c => c.round_type === 'thuthach_quatrinh' || c.round_type === 'thuthach_ketqua'),
       scorersProcess: challengeProcessScorers,
       scorersResult: challengeResultScorers
+    },
+    {
+      key: 'teamwork',
+      stepNum: 4,
+      title: 'Vòng 4: Teamwork',
+      icon: Sparkles,
+      score: rScores.teamwork,
+      isCompleted: rScores.teamwork !== undefined,
+      comments: comments.filter(c => c.round_type === 'teamwork'),
+      scorers: teamworkScorers
     }
   ];
 
@@ -220,37 +220,12 @@ export const CandidateProgressModal = ({
             ))}
           </div>
 
-          {/* Vòng 3: Teamwork */}
-          <div className="p-4 rounded-xl bg-[#111827] border border-slate-800 space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-emerald-400" />
-                <span className="font-bold text-slate-200 text-sm">Vòng 3: Teamwork</span>
-              </div>
-              <span className={`ds-badge text-xs font-mono font-bold ${
-                rScores.teamwork !== undefined ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'
-              }`}>
-                {rScores.teamwork !== undefined ? `${rScores.teamwork} điểm` : 'Chưa chấm'}
-              </span>
-            </div>
-            {teamworkScorers.length > 0 && (
-              <div className="text-xs text-slate-400">
-                <span className="text-slate-500">Giám khảo TW:</span> {teamworkScorers.join(', ')}
-              </div>
-            )}
-            {comments.filter(c => c.round_type === 'teamwork').map((cmt, i) => (
-              <div key={i} className="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800 text-xs text-slate-300 italic">
-                "{cmt.comments}"
-              </div>
-            ))}
-          </div>
-
-          {/* Vòng 4: Thử Thách */}
+          {/* Vòng 3: Thử Thách */}
           <div className="p-4 rounded-xl bg-[#111827] border border-slate-800 space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Zap className="w-4 h-4 text-amber-400" />
-                <span className="font-bold text-slate-200 text-sm">Vòng 4: Thử Thách Chuyên Môn</span>
+                <span className="font-bold text-slate-200 text-sm">Vòng 3: Thử Thách Chuyên Môn</span>
               </div>
               <div className="flex items-center gap-2">
                 {rScores.thuthach_quatrinh !== undefined && (
@@ -272,6 +247,31 @@ export const CandidateProgressModal = ({
               <p className="text-xs text-amber-300 font-medium">🎯 Đề bài: {candidate.challenge_topic}</p>
             )}
             {comments.filter(c => c.round_type === 'thuthach_quatrinh' || c.round_type === 'thuthach_ketqua').map((cmt, i) => (
+              <div key={i} className="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800 text-xs text-slate-300 italic">
+                "{cmt.comments}"
+              </div>
+            ))}
+          </div>
+
+          {/* Vòng 4: Teamwork */}
+          <div className="p-4 rounded-xl bg-[#111827] border border-slate-800 space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-emerald-400" />
+                <span className="font-bold text-slate-200 text-sm">Vòng 4: Teamwork</span>
+              </div>
+              <span className={`ds-badge text-xs font-mono font-bold ${
+                rScores.teamwork !== undefined ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800 text-slate-400'
+              }`}>
+                {rScores.teamwork !== undefined ? `${rScores.teamwork} điểm` : 'Chưa chấm'}
+              </span>
+            </div>
+            {teamworkScorers.length > 0 && (
+              <div className="text-xs text-slate-400">
+                <span className="text-slate-500">Giám khảo TW:</span> {teamworkScorers.join(', ')}
+              </div>
+            )}
+            {comments.filter(c => c.round_type === 'teamwork').map((cmt, i) => (
               <div key={i} className="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800 text-xs text-slate-300 italic">
                 "{cmt.comments}"
               </div>

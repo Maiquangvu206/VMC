@@ -41,8 +41,8 @@ export const CriteriaModal = ({ show, onClose, criteriaForm, setCriteriaForm, on
               >
                 <option value="don">📝 Vòng Đơn</option>
                 <option value="phongvan">🎙️ Vòng Phỏng Vấn</option>
-                <option value="teamwork">👥 Vòng Teamwork</option>
                 <option value="thuthach">⚡ Kho Đề Thử Thách</option>
+                <option value="teamwork">👥 Vòng Teamwork</option>
               </select>
             </div>
 

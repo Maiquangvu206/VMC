@@ -84,21 +84,6 @@ export const SeasonModal = ({ show, onClose, seasonForm, setSeasonForm, onSubmit
               <label className="ds-card p-2.5 flex items-center gap-2 cursor-pointer bg-[#0f172a] border border-[#1f2937] hover:border-slate-700 rounded-xl justify-center">
                 <input
                   type="checkbox"
-                  checked={seasonForm.scoring_type.includes('teamwork')}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setSeasonForm({ ...seasonForm, scoring_type: [...seasonForm.scoring_type, 'teamwork'] });
-                    } else {
-                      setSeasonForm({ ...seasonForm, scoring_type: seasonForm.scoring_type.filter(t => t !== 'teamwork') });
-                    }
-                  }}
-                />
-                <span className="text-xs font-semibold text-slate-200">👥 Teamwork</span>
-              </label>
-
-              <label className="ds-card p-2.5 flex items-center gap-2 cursor-pointer bg-[#0f172a] border border-[#1f2937] hover:border-slate-700 rounded-xl justify-center">
-                <input
-                  type="checkbox"
                   checked={seasonForm.scoring_type.includes('phongvan')}
                   onChange={(e) => {
                     if (e.target.checked) {
@@ -128,6 +113,21 @@ export const SeasonModal = ({ show, onClose, seasonForm, setSeasonForm, onSubmit
                   }}
                 />
                 <span className="text-xs font-semibold text-amber-300">⚡ Vòng Thử Thách</span>
+              </label>
+
+              <label className="ds-card p-2.5 flex items-center gap-2 cursor-pointer bg-[#0f172a] border border-[#1f2937] hover:border-slate-700 rounded-xl justify-center">
+                <input
+                  type="checkbox"
+                  checked={seasonForm.scoring_type.includes('teamwork')}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSeasonForm({ ...seasonForm, scoring_type: [...seasonForm.scoring_type, 'teamwork'] });
+                    } else {
+                      setSeasonForm({ ...seasonForm, scoring_type: seasonForm.scoring_type.filter(t => t !== 'teamwork') });
+                    }
+                  }}
+                />
+                <span className="text-xs font-semibold text-slate-200">👥 Teamwork</span>
               </label>
             </div>
           </div>
