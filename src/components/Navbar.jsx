@@ -165,11 +165,7 @@ export const Navbar = () => {
 
               {/* User Dropdown Menu */}
               {isUserDropdownOpen && (
-                <div
-                  className="user-dropdown-menu absolute right-0 top-full mt-2 w-64 bg-[#111827] border border-[#1f2937] rounded-xl p-2.5 shadow-xl z-50 space-y-1"
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onClick={(e) => e.stopPropagation()}
-                >
+                <div className="user-dropdown-menu absolute right-0 top-full mt-2 w-64 bg-[#111827] border border-[#1f2937] rounded-xl p-2.5 shadow-xl z-50 space-y-1 animate-slide-up">
                   <div className="p-2.5 rounded-lg bg-[#0f172a] border border-[#1f2937] space-y-1">
                     <div className="font-bold text-slate-100 text-xs truncate">{safeUser.name}</div>
                     <div className="text-[11px] text-blue-400 font-medium truncate">{safeUser.roleTitle}</div>
@@ -179,9 +175,7 @@ export const Navbar = () => {
                   {(isHRMember || isAdmin || isSuperAdmin) && (
                     <button
                       type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
+                      onClick={() => {
                         setIsUserDropdownOpen(false);
                         handleNavClick('hr_dashboard');
                         if (typeof checkinAttendance === 'function') {
@@ -201,9 +195,7 @@ export const Navbar = () => {
 
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
+                    onClick={() => {
                       setIsUserDropdownOpen(false);
                       handleNavClick('profile');
                     }}
@@ -217,9 +209,7 @@ export const Navbar = () => {
 
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
+                    onClick={() => {
                       setIsUserDropdownOpen(false);
                       if (typeof logout === 'function') {
                         logout();
