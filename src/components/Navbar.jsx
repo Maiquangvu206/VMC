@@ -183,6 +183,7 @@ export const Navbar = () => {
                         e.preventDefault();
                         e.stopPropagation();
                         setIsUserDropdownOpen(false);
+                        handleNavClick('hr_dashboard');
                         if (typeof checkinAttendance === 'function') {
                           checkinAttendance();
                         } else if (typeof setIsAttendanceModalOpen === 'function') {
