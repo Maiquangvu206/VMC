@@ -56,8 +56,10 @@ export const InternalMembers = () => {
   const {
     members,
     currentUser,
-    isHRMember,
+    isHRMember: isHRMemberFromContext,
     isHRHead,
+    isAdmin: isAdminFromContext,
+    isSuperAdmin: isSuperAdminFromContext,
     createMemberAccount,
     deleteMemberAccount,
     resetAccountPassword,
@@ -73,24 +75,27 @@ export const InternalMembers = () => {
     setMembersFilterDept
   } = useClub();
 
-  const canManageAccountsPermission = Boolean(
+  const isHRMember = isHRMemberFromContext || Boolean(
+    currentUser?.deptName?.includes('Đối Ngoại') ||
+    currentUser?.deptName?.includes('Nhân Sự') ||
+    currentUser?.department?.includes('Đối Ngoại') ||
+    currentUser?.department?.includes('Nhân Sự')
+  );
+
+  const isAdmin = isAdminFromContext || Boolean(
     currentUser?.role === 'admin' ||
     currentUser?.memberCode === 'ADMIN' ||
     currentUser?.roleTitle?.includes('Super Admin') ||
-    (currentUser?.roleTitle?.includes('Kỹ Thuật') && (
-      currentUser?.deptName?.includes('Đối Ngoại') ||
-      currentUser?.deptName?.includes('Nhân Sự') ||
-      currentUser?.deptName?.includes('ĐN-NS') ||
-      currentUser?.department?.includes('Đối Ngoại') ||
-      currentUser?.department?.includes('Nhân Sự')
-    ))
+    currentUser?.roleTitle?.includes('Chủ Nhiệm') ||
+    currentUser?.roleTitle?.includes('Trưởng Ban') ||
+    currentUser?.roleTitle?.includes('Kỹ Thuật') ||
+    isHRMember
   );
 
-  const isAdmin = canManageAccountsPermission;
-
-  const isSuperAdmin = Boolean(
+  const isSuperAdmin = isSuperAdminFromContext || Boolean(
     currentUser?.memberCode === 'ADMIN' ||
-    currentUser?.roleTitle?.includes('Super Admin')
+    currentUser?.roleTitle?.includes('Super Admin') ||
+    currentUser?.roleTitle?.includes('Chủ Nhiệm')
   );
 
   const [selectedMember, setSelectedMember] = useState(null);
@@ -511,9 +516,10 @@ export const InternalMembers = () => {
                     {isAdmin && (
                       <>
                         <button
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setActiveMenuId(null);
-                            resetAccountPassword(m.username);
+                            resetAccountPassword(m.id || m.username || m.memberCode);
                           }}
                           className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors"
                         >
@@ -522,9 +528,10 @@ export const InternalMembers = () => {
                         </button>
 
                         <button
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setActiveMenuId(null);
-                            toggleAccountStatus(m.id);
+                            toggleAccountStatus(m.id || m.memberCode);
                           }}
                           className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors"
                         >
@@ -536,9 +543,10 @@ export const InternalMembers = () => {
 
                     {isSuperAdmin && (
                       <button
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setActiveMenuId(null);
-                          deleteMemberAccount(m.id);
+                          deleteMemberAccount(m.id || m.memberCode);
                         }}
                         className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors"
                       >

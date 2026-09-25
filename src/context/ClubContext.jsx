@@ -774,18 +774,21 @@ setCurrentUser(acc);
     showToast('🎉 Đã thêm cột mốc mới vào bảng CSDL Member_Milestones thành công!', 'success');
   };
 
-  // Helper permission check for Account Management (STRICTLY ONLY ADMIN & KỸ THUẬT BAN ĐỐI NGOẠI - NHÂN SỰ)
+  // Helper permission check for Account Management (ADMIN, SUPER ADMIN, BCN, HR & KỸ THUẬT)
   const canManageAccounts = Boolean(
     currentUser?.role === 'admin' ||
     currentUser?.memberCode === 'ADMIN' ||
-    currentUser?.roleTitle?.includes('Super Admin') ||
-    (currentUser?.roleTitle?.includes('Kỹ Thuật') && (
-      currentUser?.deptName?.includes('Đối Ngoại') ||
-      currentUser?.deptName?.includes('Nhân Sự') ||
-      currentUser?.deptName?.includes('ĐN-NS') ||
-      currentUser?.department?.includes('Đối Ngoại') ||
-      currentUser?.department?.includes('Nhân Sự')
-    ))
+    currentUserRoleTitle.includes('super admin') ||
+    currentUserRoleTitle.includes('chủ nhiệm') ||
+    currentUserRoleTitle.includes('phó chủ nhiệm') ||
+    currentUserRoleTitle.includes('cố vấn') ||
+    currentUserRoleTitle.includes('advisor') ||
+    currentUserRoleTitle.includes('trưởng ban') ||
+    currentUserRoleTitle.includes('kỹ thuật') ||
+    currentUserDeptName.includes('đối ngoại') ||
+    currentUserDeptName.includes('nhân sự') ||
+    currentUserDeptName.includes('đn-ns') ||
+    currentUserDeptName.includes('dn-ns')
   );
 
   // Account Creation (SUPER ADMIN & TRƯỞNG BAN ĐỐI NGOẠI - NHÂN SỰ ONLY)
@@ -836,21 +839,29 @@ setCurrentUser(acc);
   };
 
   // Reset password by Admin (SUPER ADMIN & TRƯỞNG BAN ĐỐI NGOẠI - NHÂN SỰ ONLY)
-  const resetAccountPassword = async (username) => {
+  const resetAccountPassword = async (target) => {
     if (!canManageAccounts) {
-      showToast('⛔ Quyền bị từ chối! Chỉ Trưởng Ban Đối Ngoại - Nhân Sự mới có quyền đặt lại mật khẩu thành viên!', 'error');
+      showToast('⛔ Quyền bị từ chối! Chỉ Admin và Ban Đối Ngoại - Nhân Sự mới có quyền đặt lại mật khẩu thành viên!', 'error');
       return false;
     }
 
-    const member = db.members.find(m => m.username === username || m.memberCode === username || m.id === username);
-    if (!member) return false;
+    const targetStr = String(target || '').toLowerCase();
+    const member = (db.members || []).find(m =>
+      String(m.id).toLowerCase() === targetStr ||
+      String(m.username || '').toLowerCase() === targetStr ||
+      String(m.memberCode || m.member_code || '').toLowerCase() === targetStr
+    );
+    if (!member) {
+      showToast('❌ Không tìm thấy thông tin thành viên!', 'error');
+      return false;
+    }
 
-    const defaultPwd = member.memberCode || 'VMC2026@VinhBao';
+    const defaultPwd = member.memberCode || member.member_code || 'VMC2026@VinhBao';
 
     try {
       await fetch('/api/members/reset-password', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
         body: JSON.stringify({
           memberId: member.id,
           email: member.email,
@@ -864,10 +875,10 @@ setCurrentUser(acc);
 
     updateDb(prev => ({
       ...prev,
-      members: prev.members.map(m => m.id === member.id ? { ...m, password: defaultPwd, isFirstLogin: true } : m)
+      members: (prev.members || []).map(m => m.id === member.id ? { ...m, password: defaultPwd, isFirstLogin: true } : m)
     }));
 
-    showToast(`🔑 Đã đặt lại mật khẩu cho ${member.name} về mã thành viên (${defaultPwd}) thành công!`, 'success');
+    showToast(`🔑 Đã đặt lại mật khẩu cho ${member.name} về mặc định (${defaultPwd}) thành công!`, 'success');
     return true;
   };
 
