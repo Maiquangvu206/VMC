@@ -75,40 +75,66 @@ export const InternalMembers = () => {
     setMembersFilterDept
   } = useClub();
 
+  const userRoleTitle = (currentUser?.roleTitle || currentUser?.role_title || '').toLowerCase();
+  const userRole = (currentUser?.role || '').toLowerCase();
+
   const isHRMember = isHRMemberFromContext || Boolean(
-    currentUser?.deptName?.includes('Đối Ngoại') ||
-    currentUser?.deptName?.includes('Nhân Sự') ||
-    currentUser?.department?.includes('Đối Ngoại') ||
-    currentUser?.department?.includes('Nhân Sự')
+    userRole === 'admin' ||
+    currentUser?.memberCode === 'ADMIN' ||
+    userRoleTitle.includes('đối ngoại') ||
+    userRoleTitle.includes('nhân sự') ||
+    currentUser?.deptName?.toLowerCase().includes('đối ngoại') ||
+    currentUser?.deptName?.toLowerCase().includes('nhân sự') ||
+    currentUser?.department?.toLowerCase().includes('đối ngoại') ||
+    currentUser?.department?.toLowerCase().includes('nhân sự')
   );
 
   const isAdmin = isAdminFromContext || Boolean(
-    currentUser?.role === 'admin' ||
+    userRole === 'admin' ||
     currentUser?.memberCode === 'ADMIN' ||
-    currentUser?.roleTitle?.includes('Super Admin') ||
-    currentUser?.roleTitle?.includes('Chủ Nhiệm') ||
-    currentUser?.roleTitle?.includes('Trưởng Ban') ||
-    currentUser?.roleTitle?.includes('Kỹ Thuật') ||
+    userRoleTitle.includes('super admin') ||
+    userRoleTitle.includes('chủ nhiệm') ||
+    userRoleTitle.includes('phó chủ nhiệm') ||
+    userRoleTitle.includes('trưởng ban') ||
+    userRoleTitle.includes('kỹ thuật') ||
     isHRMember
   );
 
   const isSuperAdmin = isSuperAdminFromContext || Boolean(
+    userRole === 'super_admin' ||
     currentUser?.memberCode === 'ADMIN' ||
-    currentUser?.roleTitle?.includes('Super Admin') ||
-    currentUser?.roleTitle?.includes('Chủ Nhiệm')
+    userRoleTitle.includes('super admin') ||
+    (userRoleTitle.includes('chủ nhiệm') && !userRoleTitle.includes('phó chủ nhiệm'))
   );
 
   const [selectedMember, setSelectedMember] = useState(null);
   const [editingMember, setEditingMember] = useState(null);
   const [activeMenuId, setActiveMenuId] = useState(null);
+  const popoverMenuRef = React.useRef(null);
 
   React.useEffect(() => {
-    const handleDocumentClick = () => {
-      setActiveMenuId(null);
+    const handleDocumentClick = (e) => {
+      if (popoverMenuRef.current && !popoverMenuRef.current.contains(e.target)) {
+        setActiveMenuId(null);
+      }
     };
-    document.addEventListener('click', handleDocumentClick);
-    return () => document.removeEventListener('click', handleDocumentClick);
+    document.addEventListener('mousedown', handleDocumentClick);
+    return () => document.removeEventListener('mousedown', handleDocumentClick);
   }, []);
+
+  const handleTechUpdateMember = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!editingMember) return;
+    const targetId = editingMember.id || editingMember.memberCode || editingMember.member_code;
+    if (typeof updateMemberByTech === 'function') {
+      const res = await updateMemberByTech(targetId, editingMember);
+      if (res !== false) {
+        setEditingMember(null);
+      }
+    } else {
+      setEditingMember(null);
+    }
+  };
 
   const [isAddMsModalOpen, setIsAddMsModalOpen] = useState(false);
   const [msTitle, setMsTitle] = useState('');
@@ -255,12 +281,7 @@ export const InternalMembers = () => {
     });
   };
 
-  const handleTechUpdateMember = async (e) => {
-    e.preventDefault();
-    if (!editingMember) return;
-    await updateMemberByTech(editingMember.id, editingMember);
-    setEditingMember(null);
-  };
+
 
   const nonAdminMembers = React.useMemo(() => {
     return members.filter(m => {
@@ -493,6 +514,7 @@ export const InternalMembers = () => {
                 {/* Dropdown Menu Overlay */}
                 {activeMenuId === m.id && (
                   <div
+                    ref={popoverMenuRef}
                     className="absolute right-0 bottom-full mb-2 w-48 bg-[#111827] border border-[#1f2937] rounded-xl p-1.5 shadow-2xl z-40 space-y-1 animate-slide-up"
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -500,10 +522,11 @@ export const InternalMembers = () => {
                     <button
                       type="button"
                       onClick={(e) => {
+                        e.preventDefault();
                         e.stopPropagation();
-                        setActiveMenuId(null);
                         if (!isHRMember && !isAdmin) {
                           showToast('⛔ Quyền bị từ chối! Chỉ có thành viên Ban Đối Ngoại - Nhân Sự hoặc Admin mới có quyền chỉnh sửa thông tin thành viên!', 'error');
+                          setActiveMenuId(null);
                           return;
                         }
                         const msList = (Array.isArray(m.milestones) && m.milestones.length > 0) ? m.milestones : [
@@ -515,7 +538,15 @@ export const InternalMembers = () => {
                             badgeStyle: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                           }
                         ];
-                        setEditingMember({ ...m, milestones: msList });
+                        setEditingMember({
+                          ...m,
+                          name: m.name || m.full_name || '',
+                          memberCode: m.memberCode || m.member_code || m.id || '',
+                          deptName: m.deptName || m.department || '',
+                          roleTitle: m.roleTitle || m.role_title || '',
+                          milestones: msList
+                        });
+                        setActiveMenuId(null);
                       }}
                       className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors cursor-pointer"
                     >
@@ -528,9 +559,10 @@ export const InternalMembers = () => {
                         <button
                           type="button"
                           onClick={async (e) => {
+                            e.preventDefault();
                             e.stopPropagation();
-                            setActiveMenuId(null);
                             const codeOrId = m.memberCode || m.member_code || m.username || m.id;
+                            setActiveMenuId(null);
                             if (typeof resetAccountPassword === 'function') {
                               await resetAccountPassword(codeOrId);
                             } else if (typeof resetMemberPassword === 'function') {
@@ -546,9 +578,10 @@ export const InternalMembers = () => {
                         <button
                           type="button"
                           onClick={async (e) => {
+                            e.preventDefault();
                             e.stopPropagation();
-                            setActiveMenuId(null);
                             const codeOrId = m.id || m.memberCode || m.member_code;
+                            setActiveMenuId(null);
                             if (typeof toggleAccountStatus === 'function') {
                               await toggleAccountStatus(codeOrId);
                             }
@@ -565,9 +598,10 @@ export const InternalMembers = () => {
                       <button
                         type="button"
                         onClick={async (e) => {
+                          e.preventDefault();
                           e.stopPropagation();
-                          setActiveMenuId(null);
                           const codeOrId = m.id || m.memberCode || m.member_code;
+                          setActiveMenuId(null);
                           if (typeof deleteMemberAccount === 'function') {
                             await deleteMemberAccount(codeOrId);
                           }

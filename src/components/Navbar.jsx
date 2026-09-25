@@ -171,10 +171,11 @@ export const Navbar = () => {
                     <div className="text-[10px] text-slate-400 font-mono">Mã TV: {safeUser.memberCode}</div>
                   </div>
 
-                  {isHRMember && (
+                  {(isHRMember || isAdmin || isSuperAdmin) && (
                     <button
                       type="button"
                       onClick={(e) => {
+                        e.preventDefault();
                         e.stopPropagation();
                         setIsUserDropdownOpen(false);
                         if (typeof checkinAttendance === 'function') {
@@ -195,6 +196,7 @@ export const Navbar = () => {
                   <button
                     type="button"
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
                       setIsUserDropdownOpen(false);
                       handleNavClick('profile');
@@ -210,6 +212,7 @@ export const Navbar = () => {
                   <button
                     type="button"
                     onClick={(e) => {
+                      e.preventDefault();
                       e.stopPropagation();
                       setIsUserDropdownOpen(false);
                       if (typeof logout === 'function') {
