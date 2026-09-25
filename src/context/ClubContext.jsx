@@ -981,7 +981,12 @@ setCurrentUser(acc);
       // API thành công, cập nhật local state
       updateDb(prev => ({
         ...prev,
-        members: prev.members.map(m => m.id === id ? { ...m, status: newStatus } : m)
+        members: (prev.members || []).map(m => (
+          String(m.id) === String(id) ||
+          String(m.id) === String(member.id) ||
+          String(m.memberCode || m.member_code || '').toUpperCase() === String(id).toUpperCase() ||
+          String(m.username || '').toLowerCase() === String(id).toLowerCase()
+        ) ? { ...m, status: newStatus } : m)
       }));
 
       showToast(`✅ Đã ${newStatus === 'Suspended' ? 'khóa' : 'mở khóa'} tài khoản thành công!`, 'success');

@@ -116,8 +116,8 @@ export const InternalMembers = () => {
         setActiveMenuId(null);
       }
     };
-    document.addEventListener('mousedown', handleDocumentClick);
-    return () => document.removeEventListener('mousedown', handleDocumentClick);
+    document.addEventListener('click', handleDocumentClick);
+    return () => document.removeEventListener('click', handleDocumentClick);
   }, []);
 
   const handleTechUpdateMember = async (e) => {
