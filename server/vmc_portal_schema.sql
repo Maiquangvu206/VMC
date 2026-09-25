@@ -1,6 +1,6 @@
 -- ============================================================
 -- VMC PORTAL - DATABASE SCHEMA FOR PHPMYADMIN / MYSQL
--- Generated at: 2026-09-25T10:36:08.258Z
+-- Generated at: 2026-09-25T12:07:16.948Z
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS Members (
