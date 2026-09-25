@@ -110,11 +110,9 @@ export const InternalMembers = () => {
   const [selectedMember, setSelectedMember] = useState(null);
   const [editingMember, setEditingMember] = useState(null);
   const [activeMenuId, setActiveMenuId] = useState(null);
-  const popoverMenuRef = React.useRef(null);
-
   React.useEffect(() => {
     const handleDocumentClick = (e) => {
-      if (popoverMenuRef.current && !popoverMenuRef.current.contains(e.target)) {
+      if (!e.target.closest('.member-popover-menu') && !e.target.closest('.member-popover-toggle')) {
         setActiveMenuId(null);
       }
     };
@@ -501,21 +499,22 @@ export const InternalMembers = () => {
               {/* 3-Dots Action Popover Menu */}
               <div className="relative shrink-0">
                 <button
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     setActiveMenuId(activeMenuId === m.id ? null : m.id);
                   }}
-                  className="w-9 h-9 rounded-xl bg-[#1f2937] text-slate-300 border border-[#374151] hover:bg-[#374151] hover:text-white flex items-center justify-center transition-all"
+                  className="member-popover-toggle w-9 h-9 rounded-xl bg-[#1f2937] text-slate-300 border border-[#374151] hover:bg-[#374151] hover:text-white flex items-center justify-center transition-all cursor-pointer"
                   title="Thao tác nâng cao"
                 >
-                  <MoreVertical className="w-4 h-4 shrink-0" />
+                  <MoreVertical className="w-4 h-4 shrink-0 pointer-events-none" />
                 </button>
 
                 {/* Dropdown Menu Overlay */}
                 {activeMenuId === m.id && (
                   <div
-                    ref={popoverMenuRef}
-                    className="absolute right-0 bottom-full mb-2 w-48 bg-[#111827] border border-[#1f2937] rounded-xl p-1.5 shadow-2xl z-40 space-y-1 animate-slide-up"
+                    className="member-popover-menu absolute right-0 bottom-full mb-2 w-48 bg-[#111827] border border-[#1f2937] rounded-xl p-1.5 shadow-2xl z-40 space-y-1 animate-slide-up"
+                    onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => e.stopPropagation()}
                   >
                     {/* Edit Option */}
@@ -550,8 +549,8 @@ export const InternalMembers = () => {
                       }}
                       className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors cursor-pointer"
                     >
-                      <Edit className="w-3.5 h-3.5 text-blue-400" />
-                      <span>Chỉnh Sửa Thẻ</span>
+                      <Edit className="w-3.5 h-3.5 text-blue-400 pointer-events-none" />
+                      <span className="pointer-events-none">Chỉnh Sửa Thẻ</span>
                     </button>
 
                     {isAdmin && (
@@ -571,8 +570,8 @@ export const InternalMembers = () => {
                           }}
                           className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors cursor-pointer"
                         >
-                          <RefreshCw className="w-3.5 h-3.5 text-amber-400" />
-                          <span>Reset Mật Khẩu</span>
+                          <RefreshCw className="w-3.5 h-3.5 text-amber-400 pointer-events-none" />
+                          <span className="pointer-events-none">Reset Mật Khẩu</span>
                         </button>
 
                         <button
@@ -588,8 +587,8 @@ export const InternalMembers = () => {
                           }}
                           className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors cursor-pointer"
                         >
-                          <Lock className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>{m.status === 'Active' ? 'Khóa Tài Khoản' : 'Mở Khóa'}</span>
+                          <Lock className="w-3.5 h-3.5 text-emerald-400 pointer-events-none" />
+                          <span className="pointer-events-none">{m.status === 'Active' ? 'Khóa Tài Khoản' : 'Mở Khóa'}</span>
                         </button>
                       </>
                     )}
@@ -608,8 +607,8 @@ export const InternalMembers = () => {
                         }}
                         className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
                       >
-                        <Trash2 className="w-3.5 h-3.5 text-rose-400" />
-                        <span>Xóa Vĩnh Viễn</span>
+                        <Trash2 className="w-3.5 h-3.5 text-rose-400 pointer-events-none" />
+                        <span className="pointer-events-none">Xóa Vĩnh Viễn</span>
                       </button>
                     )}
                   </div>

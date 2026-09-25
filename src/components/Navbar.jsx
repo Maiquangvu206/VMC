@@ -43,7 +43,7 @@ export const Navbar = () => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (!event.target.closest('.user-dropdown-menu') && !event.target.closest('.user-dropdown-toggle')) {
         setIsUserDropdownOpen(false);
       }
     };
@@ -147,24 +147,29 @@ export const Navbar = () => {
             {/* User Dropdown Button */}
             <div ref={dropdownRef} className="relative shrink-0">
               <button
+                type="button"
                 onClick={() => setIsUserDropdownOpen(prev => !prev)}
-                className="flex items-center gap-2 px-2 py-1.5 rounded-xl bg-[#111827] border border-[#1f2937] hover:border-slate-700 hover:bg-[#1f2937] transition-all cursor-pointer"
+                className="user-dropdown-toggle flex items-center gap-2 px-2 py-1.5 rounded-xl bg-[#111827] border border-[#1f2937] hover:border-slate-700 hover:bg-[#1f2937] transition-all cursor-pointer"
               >
                 <img
                   src={safeUser.avatar}
                   alt={safeUser.name}
-                  className="w-6 h-6 rounded-lg object-cover border border-slate-700 shrink-0"
+                  className="w-6 h-6 rounded-lg object-cover border border-slate-700 shrink-0 pointer-events-none"
                 />
-                <div className="text-left max-w-[90px] sm:max-w-[110px] truncate hidden md:block">
+                <div className="text-left max-w-[90px] sm:max-w-[110px] truncate hidden md:block pointer-events-none">
                   <div className="font-semibold text-slate-200 text-xs truncate leading-tight">{safeUser.name}</div>
                   <div className="text-[9.5px] text-blue-400 font-medium truncate leading-tight">{safeUser.roleTitle}</div>
                 </div>
-                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform ${isUserDropdownOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 shrink-0 transition-transform pointer-events-none ${isUserDropdownOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {/* User Dropdown Menu */}
               {isUserDropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-64 bg-[#111827] border border-[#1f2937] rounded-xl p-2.5 shadow-xl z-50 space-y-1">
+                <div
+                  className="user-dropdown-menu absolute right-0 top-full mt-2 w-64 bg-[#111827] border border-[#1f2937] rounded-xl p-2.5 shadow-xl z-50 space-y-1"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <div className="p-2.5 rounded-lg bg-[#0f172a] border border-[#1f2937] space-y-1">
                     <div className="font-bold text-slate-100 text-xs truncate">{safeUser.name}</div>
                     <div className="text-[11px] text-blue-400 font-medium truncate">{safeUser.roleTitle}</div>
@@ -186,7 +191,7 @@ export const Navbar = () => {
                       }}
                       className="w-full flex items-center justify-between p-2.5 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 hover:bg-emerald-600 hover:text-white font-semibold text-xs transition-all cursor-pointer"
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 pointer-events-none">
                         <UserCheck className="w-4 h-4" />
                         <span>Điểm Danh Sinh Hoạt</span>
                       </div>
@@ -203,8 +208,8 @@ export const Navbar = () => {
                     }}
                     className="w-full flex items-center gap-2 p-2.5 rounded-lg hover:bg-[#1f2937] text-slate-300 hover:text-slate-100 transition-all text-xs font-medium cursor-pointer"
                   >
-                    <User className="w-4 h-4" />
-                    <span>Xem Hồ Sơ Cá Nhân</span>
+                    <User className="w-4 h-4 pointer-events-none" />
+                    <span className="pointer-events-none">Xem Hồ Sơ Cá Nhân</span>
                   </button>
 
                   <div className="border-t border-[#1f2937] my-1" />
@@ -221,8 +226,8 @@ export const Navbar = () => {
                     }}
                     className="w-full flex items-center justify-center gap-2 p-2.5 rounded-lg bg-rose-500/10 hover:bg-rose-600 text-rose-300 hover:text-white font-semibold text-xs transition-all cursor-pointer"
                   >
-                    <LogOut className="w-4 h-4" />
-                    <span>Đăng Xuất</span>
+                    <LogOut className="w-4 h-4 pointer-events-none" />
+                    <span className="pointer-events-none">Đăng Xuất</span>
                   </button>
                 </div>
               )}
