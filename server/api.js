@@ -1725,10 +1725,30 @@ router.delete('/recruitment/seasons/:id', async (req, res) => {
 // --- Criteria ---
 router.get('/recruitment/criteria/:seasonId', async (req, res) => {
   try {
-    const rows = await queryDatabase(
+    let rows = await queryDatabase(
       'SELECT * FROM Recruitment_Criteria WHERE season_id = ? ORDER BY sort_order ASC, id ASC',
       [req.params.seasonId]
     );
+    if (rows.length === 0 && req.params.seasonId) {
+      const defaultCriteria = [
+        { name: 'Đánh giá Đơn đăng ký', round: 'don', max: 10, difficulty: 'Dễ', sort: 1 },
+        { name: 'Kỹ năng Phỏng vấn & Giao tiếp', round: 'phongvan', max: 10, difficulty: 'Trung bình', sort: 2 },
+        { name: 'Thái độ & Làm việc nhóm (Teamwork)', round: 'teamwork', max: 10, difficulty: 'Trung bình', sort: 3 },
+        { name: 'Tiến độ & Thái độ Thực hiện Thử thách', round: 'thuthach_quatrinh', max: 10, difficulty: 'Trung bình', sort: 4 },
+        { name: 'Chất lượng Sản phẩm Thử thách', round: 'thuthach_ketqua', max: 10, difficulty: 'Khó', sort: 5 }
+      ];
+      for (const dc of defaultCriteria) {
+        const cid = 'crit-' + req.params.seasonId + '-' + dc.round;
+        await queryDatabase(
+          'INSERT INTO Recruitment_Criteria (id, season_id, criteria_name, max_score, sort_order, round_type, difficulty) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [cid, req.params.seasonId, dc.name, dc.max, dc.sort, dc.round, dc.difficulty]
+        ).catch(() => {});
+      }
+      rows = await queryDatabase(
+        'SELECT * FROM Recruitment_Criteria WHERE season_id = ? ORDER BY sort_order ASC, id ASC',
+        [req.params.seasonId]
+      );
+    }
     res.json({ success: true, data: rows });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
@@ -1912,10 +1932,19 @@ router.post('/recruitment/scores', async (req, res) => {
     const { season_id, candidate_id, interviewer_id, scores, comments } = req.body;
     if (!Array.isArray(scores) || scores.length === 0)
       return res.status(400).json({ success: false, error: 'Thiếu dữ liệu điểm' });
+
+    // Lookup candidate to resolve both ID and interview_code
+    const cRows = await queryDatabase(
+      'SELECT id, interview_code FROM Recruitment_Candidates WHERE id = ? OR interview_code = ? LIMIT 1',
+      [candidate_id, candidate_id]
+    );
+    const targetId = cRows.length > 0 ? cRows[0].id : candidate_id;
+    const targetCode = cRows.length > 0 ? cRows[0].interview_code : candidate_id;
+
     for (const s of scores) {
       const existing = await queryDatabase(
-        `SELECT id FROM Recruitment_Scores WHERE candidate_id = ? AND interviewer_id = ? AND criteria_id = ?`,
-        [candidate_id, interviewer_id, s.criteria_id]
+        `SELECT id FROM Recruitment_Scores WHERE (candidate_id = ? OR candidate_id = ?) AND interviewer_id = ? AND criteria_id = ?`,
+        [targetId, targetCode, interviewer_id, s.criteria_id]
       );
       if (existing.length > 0) {
         await queryDatabase(
@@ -1927,13 +1956,13 @@ router.post('/recruitment/scores', async (req, res) => {
         await queryDatabase(
           `INSERT INTO Recruitment_Scores (id, season_id, candidate_id, interviewer_id, criteria_id, score, comments)
            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [sid, season_id, candidate_id, interviewer_id, s.criteria_id, s.score, s.comments || comments || null]
+          [sid, season_id, targetId, interviewer_id, s.criteria_id, s.score, s.comments || comments || null]
         );
       }
     }
     await queryDatabase(
-      "UPDATE Recruitment_Candidates SET status = 'scored' WHERE id = ?",
-      [candidate_id]
+      "UPDATE Recruitment_Candidates SET status = 'scored' WHERE id = ? OR interview_code = ?",
+      [targetId, targetCode]
     );
     res.json({ success: true });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
