@@ -517,12 +517,12 @@ export const InternalMembers = () => {
                 {String(activeMenuId) === String(m.id) && (
                   <div
                     className="member-popover-menu absolute right-0 bottom-full mb-2 w-48 bg-[#111827] border border-[#1f2937] rounded-xl p-1.5 shadow-2xl z-50 space-y-1 animate-slide-up"
-                    onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => e.stopPropagation()}
                   >
                     {/* Edit Option */}
                     <button
                       type="button"
+                      onMouseDown={(e) => e.stopPropagation()}
                       onClick={(e) => {
                         e.stopPropagation();
                         setActiveMenuId(null);
@@ -546,17 +546,18 @@ export const InternalMembers = () => {
                       }}
                       className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors cursor-pointer select-none text-left"
                     >
-                      <Edit className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                      <span>Chỉnh Sửa Thẻ</span>
+                      <Edit className="w-3.5 h-3.5 text-blue-400 shrink-0 pointer-events-none" />
+                      <span className="pointer-events-none">Chỉnh Sửa Thẻ</span>
                     </button>
 
                     {/* Reset Password Option */}
                     <button
                       type="button"
+                      onMouseDown={(e) => e.stopPropagation()}
                       onClick={async (e) => {
                         e.stopPropagation();
                         setActiveMenuId(null);
-                        const targetId = m.memberCode || m.member_code || m.id;
+                        const targetId = m.memberCode || m.member_code || m.username || m.id;
                         if (typeof resetAccountPassword === 'function') {
                           await resetAccountPassword(targetId);
                         } else if (typeof resetMemberPassword === 'function') {
@@ -565,8 +566,8 @@ export const InternalMembers = () => {
                       }}
                       className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors cursor-pointer select-none text-left"
                     >
-                      <RefreshCw className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span>Reset Mật Khẩu</span>
+                      <RefreshCw className="w-3.5 h-3.5 text-amber-400 shrink-0 pointer-events-none" />
+                      <span className="pointer-events-none">Reset Mật Khẩu</span>
                     </button>
 
                     {/* Lock / Unlock Option */}
@@ -575,10 +576,11 @@ export const InternalMembers = () => {
                       return (
                         <button
                           type="button"
+                          onMouseDown={(e) => e.stopPropagation()}
                           onClick={async (e) => {
                             e.stopPropagation();
                             setActiveMenuId(null);
-                            const targetId = m.id || m.memberCode || m.member_code;
+                            const targetId = m.memberCode || m.member_code || m.username || m.id;
                             if (typeof toggleAccountStatus === 'function') {
                               const newSt = await toggleAccountStatus(targetId);
                               if (newSt && selectedMember && (selectedMember.id === m.id || selectedMember.memberCode === m.memberCode)) {
@@ -588,8 +590,8 @@ export const InternalMembers = () => {
                           }}
                           className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors cursor-pointer select-none text-left"
                         >
-                          <Lock className={`w-3.5 h-3.5 shrink-0 ${isItemLocked ? 'text-emerald-400' : 'text-rose-400'}`} />
-                          <span>{isItemLocked ? 'Mở Khóa' : 'Khóa Tài Khoản'}</span>
+                          <Lock className={`w-3.5 h-3.5 shrink-0 pointer-events-none ${isItemLocked ? 'text-emerald-400' : 'text-rose-400'}`} />
+                          <span className="pointer-events-none">{isItemLocked ? 'Mở Khóa' : 'Khóa Tài Khoản'}</span>
                         </button>
                       );
                     })()}
@@ -597,6 +599,7 @@ export const InternalMembers = () => {
                     {/* Delete Option */}
                     <button
                       type="button"
+                      onMouseDown={(e) => e.stopPropagation()}
                       onClick={(e) => {
                         e.stopPropagation();
                         setActiveMenuId(null);
@@ -604,8 +607,8 @@ export const InternalMembers = () => {
                       }}
                       className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer select-none text-left"
                     >
-                      <Trash2 className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-                      <span>Xóa Vĩnh Viễn</span>
+                      <Trash2 className="w-3.5 h-3.5 text-rose-400 shrink-0 pointer-events-none" />
+                      <span className="pointer-events-none">Xóa Vĩnh Viễn</span>
                     </button>
                   </div>
                 )}
