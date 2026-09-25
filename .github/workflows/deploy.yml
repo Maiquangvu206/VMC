@@ -9,29 +9,31 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      # 1. Kéo code mới nhất từ GitHub về máy server
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Cài đặt Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      # 3. Cài dependencies và Build Frontend (React + Vite → dist/)
       - name: Install & Build Frontend
         run: |
           npm install
           npm run build
 
-      # 4. Cài dependencies cho Backend Server
+      - name: Deploy Frontend to Nginx
+        run: |
+          sudo rm -rf /var/www/VMC/dist/*
+          sudo cp -rf dist/* /var/www/VMC/dist/
+          sudo chown -R www-data:www-data /var/www/VMC/dist
+          sudo systemctl reload nginx
+
       - name: Install Server Dependencies
         run: |
           cd server
           npm install
 
-      # 5. Khởi động lại Server với PM2 (nạp PATH để chắc chắn tìm thấy pm2)
       - name: Restart Server with PM2
         run: |
           export PATH=$PATH:$HOME/.nvm/versions/node/$(node -v)/bin:$HOME/.npm-global/bin:/usr/local/bin
@@ -46,15 +48,13 @@ jobs:
           echo "🎉 Deploy thành công! Server đang chạy."
           echo "=========================================="
 
-      # 6. Kiểm tra log PM2 sau deploy
       - name: Check PM2 logs
         run: |
           export PATH=$PATH:$HOME/.nvm/versions/node/$(node -v)/bin:$HOME/.npm-global/bin:/usr/local/bin
           sleep 5
           (pm2 logs vmc-server --lines 30 --nostream || npx pm2 logs vmc-server --lines 30 --nostream) || true
 
-      # 7. Kiểm tra server có phản hồi không
       - name: Health check
         run: |
           sleep 3
-          curl -f http://localhost:5000/api/members || echo "⚠️ Server chưa phản hồi được /api/members"
+          curl -I http://localhost:5000/api/members || echo "⚠️ Server chưa phản hồi được /api/members"
