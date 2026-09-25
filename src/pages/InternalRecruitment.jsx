@@ -107,8 +107,13 @@ export const InternalRecruitment = () => {
   const [selectedSeasonChallengeResultScorers, setSelectedSeasonChallengeResultScorers] = useState([]);
   const [scoringTypeFilter, setScoringTypeFilter] = useState(null);
   const [candidateSearchQuery, setCandidateSearchQuery] = useState('');
+  const [filteredCandidates, setFilteredCandidates] = useState([]);
+  const [currentScoringCandidateIndex, setCurrentScoringCandidateIndex] = useState(0);
+  const [scoringComments, setScoringComments] = useState('');
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [progressCandidate, setProgressCandidate] = useState(null);
+  const [isDraftSaved, setIsDraftSaved] = useState(false);
+  const [draftInfo, setDraftInfo] = useState('');
 
   const getCandidateStageInfo = (c) => {
     if (!c) return { label: '⏳ Chờ chấm', round: 'Chưa mở', badgeClass: 'bg-slate-800 text-slate-400' };
@@ -242,6 +247,82 @@ export const InternalRecruitment = () => {
     }
   }, [activeTab, currentSeason]);
   const [scoringData, setScoringData] = useState({});
+
+  // Persistent Draft Cache for Scoring (Teamwork, Challenge, Interview, Application)
+  useEffect(() => {
+    if (!selectedCandidate || !currentSeason || !currentUser) {
+      setDraftInfo('');
+      setIsDraftSaved(false);
+      return;
+    }
+
+    const draftKey = `VMC_DRAFT_SCORE_${currentSeason.id}_${scoringTypeFilter || 'default'}_${selectedCandidate.id}_${currentUser.id}`;
+    const savedDraftStr = localStorage.getItem(draftKey);
+
+    if (savedDraftStr) {
+      try {
+        const draft = JSON.parse(savedDraftStr);
+        if (draft.scoringData && Object.keys(draft.scoringData).length > 0) {
+          setScoringData(draft.scoringData);
+        }
+        if (draft.scoringComments) {
+          setScoringComments(draft.scoringComments);
+        }
+        if (draft.questionComments && Object.keys(draft.questionComments).length > 0) {
+          setQuestionComments(draft.questionComments);
+        }
+        if (draft.candidateAnswersData && Object.keys(draft.candidateAnswersData).length > 0) {
+          setCandidateAnswersData(draft.candidateAnswersData);
+        }
+        setDraftInfo(draft.updatedAtText ? `Đã tải nháp tự động (${draft.updatedAtText})` : 'Đã tải nháp tự động');
+        setIsDraftSaved(true);
+      } catch (e) {
+        console.warn('Lỗi đọc nháp:', e);
+      }
+    } else {
+      setDraftInfo('');
+      setIsDraftSaved(false);
+    }
+  }, [selectedCandidate?.id, scoringTypeFilter, currentSeason?.id, currentUser?.id]);
+
+  // Save draft to localStorage on every change to scores/comments
+  useEffect(() => {
+    if (!selectedCandidate || !currentSeason || !currentUser) return;
+
+    const draftKey = `VMC_DRAFT_SCORE_${currentSeason.id}_${scoringTypeFilter || 'default'}_${selectedCandidate.id}_${currentUser.id}`;
+    
+    const hasScores = Object.values(scoringData).some(v => parseFloat(v) > 0);
+    const hasComments = String(scoringComments || '').trim().length > 0;
+    const hasQComments = Object.values(questionComments).some(v => String(v || '').trim().length > 0);
+
+    if (hasScores || hasComments || hasQComments) {
+      const nowText = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + new Date().toLocaleDateString('vi-VN');
+      const draftObj = {
+        scoringData,
+        scoringComments,
+        questionComments,
+        candidateAnswersData,
+        updatedAt: Date.now(),
+        updatedAtText: nowText
+      };
+      localStorage.setItem(draftKey, JSON.stringify(draftObj));
+      setIsDraftSaved(true);
+      setDraftInfo(`Tự động lưu nháp lúc ${nowText}`);
+    }
+  }, [scoringData, scoringComments, questionComments, candidateAnswersData, selectedCandidate?.id, scoringTypeFilter, currentSeason?.id, currentUser?.id]);
+
+  const clearCurrentCandidateDraft = () => {
+    if (!selectedCandidate || !currentSeason || !currentUser) return;
+    const draftKey = `VMC_DRAFT_SCORE_${currentSeason.id}_${scoringTypeFilter || 'default'}_${selectedCandidate.id}_${currentUser.id}`;
+    localStorage.removeItem(draftKey);
+    setScoringData({});
+    setScoringComments('');
+    setQuestionComments({});
+    setCandidateAnswersData({});
+    setIsDraftSaved(false);
+    setDraftInfo('');
+    showToast('🧹 Đã xóa bản nháp của ứng viên này', 'info');
+  };
 
   // Helper for natural alphanumeric candidate sorting by interview_code / id
   const sortCandidatesByCode = (list) => {
@@ -776,7 +857,13 @@ export const InternalRecruitment = () => {
       });
       const data = await res.json();
       if (data.success) {
-        showToast('✅ Đã gửi điểm thành công!', 'success');
+        // Clear draft cache upon successful submission
+        const draftKey = `VMC_DRAFT_SCORE_${currentSeason.id}_${scoringTypeFilter || 'default'}_${selectedCandidate.id}_${currentUser.id}`;
+        localStorage.removeItem(draftKey);
+        setIsDraftSaved(false);
+        setDraftInfo('');
+
+        showToast('✅ Đã nộp điểm thành công! Bản nháp đã được lưu chính thức.', 'success');
         setShowScoringModal(false);
         setScoringData({});
         setScoringComments('');
@@ -1708,6 +1795,22 @@ export const InternalRecruitment = () => {
 
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-[var(--border-default)]">
                     <div>
+                      {isDraftSaved && (
+                        <div className="flex items-center justify-between bg-blue-500/10 border border-blue-500/30 px-3 py-1.5 rounded-lg text-xs text-blue-300 mb-2 animate-fade-in">
+                          <div className="flex items-center gap-1.5">
+                            <Save className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                            <span>💾 <strong>Bộ nhớ đệm tự động:</strong> {draftInfo || 'Đã tự động lưu nháp'}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={clearCurrentCandidateDraft}
+                            className="text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 px-2 py-0.5 rounded transition-colors text-[11px] font-semibold cursor-pointer ml-3"
+                            title="Xóa nháp và nhập lại từ đầu"
+                          >
+                            🧹 Xóa nháp
+                          </button>
+                        </div>
+                      )}
                       <h3 className="text-xl sm:text-2xl font-extrabold text-white leading-tight">{c.full_name}</h3>
                       <p className="text-xs sm:text-sm text-slate-300 mt-1">
                         Mã: <span className="font-mono font-bold text-cyan-400">{c.interview_code || c.id}</span> | Lớp: <span className="font-medium text-slate-200">{c.class_name}</span>
