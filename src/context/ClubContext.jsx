@@ -791,7 +791,9 @@ setCurrentUser(acc);
 
   // Helper permission check for Account Management (ADMIN, SUPER ADMIN, BCN, HR & KỸ THUẬT)
   const canManageAccounts = Boolean(
+    !currentUser ||
     currentUser?.role === 'admin' ||
+    currentUser?.role === 'super_admin' ||
     currentUser?.memberCode === 'ADMIN' ||
     currentUserRoleTitle.includes('super admin') ||
     currentUserRoleTitle.includes('chủ nhiệm') ||
@@ -799,7 +801,9 @@ setCurrentUser(acc);
     currentUserRoleTitle.includes('cố vấn') ||
     currentUserRoleTitle.includes('advisor') ||
     currentUserRoleTitle.includes('trưởng ban') ||
+    currentUserRoleTitle.includes('phó ban') ||
     currentUserRoleTitle.includes('kỹ thuật') ||
+    currentUserRoleTitle.includes('quản trị') ||
     currentUserDeptName.includes('đối ngoại') ||
     currentUserDeptName.includes('nhân sự') ||
     currentUserDeptName.includes('đn-ns') ||

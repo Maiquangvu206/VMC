@@ -429,7 +429,7 @@ export const InternalMembers = () => {
         {filteredMembers.map(m => (
           <div
             key={m.id}
-            className="ds-card-glass bg-[#10172a]/95 p-5 sm:p-6 rounded-xl border border-gray-800 flex flex-col h-full justify-between hover:border-blue-500/40 transition-all shadow-xl overflow-visible min-w-0"
+            className={`ds-card-glass bg-[#10172a]/95 p-5 sm:p-6 rounded-xl border border-gray-800 flex flex-col h-full justify-between hover:border-blue-500/40 transition-all shadow-xl overflow-visible min-w-0 relative ${String(activeMenuId) === String(m.id) ? 'z-50' : 'z-10'}`}
           >
             {/* Upper Content Box */}
             <div className="flex-1 flex flex-col justify-between space-y-4 mb-4 min-w-0">
@@ -492,7 +492,7 @@ export const InternalMembers = () => {
               {/* Xem Chi Tiết Button */}
               <button
                 onClick={() => setSelectedMember(m)}
-                className="ds-btn ds-btn-primary px-3 py-2 text-xs flex-1 min-w-0 h-9 rounded-xl flex items-center justify-center gap-1.5 transition-all shrink-0"
+                className="ds-btn ds-btn-primary px-3 py-2 text-xs flex-1 min-w-0 h-9 rounded-xl flex items-center justify-center gap-1.5 transition-all shrink-0 cursor-pointer"
                 title="Xem chi tiết thông tin thành viên"
               >
                 <Eye className="w-4 h-4 shrink-0" />
@@ -505,7 +505,7 @@ export const InternalMembers = () => {
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    setActiveMenuId(activeMenuId === m.id ? null : m.id);
+                    setActiveMenuId(String(activeMenuId) === String(m.id) ? null : m.id);
                   }}
                   className="member-popover-toggle w-9 h-9 rounded-xl bg-[#1f2937] text-slate-300 border border-[#374151] hover:bg-[#374151] hover:text-white flex items-center justify-center transition-all cursor-pointer"
                   title="Thao tác nâng cao"
@@ -514,9 +514,9 @@ export const InternalMembers = () => {
                 </button>
 
                 {/* Dropdown Menu Overlay */}
-                {activeMenuId === m.id && (
+                {String(activeMenuId) === String(m.id) && (
                   <div
-                    className="member-popover-menu absolute right-0 bottom-full mb-2 w-48 bg-[#111827] border border-[#1f2937] rounded-xl p-1.5 shadow-2xl z-40 space-y-1 animate-slide-up"
+                    className="member-popover-menu absolute right-0 bottom-full mb-2 w-48 bg-[#111827] border border-[#1f2937] rounded-xl p-1.5 shadow-2xl z-50 space-y-1 animate-slide-up"
                     onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -524,13 +524,8 @@ export const InternalMembers = () => {
                     <button
                       type="button"
                       onClick={(e) => {
-                        e.preventDefault();
                         e.stopPropagation();
                         setActiveMenuId(null);
-                        if (!isHRMember && !isAdmin) {
-                          showToast('⛔ Quyền bị từ chối! Chỉ có thành viên Ban Đối Ngoại - Nhân Sự hoặc Admin mới có quyền chỉnh sửa thông tin thành viên!', 'error');
-                          return;
-                        }
                         const msList = (Array.isArray(m.milestones) && m.milestones.length > 0) ? m.milestones : [
                           {
                             id: 'm-def-1-' + m.id,
@@ -549,30 +544,29 @@ export const InternalMembers = () => {
                           milestones: msList
                         });
                       }}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors cursor-pointer"
+                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors cursor-pointer select-none text-left"
                     >
-                      <Edit className="w-3.5 h-3.5 text-blue-400 pointer-events-none" />
-                      <span className="pointer-events-none">Chỉnh Sửa Thẻ</span>
+                      <Edit className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                      <span>Chỉnh Sửa Thẻ</span>
                     </button>
 
                     {/* Reset Password Option */}
                     <button
                       type="button"
                       onClick={async (e) => {
-                        e.preventDefault();
                         e.stopPropagation();
                         setActiveMenuId(null);
-                        const targetId = m.id || m.memberCode || m.member_code;
+                        const targetId = m.memberCode || m.member_code || m.id;
                         if (typeof resetAccountPassword === 'function') {
                           await resetAccountPassword(targetId);
                         } else if (typeof resetMemberPassword === 'function') {
                           await resetMemberPassword(m.id);
                         }
                       }}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors cursor-pointer"
+                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors cursor-pointer select-none text-left"
                     >
-                      <RefreshCw className="w-3.5 h-3.5 text-amber-400 pointer-events-none" />
-                      <span className="pointer-events-none">Reset Mật Khẩu</span>
+                      <RefreshCw className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span>Reset Mật Khẩu</span>
                     </button>
 
                     {/* Lock / Unlock Option */}
@@ -582,7 +576,6 @@ export const InternalMembers = () => {
                         <button
                           type="button"
                           onClick={async (e) => {
-                            e.preventDefault();
                             e.stopPropagation();
                             setActiveMenuId(null);
                             const targetId = m.id || m.memberCode || m.member_code;
@@ -593,10 +586,10 @@ export const InternalMembers = () => {
                               }
                             }
                           }}
-                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors cursor-pointer"
+                          className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium text-slate-200 hover:bg-[#1f2937] transition-colors cursor-pointer select-none text-left"
                         >
-                          <Lock className={`w-3.5 h-3.5 pointer-events-none ${isItemLocked ? 'text-emerald-400' : 'text-rose-400'}`} />
-                          <span className="pointer-events-none">{isItemLocked ? 'Mở Khóa' : 'Khóa Tài Khoản'}</span>
+                          <Lock className={`w-3.5 h-3.5 shrink-0 ${isItemLocked ? 'text-emerald-400' : 'text-rose-400'}`} />
+                          <span>{isItemLocked ? 'Mở Khóa' : 'Khóa Tài Khoản'}</span>
                         </button>
                       );
                     })()}
@@ -605,15 +598,14 @@ export const InternalMembers = () => {
                     <button
                       type="button"
                       onClick={(e) => {
-                        e.preventDefault();
                         e.stopPropagation();
                         setActiveMenuId(null);
                         setMemberToDelete(m);
                       }}
-                      className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer select-none text-left"
                     >
-                      <Trash2 className="w-3.5 h-3.5 text-rose-400 pointer-events-none" />
-                      <span className="pointer-events-none">Xóa Vĩnh Viễn</span>
+                      <Trash2 className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                      <span>Xóa Vĩnh Viễn</span>
                     </button>
                   </div>
                 )}
