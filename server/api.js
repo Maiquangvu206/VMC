@@ -2039,6 +2039,48 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
         AND s.comments IS NOT NULL AND TRIM(s.comments) != ''
     `, [seasonId, seasonId, seasonId]);
 
+    // Fetch detailed score entries per criteria and interviewer
+    const detailedScoresRows = await queryDatabase(`
+      SELECT s.candidate_id, s.interviewer_id, s.criteria_id, s.score, s.comments, s.created_at,
+             u.full_name AS interviewer_name,
+             cr.title AS criteria_title,
+             COALESCE(NULLIF(cr.round_type, ''), 'teamwork') AS round_type
+      FROM Recruitment_Scores s
+      LEFT JOIN Users u ON s.interviewer_id = u.id
+      LEFT JOIN Recruitment_Criteria cr ON s.criteria_id = cr.id
+      WHERE (s.season_id = ? OR s.season_id IS NULL OR s.season_id = '' 
+         OR s.candidate_id IN (SELECT id FROM Recruitment_Candidates WHERE season_id = ?)
+         OR s.candidate_id IN (SELECT interview_code FROM Recruitment_Candidates WHERE season_id = ?))
+    `, [seasonId, seasonId, seasonId]);
+
+    const detailedScoresMap = {};
+    detailedScoresRows.forEach(r => {
+      const cand = candidates.find(c => 
+        String(c.candidate_id) === String(r.candidate_id) || 
+        String(c.interview_code) === String(r.candidate_id) ||
+        String(c.candidate_id).trim() === String(r.candidate_id).trim() ||
+        String(c.interview_code).trim() === String(r.candidate_id).trim()
+      );
+      const keys = [String(r.candidate_id)];
+      if (cand) {
+        if (cand.candidate_id) keys.push(String(cand.candidate_id));
+        if (cand.interview_code) keys.push(String(cand.interview_code));
+      }
+      keys.forEach(k => {
+        if (!detailedScoresMap[k]) detailedScoresMap[k] = [];
+        detailedScoresMap[k].push({
+          interviewer_id: r.interviewer_id,
+          interviewer_name: r.interviewer_name || r.interviewer_id,
+          criteria_id: r.criteria_id,
+          criteria_title: r.criteria_title || r.criteria_id,
+          round_type: r.round_type,
+          score: parseFloat(r.score) || 0,
+          comments: r.comments || '',
+          created_at: r.created_at
+        });
+      });
+    });
+
     const commentsMap = {};
     commentsRows.forEach(r => {
       const cand = candidates.find(c => 
@@ -2175,6 +2217,11 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
         try { return JSON.parse(val); } catch (e) { return []; }
       };
 
+      const detailed_scores = [
+        ...(detailedScoresMap[candIdStr] || []),
+        ...(detailedScoresMap[codeStr] || [])
+      ].filter((v, i, self) => i === self.findIndex(t => t.interviewer_id === v.interviewer_id && t.criteria_id === v.criteria_id));
+
       return {
         candidate_id: c.candidate_id,
         interview_code: c.interview_code || c.candidate_id,
@@ -2188,6 +2235,7 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
         challenge_process_scorer_ids: parseScorerIds(c.challenge_process_scorer_ids),
         challenge_result_scorer_ids: parseScorerIds(c.challenge_result_scorer_ids),
         comments,
+        detailed_scores,
         round_scores: rScores,
         submitted_scorers: submittedScorers,
         avg_score: overallAvg,

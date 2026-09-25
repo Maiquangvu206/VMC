@@ -114,6 +114,10 @@ export const InternalRecruitment = () => {
   const [progressCandidate, setProgressCandidate] = useState(null);
   const [isDraftSaved, setIsDraftSaved] = useState(false);
   const [draftInfo, setDraftInfo] = useState('');
+  const [realtimeFilter, setRealtimeFilter] = useState('all');
+  const [realtimeSearchQuery, setRealtimeSearchQuery] = useState('');
+  const [selectedRealtimeCandidate, setSelectedRealtimeCandidate] = useState(null);
+  const [showRealtimeModal, setShowRealtimeModal] = useState(false);
 
   const getCandidateStageInfo = (c) => {
     if (!c) return { label: '⏳ Đang đánh giá', round: 'Chưa mở', badgeClass: 'bg-slate-800 text-slate-400' };
@@ -1080,6 +1084,20 @@ export const InternalRecruitment = () => {
               </button>
             )}
             
+            {/* Realtime Scoreboard tab */}
+            <button
+              onClick={() => {
+                setActiveTab('realtime');
+                if (currentSeason?.id) {
+                  fetchCandidates(currentSeason.id);
+                  fetchScoresSummary(currentSeason.id);
+                }
+              }}
+              className={`ds-btn ${activeTab === 'realtime' ? 'ds-btn-primary bg-gradient-to-r from-emerald-600 to-teal-600 border-none text-white' : 'ds-btn-secondary'}`}
+            >
+              ⚡ Bảng Chấm Realtime
+            </button>
+
             {/* Results tab - for all department members */}
             <button
               onClick={() => setActiveTab('results')}
@@ -2067,8 +2085,349 @@ export const InternalRecruitment = () => {
           );
         })()}
 
-       {/* Results Tab - for all department members */}
-       {activeTab === 'results' && currentSeason && (() => {
+        {/* Realtime Live Scoreboard Tab */}
+        {activeTab === 'realtime' && currentSeason && (() => {
+          const scoringTypes = (() => {
+            if (!currentSeason || !currentSeason.scoring_type) return [];
+            const raw = currentSeason.scoring_type;
+            if (Array.isArray(raw)) return raw;
+            if (typeof raw === 'string') {
+              try {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) return parsed;
+              } catch (e) {}
+              return [raw];
+            }
+            return [];
+          })();
+
+          const hasDon = scoringTypes.includes('don') || scoresSummary.some(s => s.round_scores?.don !== undefined);
+          const hasPv = scoringTypes.includes('phongvan') || scoresSummary.some(s => s.round_scores?.phongvan !== undefined);
+          const hasTw = scoringTypes.includes('teamwork') || scoresSummary.some(s => s.round_scores?.teamwork !== undefined);
+          const hasTtQuatrinh = scoringTypes.includes('thuthach_quatrinh') || scoringTypes.includes('thuthach') || scoresSummary.some(s => s.round_scores?.thuthach_quatrinh !== undefined);
+          const hasTtKetqua = scoringTypes.includes('thuthach_ketqua') || scoringTypes.includes('thuthach') || scoresSummary.some(s => s.round_scores?.thuthach_ketqua !== undefined);
+
+          let liveList = (candidates || []).map((c, idx) => {
+            const sMatch = (scoresSummary || []).find(s =>
+              String(s.candidate_id) === String(c.id) ||
+              String(s.candidate_id) === String(c.interview_code) ||
+              String(s.interview_code) === String(c.interview_code) ||
+              String(s.interview_code) === String(c.id)
+            );
+            return {
+              ...c,
+              ...(sMatch || {}),
+              id: c.id,
+              candidate_id: c.id,
+              interview_code: c.interview_code || sMatch?.interview_code || c.id,
+              full_name: c.full_name || sMatch?.full_name,
+              class_name: c.class_name || sMatch?.class_name,
+              desired_dept: c.desired_dept || sMatch?.desired_dept || currentSeason.department || 'N/A',
+              round_scores: sMatch?.round_scores || c.round_scores || {},
+              submitted_scorers: sMatch?.submitted_scorers || {},
+              comments: sMatch?.comments || [],
+              detailed_scores: sMatch?.detailed_scores || [],
+              total_score: sMatch?.total_score || 0,
+              avg_score: sMatch?.avg_score || 0,
+              rank: idx + 1
+            };
+          });
+
+          const totalCount = liveList.length;
+          const scoredCount = liveList.filter(item => Object.keys(item.round_scores || {}).length > 0 || item.total_score > 0).length;
+          const pendingCount = totalCount - scoredCount;
+          const totalComments = liveList.reduce((acc, item) => acc + (item.comments?.length || 0), 0);
+
+          let filteredList = liveList.filter(item => {
+            const q = (realtimeSearchQuery || '').toLowerCase().trim();
+            const matchSearch = !q || 
+              (item.full_name || '').toLowerCase().includes(q) ||
+              (item.interview_code || '').toLowerCase().includes(q) ||
+              (item.class_name || '').toLowerCase().includes(q) ||
+              (item.desired_dept || '').toLowerCase().includes(q);
+
+            const hasScores = Object.keys(item.round_scores || {}).length > 0 || item.total_score > 0;
+            const matchStatus = realtimeFilter === 'all' ? true : realtimeFilter === 'scored' ? hasScores : !hasScores;
+            return matchSearch && matchStatus;
+          });
+
+          return (
+            <div className="space-y-6 animate-fade-in">
+              {/* Realtime Banner / Header */}
+              <div className="ds-card p-6 bg-gradient-to-r from-[#0f172a] via-[#111827] to-[#0f172a] border border-emerald-500/30 rounded-2xl relative overflow-hidden shadow-2xl">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative z-10">
+                  <div>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="relative flex h-3.5 w-3.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500"></span>
+                      </span>
+                      <h2 className="text-2xl font-extrabold text-white tracking-tight">
+                        ⚡ Bảng Chấm Điểm Realtime - {currentSeason.name}
+                      </h2>
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                        Tự động đồng bộ (4s)
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+                      Bảng theo dõi trực tiếp điểm số, nhận xét và danh sách giám khảo đã hoàn thành chấm điểm theo thời gian thực.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      fetchCandidates(currentSeason.id);
+                      fetchScoresSummary(currentSeason.id);
+                    }}
+                    className="ds-btn bg-emerald-600 hover:bg-emerald-500 text-white border-none shadow-lg shadow-emerald-900/30 text-xs px-4 py-2 flex items-center gap-2 font-semibold"
+                  >
+                    <span>🔄 Cập Nhật Lập Tức</span>
+                  </button>
+                </div>
+
+                {/* Live Metrics Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-800/80">
+                  <div className="bg-[#1e293b]/50 p-3.5 rounded-xl border border-slate-800">
+                    <div className="text-slate-400 text-xs">👥 Tổng Ứng Viên</div>
+                    <div className="text-2xl font-bold text-white mt-1">{totalCount}</div>
+                  </div>
+                  <div className="bg-emerald-950/30 p-3.5 rounded-xl border border-emerald-800/40">
+                    <div className="text-emerald-400 text-xs font-medium">🟢 Đã Có Điểm</div>
+                    <div className="text-2xl font-bold text-emerald-300 mt-1">{scoredCount}</div>
+                  </div>
+                  <div className="bg-amber-950/30 p-3.5 rounded-xl border border-amber-800/40">
+                    <div className="text-amber-400 text-xs font-medium">⚪ Chưa Có Điểm</div>
+                    <div className="text-2xl font-bold text-amber-300 mt-1">{pendingCount}</div>
+                  </div>
+                  <div className="bg-purple-950/30 p-3.5 rounded-xl border border-purple-800/40">
+                    <div className="text-purple-400 text-xs font-medium">💬 Nhận Xét Live</div>
+                    <div className="text-2xl font-bold text-purple-300 mt-1">{totalComments}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Realtime Search & Filter Bar */}
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
+                <div className="relative w-full sm:w-80">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Tìm theo Mã PV, Họ tên, Lớp..."
+                    value={realtimeSearchQuery}
+                    onChange={(e) => setRealtimeSearchQuery(e.target.value)}
+                    className="ds-input pl-10 text-xs py-2 w-full"
+                  />
+                </div>
+                <div className="flex gap-2 w-full sm:w-auto overflow-x-auto">
+                  <button
+                    onClick={() => setRealtimeFilter('all')}
+                    className={`ds-btn ds-btn-xs ${realtimeFilter === 'all' ? 'ds-btn-primary' : 'ds-btn-secondary'}`}
+                  >
+                    Tất Cả ({totalCount})
+                  </button>
+                  <button
+                    onClick={() => setRealtimeFilter('scored')}
+                    className={`ds-btn ds-btn-xs ${realtimeFilter === 'scored' ? 'bg-emerald-600 text-white' : 'ds-btn-secondary'}`}
+                  >
+                    🟢 Đã Có Điểm ({scoredCount})
+                  </button>
+                  <button
+                    onClick={() => setRealtimeFilter('pending')}
+                    className={`ds-btn ds-btn-xs ${realtimeFilter === 'pending' ? 'bg-amber-600 text-white' : 'ds-btn-secondary'}`}
+                  >
+                    ⚪ Chưa Có Điểm ({pendingCount})
+                  </button>
+                </div>
+              </div>
+
+              {/* Realtime Leaderboard Table */}
+              <div className="ds-card overflow-x-auto border border-slate-800 shadow-xl rounded-2xl">
+                <table className="ds-table w-full text-left">
+                  <thead>
+                    <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider bg-[#0f172a]/80">
+                      <th className="py-3.5 px-4">Mã PV</th>
+                      <th className="py-3.5 px-4">Họ & Tên</th>
+                      <th className="py-3.5 px-4">Lớp / Ban</th>
+                      <th className="py-3.5 px-4 text-center">Trạng Thái Chấm</th>
+                      {hasDon && <th className="py-3.5 px-3 text-center">📝 TB Đơn</th>}
+                      {hasPv && <th className="py-3.5 px-3 text-center">🎙️ TB PV</th>}
+                      {hasTw && <th className="py-3.5 px-3 text-center">👥 TB TW</th>}
+                      {hasTtQuatrinh && <th className="py-3.5 px-3 text-center text-amber-300">⚡ TT Quá Trình</th>}
+                      {hasTtKetqua && <th className="py-3.5 px-3 text-center text-purple-300">🏆 TT Kết Quả</th>}
+                      <th className="py-3.5 px-4 text-center">Tổng Điểm</th>
+                      <th className="py-3.5 px-4 text-center">Thao Tác</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60 text-xs">
+                    {filteredList.length === 0 ? (
+                      <tr>
+                        <td colSpan={11} className="text-center py-10 text-slate-500 italic">
+                          Không có dữ liệu ứng viên phù hợp với bộ lọc.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredList.map((s) => {
+                        const code = s.interview_code || s.id;
+                        const rScores = s.round_scores || {};
+                        const getRoundBadge = (val) => {
+                          if (val === undefined || val === null || val === 0) return <span className="text-slate-600 font-mono">-</span>;
+                          const num = parseFloat(val);
+                          let colorClass = 'bg-slate-800 text-slate-300';
+                          if (num >= 8.0) colorClass = 'bg-emerald-950 text-emerald-300 border border-emerald-700/50 font-bold';
+                          else if (num >= 6.5) colorClass = 'bg-blue-950 text-blue-300 border border-blue-700/50 font-bold';
+                          else if (num >= 5.0) colorClass = 'bg-amber-950 text-amber-300 border border-amber-700/50';
+                          else colorClass = 'bg-rose-950 text-rose-300 border border-rose-700/50';
+
+                          return (
+                            <span className={`px-2 py-0.5 rounded text-[11px] ${colorClass}`}>
+                              {num.toFixed(1)}
+                            </span>
+                          );
+                        };
+
+                        const hasAnyScore = Object.keys(rScores).length > 0 || (s.total_score && s.total_score > 0);
+                        const commentsCount = s.comments?.length || 0;
+
+                        return (
+                          <tr key={s.id} className="hover:bg-slate-800/40 transition-colors">
+                            <td className="py-3.5 px-4 font-mono font-bold text-amber-400">
+                              {code}
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <div className="font-bold text-slate-100 text-sm">{s.full_name}</div>
+                            </td>
+                            <td className="py-3.5 px-4 text-slate-300">
+                              <div>{s.class_name || 'N/A'}</div>
+                              <div className="text-[11px] text-blue-400">{s.desired_dept || 'N/A'}</div>
+                            </td>
+                            <td className="py-3.5 px-4 text-center">
+                              {hasAnyScore ? (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-950/80 text-emerald-300 border border-emerald-700/50">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                  Đã Có Điểm
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-800/80 text-slate-400 border border-slate-700/50">
+                                  Chưa Chấm
+                                </span>
+                              )}
+                            </td>
+                            {hasDon && <td className="py-3.5 px-3 text-center">{getRoundBadge(rScores.don)}</td>}
+                            {hasPv && <td className="py-3.5 px-3 text-center">{getRoundBadge(rScores.phongvan)}</td>}
+                            {hasTw && <td className="py-3.5 px-3 text-center">{getRoundBadge(rScores.teamwork)}</td>}
+                            {hasTtQuatrinh && <td className="py-3.5 px-3 text-center">{getRoundBadge(rScores.thuthach_quatrinh)}</td>}
+                            {hasTtKetqua && <td className="py-3.5 px-3 text-center">{getRoundBadge(rScores.thuthach_ketqua)}</td>}
+                            <td className="py-3.5 px-4 text-center">
+                              <span className="text-base font-extrabold text-emerald-400 font-mono">
+                                {s.total_score && s.total_score > 0 ? s.total_score.toFixed(2) : (s.avg_score ? s.avg_score.toFixed(2) : '0.00')}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-4 text-center">
+                              <div className="flex justify-center items-center gap-2">
+                                <button
+                                  onClick={() => {
+                                    setSelectedRealtimeCandidate(s);
+                                    setShowRealtimeModal(true);
+                                  }}
+                                  className="ds-btn ds-btn-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
+                                >
+                                  💬 Nhận Xét ({commentsCount})
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Realtime Comments & Score Breakdown Modal */}
+              {showRealtimeModal && selectedRealtimeCandidate && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+                  <div className="bg-[#111827] border border-slate-700 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl">
+                    <div className="p-5 border-b border-slate-800 flex justify-between items-center bg-[#0f172a]">
+                      <div>
+                        <h3 className="font-bold text-lg text-white">
+                          Chi Tiết Điểm Live - {selectedRealtimeCandidate.full_name} ({selectedRealtimeCandidate.interview_code})
+                        </h3>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          Lớp: {selectedRealtimeCandidate.class_name} | Ban: {selectedRealtimeCandidate.desired_dept}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setShowRealtimeModal(false)}
+                        className="text-slate-400 hover:text-white p-1"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <div className="p-6 overflow-y-auto space-y-6">
+                      {/* Score Breakdown Summary */}
+                      <div>
+                        <h4 className="text-xs font-bold uppercase text-slate-400 mb-3 tracking-wider">📊 Tổng Điểm & Các Vòng</h4>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                          {Object.entries(selectedRealtimeCandidate.round_scores || {}).map(([rk, val]) => (
+                            <div key={rk} className="bg-[#1e293b] p-3 rounded-xl border border-slate-800">
+                              <div className="text-slate-400 capitalize">{rk === 'phongvan' ? 'Phỏng Vấn' : rk === 'don' ? 'Vòng Đơn' : rk === 'teamwork' ? 'Teamwork' : rk}</div>
+                              <div className="text-lg font-bold text-emerald-400 font-mono mt-0.5">{parseFloat(val || 0).toFixed(2)}</div>
+                            </div>
+                          ))}
+                          <div className="bg-emerald-950/40 p-3 rounded-xl border border-emerald-700/50 col-span-2 sm:col-span-1">
+                            <div className="text-emerald-300 font-semibold">Tổng Điểm</div>
+                            <div className="text-xl font-extrabold text-emerald-400 font-mono mt-0.5">
+                              {selectedRealtimeCandidate.total_score ? selectedRealtimeCandidate.total_score.toFixed(2) : '0.00'}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Detailed Interviewer Comments */}
+                      <div>
+                        <h4 className="text-xs font-bold uppercase text-slate-400 mb-3 tracking-wider">💬 Nhận Xét Từ Giám Khảo</h4>
+                        {!selectedRealtimeCandidate.comments || selectedRealtimeCandidate.comments.length === 0 ? (
+                          <div className="text-slate-500 italic text-xs py-4 text-center bg-slate-900/50 rounded-xl">
+                            Chưa có nhận xét nào được ghi lại.
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {selectedRealtimeCandidate.comments.map((cItem, cIdx) => (
+                              <div key={cIdx} className="bg-slate-900/80 p-3.5 rounded-xl border border-slate-800 space-y-1 text-xs">
+                                <div className="flex justify-between items-center text-slate-300 font-semibold">
+                                  <span>👤 {cItem.interviewer_name || cItem.interviewer_id}</span>
+                                  <span className="text-[11px] text-blue-400 capitalize bg-blue-950/60 px-2 py-0.5 rounded border border-blue-800/40">
+                                    {cItem.round_type || 'Giám Khảo'}
+                                  </span>
+                                </div>
+                                <p className="text-slate-200 leading-relaxed pt-1 font-sans">
+                                  "{cItem.comments}"
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="p-4 border-t border-slate-800 bg-[#0f172a] flex justify-end">
+                      <button
+                        onClick={() => setShowRealtimeModal(false)}
+                        className="ds-btn ds-btn-secondary text-xs"
+                      >
+                        Đóng
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* Results Tab - for all department members */}
+        {activeTab === 'results' && currentSeason && (() => {
          const scoringTypes = (() => {
            if (!currentSeason || !currentSeason.scoring_type) return [];
            const raw = currentSeason.scoring_type;
