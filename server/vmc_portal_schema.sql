@@ -1,6 +1,6 @@
 -- ============================================================
 -- VMC PORTAL - DATABASE SCHEMA FOR PHPMYADMIN / MYSQL
--- Generated at: 2026-09-25T12:07:16.948Z
+-- Generated at: 2026-09-25T16:34:34.577Z
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS Members (
@@ -180,4 +180,20 @@ CREATE TABLE IF NOT EXISTS Recruitment_Scores (
   score DECIMAL(5,2) DEFAULT 0,
   comments TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS Recruitment_Evaluations (
+  id VARCHAR(100) PRIMARY KEY,
+  season_id VARCHAR(100) NOT NULL,
+  candidate_id VARCHAR(100) NOT NULL,
+  interview_code VARCHAR(100),
+  interviewer_id VARCHAR(100) NOT NULL,
+  round_type VARCHAR(50) NOT NULL,
+  total_score DECIMAL(5,2) DEFAULT 0,
+  avg_score DECIMAL(5,2) DEFAULT 0,
+  scores_json LONGTEXT,
+  comments TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY candidate_interviewer_round (candidate_id, interviewer_id, round_type)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
