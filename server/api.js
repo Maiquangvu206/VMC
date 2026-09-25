@@ -1913,13 +1913,23 @@ router.post('/recruitment/scores', async (req, res) => {
     if (!Array.isArray(scores) || scores.length === 0)
       return res.status(400).json({ success: false, error: 'Thiếu dữ liệu điểm' });
     for (const s of scores) {
-      const sid = 'score-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
-      await queryDatabase(
-        `INSERT INTO Recruitment_Scores (id, season_id, candidate_id, interviewer_id, criteria_id, score, comments)
-         VALUES (?, ?, ?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE score = VALUES(score), comments = VALUES(comments)`,
-        [sid, season_id, candidate_id, interviewer_id, s.criteria_id, s.score, s.comments || comments || null]
+      const existing = await queryDatabase(
+        `SELECT id FROM Recruitment_Scores WHERE candidate_id = ? AND interviewer_id = ? AND criteria_id = ?`,
+        [candidate_id, interviewer_id, s.criteria_id]
       );
+      if (existing.length > 0) {
+        await queryDatabase(
+          `UPDATE Recruitment_Scores SET score = ?, comments = ?, season_id = ? WHERE id = ?`,
+          [s.score, s.comments || comments || null, season_id, existing[0].id]
+        );
+      } else {
+        const sid = 'score-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+        await queryDatabase(
+          `INSERT INTO Recruitment_Scores (id, season_id, candidate_id, interviewer_id, criteria_id, score, comments)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [sid, season_id, candidate_id, interviewer_id, s.criteria_id, s.score, s.comments || comments || null]
+        );
+      }
     }
     await queryDatabase(
       "UPDATE Recruitment_Candidates SET status = 'scored' WHERE id = ?",
@@ -1933,6 +1943,16 @@ router.post('/recruitment/scores', async (req, res) => {
 router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
   try {
     const threshold = parseFloat(req.query.threshold) || 0;
+    // Auto deduplicate historical score rows if any exist
+    await queryDatabase(`
+      DELETE s1 FROM Recruitment_Scores s1
+      INNER JOIN Recruitment_Scores s2 
+      WHERE s1.candidate_id = s2.candidate_id 
+        AND s1.interviewer_id = s2.interviewer_id 
+        AND s1.criteria_id = s2.criteria_id 
+        AND s1.created_at < s2.created_at
+    `).catch(() => {});
+
     // Get season quota
     const seasonRow = await queryDatabase('SELECT quota FROM Recruitment_Seasons WHERE id = ?', [req.params.seasonId]);
     const quota = seasonRow[0]?.quota || 0;
@@ -1945,7 +1965,7 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
       ORDER BY c.created_at ASC
     `, [req.params.seasonId]);
 
-    // Fetch average scores for each candidate per round_type (excluding 0 scores for rounds other than don & thuthach_ketqua)
+    // Fetch average scores for each candidate per round_type
     const roundScoresRows = await queryDatabase(`
       SELECT 
         s.candidate_id,
@@ -1955,7 +1975,6 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
       FROM Recruitment_Scores s
       LEFT JOIN Recruitment_Criteria cr ON s.criteria_id = cr.id
       WHERE s.season_id = ?
-        AND (COALESCE(cr.round_type, 'teamwork') IN ('don', 'thuthach_ketqua') OR s.score > 0)
       GROUP BY s.candidate_id, COALESCE(cr.round_type, 'teamwork')
     `, [req.params.seasonId]);
 
@@ -1993,6 +2012,10 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
       }
       const avgVal = parseFloat(r.round_avg) || 0;
       roundScoresMap[r.candidate_id][r.round_type] = avgVal;
+      if (r.round_type === 'thuthach') {
+        roundScoresMap[r.candidate_id]['thuthach_quatrinh'] = avgVal;
+        roundScoresMap[r.candidate_id]['thuthach_ketqua'] = avgVal;
+      }
       totalScoreMap[r.candidate_id] = parseFloat(((totalScoreMap[r.candidate_id] || 0) + avgVal).toFixed(2));
     });
 

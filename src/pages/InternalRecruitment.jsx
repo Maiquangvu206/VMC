@@ -142,8 +142,8 @@ export const InternalRecruitment = () => {
       };
     }
 
-    if (rScores.thuthach_quatrinh !== undefined || rScores.thuthach_ketqua !== undefined || activeRound.includes('thuthach')) {
-      const isScored = rScores.thuthach_quatrinh !== undefined || rScores.thuthach_ketqua !== undefined;
+    if (rScores.thuthach_quatrinh !== undefined || rScores.thuthach_ketqua !== undefined || rScores.thuthach !== undefined || activeRound.includes('thuthach')) {
+      const isScored = rScores.thuthach_quatrinh !== undefined || rScores.thuthach_ketqua !== undefined || rScores.thuthach !== undefined;
       return {
         label: `⚡ Vòng 3: Thử Thách (${isScored ? 'Đã chấm' : 'Chờ chấm'})`,
         round: 'Vòng 3: Thử Thách',

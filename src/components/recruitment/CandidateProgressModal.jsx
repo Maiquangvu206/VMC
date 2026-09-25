@@ -65,10 +65,11 @@ export const CandidateProgressModal = ({
       stepNum: 3,
       title: 'Vòng 3: Thử Thách',
       icon: Zap,
-      scoreProcess: rScores.thuthach_quatrinh,
-      scoreResult: rScores.thuthach_ketqua,
-      isCompleted: rScores.thuthach_quatrinh !== undefined || rScores.thuthach_ketqua !== undefined,
-      comments: comments.filter(c => c.round_type === 'thuthach_quatrinh' || c.round_type === 'thuthach_ketqua'),
+      score: rScores.thuthach,
+      scoreProcess: rScores.thuthach_quatrinh ?? rScores.thuthach,
+      scoreResult: rScores.thuthach_ketqua ?? rScores.thuthach,
+      isCompleted: rScores.thuthach_quatrinh !== undefined || rScores.thuthach_ketqua !== undefined || rScores.thuthach !== undefined,
+      comments: comments.filter(c => c.round_type === 'thuthach_quatrinh' || c.round_type === 'thuthach_ketqua' || c.round_type === 'thuthach'),
       scorersProcess: challengeProcessScorers,
       scorersResult: challengeResultScorers
     },
@@ -228,6 +229,11 @@ export const CandidateProgressModal = ({
                 <span className="font-bold text-slate-200 text-sm">Vòng 3: Thử Thách Chuyên Môn</span>
               </div>
               <div className="flex items-center gap-2">
+                {rScores.thuthach !== undefined && rScores.thuthach_quatrinh === undefined && (
+                  <span className="ds-badge text-[11px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    Điểm: {rScores.thuthach}đ
+                  </span>
+                )}
                 {rScores.thuthach_quatrinh !== undefined && (
                   <span className="ds-badge text-[11px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30">
                     Quá trình: {rScores.thuthach_quatrinh}đ
@@ -238,7 +244,7 @@ export const CandidateProgressModal = ({
                     Kết quả: {rScores.thuthach_ketqua}đ
                   </span>
                 )}
-                {rScores.thuthach_quatrinh === undefined && rScores.thuthach_ketqua === undefined && (
+                {rScores.thuthach_quatrinh === undefined && rScores.thuthach_ketqua === undefined && rScores.thuthach === undefined && (
                   <span className="ds-badge text-xs font-mono text-slate-400 bg-slate-800">Chưa chấm</span>
                 )}
               </div>
@@ -246,7 +252,7 @@ export const CandidateProgressModal = ({
             {candidate.challenge_topic && (
               <p className="text-xs text-amber-300 font-medium">🎯 Đề bài: {candidate.challenge_topic}</p>
             )}
-            {comments.filter(c => c.round_type === 'thuthach_quatrinh' || c.round_type === 'thuthach_ketqua').map((cmt, i) => (
+            {comments.filter(c => c.round_type === 'thuthach_quatrinh' || c.round_type === 'thuthach_ketqua' || c.round_type === 'thuthach').map((cmt, i) => (
               <div key={i} className="bg-slate-900/90 p-2.5 rounded-lg border border-slate-800 text-xs text-slate-300 italic">
                 "{cmt.comments}"
               </div>
