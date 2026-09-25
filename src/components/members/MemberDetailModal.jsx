@@ -123,13 +123,13 @@ export const MemberDetailModal = ({ show, onClose, member, onEdit, onLock, onRes
            <button
              onClick={onLock}
              className={`ds-btn ds-btn-xs flex-1 min-w-[90px] ${
-               member.status === 'Locked'
+               (member.status === 'Locked' || member.status === 'Suspended')
                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                  : 'bg-rose-500/20 text-red-300 border border-rose-500/40'
              }`}
            >
              <Lock className="w-3.5 h-3.5" />
-             {member.status === 'Locked' ? 'Mở khóa' : 'Khóa'}
+             {(member.status === 'Locked' || member.status === 'Suspended') ? 'Mở khóa' : 'Khóa'}
            </button>
            <button
              onClick={onResetPassword}

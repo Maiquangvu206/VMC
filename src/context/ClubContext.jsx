@@ -950,32 +950,34 @@ setCurrentUser(acc);
   const toggleAccountStatus = async (id) => {
     if (!canManageAccounts) {
       showToast('⛔ Quyền bị từ chối! Chỉ có Super Admin (Chủ Nhiệm CLB) và Kỹ Thuật Ban Đối Ngoại - Nhân Sự mới có quyền khóa/mở khóa tài khoản!', 'error');
-      return;
+      return false;
     }
 
     const member = (db.members || []).find(m =>
       String(m.id) === String(id) ||
-      String(m.memberCode || m.member_code).toUpperCase() === String(id).toUpperCase() ||
-      String(m.username).toLowerCase() === String(id).toLowerCase()
+      String(m.memberCode || m.member_code || '').toUpperCase() === String(id).toUpperCase() ||
+      String(m.username || '').toLowerCase() === String(id).toLowerCase()
     );
-    if (!member) return;
+    if (!member) {
+      showToast('❌ Không tìm thấy thông tin thành viên!', 'error');
+      return false;
+    }
 
-    const newStatus = member.status === 'Active' ? 'Suspended' : 'Active';
+    const isLocked = member.status === 'Suspended' || member.status === 'Locked';
+    const newStatus = isLocked ? 'Active' : 'Suspended';
     const targetCode = member.memberCode || member.member_code || member.id;
 
     try {
-      // Gọi API cập nhật status vào DB trước (không optimistic update)
+      // Gọi API cập nhật status vào DB trước
       console.log('🔒 Đang gọi API cập nhật status:', targetCode, '->', newStatus);
       const res = await updateMemberAPI(targetCode, {
         status: newStatus,
         name: member.name
       });
 
-      console.log('🔒 API Response:', res);
-
       if (!res || !res.success) {
         showToast(`❌ Lỗi cập nhật trạng thái tài khoản! ${res?.message || 'Unknown error'}`, 'error');
-        return;
+        return false;
       }
 
       // API thành công, cập nhật local state
@@ -990,11 +992,11 @@ setCurrentUser(acc);
       }));
 
       showToast(`✅ Đã ${newStatus === 'Suspended' ? 'khóa' : 'mở khóa'} tài khoản thành công!`, 'success');
+      return newStatus;
     } catch (err) {
-      // Lỗi kết nối
       console.error('❌ Lỗi toggleAccountStatus:', err);
       showToast(`❌ Lỗi kết nối server! ${err.message}`, 'error');
-      return;
+      return false;
     }
 
     if (newStatus === 'Suspended') {

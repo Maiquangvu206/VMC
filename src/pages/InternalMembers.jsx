@@ -625,7 +625,13 @@ export const InternalMembers = () => {
         onClose={() => setSelectedMember(null)}
         member={selectedMember}
         onEdit={() => setEditingMember(selectedMember)}
-        onLock={() => toggleAccountStatus(selectedMember?.id || selectedMember?.memberCode)}
+        onLock={async () => {
+          const targetId = selectedMember?.id || selectedMember?.memberCode;
+          const newSt = await toggleAccountStatus(targetId);
+          if (newSt) {
+            setSelectedMember(prev => prev ? { ...prev, status: newSt } : null);
+          }
+        }}
         onResetPassword={() => resetAccountPassword(selectedMember?.memberCode || selectedMember?.id)}
         isHRMember={isHRMember}
         onAddMilestone={() => setIsAddMsModalOpen(true)}
