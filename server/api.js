@@ -2017,14 +2017,36 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
     const seasonRow = await queryDatabase('SELECT quota FROM Recruitment_Seasons WHERE id = ?', [seasonId]);
     const quota = seasonRow[0]?.quota || 0;
     
-    // Fetch candidates including interview_code and assigned scorer columns
-    const candidates = await queryDatabase(`
-      SELECT c.id AS candidate_id, c.interview_code, c.full_name, c.class_name, c.desired_dept, c.status, c.notes,
-             c.interviewer_ids, c.teamwork_scorer_ids, c.challenge_process_scorer_ids, c.challenge_result_scorer_ids
-      FROM Recruitment_Candidates c
-      WHERE c.season_id = ?
-      ORDER BY c.created_at ASC
-    `, [seasonId]);
+    // Auto-backfill scores from Recruitment_Scores into Recruitment_Evaluations table
+    try {
+      await queryDatabase(`
+        INSERT INTO Recruitment_Evaluations (id, candidate_id, interview_code, season_id, interviewer_id, round_type, total_score, avg_score, comments)
+        SELECT 
+          CONCAT('eval-', s.candidate_id, '-', COALESCE(s.interviewer_id, '0'), '-', COALESCE(cr.round_type, 'don')) AS id,
+          s.candidate_id,
+          COALESCE(c.interview_code, s.candidate_id),
+          COALESCE(s.season_id, c.season_id, ?),
+          s.interviewer_id,
+          COALESCE(NULLIF(cr.round_type, ''), 'don') AS round_type,
+          ROUND(SUM(s.score), 2) AS total_score,
+          ROUND(AVG(s.score), 2) AS avg_score,
+          MAX(s.comments) AS comments
+        FROM Recruitment_Scores s
+        LEFT JOIN Recruitment_Criteria cr ON s.criteria_id = cr.id
+        LEFT JOIN Recruitment_Candidates c ON (s.candidate_id = c.id OR s.candidate_id = c.interview_code)
+        WHERE (s.season_id = ? OR s.season_id IS NULL OR s.season_id = ''
+           OR s.candidate_id IN (SELECT id FROM Recruitment_Candidates WHERE season_id = ?)
+           OR s.candidate_id IN (SELECT interview_code FROM Recruitment_Candidates WHERE season_id = ?))
+        GROUP BY s.candidate_id, s.interviewer_id, COALESCE(NULLIF(cr.round_type, ''), 'don')
+        ON DUPLICATE KEY UPDATE 
+          total_score = VALUES(total_score),
+          avg_score = VALUES(avg_score),
+          comments = VALUES(comments),
+          season_id = VALUES(season_id)
+      `, [seasonId, seasonId, seasonId, seasonId]);
+    } catch (e) {
+      console.warn('Notice: Auto backfill Recruitment_Evaluations:', e.message);
+    }
 
     // Fetch average scores for each candidate per round_type
     const roundScoresRows = await queryDatabase(`
@@ -2194,6 +2216,31 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
         if (rType === 'thuthach') {
           roundScoresMap[k]['thuthach_quatrinh'] = avgVal;
           roundScoresMap[k]['thuthach_ketqua'] = avgVal;
+        }
+      });
+    });
+
+    evalRows.forEach(r => {
+      const cand = candidates.find(c => 
+        String(c.candidate_id) === String(r.candidate_id) || 
+        String(c.interview_code) === String(r.candidate_id) ||
+        String(c.candidate_id) === String(r.interview_code) ||
+        String(c.interview_code) === String(r.interview_code)
+      );
+      const keys = [String(r.candidate_id || '')];
+      if (r.interview_code) keys.push(String(r.interview_code));
+      if (cand) {
+        if (cand.candidate_id) keys.push(String(cand.candidate_id));
+        if (cand.interview_code) keys.push(String(cand.interview_code));
+      }
+      const scoreVal = parseFloat(r.avg_score || r.total_score) || 0;
+      keys.forEach(k => {
+        if (k) {
+          if (!roundScoresMap[k]) roundScoresMap[k] = {};
+          const rType = r.round_type || 'don';
+          if (roundScoresMap[k][rType] === undefined || roundScoresMap[k][rType] === 0) {
+            roundScoresMap[k][rType] = scoreVal;
+          }
         }
       });
     });
