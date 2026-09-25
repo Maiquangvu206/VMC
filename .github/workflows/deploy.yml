@@ -37,6 +37,7 @@ jobs:
       - name: Restart Server with PM2
         run: |
           export PATH=$PATH:$HOME/.nvm/versions/node/$(node -v)/bin:$HOME/.npm-global/bin:/usr/local/bin
+          node server/init_db.js || true
           if command -v pm2 &> /dev/null; then
             pm2 restart vmc-server || pm2 start server/index.js --name "vmc-server" --cwd "$(pwd)"
             pm2 save

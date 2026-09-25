@@ -70,6 +70,49 @@ queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN facebook TEXT').cat
 queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN challenge_topic TEXT').catch(() => {});
 queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN interview_code VARCHAR(100)').catch(() => {});
 queryDatabase("UPDATE Recruitment_Candidates SET interview_code = id WHERE interview_code IS NULL OR interview_code = ''").catch(() => {});
+
+queryDatabase(`
+  CREATE TABLE IF NOT EXISTS Recruitment_Evaluations (
+    id VARCHAR(100) PRIMARY KEY,
+    season_id VARCHAR(100) NOT NULL,
+    candidate_id VARCHAR(100) NOT NULL,
+    interview_code VARCHAR(100),
+    interviewer_id VARCHAR(100) NOT NULL,
+    round_type VARCHAR(50) NOT NULL,
+    total_score DECIMAL(5,2) DEFAULT 0,
+    avg_score DECIMAL(5,2) DEFAULT 0,
+    scores_json LONGTEXT,
+    comments TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY candidate_interviewer_round (candidate_id, interviewer_id, round_type)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+`).then(async () => {
+  try {
+    await queryDatabase(`
+      INSERT INTO Recruitment_Evaluations (id, candidate_id, interview_code, season_id, interviewer_id, round_type, total_score, avg_score, comments)
+      SELECT 
+        CONCAT('eval-', s.candidate_id, '-', COALESCE(s.interviewer_id, '0'), '-', COALESCE(cr.round_type, 'don')) AS id,
+        s.candidate_id,
+        COALESCE(c.interview_code, s.candidate_id),
+        COALESCE(s.season_id, c.season_id, 'season-1790279561020'),
+        s.interviewer_id,
+        COALESCE(NULLIF(cr.round_type, ''), 'don') AS round_type,
+        ROUND(SUM(s.score), 2) AS total_score,
+        ROUND(AVG(s.score), 2) AS avg_score,
+        MAX(s.comments) AS comments
+      FROM Recruitment_Scores s
+      LEFT JOIN Recruitment_Criteria cr ON s.criteria_id = cr.id
+      LEFT JOIN Recruitment_Candidates c ON (s.candidate_id = c.id OR s.candidate_id = c.interview_code)
+      GROUP BY s.candidate_id, s.interviewer_id, COALESCE(NULLIF(cr.round_type, ''), 'don')
+      ON DUPLICATE KEY UPDATE 
+        total_score = VALUES(total_score),
+        avg_score = VALUES(avg_score),
+        comments = VALUES(comments),
+        season_id = VALUES(season_id)
+    `);
+  } catch (e) {}
+}).catch(() => {});
 queryDatabase(`
   CREATE TABLE IF NOT EXISTS Birthday_Mail_Logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
