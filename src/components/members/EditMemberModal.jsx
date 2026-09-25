@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, User, Mail, Hash, GraduationCap, Briefcase, Phone, Calendar, MapPin, Globe, Save } from 'lucide-react';
+import { X, User, Mail, Hash, GraduationCap, Briefcase, Phone, Calendar, MapPin, Globe, Save, ShieldCheck } from 'lucide-react';
 
 export const EditMemberModal = ({ show, onClose, member, formData, setFormData, onSubmit, loading }) => {
   if (!show || !member) return null;
@@ -72,25 +72,58 @@ export const EditMemberModal = ({ show, onClose, member, formData, setFormData, 
              </div>
            </div>
 
-                       <div>
-              <label className="ds-field-label">Ban *</label>
-              <div className="relative flex items-center w-full">
-                <Briefcase className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
-                <select
-                  value={formData.deptName || ''}
-                  onChange={(e) => setFormData({ ...formData, deptName: e.target.value })}
-                  className="ds-input ds-select w-full cursor-pointer"
-                  style={{ paddingLeft: '2.75rem' }}
-                >
-                  <option value="">-- Chọn Ban --</option>
-                  <option value="Ban Sản Xuất Media">Ban Sản Xuất Media</option>
-                  <option value="Ban Nội Dung - Phát Thanh">Ban Nội Dung - Phát Thanh</option>
-                  <option value="Ban Đối Ngoại - Nhân Sự">Ban Đối Ngoại - Nhân Sự</option>
-                  <option value="Ban Chủ Nhiệm">Ban Chủ Nhiệm</option>
-                  <option value="Ban Cố Vấn">Ban Cố Vấn</option>
-                </select>
-              </div>
-            </div>
+           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+             <div>
+               <label className="ds-field-label">Ban *</label>
+               <div className="relative flex items-center w-full">
+                 <Briefcase className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
+                 <select
+                   value={formData.deptName || ''}
+                   onChange={(e) => setFormData({ ...formData, deptName: e.target.value })}
+                   className="ds-input ds-select w-full cursor-pointer"
+                   style={{ paddingLeft: '2.75rem' }}
+                 >
+                   <option value="">-- Chọn Ban --</option>
+                   <option value="Ban Sản Xuất Media">Ban Sản Xuất Media</option>
+                   <option value="Ban Nội Dung - Phát Thanh">Ban Nội Dung - Phát Thanh</option>
+                   <option value="Ban Đối Ngoại - Nhân Sự">Ban Đối Ngoại - Nhân Sự</option>
+                   <option value="Ban Chủ Nhiệm">Ban Chủ Nhiệm</option>
+                   <option value="Ban Cố Vấn">Ban Cố Vấn</option>
+                 </select>
+               </div>
+             </div>
+             <div>
+               <label className="ds-field-label">Chức vụ / Chức danh *</label>
+               <div className="relative flex items-center w-full">
+                 <ShieldCheck className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
+                 <input
+                   type="text"
+                   value={formData.roleTitle || ''}
+                   onChange={(e) => setFormData({ ...formData, roleTitle: e.target.value })}
+                   className="ds-input w-full"
+                   style={{ paddingLeft: '2.75rem' }}
+                   placeholder="VD: Thành Viên VMC, Trưởng Ban, Phó Ban..."
+                   list="editMemberRoleTitleOptions"
+                 />
+                 <datalist id="editMemberRoleTitleOptions">
+                   <option value="Thành Viên VMC" />
+                   <option value="Trưởng Ban Sản Xuất" />
+                   <option value="Phó Ban Sản Xuất" />
+                   <option value="Thành Viên Ban Sản Xuất" />
+                   <option value="Trưởng Ban Nội Dung - Phát Thanh" />
+                   <option value="Phó Ban Nội Dung - Phát Thanh" />
+                   <option value="Thành Viên Ban Nội Dung - Phát Thanh" />
+                   <option value="Trưởng Ban Đối Ngoại - Nhân Sự" />
+                   <option value="Phó Ban Đối Ngoại - Nhân Sự" />
+                   <option value="Kỹ Thuật Ban Đối Ngoại - Nhân Sự" />
+                   <option value="Thành Viên Ban Đối Ngoại - Nhân Sự" />
+                   <option value="Chủ Nhiệm CLB" />
+                   <option value="Phó Chủ Nhiệm CLB" />
+                   <option value="Cố Vấn CLB" />
+                 </datalist>
+               </div>
+             </div>
+           </div>
 
            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
              <div>

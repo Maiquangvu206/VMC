@@ -82,24 +82,27 @@ setCurrentUser(user);
 
   const logout = async () => {
     const sessionId = sessionStorage.getItem('VMC_SESSION_ID') || currentSessionId;
-    try {
-      await fetch('/api/sessions/logout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, memberId: currentUser?.id, username: currentUser?.username || currentUser?.memberCode })
-      });
-    } catch (e) {
-      console.warn('⚠️ Không thể cập nhật trạng thái phiên khi đăng xuất:', e.message);
-    }
+    const userId = currentUser?.id;
+    const uname = currentUser?.username || currentUser?.memberCode;
+
     sessionStorage.removeItem('VMC_SESSION_ID');
     sessionStorage.removeItem('VMC_CURRENT_USER');
     sessionStorage.removeItem('VMC_IS_AUTH');
     setIsAuthenticated(false);
     setCurrentUser(null);
+
     const newId = 'sess-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now();
     setCurrentSessionId(newId);
     try {
       sessionStorage.setItem('VMC_SESSION_ID', newId);
+    } catch (e) {}
+
+    try {
+      fetch('/api/sessions/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
+        body: JSON.stringify({ sessionId, memberId: userId, username: uname })
+      }).catch(() => {});
     } catch (e) {}
   };
 

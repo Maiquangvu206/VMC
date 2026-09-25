@@ -2040,14 +2040,22 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
-// Kiểm tra interviewer đã chấm ứng viên nào chưa (trả về list candidate_id đã chấm)
+// Kiểm tra interviewer đã chấm ứng viên nào chưa (trả về list candidate_id đã chấm trong vòng đó)
 router.get('/recruitment/scores/submitted', async (req, res) => {
   try {
-    const { season_id, interviewer_id } = req.query;
-    const rows = await queryDatabase(
-      'SELECT DISTINCT candidate_id FROM Recruitment_Scores WHERE season_id = ? AND interviewer_id = ?',
-      [season_id, interviewer_id]
-    );
+    const { season_id, interviewer_id, round_type } = req.query;
+    let sql = `
+      SELECT DISTINCT s.candidate_id 
+      FROM Recruitment_Scores s
+      LEFT JOIN Recruitment_Criteria cr ON s.criteria_id = cr.id
+      WHERE s.season_id = ? AND s.interviewer_id = ?
+    `;
+    const params = [season_id, interviewer_id];
+    if (round_type) {
+      sql += " AND COALESCE(cr.round_type, 'teamwork') = ?";
+      params.push(round_type);
+    }
+    const rows = await queryDatabase(sql, params);
     res.json({ success: true, data: rows.map(r => r.candidate_id) });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });

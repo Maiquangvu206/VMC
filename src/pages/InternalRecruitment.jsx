@@ -283,10 +283,10 @@ export const InternalRecruitment = () => {
       fetchCandidates(currentSeason.id);
       fetchScoresSummary(currentSeason.id);
       if (currentUser?.id) {
-        fetchSubmittedCandidates(currentSeason.id);
+        fetchSubmittedCandidates(currentSeason.id, scoringTypeFilter);
       }
     }
-  }, [currentSeason, currentUser]);
+  }, [currentSeason, currentUser, scoringTypeFilter]);
 
   const fetchSeasons = async () => {
     try {
@@ -358,9 +358,11 @@ export const InternalRecruitment = () => {
     }
   };
 
-  const fetchSubmittedCandidates = async (seasonId) => {
+  const fetchSubmittedCandidates = async (seasonId, roundType) => {
+    if (!seasonId || !currentUser?.id) return;
+    const rType = roundType || scoringTypeFilter || currentSeason?.active_round || 'don';
     try {
-      const res = await fetch(`/api/recruitment/scores/submitted?season_id=${seasonId}&interviewer_id=${currentUser.id}`, { headers: { 'ngrok-skip-browser-warning': 'true' } });
+      const res = await fetch(`/api/recruitment/scores/submitted?season_id=${seasonId}&interviewer_id=${currentUser.id}&round_type=${rType}`, { headers: { 'ngrok-skip-browser-warning': 'true' } });
       const data = await res.json();
       if (data.success && Array.isArray(data.data)) {
         setSubmittedCandidates(data.data);
@@ -728,7 +730,7 @@ export const InternalRecruitment = () => {
         setSelectedQuestions({});
         setQuestionComments({});
         setSubmittedCandidates([...submittedCandidates, selectedCandidate.id]);
-        fetchSubmittedCandidates(currentSeason.id);
+        fetchSubmittedCandidates(currentSeason.id, scoringTypeFilter);
         fetchCandidates(currentSeason.id);
         fetchScoresSummary(currentSeason.id);
         

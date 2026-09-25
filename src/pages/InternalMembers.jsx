@@ -133,21 +133,18 @@ export const InternalMembers = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTerm, setSelectedTerm] = useState('ALL');
-  const [selectedDept, setSelectedDept] = useState('ALL');
+  const [selectedDept, setSelectedDept] = useState(membersFilterDept || 'ALL');
 
   React.useEffect(() => {
-    if (!membersFilterDept) return;
-    if (membersFilterDept === 'ALL') {
-      setSelectedDept('ALL');
-      return;
+    if (membersFilterDept && membersFilterDept !== selectedDept) {
+      setSelectedDept(membersFilterDept);
     }
-    setSelectedDept(membersFilterDept);
   }, [membersFilterDept]);
 
-  React.useEffect(() => {
-    if (!membersFilterDept || membersFilterDept === selectedDept) return;
-    setMembersFilterDept(selectedDept);
-  }, [selectedDept, membersFilterDept, setMembersFilterDept]);
+  const handleDeptChange = (newDept) => {
+    setSelectedDept(newDept);
+    setMembersFilterDept(newDept);
+  };
 
   const hasSuperAdmin = members.some(m => m.roleTitle?.includes('Super Admin'));
 
@@ -364,7 +361,7 @@ export const InternalMembers = () => {
             </span>
             <select
               value={selectedDept}
-              onChange={(e) => setSelectedDept(e.target.value)}
+              onChange={(e) => handleDeptChange(e.target.value)}
               className="ds-input ds-select w-full sm:w-auto min-w-[170px] bg-slate-900/80 border-slate-700/80 text-sm"
             >
               <option value="ALL">Tất Cả Các Ban</option>
@@ -384,7 +381,7 @@ export const InternalMembers = () => {
         <span>Hiển thị <strong className="text-slate-100 font-bold">{filteredMembers.length}</strong> / {nonAdminMembers.length} thành viên</span>
         {(searchQuery || selectedTerm !== 'ALL' || selectedDept !== 'ALL') && (
           <button
-            onClick={() => { setSearchQuery(''); setSelectedTerm('ALL'); setSelectedDept('ALL'); }}
+            onClick={() => { setSearchQuery(''); setSelectedTerm('ALL'); handleDeptChange('ALL'); }}
             className="text-blue-400 hover:underline flex items-center gap-1.5 text-sm"
           >
             <X className="w-3.5 h-3.5" /> Xóa bộ lọc
@@ -397,7 +394,7 @@ export const InternalMembers = () => {
         {filteredMembers.map(m => (
           <div
             key={m.id}
-            className="ds-card-glass bg-[#10172a]/95 p-5 sm:p-6 rounded-xl border border-gray-800 flex flex-col h-full justify-between hover:border-blue-500/40 transition-all shadow-xl overflow-hidden min-w-0"
+            className="ds-card-glass bg-[#10172a]/95 p-5 sm:p-6 rounded-xl border border-gray-800 flex flex-col h-full justify-between hover:border-blue-500/40 transition-all shadow-xl overflow-visible min-w-0"
           >
             {/* Upper Content Box */}
             <div className="flex-1 flex flex-col justify-between space-y-4 mb-4 min-w-0">
@@ -490,7 +487,7 @@ export const InternalMembers = () => {
                     <button
                       onClick={() => {
                         setActiveMenuId(null);
-                        if (!isHRMember) {
+                        if (!isHRMember && !isAdmin) {
                           showToast('⛔ Quyền bị từ chối! Chỉ có thành viên Ban Đối Ngoại - Nhân Sự hoặc Admin mới có quyền chỉnh sửa thông tin thành viên!', 'error');
                           return;
                         }

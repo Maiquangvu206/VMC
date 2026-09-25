@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, User, Mail, Hash, GraduationCap, Briefcase, Phone, Calendar, MapPin, Globe } from 'lucide-react';
+import { X, User, Mail, Hash, GraduationCap, Briefcase, Phone, Calendar, MapPin, Globe, ShieldCheck } from 'lucide-react';
 
 export const NewAccountModal = ({ show, onClose, formData, setFormData, onSubmit, loading }) => {
   if (!show) return null;
@@ -91,6 +91,38 @@ export const NewAccountModal = ({ show, onClose, formData, setFormData, onSubmit
                   <option value="Ban Chủ Nhiệm">Ban Chủ Nhiệm</option>
                   <option value="Ban Cố Vấn">Ban Cố Vấn</option>
                 </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="ds-field-label">Chức vụ *</label>
+              <div className="relative flex items-center w-full">
+                <ShieldCheck className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
+                <input
+                  type="text"
+                  value={formData.roleTitle || ''}
+                  onChange={(e) => setFormData({ ...formData, roleTitle: e.target.value })}
+                  className="ds-input w-full"
+                  style={{ paddingLeft: '2.75rem' }}
+                  placeholder="VD: Thành Viên VMC, Trưởng Ban, Phó Ban..."
+                  list="newAccountRoleTitleOptions"
+                />
+                <datalist id="newAccountRoleTitleOptions">
+                  <option value="Thành Viên VMC" />
+                  <option value="Trưởng Ban Sản Xuất" />
+                  <option value="Phó Ban Sản Xuất" />
+                  <option value="Thành Viên Ban Sản Xuất" />
+                  <option value="Trưởng Ban Nội Dung - Phát Thanh" />
+                  <option value="Phó Ban Nội Dung - Phát Thanh" />
+                  <option value="Thành Viên Ban Nội Dung - Phát Thanh" />
+                  <option value="Trưởng Ban Đối Ngoại - Nhân Sự" />
+                  <option value="Phó Ban Đối Ngoại - Nhân Sự" />
+                  <option value="Kỹ Thuật Ban Đối Ngoại - Nhân Sự" />
+                  <option value="Thành Viên Ban Đối Ngoại - Nhân Sự" />
+                  <option value="Chủ Nhiệm CLB" />
+                  <option value="Phó Chủ Nhiệm CLB" />
+                  <option value="Cố Vấn CLB" />
+                </datalist>
               </div>
             </div>
            
