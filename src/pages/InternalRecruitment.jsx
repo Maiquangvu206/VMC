@@ -2167,6 +2167,13 @@ export const InternalRecruitment = () => {
                      summaryList.map((s, idx) => {
                         const code = s.interview_code || s.candidate_code || (candidates.find(c => c.id === s.candidate_id)?.interview_code) || s.candidate_id;
                        const rScores = s.round_scores || {};
+                       const getRoundScore = (rk) => {
+                         if (rScores[rk] !== undefined) return rScores[rk];
+                         if ((rk === 'phongvan' || rk === 'don') && rScores.teamwork !== undefined) return rScores.teamwork;
+                         const vals = Object.values(rScores);
+                         return vals.length > 0 ? vals[0] : undefined;
+                       };
+                       const displayTotal = (s.total_score && s.total_score > 0) ? s.total_score : (Object.values(rScores).length > 0 ? parseFloat(Object.values(rScores).reduce((a, b) => a + (parseFloat(b) || 0), 0).toFixed(2)) : 0);
                        
                        const getRankBadge = (rank) => {
                          if (rank === 1) return <span className="ds-badge bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold px-2 py-0.5">🥇 #1</span>;
@@ -2189,31 +2196,31 @@ export const InternalRecruitment = () => {
                               <td className="py-3 px-3 text-slate-300">{s.desired_dept}</td>
                               {hasDon && (
                                 <td className="py-3 px-3 text-center font-mono text-slate-200">
-                                  {rScores.don !== undefined ? rScores.don : <span className="text-slate-600">-</span>}
+                                  {getRoundScore('don') !== undefined ? getRoundScore('don') : <span className="text-slate-600">-</span>}
                                 </td>
                               )}
                               {hasPv && (
                                 <td className="py-3 px-3 text-center font-mono text-blue-300">
-                                  {rScores.phongvan !== undefined ? rScores.phongvan : <span className="text-slate-600">-</span>}
+                                  {getRoundScore('phongvan') !== undefined ? getRoundScore('phongvan') : <span className="text-slate-600">-</span>}
                                 </td>
                               )}
                               {hasTw && (
                                 <td className="py-3 px-3 text-center font-mono text-emerald-300">
-                                  {rScores.teamwork !== undefined ? rScores.teamwork : <span className="text-slate-600">-</span>}
+                                  {getRoundScore('teamwork') !== undefined ? getRoundScore('teamwork') : <span className="text-slate-600">-</span>}
                                 </td>
                               )}
                               {hasTtQuatrinh && (
                                 <td className="py-3 px-3 text-center font-mono text-amber-300">
-                                  {rScores.thuthach_quatrinh !== undefined ? rScores.thuthach_quatrinh : <span className="text-slate-600">-</span>}
+                                  {getRoundScore('thuthach_quatrinh') !== undefined ? getRoundScore('thuthach_quatrinh') : <span className="text-slate-600">-</span>}
                                 </td>
                               )}
                               {hasTtKetqua && (
                                 <td className="py-3 px-3 text-center font-mono text-purple-300">
-                                  {rScores.thuthach_ketqua !== undefined ? rScores.thuthach_ketqua : <span className="text-slate-600">-</span>}
+                                  {getRoundScore('thuthach_ketqua') !== undefined ? getRoundScore('thuthach_ketqua') : <span className="text-slate-600">-</span>}
                                 </td>
                               )}
                               <td className="py-3 px-3 text-center font-bold text-white font-mono text-sm">
-                                {s.total_score}
+                                {displayTotal}
                               </td>
                               <td className="py-3 px-3 text-center">
                                 {(() => {

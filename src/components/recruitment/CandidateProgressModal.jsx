@@ -365,7 +365,9 @@ export const CandidateProgressModal = ({
             <div>
               <span className="text-xs text-slate-400 font-medium block">Tổng điểm tích lũy</span>
               <span className="text-2xl font-black font-mono text-cyan-300">
-                {summary.total_score !== undefined ? summary.total_score : (candidate.total_score || 0)} PTS
+                {(summary.total_score !== undefined && summary.total_score > 0)
+                  ? summary.total_score
+                  : (candidate.total_score || (Object.values(rScores).length > 0 ? parseFloat(Object.values(rScores).reduce((a, b) => a + (parseFloat(b) || 0), 0).toFixed(2)) : 0))} PTS
               </span>
             </div>
             {summary.rank && (

@@ -2101,14 +2101,24 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
       const candIdStr = String(c.candidate_id);
       const codeStr = String(c.interview_code || '');
 
-      const rScores = {
+      const rScoresRaw = {
         ...(roundScoresMap[candIdStr] || {}),
         ...(roundScoresMap[codeStr] || {})
       };
 
-      const total = totalScoreMap[candIdStr] ?? totalScoreMap[codeStr] ?? (
-        Object.values(rScores).reduce((a, b) => a + (parseFloat(b) || 0), 0)
-      );
+      // If criteria round_type defaulted to 'teamwork' in DB, alias to 'phongvan' and 'don' if missing
+      const rScores = { ...rScoresRaw };
+      if (rScores.phongvan === undefined && rScores.teamwork !== undefined) {
+        rScores.phongvan = rScores.teamwork;
+      }
+      if (rScores.don === undefined && rScores.teamwork !== undefined && Object.keys(rScoresRaw).length === 1) {
+        rScores.don = rScores.teamwork;
+      }
+
+      const totalVal = totalScoreMap[candIdStr] ?? totalScoreMap[codeStr];
+      const roundVals = Object.values(rScoresRaw);
+      const overallAvg = roundVals.length > 0 ? parseFloat((roundVals.reduce((a, b) => a + b, 0) / roundVals.length).toFixed(2)) : 0;
+      const total = totalVal && totalVal > 0 ? totalVal : (roundVals.length > 0 ? parseFloat(roundVals.reduce((a, b) => a + b, 0).toFixed(2)) : 0);
 
       const submittedScorers = {
         ...(submittedScorersMap[candIdStr] || {}),
@@ -2119,9 +2129,6 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
         ...(commentsMap[candIdStr] || []),
         ...(commentsMap[codeStr] || [])
       ].filter((v, i, self) => i === self.findIndex(t => t.interviewer_id === v.interviewer_id && t.comments === v.comments));
-
-      const roundVals = Object.values(rScores);
-      const overallAvg = roundVals.length > 0 ? parseFloat((roundVals.reduce((a, b) => a + b, 0) / roundVals.length).toFixed(2)) : 0;
 
       let result_status = 'pending';
       if (c.status === 'passed') result_status = 'passed';
