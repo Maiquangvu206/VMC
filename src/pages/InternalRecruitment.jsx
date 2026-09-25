@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useClub } from '../context/ClubContext';
 import {
   UserPlus, ToggleLeft, ToggleRight, Plus, Edit, Trash2, Users, 
-  CheckCircle, XCircle, Clock, Award, Search, Filter, Save, ChevronDown,
+  CheckCircle, XCircle, Clock, Award, Search, Filter, Save, ChevronDown, ChevronRight,
   Star, FileText, Calendar, GraduationCap, Briefcase, AlertCircle, X
 } from 'lucide-react';
 import { SeasonModal } from '../components/recruitment/SeasonModal';
@@ -13,6 +13,7 @@ import { ScoringModal } from '../components/recruitment/ScoringModal';
 import { CandidateInterviewerModal } from '../components/recruitment/CandidateInterviewerModal';
 import { CandidateTeamworkModal } from '../components/recruitment/CandidateTeamworkModal';
 import { CandidateChallengeModal } from '../components/recruitment/CandidateChallengeModal';
+import { CandidateProgressModal } from '../components/recruitment/CandidateProgressModal';
 
 export const InternalRecruitment = () => {
   const { 
@@ -106,9 +107,61 @@ export const InternalRecruitment = () => {
   const [selectedSeasonChallengeResultScorers, setSelectedSeasonChallengeResultScorers] = useState([]);
   const [scoringTypeFilter, setScoringTypeFilter] = useState(null);
   const [candidateSearchQuery, setCandidateSearchQuery] = useState('');
-  const [filteredCandidates, setFilteredCandidates] = useState([]);
-  const [currentScoringCandidateIndex, setCurrentScoringCandidateIndex] = useState(0);
-  const [scoringComments, setScoringComments] = useState('');
+  const [showProgressModal, setShowProgressModal] = useState(false);
+  const [progressCandidate, setProgressCandidate] = useState(null);
+
+  const getCandidateStageInfo = (c) => {
+    if (!c) return { label: '⏳ Chờ chấm', round: 'Chưa mở', badgeClass: 'bg-slate-800 text-slate-400' };
+    const summary = scoresSummary.find(s => String(s.candidate_id) === String(c.id) || String(s.interview_code) === String(c.interview_code)) || {};
+    const rScores = summary.round_scores || c.round_scores || {};
+    const status = c.status || summary.result_status || 'pending';
+
+    if (status === 'passed') {
+      return { label: '🎉 Đã Trúng Tuyển', round: 'Trúng Tuyển', badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30' };
+    }
+    if (status === 'failed') {
+      return { label: '❌ Không Trúng Tuyển', round: 'Không Trúng Tuyển', badgeClass: 'bg-rose-500/20 text-rose-300 border-rose-500/40 hover:bg-rose-500/30' };
+    }
+    if (status === 'reserve') {
+      return { label: '⏳ Danh Sách Dự Bị', round: 'Dự Bị', badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30' };
+    }
+
+    const activeRound = currentSeason?.active_round || 'don';
+
+    if (rScores.thuthach_quatrinh !== undefined || rScores.thuthach_ketqua !== undefined || activeRound.includes('thuthach')) {
+      const isScored = rScores.thuthach_quatrinh !== undefined || rScores.thuthach_ketqua !== undefined;
+      return {
+        label: `⚡ Vòng 4: Thử Thách (${isScored ? 'Đã chấm' : 'Chờ chấm'})`,
+        round: 'Vòng 4: Thử Thách',
+        badgeClass: isScored ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 hover:bg-purple-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30 animate-pulse'
+      };
+    }
+
+    if (rScores.teamwork !== undefined || activeRound.includes('teamwork')) {
+      const isScored = rScores.teamwork !== undefined;
+      return {
+        label: `👥 Vòng 3: Teamwork (${isScored ? 'Đã chấm' : 'Chờ chấm'})`,
+        round: 'Vòng 3: Teamwork',
+        badgeClass: isScored ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30' : 'bg-blue-500/20 text-blue-300 border-blue-500/40 hover:bg-blue-500/30 animate-pulse'
+      };
+    }
+
+    if (rScores.phongvan !== undefined || activeRound.includes('phongvan')) {
+      const isScored = rScores.phongvan !== undefined;
+      return {
+        label: `🎙️ Vòng 2: Phỏng Vấn (${isScored ? 'Đã chấm' : 'Chờ chấm'})`,
+        round: 'Vòng 2: Phỏng Vấn',
+        badgeClass: isScored ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 hover:bg-indigo-500/30' : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 hover:bg-cyan-500/30 animate-pulse'
+      };
+    }
+
+    const isScored = rScores.don !== undefined || status === 'scored';
+    return {
+      label: `📝 Vòng 1: Bài Đơn (${isScored ? 'Đã chấm' : 'Chờ chấm'})`,
+      round: 'Vòng 1: Bài Đơn',
+      badgeClass: isScored ? 'bg-blue-500/20 text-blue-300 border-blue-500/40 hover:bg-blue-500/30' : 'bg-slate-700/60 text-slate-300 border-slate-600 hover:bg-slate-700'
+    };
+  };
 
   // Check if current user can score based on scoring type
   const canScore = React.useMemo(() => {
@@ -1306,11 +1359,24 @@ export const InternalRecruitment = () => {
                           </div>
                         )}
                         <div className="flex items-center gap-2 mt-2">
-                          {c.status === 'passed' && <span className="ds-badge ds-badge-emerald">✅ Đậu</span>}
-                          {c.status === 'failed' && <span className="ds-badge ds-badge-rose">❌ Rớt</span>}
-                          {c.status === 'reserve' && <span className="ds-badge ds-badge-amber">⏳ Dự bị</span>}
-                          {c.status === 'scored' && <span className="ds-badge ds-badge-blue">📝 Đã chấm</span>}
-                          {c.status === 'pending' && <span className="ds-badge ds-badge-secondary">⏳ Chờ chấm</span>}
+                          {(() => {
+                            const stage = getCandidateStageInfo(c);
+                            return (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setProgressCandidate(c);
+                                  setShowProgressModal(true);
+                                }}
+                                className={`ds-badge text-xs font-semibold px-2.5 py-1 border rounded-lg flex items-center gap-1.5 transition-all cursor-pointer shadow-sm hover:scale-105 ${stage.badgeClass}`}
+                                title="Nhấn vào đây để xem chi tiết tiến trình vòng thi của ứng viên này"
+                              >
+                                <span>{stage.label}</span>
+                                <ChevronRight className="w-3.5 h-3.5 opacity-70" />
+                              </button>
+                            );
+                          })()}
                         </div>
                       </div>
                       <div className="flex gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
@@ -1983,10 +2049,25 @@ export const InternalRecruitment = () => {
                                 {s.total_score}
                               </td>
                               <td className="py-3 px-3 text-center">
-                                {s.result_status === 'passed' && <span className="ds-badge ds-badge-emerald">✅ Đậu</span>}
-                                {s.result_status === 'failed' && <span className="ds-badge ds-badge-rose">❌ Rớt</span>}
-                                {s.result_status === 'reserve' && <span className="ds-badge ds-badge-amber">⏳ Dự bị</span>}
-                                {s.result_status === 'pending' && <span className="ds-badge ds-badge-secondary">⏳ Chờ</span>}
+                                {(() => {
+                                  const candObj = candidates.find(cand => String(cand.id) === String(s.candidate_id)) || s;
+                                  const stage = getCandidateStageInfo(candObj);
+                                  return (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setProgressCandidate(candObj);
+                                        setShowProgressModal(true);
+                                      }}
+                                      className={`ds-badge text-[11px] font-semibold px-2 py-0.5 border rounded-lg flex items-center justify-center gap-1 transition-all cursor-pointer hover:scale-105 mx-auto ${stage.badgeClass}`}
+                                      title="Nhấn vào đây để xem chi tiết tiến trình đánh giá của ứng viên"
+                                    >
+                                      <span>{stage.label}</span>
+                                      <ChevronRight className="w-3 h-3 opacity-70" />
+                                    </button>
+                                  );
+                                })()}
                               </td>
                             </tr>
                             {s.comments && s.comments.length > 0 && (
@@ -2196,6 +2277,15 @@ export const InternalRecruitment = () => {
           );
         }}
         loading={loading}
+      />
+
+      <CandidateProgressModal
+        show={showProgressModal}
+        onClose={() => setShowProgressModal(false)}
+        candidate={progressCandidate}
+        currentSeason={currentSeason}
+        scoresSummary={scoresSummary}
+        members={members}
       />
 
     </div>
