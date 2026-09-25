@@ -2096,10 +2096,11 @@ export const InternalRecruitment = () => {
         if (Array.isArray(candidates) && candidates.length > 0) {
           summaryList = candidates.map((c, idx) => {
             const matchSummary = (scoresSummary || []).find(s =>
-              String(s.candidate_id) === String(c.id) ||
-              String(s.candidate_id) === String(c.interview_code) ||
-              String(s.interview_code) === String(c.interview_code) ||
-              String(s.interview_code) === String(c.id)
+              String(s.candidate_id).trim() === String(c.id).trim() ||
+              String(s.candidate_id).trim() === String(c.interview_code || '').trim() ||
+              String(s.interview_code || '').trim() === String(c.interview_code || '').trim() ||
+              String(s.interview_code || '').trim() === String(c.id).trim() ||
+              (s.full_name && c.full_name && String(s.full_name).trim().toLowerCase() === String(c.full_name).trim().toLowerCase())
             );
             if (matchSummary) {
               return {

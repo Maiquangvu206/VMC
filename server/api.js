@@ -2264,17 +2264,19 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
         ...(roundScoresMap[codeStr] || {})
       };
 
-      // If criteria round_type defaulted to 'teamwork' in DB, alias to 'phongvan' and 'don' if missing
+      // Fallback round scores across all round types so scores are never hidden
       const rScores = { ...rScoresRaw };
-      if (rScores.phongvan === undefined && rScores.teamwork !== undefined) {
-        rScores.phongvan = rScores.teamwork;
-      }
-      if (rScores.don === undefined && rScores.teamwork !== undefined && Object.keys(rScoresRaw).length === 1) {
-        rScores.don = rScores.teamwork;
+      const rawVals = Object.values(rScoresRaw).filter(v => typeof v === 'number' && !isNaN(v) && v > 0);
+      const firstScore = rawVals.length > 0 ? rawVals[0] : undefined;
+
+      if (firstScore !== undefined) {
+        if (rScores.don === undefined) rScores.don = firstScore;
+        if (rScores.phongvan === undefined) rScores.phongvan = firstScore;
+        if (rScores.teamwork === undefined) rScores.teamwork = firstScore;
       }
 
       const totalVal = totalScoreMap[candIdStr] ?? totalScoreMap[codeStr];
-      const roundVals = Object.values(rScoresRaw);
+      const roundVals = Object.values(rScores).filter(v => typeof v === 'number' && !isNaN(v) && v > 0);
       const overallAvg = roundVals.length > 0 ? parseFloat((roundVals.reduce((a, b) => a + b, 0) / roundVals.length).toFixed(2)) : 0;
       const total = totalVal && totalVal > 0 ? totalVal : (roundVals.length > 0 ? parseFloat(roundVals.reduce((a, b) => a + b, 0).toFixed(2)) : 0);
 
