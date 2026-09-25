@@ -262,15 +262,9 @@ export const InternalRecruitment = () => {
     if (savedDraftStr) {
       try {
         const draft = JSON.parse(savedDraftStr);
-        if (draft.scoringData && Object.keys(draft.scoringData).length > 0) {
-          setScoringData(draft.scoringData);
-        }
-        if (draft.scoringComments) {
-          setScoringComments(draft.scoringComments);
-        }
-        if (draft.questionComments && Object.keys(draft.questionComments).length > 0) {
-          setQuestionComments(draft.questionComments);
-        }
+        setScoringData(draft.scoringData || {});
+        setScoringComments(draft.scoringComments || '');
+        setQuestionComments(draft.questionComments || {});
         if (draft.candidateAnswersData && Object.keys(draft.candidateAnswersData).length > 0) {
           setCandidateAnswersData(draft.candidateAnswersData);
         }
@@ -278,8 +272,16 @@ export const InternalRecruitment = () => {
         setIsDraftSaved(true);
       } catch (e) {
         console.warn('Lỗi đọc nháp:', e);
+        setScoringData({});
+        setScoringComments('');
+        setQuestionComments({});
+        setDraftInfo('');
+        setIsDraftSaved(false);
       }
     } else {
+      setScoringData({});
+      setScoringComments('');
+      setQuestionComments({});
       setDraftInfo('');
       setIsDraftSaved(false);
     }
@@ -378,10 +380,20 @@ export const InternalRecruitment = () => {
 
     const sortedList = sortCandidatesByCode(list);
     setFilteredCandidates(sortedList);
-    setCurrentScoringCandidateIndex(0);
+
     if (sortedList.length > 0) {
+      if (selectedCandidate) {
+        const existingIdx = sortedList.findIndex(c => String(c.id) === String(selectedCandidate.id) || String(c.interview_code) === String(selectedCandidate.interview_code));
+        if (existingIdx !== -1) {
+          setCurrentScoringCandidateIndex(existingIdx);
+          setSelectedCandidate(sortedList[existingIdx]);
+          return;
+        }
+      }
+      setCurrentScoringCandidateIndex(0);
       setSelectedCandidate(sortedList[0]);
     } else {
+      setCurrentScoringCandidateIndex(0);
       setSelectedCandidate(null);
     }
   }, [candidates, scoringTypeFilter, candidateSearchQuery, currentSeason, currentUser]);
@@ -1808,15 +1820,32 @@ export const InternalRecruitment = () => {
                         Ban mong muốn: <span className="font-medium text-slate-200">{c.desired_dept}</span>
                       </p>
                     </div>
-                   <div className="flex gap-2">
+                   <div className="flex flex-wrap gap-2 items-center">
+                     <select
+                       value={selectedCandidate?.id || ''}
+                       onChange={(e) => {
+                         const idx = filteredCandidates.findIndex(cand => String(cand.id) === String(e.target.value));
+                         if (idx !== -1) {
+                           setCurrentScoringCandidateIndex(idx);
+                           setSelectedCandidate(filteredCandidates[idx]);
+                         }
+                       }}
+                       className="ds-input bg-slate-900 border border-slate-700 text-cyan-300 font-bold text-xs py-1.5 px-3 rounded-xl cursor-pointer hover:border-slate-600 transition-colors max-w-[240px] truncate"
+                       title="Chọn nhanh ứng viên để chấm"
+                     >
+                       {filteredCandidates.map((cand, idx) => (
+                         <option key={cand.id} value={cand.id}>
+                           #{idx + 1} - {cand.interview_code || cand.id} - {cand.full_name}
+                         </option>
+                       ))}
+                     </select>
+
                      <button
                        onClick={() => {
                          if (currentScoringCandidateIndex > 0) {
                            const newIndex = currentScoringCandidateIndex - 1;
                            setCurrentScoringCandidateIndex(newIndex);
                            setSelectedCandidate(filteredCandidates[newIndex]);
-                           setScoringComments('');
-                           setScoringData({});
                          }
                        }}
                        disabled={currentScoringCandidateIndex === 0}
@@ -1830,8 +1859,6 @@ export const InternalRecruitment = () => {
                            const newIndex = currentScoringCandidateIndex + 1;
                            setCurrentScoringCandidateIndex(newIndex);
                            setSelectedCandidate(filteredCandidates[newIndex]);
-                           setScoringComments('');
-                           setScoringData({});
                          }
                        }}
                        disabled={currentScoringCandidateIndex === filteredCandidates.length - 1}
