@@ -1811,7 +1811,7 @@ router.get('/recruitment/candidates/:seasonId', async (req, res) => {
 
 router.post('/recruitment/candidates', async (req, res) => {
   try {
-    const { id, interviewer_id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, notes, application_answers, lead_interviewer_id, selected_questions, facebook, challenge_topic } = req.body;
+    const { id, interviewer_id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, notes, application_answers, lead_interviewer_id, selected_questions, facebook, challenge_topic } = req.body;
     const cid = (id && typeof id === 'string' && id.trim()) ? id.trim() : ('cand-' + Date.now());
     const codeVal = (interviewer_id && typeof interviewer_id === 'string' && interviewer_id.trim()) ? interviewer_id.trim() : cid;
     const interviewerIdsVal = interviewer_ids !== undefined
@@ -1970,7 +1970,7 @@ router.post('/recruitment/scores', async (req, res) => {
       const evalId = 'eval-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
 
       await queryDatabase(`
-        INSERT INTO Recruitment_Evaluations (id, season_id, candidate_id, interviewer_id, interviewer_id, round_type, total_score, avg_score, scores_json, comments)
+        INSERT INTO Recruitment_Evaluations (id, season_id, candidate_id, interviewer_id, round_type, total_score, avg_score, scores_json, comments)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
           total_score = VALUES(total_score),
@@ -2024,7 +2024,7 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
     // Auto-backfill scores from Recruitment_Scores into Recruitment_Evaluations table
     try {
       await queryDatabase(`
-        INSERT INTO Recruitment_Evaluations (id, candidate_id, interviewer_id, season_id, interviewer_id, round_type, total_score, avg_score, comments)
+        INSERT INTO Recruitment_Evaluations (id, candidate_id, interviewer_id, season_id, round_type, total_score, avg_score, comments)
         SELECT 
           CONCAT('eval-', s.candidate_id, '-', COALESCE(s.interviewer_id, '0'), '-', COALESCE(cr.round_type, 'don')) AS id,
           s.candidate_id,
