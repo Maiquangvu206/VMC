@@ -23,7 +23,8 @@ export const CandidateProgressModal = ({
     (s.full_name && candidate.full_name && String(s.full_name).trim().toLowerCase() === String(candidate.full_name).trim().toLowerCase())
   ) || {};
 
-  const rScores = summary.round_scores || candidate.round_scores || {};
+  const rScoresRaw = summary.round_scores || candidate.round_scores || {};
+  const rScores = { ...rScoresRaw };
 
   const comments = summary.comments || candidate.comments || [];
   const submittedScorersMap = summary.submitted_scorers || candidate.submitted_scorers || {};
