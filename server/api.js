@@ -428,9 +428,9 @@ const sendAssignmentEmails = async (candidateName, oldInterviewerIds, newIntervi
     // 1. Send to newly assigned Interviewers
     const addedInterviewers = newInterviewerIds.filter(id => !oldInterviewerIds.includes(id));
     for (const memberId of addedInterviewers) {
-      const Members = await queryDatabase('SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? LIMIT 1', [memberId, memberId]);
-      if (Members && Members.length > 0 && Members[0].email) {
-        const m = Members[0];
+      const members = await queryDatabase('SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? LIMIT 1', [memberId, memberId]);
+      if (members && members.length > 0 && members[0].email) {
+        const m = members[0];
         await sendMailHelper(
           m.email,
           `🔔 [VMC Recruitment] Bạn được phân công Phỏng vấn ứng viên "${candidateName}"`,
@@ -455,9 +455,9 @@ const sendAssignmentEmails = async (candidateName, oldInterviewerIds, newIntervi
     // 2. Send to newly assigned Teamwork Scorers
     const addedScorers = newScorerIds.filter(id => !oldScorerIds.includes(id));
     for (const memberId of addedScorers) {
-      const Members = await queryDatabase('SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? LIMIT 1', [memberId, memberId]);
-      if (Members && Members.length > 0 && Members[0].email) {
-        const m = Members[0];
+      const members = await queryDatabase('SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? LIMIT 1', [memberId, memberId]);
+      if (members && members.length > 0 && members[0].email) {
+        const m = members[0];
         await sendMailHelper(
           m.email,
           `🔔 [VMC Recruitment] Bạn được phân công chấm điểm Teamwork ứng viên "${candidateName}"`,
@@ -958,8 +958,8 @@ router.put('/birthday-assignments/:id', async (req, res) => {
 
           if (newNoPhotoMemberId) {
             // Lấy thông tin thành viên đó
-            const Members = await queryDatabase('SELECT full_name FROM Members WHERE id = ? LIMIT 1', [newNoPhotoMemberId]);
-            const memberName = (Members && Members.length > 0) ? Members[0].full_name : 'Thành viên';
+            const members = await queryDatabase('SELECT full_name FROM Members WHERE id = ? LIMIT 1', [newNoPhotoMemberId]);
+            const memberName = (members && members.length > 0) ? members[0].full_name : 'Thành viên';
 
             // Lấy thông tin người phụ trách (assignee)
             const assignees = await queryDatabase('SELECT full_name FROM Members WHERE id = ? OR member_code = ? LIMIT 1', [oldAssignment.assignee_id, oldAssignment.assignee_id]);
@@ -1787,7 +1787,7 @@ router.delete('/recruitment/criteria/:id', async (req, res) => {
 router.get('/recruitment/candidates/:seasonId', async (req, res) => {
   try {
     const { interviewer_id } = req.query;
-    let sql = 'SELECT id, interviewer_id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, status, notes, application_answers, lead_interviewer_id, selected_questions, facebook, challenge_topic, created_at FROM Recruitment_Candidates WHERE season_id = ?';
+    let sql = 'SELECT id, interview_code, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, status, notes, application_answers, lead_interviewer_id, selected_questions, facebook, challenge_topic, created_at FROM Recruitment_Candidates WHERE season_id = ?';
     const params = [req.params.seasonId];
     // Interviewer chỉ thấy ứng viên được gán cho mình
     if (interviewer_id) {
@@ -1798,7 +1798,7 @@ router.get('/recruitment/candidates/:seasonId', async (req, res) => {
     const rows = await queryDatabase(sql, params);
     const data = rows.map(r => ({
       ...r,
-      interviewer_id: r.interviewer_id || r.id,
+      interview_code: r.interview_code || r.id,
       interviewer_ids: (() => { try { return r.interviewer_ids ? JSON.parse(r.interviewer_ids) : []; } catch { return []; } })(),
       teamwork_scorer_ids: (() => { try { return r.teamwork_scorer_ids ? JSON.parse(r.teamwork_scorer_ids) : []; } catch { return []; } })(),
       challenge_process_scorer_ids: (() => { try { return r.challenge_process_scorer_ids ? JSON.parse(r.challenge_process_scorer_ids) : []; } catch { return []; } })(),
@@ -1811,9 +1811,9 @@ router.get('/recruitment/candidates/:seasonId', async (req, res) => {
 
 router.post('/recruitment/candidates', async (req, res) => {
   try {
-    const { id, interviewer_id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, notes, application_answers, lead_interviewer_id, selected_questions, facebook, challenge_topic } = req.body;
+    const { id, interview_code, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, notes, application_answers, lead_interviewer_id, selected_questions, facebook, challenge_topic } = req.body;
     const cid = (id && typeof id === 'string' && id.trim()) ? id.trim() : ('cand-' + Date.now());
-    const codeVal = (interviewer_id && typeof interviewer_id === 'string' && interviewer_id.trim()) ? interviewer_id.trim() : cid;
+    const codeVal = (interview_code && typeof interview_code === 'string' && interview_code.trim()) ? interview_code.trim() : cid;
     const interviewerIdsVal = interviewer_ids !== undefined
       ? (Array.isArray(interviewer_ids) ? JSON.stringify(interviewer_ids) : interviewer_ids)
       : null;
@@ -1830,19 +1830,19 @@ router.post('/recruitment/candidates', async (req, res) => {
       ? (Array.isArray(selected_questions) ? JSON.stringify(selected_questions) : selected_questions)
       : null;
     await queryDatabase(
-      'INSERT INTO Recruitment_Candidates (id, interviewer_id, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, notes, application_answers, lead_interviewer_id, selected_questions, facebook, challenge_topic) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO Recruitment_Candidates (id, interview_code, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, notes, application_answers, lead_interviewer_id, selected_questions, facebook, challenge_topic) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [cid, codeVal, season_id, full_name, class_name || null, phone || null, email || null, desired_dept || null, interviewer_id || null, interviewerIdsVal, teamworkScorerIdsVal, challengeProcessScorerIdsVal, challengeResultScorerIdsVal, notes || null, application_answers || null, lead_interviewer_id || null, selectedQuestionsVal, facebook || null, challenge_topic || null]
     );
-    res.json({ success: true, data: { id: cid, interviewer_id: codeVal, season_id, full_name, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, facebook, challenge_topic, status: 'pending' } });
+    res.json({ success: true, data: { id: cid, interview_code: codeVal, season_id, full_name, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, facebook, challenge_topic, status: 'pending' } });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
 
 router.put('/recruitment/candidates/:id', async (req, res) => {
   try {
-    const { full_name, interviewer_id, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, status, notes, application_answers, lead_interviewer_id, selected_questions, facebook, challenge_topic } = req.body;
+    const { full_name, interview_code, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, status, notes, application_answers, lead_interviewer_id, selected_questions, facebook, challenge_topic } = req.body;
 
     // Fetch old data for logs and comparison
-    const current = await queryDatabase('SELECT full_name, interviewer_ids, teamwork_scorer_ids FROM Recruitment_Candidates WHERE id = ? OR interviewer_id = ? LIMIT 1', [req.params.id, req.params.id]);
+    const current = await queryDatabase('SELECT full_name, interviewer_ids, teamwork_scorer_ids FROM Recruitment_Candidates WHERE id = ? OR interview_code = ? LIMIT 1', [req.params.id, req.params.id]);
     let oldInterviewerIds = [];
     let oldScorerIds = [];
     let candName = full_name;
@@ -1860,7 +1860,7 @@ router.put('/recruitment/candidates/:id', async (req, res) => {
     const params = [];
 
     if (full_name !== undefined) { updates.push('full_name = ?'); params.push(full_name); }
-    if (interviewer_id !== undefined) { updates.push('interviewer_id = ?'); params.push(interviewer_id); }
+    if (interview_code !== undefined) { updates.push('interview_code = ?'); params.push(interview_code); }
     if (class_name !== undefined) { updates.push('class_name = ?'); params.push(class_name); }
     if (phone !== undefined) { updates.push('phone = ?'); params.push(phone); }
     if (email !== undefined) { updates.push('email = ?'); params.push(email); }
@@ -1881,7 +1881,7 @@ router.put('/recruitment/candidates/:id', async (req, res) => {
     if (updates.length > 0) {
       params.push(req.params.id, req.params.id);
       await queryDatabase(
-        `UPDATE Recruitment_Candidates SET ${updates.join(', ')} WHERE id = ? OR interviewer_id = ?`,
+        `UPDATE Recruitment_Candidates SET ${updates.join(', ')} WHERE id = ? OR interview_code = ?`,
         params
       );
     }
@@ -1926,13 +1926,13 @@ router.post('/recruitment/scores', async (req, res) => {
     if (!Array.isArray(scores) || scores.length === 0)
       return res.status(400).json({ success: false, error: 'Thiếu dữ liệu điểm' });
 
-    // Lookup candidate to resolve both ID and interviewer_id
+    // Lookup candidate to resolve both ID and interview_code
     const cRows = await queryDatabase(
-      'SELECT id, interviewer_id FROM Recruitment_Candidates WHERE id = ? OR interviewer_id = ? LIMIT 1',
+      'SELECT id, interview_code FROM Recruitment_Candidates WHERE id = ? OR interview_code = ? LIMIT 1',
       [candidate_id, candidate_id]
     );
     const targetId = cRows.length > 0 ? cRows[0].id : candidate_id;
-    const targetCode = cRows.length > 0 ? cRows[0].interviewer_id : candidate_id;
+    const targetCode = cRows.length > 0 ? cRows[0].interview_code : candidate_id;
 
     for (const s of scores) {
       const existing = await queryDatabase(
@@ -1970,7 +1970,7 @@ router.post('/recruitment/scores', async (req, res) => {
       const evalId = 'eval-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
 
       await queryDatabase(`
-        INSERT INTO Recruitment_Evaluations (id, season_id, candidate_id, interviewer_id, round_type, total_score, avg_score, scores_json, comments)
+        INSERT INTO Recruitment_Evaluations (id, season_id, candidate_id, interview_code, interviewer_id, round_type, total_score, avg_score, scores_json, comments)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
           total_score = VALUES(total_score),
@@ -1984,7 +1984,7 @@ router.post('/recruitment/scores', async (req, res) => {
     }
 
     await queryDatabase(
-      "UPDATE Recruitment_Candidates SET status = 'scored' WHERE id = ? OR interviewer_id = ?",
+      "UPDATE Recruitment_Candidates SET status = 'scored' WHERE id = ? OR interview_code = ?",
       [targetId, targetCode]
     );
     res.json({ success: true });
@@ -1999,8 +1999,8 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
 
     // Auto deduplicate historical score rows if any exist
     await queryDatabase(`
-      DELETE s1 FROM Recruitment_Scores s1
-      INNER JOIN Recruitment_Scores s2 
+      DELETE s1 FROM recruitment_scores s1
+      INNER JOIN recruitment_scores s2 
       WHERE s1.candidate_id = s2.candidate_id 
         AND s1.interviewer_id = s2.interviewer_id 
         AND s1.criteria_id = s2.criteria_id 
@@ -2008,12 +2008,12 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
     `).catch(() => { });
 
     // Get season quota
-    const seasonRow = await queryDatabase('SELECT quota FROM Recruitment_Seasons WHERE id = ?', [seasonId]);
+    const seasonRow = await queryDatabase('SELECT quota FROM  WHERE id = ?', [seasonId]);
     const quota = seasonRow[0]?.quota || 0;
 
     // Fetch all candidates for this season
     const candRows = await queryDatabase(
-      'SELECT id AS candidate_id, interviewer_id, full_name, class_name, desired_dept, status, notes, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids FROM Recruitment_Seasons WHERE season_id = ? OR season_id IS NULL OR season_id = ""',
+      'SELECT id AS candidate_id, interview_code, full_name, class_name, desired_dept, status, notes, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids FROM recruitment_candidates WHERE season_id = ? OR season_id IS NULL OR season_id = ""',
       [seasonId]
     );
     const candidates = candRows.map(c => ({
@@ -2021,26 +2021,26 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
       candidate_id: String(c.candidate_id || c.id).trim()
     }));
 
-    // Auto-backfill scores from Recruitment_Scores into Recruitment_Evaluations table
+    // Auto-backfill scores from recruitment_scores into recruitment_evaluations table
     try {
       await queryDatabase(`
-        INSERT INTO Recruitment_Evaluations (id, candidate_id, interviewer_id, season_id, round_type, total_score, avg_score, comments)
+        INSERT INTO recruitment_evaluations (id, candidate_id, interview_code, season_id, interviewer_id, round_type, total_score, avg_score, comments)
         SELECT 
           CONCAT('eval-', s.candidate_id, '-', COALESCE(s.interviewer_id, '0'), '-', COALESCE(cr.round_type, 'don')) AS id,
           s.candidate_id,
-          COALESCE(c.interviewer_id, s.candidate_id),
+          COALESCE(c.interview_code, s.candidate_id),
           COALESCE(s.season_id, c.season_id, ?),
           s.interviewer_id,
           COALESCE(NULLIF(cr.round_type, ''), 'don') AS round_type,
           ROUND(SUM(s.score), 2) AS total_score,
           ROUND(AVG(s.score), 2) AS avg_score,
           MAX(s.comments) AS comments
-        FROM Recruitment_Scores s
-        LEFT JOIN Recruitment_Criteria cr ON s.criteria_id = cr.id
-        LEFT JOIN Recruitment_Candidates c ON (s.candidate_id = c.id OR s.candidate_id = c.interviewer_id)
+        FROM recruitment_scores s
+        LEFT JOIN recruitment_criteria cr ON s.criteria_id = cr.id
+        LEFT JOIN recruitment_candidates c ON (s.candidate_id = c.id OR s.candidate_id = c.interview_code)
         WHERE (s.season_id = ? OR s.season_id IS NULL OR s.season_id = ''
-           OR s.candidate_id IN (SELECT id FROM Recruitment_Candidates WHERE season_id = ?)
-           OR s.candidate_id IN (SELECT interviewer_id FROM Recruitment_Candidates WHERE season_id = ?))
+           OR s.candidate_id IN (SELECT id FROM recruitment_candidates WHERE season_id = ?)
+           OR s.candidate_id IN (SELECT interview_code FROM recruitment_candidates WHERE season_id = ?))
         GROUP BY s.candidate_id, s.interviewer_id, COALESCE(NULLIF(cr.round_type, ''), 'don')
         ON DUPLICATE KEY UPDATE 
           total_score = VALUES(total_score),
@@ -2049,25 +2049,25 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
           season_id = VALUES(season_id)
       `, [seasonId, seasonId, seasonId, seasonId]);
     } catch (e) {
-      console.warn('Notice: Auto backfill Recruitment_Evaluations:', e.message);
+      console.warn('Notice: Auto backfill recruitment_evaluations:', e.message);
     }
 
-    // Helper to find all candidate lookup keys (PK candidate_id, interviewer_id)
+    // Helper to find all candidate lookup keys (PK candidate_id, interview_code)
     const findCandidateKeys = (rawCandId, rawInterviewCode) => {
       const targetStr = String(rawCandId || '').trim();
       const codeStr = String(rawInterviewCode || '').trim();
       const cand = candidates.find(c =>
         (c.candidate_id && String(c.candidate_id).trim() === targetStr) ||
-        (c.interviewer_id && String(c.interviewer_id).trim() === targetStr) ||
+        (c.interview_code && String(c.interview_code).trim() === targetStr) ||
         (codeStr && c.candidate_id && String(c.candidate_id).trim() === codeStr) ||
-        (codeStr && c.interviewer_id && String(c.interviewer_id).trim() === codeStr)
+        (codeStr && c.interview_code && String(c.interview_code).trim() === codeStr)
       );
       const keys = new Set();
       if (targetStr) keys.add(targetStr);
       if (codeStr) keys.add(codeStr);
       if (cand) {
         if (cand.candidate_id) keys.add(String(cand.candidate_id).trim());
-        if (cand.interviewer_id) keys.add(String(cand.interviewer_id).trim());
+        if (cand.interview_code) keys.add(String(cand.interview_code).trim());
       }
       return Array.from(keys);
     };
@@ -2086,25 +2086,25 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
           COALESCE(NULLIF(CASE WHEN cr.round_type = 'thuthach' THEN 'thuthach_ketqua' ELSE cr.round_type END, ''), 'teamwork') AS round_type,
           SUM(s.score) AS interviewer_total,
           AVG(s.score) AS interviewer_avg
-        FROM Recruitment_Scores s
-        LEFT JOIN Recruitment_Criteria cr ON s.criteria_id = cr.id
+        FROM recruitment_scores s
+        LEFT JOIN recruitment_criteria cr ON s.criteria_id = cr.id
         WHERE (s.season_id = ? OR s.season_id IS NULL OR s.season_id = ''
-           OR s.candidate_id IN (SELECT id FROM Recruitment_Candidates WHERE season_id = ?)
-           OR s.candidate_id IN (SELECT interviewer_id FROM Recruitment_Candidates WHERE season_id = ?))
+           OR s.candidate_id IN (SELECT id FROM recruitment_candidates WHERE season_id = ?)
+           OR s.candidate_id IN (SELECT interview_code FROM recruitment_candidates WHERE season_id = ?))
         GROUP BY s.candidate_id, s.interviewer_id, COALESCE(NULLIF(CASE WHEN cr.round_type = 'thuthach' THEN 'thuthach_ketqua' ELSE cr.round_type END, ''), 'teamwork')
       ) interviewer_scores
       GROUP BY cand_id, round_type
     `, [seasonId, seasonId, seasonId]);
 
-    // Also fetch from dedicated Recruitment_Evaluations database table if present
+    // Also fetch from dedicated recruitment_evaluations database table if present
     const evalRows = await queryDatabase(`
-      SELECT candidate_id, interviewer_id, interviewer_id, round_type, total_score, avg_score, comments
-      FROM Recruitment_Evaluations
+      SELECT candidate_id, interview_code, interviewer_id, round_type, total_score, avg_score, comments
+      FROM recruitment_evaluations
       WHERE season_id = ?
          OR season_id IS NULL
          OR season_id = ''
-         OR candidate_id IN (SELECT id FROM Recruitment_Candidates WHERE season_id = ?)
-         OR candidate_id IN (SELECT interviewer_id FROM Recruitment_Candidates WHERE season_id = ?)
+         OR candidate_id IN (SELECT id FROM recruitment_candidates WHERE season_id = ?)
+         OR candidate_id IN (SELECT interview_code FROM recruitment_candidates WHERE season_id = ?)
     `, [seasonId, seasonId, seasonId]).catch(() => []);
 
     // Fetch distinct submitted scorers for each candidate per round_type
@@ -2113,22 +2113,22 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
         s.candidate_id, 
         s.interviewer_id, 
         COALESCE(NULLIF(CASE WHEN cr.round_type = 'thuthach' THEN 'thuthach_ketqua' ELSE cr.round_type END, ''), 'teamwork') AS round_type
-      FROM Recruitment_Scores s
-      LEFT JOIN Recruitment_Criteria cr ON s.criteria_id = cr.id
+      FROM recruitment_scores s
+      LEFT JOIN recruitment_criteria cr ON s.criteria_id = cr.id
       WHERE s.season_id = ? 
          OR s.season_id IS NULL 
          OR s.season_id = ''
-         OR s.candidate_id IN (SELECT id FROM Recruitment_Candidates WHERE season_id = ?)
-         OR s.candidate_id IN (SELECT interviewer_id FROM Recruitment_Candidates WHERE season_id = ?)
+         OR s.candidate_id IN (SELECT id FROM recruitment_candidates WHERE season_id = ?)
+         OR s.candidate_id IN (SELECT interview_code FROM recruitment_candidates WHERE season_id = ?)
     `, [seasonId, seasonId, seasonId]);
 
     // Fetch comments left by interviewers for each candidate
     const commentsRows = await queryDatabase(`
       SELECT DISTINCT s.candidate_id, s.interviewer_id, s.comments, COALESCE(u.full_name, s.interviewer_id) AS interviewer_name, COALESCE(NULLIF(CASE WHEN cr.round_type = 'thuthach' THEN 'thuthach_ketqua' ELSE cr.round_type END, ''), 'teamwork') AS round_type
-      FROM Recruitment_Scores s
-      LEFT JOIN Members u ON (s.interviewer_id = u.id OR s.interviewer_id = u.member_code OR s.interviewer_id = u.username)
-      LEFT JOIN Recruitment_Criteria cr ON s.criteria_id = cr.id
-      WHERE (s.season_id = ? OR s.season_id IS NULL OR s.season_id = '' OR s.candidate_id IN (SELECT id FROM Recruitment_Candidates WHERE season_id = ?) OR s.candidate_id IN (SELECT interviewer_id FROM Recruitment_Candidates WHERE season_id = ?))
+      FROM recruitment_scores s
+      LEFT JOIN members u ON (s.interviewer_id = u.id OR s.interviewer_id = u.member_code OR s.interviewer_id = u.username)
+      LEFT JOIN recruitment_criteria cr ON s.criteria_id = cr.id
+      WHERE (s.season_id = ? OR s.season_id IS NULL OR s.season_id = '' OR s.candidate_id IN (SELECT id FROM recruitment_candidates WHERE season_id = ?) OR s.candidate_id IN (SELECT interview_code FROM recruitment_candidates WHERE season_id = ?))
         AND s.comments IS NOT NULL AND TRIM(s.comments) != ''
     `, [seasonId, seasonId, seasonId]);
 
@@ -2138,12 +2138,12 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
              COALESCE(u.full_name, s.interviewer_id) AS interviewer_name,
              cr.criteria_name AS criteria_title,
              COALESCE(NULLIF(CASE WHEN cr.round_type = 'thuthach' THEN 'thuthach_ketqua' ELSE cr.round_type END, ''), 'teamwork') AS round_type
-      FROM Recruitment_Scores s
-      LEFT JOIN Members u ON (s.interviewer_id = u.id OR s.interviewer_id = u.member_code OR s.interviewer_id = u.username)
-      LEFT JOIN Recruitment_Criteria cr ON s.criteria_id = cr.id
+      FROM recruitment_scores s
+      LEFT JOIN members u ON (s.interviewer_id = u.id OR s.interviewer_id = u.member_code OR s.interviewer_id = u.username)
+      LEFT JOIN recruitment_criteria cr ON s.criteria_id = cr.id
       WHERE (s.season_id = ? OR s.season_id IS NULL OR s.season_id = '' 
-         OR s.candidate_id IN (SELECT id FROM Recruitment_Candidates WHERE season_id = ?)
-         OR s.candidate_id IN (SELECT interviewer_id FROM Recruitment_Candidates WHERE season_id = ?))
+         OR s.candidate_id IN (SELECT id FROM recruitment_candidates WHERE season_id = ?)
+         OR s.candidate_id IN (SELECT interview_code FROM recruitment_candidates WHERE season_id = ?))
     `, [seasonId, seasonId, seasonId]);
 
     const detailedScoresMap = {};
@@ -2212,7 +2212,7 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
     // Group evaluation rows by candidate key and round_type
     const evalGroupsMap = {};
     evalRows.forEach(r => {
-      const keys = findCandidateKeys(r.candidate_id, r.interviewer_id);
+      const keys = findCandidateKeys(r.candidate_id, r.interview_code);
       const tot = parseFloat(r.total_score || 0);
       const avg = parseFloat(r.avg_score || 0);
       const rType = r.round_type || 'don';
@@ -2234,7 +2234,7 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
       ...Object.keys(candidateScoresGroup),
       ...Object.keys(evalGroupsMap),
       ...candidates.map(c => String(c.candidate_id).trim()),
-      ...candidates.map(c => String(c.interviewer_id || '').trim()).filter(Boolean)
+      ...candidates.map(c => String(c.interview_code || '').trim()).filter(Boolean)
     ]);
 
     allCandidateKeys.forEach(k => {
@@ -2379,7 +2379,7 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
 
     const data = candidates.map(c => {
       const candIdStr = String(c.candidate_id).trim();
-      const codeStr = String(c.interviewer_id || '').trim();
+      const codeStr = String(c.interview_code || '').trim();
 
       const rScoresRaw = {
         ...(roundScoresMap[candIdStr] || {}),
@@ -2432,7 +2432,7 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
 
       return {
         candidate_id: c.candidate_id,
-        interviewer_id: c.interviewer_id || c.candidate_id,
+        interview_code: c.interview_code || c.candidate_id,
         full_name: c.full_name,
         class_name: c.class_name,
         desired_dept: c.desired_dept,
@@ -2454,7 +2454,7 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
     });
 
     // Sort by total_score descending to assign rank, with natural alphanumeric tie-breaker
-    data.sort((a, b) => b.total_score - a.total_score || b.avg_score - a.avg_score || (a.interviewer_id || a.candidate_id || '').localeCompare((b.interviewer_id || b.candidate_id || ''), undefined, { numeric: true, sensitivity: 'base' }));
+    data.sort((a, b) => b.total_score - a.total_score || b.avg_score - a.avg_score || (a.interview_code || a.candidate_id || '').localeCompare((b.interview_code || b.candidate_id || ''), undefined, { numeric: true, sensitivity: 'base' }));
     data.forEach((item, idx) => {
       item.rank = idx + 1;
     });
@@ -2471,7 +2471,7 @@ router.get('/recruitment/scores/submitted', async (req, res) => {
       SELECT DISTINCT s.candidate_id 
       FROM Recruitment_Scores s
       LEFT JOIN Recruitment_Criteria cr ON s.criteria_id = cr.id
-      WHERE (s.season_id = ? OR s.season_id IS NULL OR s.season_id = '' OR s.candidate_id IN (SELECT id FROM Recruitment_Candidates WHERE season_id = ?) OR s.candidate_id IN (SELECT interviewer_id FROM Recruitment_Candidates WHERE season_id = ?))
+      WHERE (s.season_id = ? OR s.season_id IS NULL OR s.season_id = '' OR s.candidate_id IN (SELECT id FROM Recruitment_Candidates WHERE season_id = ?) OR s.candidate_id IN (SELECT interview_code FROM Recruitment_Candidates WHERE season_id = ?))
         AND s.interviewer_id = ?
     `;
     const params = [season_id, season_id, season_id, interviewer_id];
@@ -2483,17 +2483,17 @@ router.get('/recruitment/scores/submitted', async (req, res) => {
 
     // Fetch candidate mapping to return both PK IDs and interview_codes
     const candidates = await queryDatabase(
-      'SELECT id, interviewer_id FROM Recruitment_Candidates WHERE season_id = ?',
+      'SELECT id, interview_code FROM Recruitment_Candidates WHERE season_id = ?',
       [season_id]
     );
 
     const resultIds = new Set();
     rows.forEach(r => {
       resultIds.add(r.candidate_id);
-      const cand = candidates.find(c => String(c.id) === String(r.candidate_id) || String(c.interviewer_id) === String(r.candidate_id));
+      const cand = candidates.find(c => String(c.id) === String(r.candidate_id) || String(c.interview_code) === String(r.candidate_id));
       if (cand) {
         if (cand.id) resultIds.add(String(cand.id));
-        if (cand.interviewer_id) resultIds.add(String(cand.interviewer_id));
+        if (cand.interview_code) resultIds.add(String(cand.interview_code));
       }
     });
 
