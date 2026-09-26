@@ -2285,22 +2285,13 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
         ...(roundTotalsMap[codeStr] || {})
       };
 
-      // Fallback round scores across all round types so scores are never hidden
+      // Keep exact actual scores for each round type without artificial cross-round fallback
       const rScores = { ...rScoresRaw };
       const rawVals = Object.values(rScoresRaw).filter(v => typeof v === 'number' && !isNaN(v) && v > 0);
-      const firstScore = rawVals.length > 0 ? rawVals[0] : undefined;
-
-      if (firstScore !== undefined) {
-        if (rScores.don === undefined) rScores.don = firstScore;
-        if (rScores.phongvan === undefined) rScores.phongvan = firstScore;
-        if (rScores.teamwork === undefined) rScores.teamwork = firstScore;
-      }
-
       const totalVals = Object.values(rTotalsRaw).filter(v => typeof v === 'number' && !isNaN(v) && v > 0);
-      const sumTotals = totalVals.length > 0 ? parseFloat(totalVals.reduce((a, b) => a + b, 0).toFixed(2)) : 0;
-      const totalVal = totalScoreMap[candIdStr] ?? totalScoreMap[codeStr] ?? sumTotals;
+      const sumTotals = totalVals.length > 0 ? parseFloat(totalVals.reduce((a, b) => a + b, 0).toFixed(2)) : (rawVals.length > 0 ? parseFloat(rawVals.reduce((a, b) => a + b, 0).toFixed(2)) : 0);
       const overallAvg = rawVals.length > 0 ? parseFloat((rawVals.reduce((a, b) => a + b, 0) / rawVals.length).toFixed(2)) : 0;
-      const total = totalVal && totalVal > 0 ? totalVal : (sumTotals > 0 ? sumTotals : (overallAvg > 0 ? overallAvg : 0));
+      const total = sumTotals;
 
       const submittedScorers = {
         ...(submittedScorersMap[candIdStr] || {}),

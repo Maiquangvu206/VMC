@@ -25,14 +25,6 @@ export const CandidateProgressModal = ({
 
   const rScoresRaw = summary.round_scores || candidate.round_scores || {};
   const rScores = { ...rScoresRaw };
-  const rawVals = Object.values(rScoresRaw).filter(v => typeof v === 'number' && !isNaN(v) && v > 0);
-  const firstScore = rawVals.length > 0 ? rawVals[0] : (summary.avg_score || summary.total_score || undefined);
-
-  if (firstScore !== undefined) {
-    if (rScores.don === undefined) rScores.don = firstScore;
-    if (rScores.phongvan === undefined) rScores.phongvan = firstScore;
-    if (rScores.teamwork === undefined) rScores.teamwork = firstScore;
-  }
 
   const comments = summary.comments || candidate.comments || [];
   const submittedScorersMap = summary.submitted_scorers || candidate.submitted_scorers || {};
