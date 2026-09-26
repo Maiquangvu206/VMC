@@ -3,7 +3,7 @@ import { useClub } from '../context/ClubContext';
 import {
   UserPlus, ToggleLeft, ToggleRight, Plus, Edit, Trash2, Users,
   CheckCircle, XCircle, Clock, Award, Search, Filter, Save, ChevronDown, ChevronRight,
-  Star, FileText, Calendar, GraduationCap, Briefcase, AlertCircle, X
+  Star, FileText, Calendar, GraduationCap, Briefcase, AlertCircle, X, Zap
 } from 'lucide-react';
 import { SeasonModal } from '../components/recruitment/SeasonModal';
 import { CriteriaModal } from '../components/recruitment/CriteriaModal';
@@ -14,6 +14,8 @@ import { CandidateInterviewerModal } from '../components/recruitment/CandidateIn
 import { CandidateTeamworkModal } from '../components/recruitment/CandidateTeamworkModal';
 import { CandidateChallengeModal } from '../components/recruitment/CandidateChallengeModal';
 import { CandidateProgressModal } from '../components/recruitment/CandidateProgressModal';
+import { RoundControlPanel } from '../components/recruitment/RoundControlPanel';
+import { RecruitmentSummaryTable } from '../components/recruitment/RecruitmentSummaryTable';
 
 export const InternalRecruitment = () => {
   const {
@@ -40,6 +42,39 @@ export const InternalRecruitment = () => {
     currentUserRoleTitle.includes('advisor')
   );
 
+  // Strict permission check: Only Admin and Tech department/roles are allowed to control round active state
+  const canControlRound = Boolean(
+    isSuperAdmin ||
+    currentUser?.role === 'super_admin' ||
+    currentUser?.role === 'admin' ||
+    currentUser?.memberCode === 'ADMIN' ||
+    currentUserRoleTitle.includes('admin') ||
+    currentUserRoleTitle.includes('super admin') ||
+    currentUserRoleTitle.includes('kỹ thuật') ||
+    currentUserRoleTitle.includes('tech') ||
+    currentUserDeptName.includes('kỹ thuật') ||
+    currentUserDeptName.includes('tech')
+  );
+
+  // Helper to safely parse and normalize any string/JSON/array of IDs into an array of String IDs
+  const parseIdsArray = (val) => {
+    if (!val) return [];
+    if (Array.isArray(val)) {
+      return val.map(id => String(id)).filter(Boolean);
+    }
+    if (typeof val === 'string') {
+      try {
+        const parsed = JSON.parse(val);
+        if (Array.isArray(parsed)) {
+          return parsed.map(id => String(id)).filter(Boolean);
+        }
+      } catch {
+        return val.split(',').map(s => s.trim()).filter(Boolean);
+      }
+    }
+    return [String(val)].filter(Boolean);
+  };
+
   // Helper to check if a user is permitted to access a given season
   const canAccessSeason = (season) => {
     if (!season) return false;
@@ -58,17 +93,12 @@ export const InternalRecruitment = () => {
     const isDeptMember = !seasonDept || seasonDept === 'tất cả' || seasonDept === 'tất cả ban' || (userDept && (userDept.includes(seasonDept) || seasonDept.includes(userDept)));
 
     // 3. Assigned scorer/interviewer
-    const getInterviewerIds = (interviewerIdsVal) => {
-      if (!interviewerIdsVal) return [];
-      if (Array.isArray(interviewerIdsVal)) return interviewerIdsVal;
-      try { return JSON.parse(interviewerIdsVal); } catch (e) { return []; }
-    };
-    const isAssignedScorer = getInterviewerIds(season.interviewer_ids).includes(currentUser?.id) ||
+    const isAssignedScorer = parseIdsArray(season.interviewer_ids).includes(String(currentUser?.id)) ||
       (Array.isArray(candidates) && candidates.some(c =>
-        (c.interviewer_ids || []).includes(currentUser?.id) ||
-        (c.teamwork_scorer_ids || []).includes(currentUser?.id) ||
-        (c.challenge_process_scorer_ids || []).includes(currentUser?.id) ||
-        (c.challenge_result_scorer_ids || []).includes(currentUser?.id)
+        parseIdsArray(c.interviewer_ids).includes(String(currentUser?.id)) ||
+        parseIdsArray(c.teamwork_scorer_ids).includes(String(currentUser?.id)) ||
+        parseIdsArray(c.challenge_process_scorer_ids).includes(String(currentUser?.id)) ||
+        parseIdsArray(c.challenge_result_scorer_ids).includes(String(currentUser?.id))
       ));
 
     return isDeptMember || isAssignedScorer;
@@ -120,18 +150,14 @@ export const InternalRecruitment = () => {
   const [showRealtimeModal, setShowRealtimeModal] = useState(false);
 
   const getCandidateStageInfo = (c) => {
-    if (!c) return { label: '⏳ Đang đánh giá', round: 'Chưa mở', badgeClass: 'bg-slate-800 text-slate-400' };
+    if (!c) return { label: '⏳ Đang xét', round: 'Đang xét', badgeClass: 'bg-slate-800 text-slate-400' };
     const summary = scoresSummary.find(s =>
       String(s.candidate_id) === String(c.id) ||
       String(s.candidate_id) === String(c.interview_code) ||
       String(s.interview_code) === String(c.interview_code) ||
       String(s.interview_code) === String(c.id)
     ) || {};
-    const rScores = summary.round_scores || c.round_scores || {};
     const status = c.status || summary.result_status || 'pending';
-    const submittedScorersMap = summary.submitted_scorers || c.submitted_scorers || {};
-    const activeRound = currentSeason?.active_round || 'don';
-    const isRound1Closed = activeRound !== 'don' || currentSeason?.status === 'closed' || currentSeason?.status === 'completed';
 
     if (status === 'passed') {
       return { label: '🎉 Đã Trúng Tuyển', round: 'Trúng Tuyển', badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30' };
@@ -143,57 +169,7 @@ export const InternalRecruitment = () => {
       return { label: '⏳ Danh Sách Dự Bị', round: 'Dự Bị', badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30' };
     }
 
-    const checkFullyGraded = (rawAssignedIds, roundKey) => {
-      let assigned = [];
-      if (Array.isArray(rawAssignedIds)) assigned = rawAssignedIds;
-      else { try { assigned = JSON.parse(rawAssignedIds); } catch (e) { assigned = []; } }
-      const submitted = (submittedScorersMap[roundKey] || []).map(String);
-      if (assigned.length > 0) {
-        return assigned.every(id => submitted.includes(String(id)));
-      }
-      return rScores[roundKey] !== undefined || submitted.length > 0;
-    };
-
-    if (activeRound.includes('teamwork') || rScores.teamwork !== undefined) {
-      const v4Assigned = c.teamwork_scorer_ids || summary.teamwork_scorer_ids || [];
-      const isDone = checkFullyGraded(v4Assigned, 'teamwork');
-      return {
-        label: `👥 Vòng 4: Teamwork (${isDone ? 'Đã chấm' : 'Đang chấm'})`,
-        round: 'Vòng 4: Teamwork',
-        badgeClass: isDone ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30' : 'bg-blue-500/20 text-blue-300 border-blue-500/40 hover:bg-blue-500/30 animate-pulse'
-      };
-    }
-
-    if (activeRound.includes('thuthach') || rScores.thuthach_quatrinh !== undefined || rScores.thuthach_ketqua !== undefined || rScores.thuthach !== undefined) {
-      const v3Proc = c.challenge_process_scorer_ids || summary.challenge_process_scorer_ids || [];
-      const v3Res = c.challenge_result_scorer_ids || summary.challenge_result_scorer_ids || [];
-      const isProcDone = checkFullyGraded(v3Proc, 'thuthach_quatrinh') || checkFullyGraded(v3Proc, 'thuthach');
-      const isResDone = checkFullyGraded(v3Res, 'thuthach_ketqua') || checkFullyGraded(v3Res, 'thuthach');
-      const isDone = isProcDone && isResDone;
-      return {
-        label: `⚡ Vòng 3: Thử Thách (${isDone ? 'Đã chấm' : 'Đang chấm'})`,
-        round: 'Vòng 3: Thử Thách',
-        badgeClass: isDone ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 hover:bg-purple-500/30' : 'bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30 animate-pulse'
-      };
-    }
-
-    if (activeRound.includes('phongvan') || rScores.phongvan !== undefined) {
-      const v2Assigned = c.interviewer_ids || summary.interviewer_ids || [];
-      const isDone = checkFullyGraded(v2Assigned, 'phongvan');
-      return {
-        label: `🎙️ Vòng 2: Phỏng Vấn (${isDone ? 'Đã chấm' : 'Đang chấm'})`,
-        round: 'Vòng 2: Phỏng Vấn',
-        badgeClass: isDone ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 hover:bg-indigo-500/30' : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 hover:bg-cyan-500/30 animate-pulse'
-      };
-    }
-
-    // Default Vòng 1 (Bài Đơn): Đang chấm until Vòng 1 is stopped / closed
-    const isV1Done = isRound1Closed || rScores.don !== undefined;
-    return {
-      label: `📝 Vòng 1: Bài Đơn (${isV1Done ? 'Đã chấm' : 'Đang chấm'})`,
-      round: 'Vòng 1: Bài Đơn',
-      badgeClass: isV1Done ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30' : 'bg-blue-500/20 text-blue-300 border-blue-500/40 hover:bg-blue-500/30 animate-pulse'
-    };
+    return { label: '⏳ Đang Xét', round: 'Đang Xét', badgeClass: 'bg-slate-800/80 text-slate-400 border-slate-700/60 hover:bg-slate-700/50' };
   };
 
   // Check if current user can score based on scoring type
@@ -204,6 +180,7 @@ export const InternalRecruitment = () => {
     const seasonDept = currentSeason.department?.toLowerCase() || '';
     const userDept = (currentUser?.deptName || currentUser?.department || '').toLowerCase();
     const userRoleTitle = (currentUser?.roleTitle || '').toLowerCase();
+    const uIdStr = String(currentUser?.id);
 
     // BCN (Chủ Nhiệm, Phó Chủ Nhiệm) - always can score
     const isBCN = userRoleTitle.includes('chủ nhiệm') || userRoleTitle.includes('phó chủ nhiệm');
@@ -217,34 +194,47 @@ export const InternalRecruitment = () => {
     // Check if user can score based on any enabled scoring type
     const canScoreDon = scoringTypes.includes('don') && (isBCN || isAdvisor || isDeptMember);
     const canScoreTeamwork = scoringTypes.includes('teamwork') && (
-      (currentSeason?.interviewer_ids || []).includes(currentUser?.id) ||
+      parseIdsArray(currentSeason?.interviewer_ids).includes(uIdStr) ||
       (Array.isArray(candidates) && candidates.some(c =>
-        (c.teamwork_scorer_ids || []).includes(currentUser?.id) ||
-        (c.interviewer_ids || []).includes(currentUser?.id)
+        parseIdsArray(c.teamwork_scorer_ids).includes(uIdStr) ||
+        parseIdsArray(c.interviewer_ids).includes(uIdStr)
       ))
     );
     const canScorePhongvan = scoringTypes.includes('phongvan') && (
       isBCN || isAdvisor || isDeptMember ||
-      (currentSeason?.interviewer_ids || []).includes(currentUser?.id) ||
+      parseIdsArray(currentSeason?.interviewer_ids).includes(uIdStr) ||
       (Array.isArray(candidates) && candidates.some(c =>
-        (c.interviewer_ids || []).includes(currentUser?.id)
+        parseIdsArray(c.interviewer_ids).includes(uIdStr)
       ))
     );
     const canScoreChallengeProcess = scoringTypes.includes('thuthach_quatrinh') && (
       isBCN || isAdvisor || isDeptMember ||
       (Array.isArray(candidates) && candidates.some(c =>
-        (c.challenge_process_scorer_ids || []).includes(currentUser?.id)
+        parseIdsArray(c.challenge_process_scorer_ids).includes(uIdStr)
       ))
     );
     const canScoreChallengeResult = scoringTypes.includes('thuthach_ketqua') && (
       isBCN || isAdvisor || isDeptMember ||
       (Array.isArray(candidates) && candidates.some(c =>
-        (c.challenge_result_scorer_ids || []).includes(currentUser?.id)
+        parseIdsArray(c.challenge_result_scorer_ids).includes(uIdStr)
       ))
     );
 
     return canScoreDon || canScoreTeamwork || canScorePhongvan || canScoreChallengeProcess || canScoreChallengeResult;
   }, [currentSeason, currentUser, candidates]);
+
+  // Helper to check if a specific round is open in current season (active_round)
+  const checkRoundActive = (roundKey, seasonObj = currentSeason) => {
+    if (!seasonObj) return false;
+    const active = seasonObj.active_round || 'don';
+    if (active === 'all') return true;
+    if (active === 'none') return false;
+    const openRounds = active.split(',');
+    if (roundKey === 'thuthach' || (roundKey && roundKey.includes('thuthach'))) {
+      return openRounds.includes('thuthach') || openRounds.includes('thuthach_quatrinh') || openRounds.includes('thuthach_ketqua');
+    }
+    return openRounds.includes(roundKey);
+  };
 
 
   // Form states
@@ -395,14 +385,21 @@ export const InternalRecruitment = () => {
     const isPowerUser = isSuperAdmin || isAdmin || isHRHead || isBCN || isAdvisor;
 
     if (!isPowerUser) {
+      const uIdStr = String(currentUser?.id);
       if (filterType === 'teamwork') {
-        list = list.filter(c => (c.teamwork_scorer_ids || []).includes(currentUser?.id));
+        list = list.filter(c =>
+          parseIdsArray(c.teamwork_scorer_ids).includes(uIdStr) ||
+          parseIdsArray(currentSeason?.interviewer_ids).includes(uIdStr)
+        );
       } else if (filterType === 'phongvan') {
-        list = list.filter(c => (c.interviewer_ids || []).includes(currentUser?.id));
+        list = list.filter(c =>
+          parseIdsArray(c.interviewer_ids).includes(uIdStr) ||
+          parseIdsArray(currentSeason?.interviewer_ids).includes(uIdStr)
+        );
       } else if (filterType === 'thuthach_quatrinh') {
-        list = list.filter(c => (c.challenge_process_scorer_ids || []).includes(currentUser?.id));
+        list = list.filter(c => parseIdsArray(c.challenge_process_scorer_ids).includes(uIdStr));
       } else if (filterType === 'thuthach_ketqua') {
-        list = list.filter(c => (c.challenge_result_scorer_ids || []).includes(currentUser?.id));
+        list = list.filter(c => parseIdsArray(c.challenge_result_scorer_ids).includes(uIdStr));
       }
     }
 
@@ -600,6 +597,10 @@ export const InternalRecruitment = () => {
   };
 
   const updateActiveRound = async (seasonId, round) => {
+    if (!canControlRound) {
+      showToast('⛔ Chỉ Admin và Bộ phận Kỹ thuật mới có quyền mở/đóng vòng!', 'error');
+      return;
+    }
     try {
       const res = await fetch(`/api/recruitment/seasons/${seasonId}`, {
         method: 'PUT',
@@ -634,18 +635,19 @@ export const InternalRecruitment = () => {
     }
   };
 
-  const assignInterviewers = async (seasonId, interviewerIds) => {
+  const assignInterviewers = async (seasonId, interviewerIds, leadId) => {
     try {
       const res = await fetch(`/api/recruitment/seasons/${seasonId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
-        body: JSON.stringify({ interviewer_ids: interviewerIds })
+        body: JSON.stringify({ interviewer_ids: interviewerIds, lead_interviewer_id: leadId })
       });
       if (res.ok) {
         showToast('✅ Đã phân công Phỏng vấn!', 'success');
-        fetchSeasons();
+        await fetchSeasons();
         setShowInterviewerModal(false);
         setSelectedInterviewers([]);
+        setLeadInterviewerId(null);
       }
     } catch (e) {
       showToast('❌ Lỗi phân công Phỏng vấn!', 'error');
@@ -661,7 +663,7 @@ export const InternalRecruitment = () => {
       });
       if (res.ok) {
         showToast('✅ Đã phân công Teamwork!', 'success');
-        fetchSeasons();
+        await fetchSeasons();
         setShowTeamworkModal(false);
         setSelectedTeamworkScorers([]);
       }
@@ -682,7 +684,7 @@ export const InternalRecruitment = () => {
       });
       if (res.ok) {
         showToast('✅ Đã phân công Vòng Thử Thách thành công!', 'success');
-        fetchSeasons();
+        await fetchSeasons();
         setShowSeasonChallengeModal(false);
         setSelectedSeasonForChallenge(null);
         setSelectedSeasonChallengeProcessScorers([]);
@@ -695,7 +697,8 @@ export const InternalRecruitment = () => {
 
   const openInterviewerModal = (season) => {
     setSelectedSeasonForInterviewers(season);
-    setSelectedInterviewers(season.interviewer_ids || []);
+    setSelectedInterviewers(parseIdsArray(season.interviewer_ids));
+    setLeadInterviewerId(season.lead_interviewer_id ? String(season.lead_interviewer_id) : null);
     setShowInterviewerModal(true);
   };
 
@@ -773,6 +776,7 @@ export const InternalRecruitment = () => {
 
   const assignCandidateToInterviewer = async (candidateId, interviewerIds, leadId) => {
     try {
+      setLoading(true);
       const res = await fetch(`/api/recruitment/candidates/${candidateId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
@@ -780,16 +784,27 @@ export const InternalRecruitment = () => {
       });
       if (res.ok) {
         showToast('✅ Đã phân công Phỏng vấn!', 'success');
-        fetchCandidates(currentSeason.id);
+        if (currentSeason?.id) {
+          await fetchCandidates(currentSeason.id);
+          await fetchScoresSummary(currentSeason.id);
+        }
+        setShowCandidateInterviewerModal(false);
+        setSelectedCandidate(null);
         setSelectedCandidateInterviewers([]);
+        setSelectedLeadInterviewerId('');
+      } else {
+        showToast('❌ Lỗi phân công!', 'error');
       }
     } catch (e) {
       showToast('❌ Lỗi phân công!', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
   const assignCandidateTeamworkScorers = async (candidateId, scorerIds) => {
     try {
+      setLoading(true);
       const res = await fetch(`/api/recruitment/candidates/${candidateId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
@@ -797,16 +812,26 @@ export const InternalRecruitment = () => {
       });
       if (res.ok) {
         showToast('✅ Đã phân công chấm Teamwork!', 'success');
-        fetchCandidates(currentSeason.id);
+        if (currentSeason?.id) {
+          await fetchCandidates(currentSeason.id);
+          await fetchScoresSummary(currentSeason.id);
+        }
+        setShowCandidateTeamworkModal(false);
+        setSelectedCandidate(null);
         setSelectedCandidateTeamworkScorers([]);
+      } else {
+        showToast('❌ Lỗi phân công!', 'error');
       }
     } catch (e) {
       showToast('❌ Lỗi phân công!', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
   const assignCandidateChallengeScorers = async (candidateId, processScorerIds, resultScorerIds, topicVal) => {
     try {
+      setLoading(true);
       const res = await fetch(`/api/recruitment/candidates/${candidateId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'ngrok-skip-browser-warning': 'true' },
@@ -818,13 +843,22 @@ export const InternalRecruitment = () => {
       });
       if (res.ok) {
         showToast('✅ Đã phân công Vòng Thử Thách & đề thi thành công!', 'success');
-        fetchCandidates(currentSeason.id);
+        if (currentSeason?.id) {
+          await fetchCandidates(currentSeason.id);
+          await fetchScoresSummary(currentSeason.id);
+        }
+        setShowCandidateChallengeModal(false);
+        setSelectedCandidate(null);
         setSelectedCandidateChallengeProcessScorers([]);
         setSelectedCandidateChallengeResultScorers([]);
         setSelectedCandidateChallengeTopic('');
+      } else {
+        showToast('❌ Lỗi phân công!', 'error');
       }
     } catch (e) {
       showToast('❌ Lỗi phân công!', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -856,12 +890,48 @@ export const InternalRecruitment = () => {
     setLoading(false);
   };
 
+  // Helper to filter criteria for scoring based on candidate and round type
+  const getScoringCriteriaForCandidate = (cand) => {
+    if (scoringTypeFilter === 'thuthach_ketqua') {
+      const challengeTopics = criteria.filter(crit => crit.round_type === 'thuthach');
+
+      if (cand?.challenge_topic && String(cand.challenge_topic).trim() !== '') {
+        const assignedTopicInList = challengeTopics.filter(crit =>
+          crit.criteria_name.trim().toLowerCase() === cand.challenge_topic.trim().toLowerCase() ||
+          crit.criteria_name.toLowerCase().includes(cand.challenge_topic.toLowerCase()) ||
+          cand.challenge_topic.toLowerCase().includes(crit.criteria_name.toLowerCase())
+        );
+
+        if (assignedTopicInList.length > 0) {
+          return assignedTopicInList;
+        } else {
+          const customTopicObj = {
+            id: `topic-custom-${cand.id}`,
+            criteria_name: `🎯 Đề thử thách: ${cand.challenge_topic}`,
+            round_type: 'thuthach',
+            max_score: 10
+          };
+          return [customTopicObj];
+        }
+      } else {
+        // If candidate has no assigned topic, do not return other candidates' topics!
+        return [];
+      }
+    }
+
+    if (scoringTypeFilter === 'thuthach_quatrinh') {
+      return criteria.filter(crit => crit.round_type === 'thuthach_quatrinh');
+    }
+
+    return criteria.filter(crit => (crit.round_type || 'teamwork') === (scoringTypeFilter || 'teamwork'));
+  };
+
   // Scoring operations
   const submitScores = async () => {
     if (!selectedCandidate || !currentSeason) return;
     setLoading(true);
     try {
-      const activeCriteria = criteria.filter(crit => (crit.round_type || 'teamwork') === (scoringTypeFilter || 'teamwork'));
+      const activeCriteria = getScoringCriteriaForCandidate(selectedCandidate);
 
       // For phongvan, filter scores by selected questions only!
       const scoredCriteria = scoringTypeFilter === 'phongvan'
@@ -1002,7 +1072,7 @@ export const InternalRecruitment = () => {
   }, [selectedSeasonForInterviewers, currentSeason, members]);
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8 pb-20">
+    <div className="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8 pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           <UserPlus className="text-violet-400 w-8 h-8 shrink-0" />
@@ -1010,9 +1080,6 @@ export const InternalRecruitment = () => {
             <h1 className="font-heading text-3xl font-extrabold text-slate-100 mt-1">
               Quản Lý Tuyển Gen Nội Bộ
             </h1>
-            <p className="text-sm text-slate-400 mt-2">
-              Hệ thống chấm điểm mù, phân công phỏng vấn và tổng hợp kết quả tuyển gen.
-            </p>
           </div>
         </div>
 
@@ -1132,11 +1199,11 @@ export const InternalRecruitment = () => {
 
               return (
                 <div key={season.id} className="ds-card p-6">
-                  <div className="flex justify-between items-start">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                     <div>
                       <h3 className="font-bold text-slate-100 text-xl">{season.name}</h3>
                       <p className="text-slate-400 text-base mt-2">Ban: {season.department || 'Tất cả'} | Chỉ tiêu: {season.quota} thành viên</p>
-                      <div className="flex items-center gap-3 mt-3">
+                      <div className="flex flex-wrap items-center gap-3 mt-3">
                         {season.is_active === 1 ? (
                           <span className="flex items-center gap-2 text-emerald-400 text-sm">
                             <CheckCircle className="w-4 h-4" /> Đang hoạt động
@@ -1155,16 +1222,16 @@ export const InternalRecruitment = () => {
                             return list.map(r =>
                               r === 'don' ? '📝 Đơn'
                                 : r === 'phongvan' ? '🎙️ PV'
-                                  : r === 'teamwork' ? '👥 TW'
-                                    : r === 'thuthach_quatrinh' ? '⚡ TT Quá Trình'
-                                      : r === 'thuthach_ketqua' ? '🏆 TT Kết Quả'
+                                  : r === 'thuthach_quatrinh' ? '⚡ TT Quá Trình'
+                                    : r === 'thuthach_ketqua' ? '🏆 TT Kết Quả'
+                                      : r === 'teamwork' ? '👥 TW'
                                         : r
                             ).join(', ');
                           })()}
                         </span>
                       </div>
                     </div>
-                    <div className="flex gap-3">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0">
                       {season.is_active === 1 && (isSuperAdmin || isAdmin || isHRHead) && (
                         <button
                           onClick={() => deactivateSeason(season.id)}
@@ -1177,37 +1244,52 @@ export const InternalRecruitment = () => {
                       {(isSuperAdmin || isAdmin || isHRHead) && (
                         <div className="flex gap-1">
                           <button
+                            type="button"
                             onClick={() => {
+                              if (!checkRoundActive('phongvan', season)) {
+                                alert('🔒 Vòng Phỏng Vấn chưa được mở. Vui lòng bật mở Vòng Phỏng Vấn ở phần Quản lý mùa tuyển trước khi phân công!');
+                                return;
+                              }
                               setSelectedSeasonForInterviewers(season);
-                              setSelectedInterviewers(season.interviewer_ids || []);
-                              setLeadInterviewerId(season.lead_interviewer_id || null);
+                              setSelectedInterviewers(parseIdsArray(season.interviewer_ids));
+                              setLeadInterviewerId(season.lead_interviewer_id ? String(season.lead_interviewer_id) : null);
                               setShowInterviewerModal(true);
                             }}
-                            className="ds-btn ds-btn-primary ds-btn-xs"
-                            title="Phân công Phỏng vấn"
+                            className={`ds-btn ds-btn-xs ${checkRoundActive('phongvan', season) ? 'ds-btn-primary' : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-60'}`}
+                            title={checkRoundActive('phongvan', season) ? "Phân công Phỏng vấn" : "🔒 Vòng Phỏng Vấn chưa được mở"}
                           >
                             <Users className="w-3.5 h-3.5 mr-0.5" />PV
                           </button>
                           <button
+                            type="button"
                             onClick={() => {
+                              if (!checkRoundActive('teamwork', season)) {
+                                alert('🔒 Vòng Teamwork chưa được mở. Vui lòng bật mở Vòng Teamwork ở phần Quản lý mùa tuyển trước khi phân công!');
+                                return;
+                              }
                               setSelectedSeasonForTeamwork(season);
-                              setSelectedTeamworkScorers(season.teamwork_scorer_ids || []);
+                              setSelectedTeamworkScorers(parseIdsArray(season.teamwork_scorer_ids));
                               setShowTeamworkModal(true);
                             }}
-                            className="ds-btn ds-btn-xs bg-slate-800 text-slate-300 border border-slate-600 hover:text-white"
-                            title="Phân công Teamwork"
+                            className={`ds-btn ds-btn-xs ${checkRoundActive('teamwork', season) ? 'bg-slate-800 text-slate-300 border border-slate-600 hover:text-white' : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-60'}`}
+                            title={checkRoundActive('teamwork', season) ? "Phân công Teamwork" : "🔒 Vòng Teamwork chưa được mở"}
                           >
                             <Users className="w-3.5 h-3.5 mr-0.5" />TW
                           </button>
                           <button
+                            type="button"
                             onClick={() => {
+                              if (!checkRoundActive('thuthach', season)) {
+                                alert('🔒 Vòng Thử Thách chưa được mở. Vui lòng bật mở Vòng Thử Thách (Quá trình hoặc Kết quả) ở phần Quản lý mùa tuyển trước khi phân công!');
+                                return;
+                              }
                               setSelectedSeasonForChallenge(season);
-                              setSelectedSeasonChallengeProcessScorers(season.challenge_process_scorer_ids || []);
-                              setSelectedSeasonChallengeResultScorers(season.challenge_result_scorer_ids || []);
+                              setSelectedSeasonChallengeProcessScorers(parseIdsArray(season.challenge_process_scorer_ids));
+                              setSelectedSeasonChallengeResultScorers(parseIdsArray(season.challenge_result_scorer_ids));
                               setShowSeasonChallengeModal(true);
                             }}
-                            className="ds-btn ds-btn-xs bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30"
-                            title="Phân công Vòng Thử Thách (Chấm Quá trình & Kết quả)"
+                            className={`ds-btn ds-btn-xs ${checkRoundActive('thuthach', season) ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30' : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-60'}`}
+                            title={checkRoundActive('thuthach', season) ? "Phân công Vòng Thử Thách (Chấm Quá trình & Kết quả)" : "🔒 Vòng Thử Thách chưa được mở"}
                           >
                             <Users className="w-3.5 h-3.5 mr-0.5" />TT
                           </button>
@@ -1247,114 +1329,12 @@ export const InternalRecruitment = () => {
                     </div>
                   </div>
 
-                  {/* Control active round for head of department / admins */}
-                  {season.is_active === 1 && canManageSeason && (() => {
-                    const active = season.active_round || 'none';
-                    const openRounds = active === 'all' ? scoringTypes : (active === 'none' ? [] : active.split(','));
-                    const donOpen = openRounds.includes('don');
-                    const pvOpen = openRounds.includes('phongvan');
-                    const twOpen = openRounds.includes('teamwork');
-                    const ttQuatrinhOpen = openRounds.includes('thuthach_quatrinh');
-                    const ttKetquaOpen = openRounds.includes('thuthach_ketqua');
-
-                    // Toggle a round on or off with sequential rules:
-                    // - OPEN: only allowed if the PREVIOUS round is currently open
-                    // - CLOSE: always allowed regardless of other rounds
-                    // - RE-OPEN backward: blocked if any LATER round is currently open
-                    const toggleRound = (round) => {
-                      let next = [...openRounds];
-                      if (next.includes(round)) {
-                        // Close: always allowed
-                        next = next.filter(r => r !== round);
-                      } else {
-                        // Open: only if prerequisite is met
-                        // don: can open only if phongvan is NOT open (no going backward)
-                        // phongvan: can open only if don is currently open
-                        // teamwork: can open only if phongvan is currently open
-                        if (round === 'don' && pvOpen) return; // blocked: phongvan already open
-                        if (round === 'phongvan' && !donOpen) return; // blocked: don not open yet
-                        if (round === 'phongvan' && twOpen) return; // blocked: teamwork already open
-                        if (round === 'teamwork' && !pvOpen) return; // blocked: phongvan not open yet
-                        next.push(round);
-                      }
-                      const val = next.length === 0 ? 'none' : next.join(',');
-                      updateActiveRound(season.id, val);
-                    };
-
-                    const roundBtn = (key, emoji, label, isOpen, disabled, disabledReason, color) => (
-                      <button
-                        onClick={() => toggleRound(key)}
-                        disabled={disabled}
-                        title={disabled ? disabledReason : (isOpen ? `Đang mở — nhấn để đóng ${label}` : `Mở ${label}`)}
-                        className={`ds-btn ds-btn-xs transition-all ${isOpen
-                            ? `${color} text-white`
-                            : disabled
-                              ? 'bg-slate-900 text-slate-600 border border-slate-800 cursor-not-allowed opacity-40'
-                              : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-700'
-                          }`}
-                      >
-                        {emoji} {isOpen ? `✓ ${label}` : label}
-                      </button>
-                    );
-
-                    return (
-                      <div className="mt-4 pt-4 border-t border-[#1f2937] bg-[#0f172a] p-3 rounded-xl space-y-2">
-                        <span className="text-xs text-slate-300 font-medium">🛡️ Điều khiển vòng chấm điểm:</span>
-                        <div className="flex flex-wrap gap-2 mt-1">
-                          {scoringTypes.includes('don') && roundBtn(
-                            'don', '📝', 'Đơn', donOpen,
-                            !donOpen && pvOpen, // can't re-open don if phongvan is already open
-                            'Không thể mở lại Vòng Đơn khi Phỏng Vấn đang mở',
-                            'bg-amber-600'
-                          )}
-                          {scoringTypes.includes('phongvan') && roundBtn(
-                            'phongvan', '🎙️', 'PV', pvOpen,
-                            !pvOpen && (!donOpen || twOpen), // can't open if don not open, or if teamwork open (backward)
-                            !donOpen ? 'Cần mở Vòng Đơn trước' : 'Không thể mở lại PV khi Teamwork đang mở',
-                            'bg-blue-600'
-                          )}
-                          {scoringTypes.includes('teamwork') && roundBtn(
-                            'teamwork', '👥', 'TW', twOpen,
-                            !twOpen && !pvOpen,
-                            'Cần mở Vòng Phỏng Vấn trước',
-                            'bg-emerald-600'
-                          )}
-                          {(scoringTypes.includes('thuthach_quatrinh') || scoringTypes.includes('thuthach')) && roundBtn(
-                            'thuthach_quatrinh', '⚡', 'TT Quá Trình', ttQuatrinhOpen,
-                            false,
-                            '',
-                            'bg-amber-500'
-                          )}
-                          {(scoringTypes.includes('thuthach_ketqua') || scoringTypes.includes('thuthach')) && roundBtn(
-                            'thuthach_ketqua', '🏆', 'TT Kết Quả', ttKetquaOpen,
-                            false,
-                            '',
-                            'bg-purple-600'
-                          )}
-                          <div className="h-5 border-l border-slate-700 mx-0.5" />
-                          <button
-                            onClick={() => updateActiveRound(season.id, scoringTypes.join(','))}
-                            className="ds-btn ds-btn-xs bg-violet-700 text-white hover:bg-violet-600"
-                            title="Mở tất cả vòng cùng lúc"
-                          >
-                            ⚡ Mở Cả (${scoringTypes.length})
-                          </button>
-                          <button
-                            onClick={() => updateActiveRound(season.id, 'none')}
-                            className="ds-btn ds-btn-xs bg-slate-900 text-rose-400 border border-rose-800 hover:bg-rose-900"
-                            title="Tắt tất cả vòng chấm"
-                          >
-                            🔒 Tắt Tất Cả
-                          </button>
-                        </div>
-                        {openRounds.length > 0 && (
-                          <p className="text-[10px] text-slate-500 mt-1">
-                            Đang mở: {openRounds.map(r => r === 'don' ? '📝 Đơn' : r === 'phongvan' ? '🎙️ PV' : r === 'teamwork' ? '👥 TW' : r === 'thuthach_quatrinh' ? '⚡ TT Quá Trình' : r === 'thuthach_ketqua' ? '🏆 TT Kết Quả' : r).join(' → ')}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })()}
+                  {/* Control active round for Admin / Tech only */}
+                  <RoundControlPanel
+                    season={season}
+                    canControlRound={canControlRound}
+                    updateActiveRound={updateActiveRound}
+                  />
                 </div>
               );
             })}
@@ -1367,8 +1347,9 @@ export const InternalRecruitment = () => {
         const roundGroups = [
           { key: 'don', label: '📝 Vòng Đơn', color: 'text-amber-400', border: 'border-amber-500/30', bg: 'bg-amber-500/5', badge: 'bg-amber-500/20 text-amber-300' },
           { key: 'phongvan', label: '🎙️ Vòng Phỏng Vấn', color: 'text-blue-400', border: 'border-blue-500/30', bg: 'bg-blue-500/5', badge: 'bg-blue-500/20 text-blue-300' },
+          { key: 'thuthach_quatrinh', label: '⚡ Thử Thách Quá Trình', color: 'text-amber-400', border: 'border-amber-500/30', bg: 'bg-amber-500/5', badge: 'bg-amber-500/20 text-amber-300' },
+          { key: 'thuthach', label: '⚡ Kho Đề Thử Thách', color: 'text-purple-400', border: 'border-purple-500/30', bg: 'bg-purple-500/5', badge: 'bg-purple-500/20 text-purple-300' },
           { key: 'teamwork', label: '👥 Vòng Teamwork', color: 'text-emerald-400', border: 'border-emerald-500/30', bg: 'bg-emerald-500/5', badge: 'bg-emerald-500/20 text-emerald-300' },
-          { key: 'thuthach', label: '⚡ Kho Đề Thử Thách', color: 'text-amber-400', border: 'border-amber-500/30', bg: 'bg-amber-500/5', badge: 'bg-amber-500/20 text-amber-300' },
         ];
 
         return (
@@ -1389,7 +1370,6 @@ export const InternalRecruitment = () => {
             {roundGroups.map(group => {
               const groupCriteria = sortCriteria(criteria.filter(c => {
                 const rt = c.round_type || 'teamwork';
-                if (group.key === 'thuthach') return rt.startsWith('thuthach');
                 return rt === group.key;
               }));
 
@@ -1399,7 +1379,7 @@ export const InternalRecruitment = () => {
                     <div className="flex items-center gap-2">
                       <h3 className={`font-bold text-base ${group.color}`}>{group.label}</h3>
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${group.badge}`}>
-                        {groupCriteria.length} {group.key === 'thuthach' ? 'đề thử thách' : 'câu hỏi'}
+                        {groupCriteria.length} {group.key === 'thuthach' ? 'đề thử thách' : 'câu hỏi / tiêu chí'}
                       </span>
                     </div>
                     <button
@@ -1425,19 +1405,18 @@ export const InternalRecruitment = () => {
                             <span className="text-slate-500 text-xs font-mono mt-0.5 shrink-0">#{idx + 1}</span>
                             <div className="min-w-0">
                               <p className="font-semibold text-slate-100 text-sm leading-snug">{c.criteria_name}</p>
-                              <div className="flex items-center gap-2 mt-1">
-                                {group.key === 'thuthach' ? (
+                              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                {group.key === 'thuthach' && (
                                   <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${c.difficulty === 'Dễ'
-                                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                                      : c.difficulty === 'Khó'
-                                        ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
-                                        : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                                    : c.difficulty === 'Khó'
+                                      ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+                                      : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
                                     }`}>
                                     Mức độ: {c.difficulty === 'Dễ' ? '🟢 Dễ' : c.difficulty === 'Khó' ? '🔴 Khó' : '🟡 Trung bình'}
                                   </span>
-                                ) : (
-                                  <p className="text-slate-500 text-xs">Điểm tối đa: <span className="text-slate-300 font-medium">{c.max_score}</span></p>
                                 )}
+                                <p className="text-slate-400 text-xs">Điểm tối đa: <span className="text-emerald-400 font-bold">{c.max_score || 10}</span></p>
                               </div>
                             </div>
                           </div>
@@ -1485,7 +1464,7 @@ export const InternalRecruitment = () => {
                       <h3 className="font-bold text-white text-lg">{c.full_name}</h3>
                       <p className="text-slate-400 text-sm">Mùa tuyển sinh: {currentSeason.name} | Mã ứng viên: <strong className="text-cyan-400 font-mono text-xs">{c.interview_code || c.id}</strong></p>
 
-                      <p className="text-slate-500 text-xs mt-1">Ban nguyện vọng: {c.desired_dept || 'Tất cả'} (Click để xem chi tiết)</p>
+                      <p className="text-slate-500 text-xs mt-1">Ban nguyện vọng: {c.desired_dept || 'Tất cả'}</p>
                       {c.challenge_topic && (
                         <div className="mt-1.5 flex items-center gap-1.5">
                           <span className="ds-badge bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px]">
@@ -1518,40 +1497,55 @@ export const InternalRecruitment = () => {
                       {(isSuperAdmin || isAdmin || isHRHead || isDeptHead) && (
                         <>
                           <button
+                            type="button"
                             onClick={() => {
+                              if (!checkRoundActive('phongvan', currentSeason)) {
+                                alert('🔒 Vòng Phỏng Vấn chưa được mở. Vui lòng mở Vòng Phỏng Vấn ở phần Quản lý mùa tuyển trước khi phân công cho ứng viên!');
+                                return;
+                              }
                               setSelectedCandidate(c);
-                              setSelectedCandidateInterviewers(c.interviewer_ids || []);
-                              setLeadInterviewerId(c.lead_interviewer_id || null);
+                              setSelectedCandidateInterviewers(parseIdsArray(c.interviewer_ids));
+                              setLeadInterviewerId(c.lead_interviewer_id ? String(c.lead_interviewer_id) : null);
                               setShowCandidateInterviewerModal(true);
                             }}
-                            className="ds-btn ds-btn-xs ds-btn-primary"
-                            title="Phân công Phỏng Vấn cho ứng viên này"
+                            className={`ds-btn ds-btn-xs ${checkRoundActive('phongvan', currentSeason) ? 'ds-btn-primary' : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-60'}`}
+                            title={checkRoundActive('phongvan', currentSeason) ? "Phân công Phỏng Vấn cho ứng viên này" : "🔒 Vòng Phỏng Vấn chưa được mở"}
                           >
                             <Users className="w-3.5 h-3.5 mr-1" /> PV
                           </button>
 
                           <button
+                            type="button"
                             onClick={() => {
+                              if (!checkRoundActive('teamwork', currentSeason)) {
+                                alert('🔒 Vòng Teamwork chưa được mở. Vui lòng mở Vòng Teamwork ở phần Quản lý mùa tuyển trước khi phân công cho ứng viên!');
+                                return;
+                              }
                               setSelectedCandidate(c);
-                              setSelectedCandidateTeamworkScorers(c.teamwork_scorer_ids || []);
+                              setSelectedCandidateTeamworkScorers(parseIdsArray(c.teamwork_scorer_ids));
                               setShowCandidateTeamworkModal(true);
                             }}
-                            className="ds-btn ds-btn-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30"
-                            title="Phân công Teamwork cho ứng viên này"
+                            className={`ds-btn ds-btn-xs ${checkRoundActive('teamwork', currentSeason) ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30' : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-60'}`}
+                            title={checkRoundActive('teamwork', currentSeason) ? "Phân công Teamwork cho ứng viên này" : "🔒 Vòng Teamwork chưa được mở"}
                           >
                             <Users className="w-3.5 h-3.5 mr-1" /> TW
                           </button>
 
                           <button
+                            type="button"
                             onClick={() => {
+                              if (!checkRoundActive('thuthach', currentSeason)) {
+                                alert('🔒 Vòng Thử Thách chưa được mở. Vui lòng mở Vòng Thử Thách ở phần Quản lý mùa tuyển trước khi giao đề / phân công ứng viên!');
+                                return;
+                              }
                               setSelectedCandidate(c);
                               setSelectedCandidateChallengeTopic(c.challenge_topic || '');
-                              setSelectedCandidateChallengeProcessScorers(c.challenge_process_scorer_ids || []);
-                              setSelectedCandidateChallengeResultScorers(c.challenge_result_scorer_ids || []);
+                              setSelectedCandidateChallengeProcessScorers(parseIdsArray(c.challenge_process_scorer_ids));
+                              setSelectedCandidateChallengeResultScorers(parseIdsArray(c.challenge_result_scorer_ids));
                               setShowCandidateChallengeModal(true);
                             }}
-                            className="ds-btn ds-btn-xs bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30"
-                            title="Phân công Vòng Thử Thách cho ứng viên này"
+                            className={`ds-btn ds-btn-xs ${checkRoundActive('thuthach', currentSeason) ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30' : 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed opacity-60'}`}
+                            title={checkRoundActive('thuthach', currentSeason) ? "Phân công Vòng Thử Thách cho ứng viên này" : "🔒 Vòng Thử Thách chưa được mở"}
                           >
                             ⚡ Thử Thách
                           </button>
@@ -1729,12 +1723,7 @@ export const InternalRecruitment = () => {
         const userDept = (currentUser?.deptName || currentUser?.department || '').toLowerCase().trim();
         const seasonDept = (currentSeason.department || '').toLowerCase().trim();
         const isSeasonDeptHead = isDeptHead && userDept.includes(seasonDept);
-        const isRoundOpen = isSuperAdmin || isAdmin || isHRHead || isSeasonDeptHead || (() => {
-          const active = currentSeason.active_round || 'don';
-          if (active === 'all') return true;
-          if (active === 'none') return false;
-          return active.split(',').includes(scoringTypeFilter);
-        })();
+        const isRoundOpen = checkRoundActive(scoringTypeFilter, currentSeason);
 
         return (
           <div className="space-y-4">
@@ -1807,6 +1796,17 @@ export const InternalRecruitment = () => {
                   )}
                 </div>
 
+                {/* Empty State Banner when no candidates assigned or found */}
+                {filteredCandidates.length === 0 && (
+                  <div className="text-center py-12 ds-card bg-[#0f172a]/50 border border-slate-800 rounded-2xl space-y-2">
+                    <AlertCircle className="w-10 h-10 text-amber-500/80 mx-auto mb-1" />
+                    <h4 className="font-heading font-bold text-white text-base">Không Tìm Thấy Ứng Viên Phù Hợp</h4>
+                    <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+                      Bạn chưa được phân công chấm điểm cho ứng viên nào ở vòng này, hoặc không có ứng viên nào khớp với từ khóa tìm kiếm.
+                    </p>
+                  </div>
+                )}
+
                 {/* Single candidate scoring form */}
                 {selectedCandidate && filteredCandidates.length > 0 && (() => {
                   const c = selectedCandidate;
@@ -1825,15 +1825,15 @@ export const InternalRecruitment = () => {
                       const isDeptMember = seasonDept && userDept.includes(seasonDept);
                       return isDeptMember;
                     } else if (filterType === 'teamwork') {
-                      return (c.teamwork_scorer_ids || []).includes(currentUser?.id) ||
-                        (currentSeason?.interviewer_ids || []).includes(currentUser?.id);
+                      return parseIdsArray(c.teamwork_scorer_ids).includes(String(currentUser?.id)) ||
+                        parseIdsArray(currentSeason?.interviewer_ids).includes(String(currentUser?.id));
                     } else if (filterType === 'phongvan') {
-                      return (c.interviewer_ids || []).includes(currentUser?.id) ||
-                        (currentSeason?.interviewer_ids || []).includes(currentUser?.id);
+                      return parseIdsArray(c.interviewer_ids).includes(String(currentUser?.id)) ||
+                        parseIdsArray(currentSeason?.interviewer_ids).includes(String(currentUser?.id));
                     } else if (filterType === 'thuthach_quatrinh') {
-                      return (c.challenge_process_scorer_ids || []).includes(currentUser?.id);
+                      return parseIdsArray(c.challenge_process_scorer_ids).includes(String(currentUser?.id));
                     } else if (filterType === 'thuthach_ketqua') {
-                      return (c.challenge_result_scorer_ids || []).includes(currentUser?.id);
+                      return parseIdsArray(c.challenge_result_scorer_ids).includes(String(currentUser?.id));
                     }
                     return false;
                   })();
@@ -1908,94 +1908,144 @@ export const InternalRecruitment = () => {
                       {/* Scoring form */}
                       {isAssignedToScore && !isSubmitted ? (
                         <div className="space-y-4">
-                          {sortCriteria(criteria.filter(crit => (crit.round_type || 'teamwork') === (scoringTypeFilter || 'teamwork'))).map(crit => (
-                            <div key={crit.id} className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/80 space-y-3 shadow-sm">
-                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-700/60 w-full">
-                                <div className="flex-1 min-w-0 w-full">
-                                  <label className="text-slate-100 font-bold text-sm sm:text-base block leading-normal tracking-wide text-left w-full whitespace-normal break-words">
-                                    {crit.criteria_name}
-                                  </label>
-                                  <span className="inline-block mt-1.5 px-2.5 py-0.5 rounded bg-slate-700/60 text-slate-300 text-[11px] font-medium border border-slate-600/40">
-                                    Thang điểm: 0 - {crit.max_score}
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-700/60">
-                                  <span className="text-xs text-slate-300 font-medium">Điểm:</span>
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    max={crit.max_score}
-                                    value={scoringData[crit.id] ?? ''}
-                                    onChange={(e) => setScoringData(prev => ({
-                                      ...prev,
-                                      [crit.id]: parseFloat(e.target.value) || 0
-                                    }))}
-                                    placeholder="0"
-                                    className="ds-input w-20 sm:w-24 text-center font-bold text-base sm:text-lg text-emerald-400 bg-slate-950 border-slate-700 focus:border-emerald-500 py-1"
-                                  />
-                                </div>
+                          {/* Special Banner for TT Quá Trình: Display assigned challenge topic */}
+                          {scoringTypeFilter === 'thuthach_quatrinh' && (
+                            <div className="p-4 rounded-xl bg-[#0f172a] border border-amber-500/40 space-y-2 shadow-sm">
+                              <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                                  <Zap className="w-4 h-4 text-amber-400 shrink-0" />
+                                  <span>🎯 Đề Thử Thách Được Giao Cho Ứng Viên:</span>
+                                </span>
+                                {c.challenge_topic && (() => {
+                                  const topicObj = criteria.find(cr => cr.round_type === 'thuthach' && cr.criteria_name === c.challenge_topic);
+                                  if (!topicObj || !topicObj.difficulty) return null;
+                                  return (
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${topicObj.difficulty === 'Dễ' ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' :
+                                      topicObj.difficulty === 'Khó' ? 'bg-rose-500/20 text-rose-300 border-rose-500/30' :
+                                        'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                                      }`}>
+                                      Mức độ: {topicObj.difficulty === 'Dễ' ? '🟢 Dễ' : topicObj.difficulty === 'Khó' ? '🔴 Khó' : '🟡 Trung bình'}
+                                    </span>
+                                  );
+                                })()}
                               </div>
-
-                              {/* Answer / Response Section based on round type */}
-                              {scoringTypeFilter === 'don' && (
-                                <div className="bg-slate-900/90 rounded-lg p-3 border border-slate-700/70">
-                                  <div className="text-xs font-semibold text-blue-400 mb-1.5 flex items-center gap-1.5">
-                                    <FileText className="w-4 h-4 text-blue-400 shrink-0" />
-                                    <span>Bài làm / Câu trả lời của ứng viên (từ Đơn CSDL):</span>
-                                  </div>
-                                  {(() => {
-                                    let candidateAnsText = '';
-                                    if (c.application_answers) {
-                                      try {
-                                        const parsed = typeof c.application_answers === 'string' ? JSON.parse(c.application_answers) : c.application_answers;
-                                        if (typeof parsed === 'object' && parsed !== null) {
-                                          candidateAnsText = parsed[crit.id] || parsed[crit.criteria_name] || '';
-                                        } else if (typeof parsed === 'string') {
-                                          candidateAnsText = parsed;
-                                        }
-                                      } catch (_) {
-                                        candidateAnsText = c.application_answers;
-                                      }
-                                    }
-                                    return candidateAnsText ? (
-                                      <p className="text-slate-200 text-sm whitespace-pre-wrap leading-relaxed pl-5">
-                                        {candidateAnsText}
-                                      </p>
-                                    ) : (
-                                      <p className="text-slate-500 text-xs italic pl-5">
-                                        (Chưa có câu trả lời trong CSDL)
-                                      </p>
-                                    );
-                                  })()}
-                                </div>
-                              )}
-
-                              {(scoringTypeFilter === 'phongvan' || scoringTypeFilter === 'thuthach_quatrinh') && (
-                                <div className="bg-slate-900/90 rounded-lg p-3 border border-slate-700/70">
-                                  <div className="text-xs font-semibold text-blue-400 mb-1.5 flex items-center justify-between">
-                                    <span className="flex items-center gap-1.5">
-                                      <FileText className="w-4 h-4 text-blue-400 shrink-0" />
-                                      <span>Ghi chú câu trả lời / Bài làm ứng viên:</span>
-                                    </span>
-                                    <span className="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 font-medium">
-                                      ✏️ Người chấm điền
-                                    </span>
-                                  </div>
-                                  <textarea
-                                    rows={3}
-                                    value={questionComments[crit.id] ?? candidateAnswersData[crit.id] ?? ''}
-                                    onChange={(e) => {
-                                      const val = e.target.value;
-                                      setQuestionComments(prev => ({ ...prev, [crit.id]: val }));
-                                      setCandidateAnswersData(prev => ({ ...prev, [crit.id]: val }));
-                                    }}
-                                    placeholder="Nhập câu trả lời / ghi chú bài làm của ứng viên..."
-                                    className="ds-textarea text-xs bg-slate-950 text-slate-100 border-slate-700/80 focus:border-blue-500 w-full"
-                                  />
-                                </div>
-                              )}
+                              <p className="text-sm sm:text-base font-bold text-white leading-relaxed">
+                                {c.challenge_topic ? c.challenge_topic : <span className="text-slate-500 italic font-normal">(Chưa phân công đề thử thách cho ứng viên này)</span>}
+                              </p>
                             </div>
-                          ))}
+                          )}
+
+                          {(() => {
+                            const candCriteria = getScoringCriteriaForCandidate(c);
+                            if (scoringTypeFilter === 'thuthach_ketqua' && candCriteria.length === 0) {
+                              return (
+                                <div className="p-6 text-center rounded-xl bg-amber-950/20 border border-amber-500/30 text-amber-300 space-y-2 my-4">
+                                  <AlertCircle className="w-8 h-8 text-amber-400 mx-auto" />
+                                  <p className="font-bold text-sm">Ứng viên chưa được phân công đề bài thử thách!</p>
+                                  <p className="text-xs text-slate-400">Vui lòng phân công đề bài cho ứng viên này trước khi thực hiện chấm điểm Vòng 3 Thử Thách Kết Quả.</p>
+                                </div>
+                              );
+                            }
+
+                            return sortCriteria(candCriteria).map(crit => {
+                              const isChallengeItem = crit.round_type === 'thuthach';
+                              const isAssignedTopic = c.challenge_topic && (
+                                crit.criteria_name.toLowerCase().includes(c.challenge_topic.toLowerCase()) ||
+                                c.challenge_topic.toLowerCase().includes(crit.criteria_name.toLowerCase())
+                              );
+
+                              return (
+                                <div key={crit.id} className={`p-4 rounded-xl space-y-3 shadow-sm ${isAssignedTopic
+                                  ? 'bg-amber-950/40 border border-amber-500/50'
+                                  : 'bg-slate-800/60 border border-slate-700/80'
+                                  }`}>
+                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-700/60 w-full">
+                                    <div className="flex-1 min-w-0 w-full">
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <label className="text-slate-100 font-bold text-sm sm:text-base block leading-normal tracking-wide text-left whitespace-normal break-words">
+                                          {crit.criteria_name}
+                                        </label>
+                                      </div>
+                                      <span className="inline-block mt-1.5 px-2.5 py-0.5 rounded bg-slate-700/60 text-slate-300 text-[11px] font-medium border border-slate-600/40">
+                                        Thang điểm: 0 - {crit.max_score || 10}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-center bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-700/60">
+                                      <span className="text-xs text-slate-300 font-medium">Điểm:</span>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        max={crit.max_score || 10}
+                                        value={scoringData[crit.id] ?? ''}
+                                        onChange={(e) => setScoringData(prev => ({
+                                          ...prev,
+                                          [crit.id]: parseFloat(e.target.value) || 0
+                                        }))}
+                                        placeholder="0"
+                                        className="ds-input w-20 sm:w-24 text-center font-bold text-base sm:text-lg text-emerald-400 bg-slate-950 border-slate-700 focus:border-emerald-500 py-1"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  {/* Answer / Response Section based on round type */}
+                                  {scoringTypeFilter === 'don' && (
+                                    <div className="bg-slate-900/90 rounded-lg p-3 border border-slate-700/70">
+                                      <div className="text-xs font-semibold text-blue-400 mb-1.5 flex items-center gap-1.5">
+                                        <FileText className="w-4 h-4 text-blue-400 shrink-0" />
+                                        <span>Bài làm / Câu trả lời của ứng viên (từ Đơn CSDL):</span>
+                                      </div>
+                                      {(() => {
+                                        let candidateAnsText = '';
+                                        if (c.application_answers) {
+                                          try {
+                                            const parsed = typeof c.application_answers === 'string' ? JSON.parse(c.application_answers) : c.application_answers;
+                                            if (typeof parsed === 'object' && parsed !== null) {
+                                              candidateAnsText = parsed[crit.id] || parsed[crit.criteria_name] || '';
+                                            } else if (typeof parsed === 'string') {
+                                              candidateAnsText = parsed;
+                                            }
+                                          } catch (_) {
+                                            candidateAnsText = c.application_answers;
+                                          }
+                                        }
+                                        return candidateAnsText ? (
+                                          <p className="text-slate-200 text-sm whitespace-pre-wrap leading-relaxed pl-5">
+                                            {candidateAnsText}
+                                          </p>
+                                        ) : (
+                                          <p className="text-slate-500 text-xs italic pl-5">
+                                            (Chưa có câu trả lời trong CSDL)
+                                          </p>
+                                        );
+                                      })()}
+                                    </div>
+                                  )}
+
+                                  {(scoringTypeFilter === 'phongvan' || scoringTypeFilter === 'thuthach_quatrinh' || scoringTypeFilter === 'thuthach_ketqua') && (
+                                    <div className="bg-slate-900/90 rounded-lg p-3 border border-slate-700/70">
+                                      <div className="text-xs font-semibold text-blue-400 mb-1.5 flex items-center justify-between">
+                                        <span className="flex items-center gap-1.5">
+                                          <FileText className="w-4 h-4 text-blue-400 shrink-0" />
+                                          <span>Ghi chú câu trả lời</span>
+                                        </span>
+                                      </div>
+                                      <textarea
+                                        rows={3}
+                                        value={questionComments[crit.id] ?? candidateAnswersData[crit.id] ?? ''}
+                                        onChange={(e) => {
+                                          const val = e.target.value;
+                                          setQuestionComments(prev => ({ ...prev, [crit.id]: val }));
+                                          setCandidateAnswersData(prev => ({ ...prev, [crit.id]: val }));
+                                        }}
+                                        placeholder="Nhập câu trả lời / ghi chú bài làm của ứng viên..."
+                                        className="ds-textarea text-xs bg-slate-950 text-slate-100 border-slate-700/80 focus:border-blue-500 w-full"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })
+                          })()}
 
                           {/* Comments field */}
                           <div>
@@ -2013,7 +2063,7 @@ export const InternalRecruitment = () => {
                           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-4 border-t border-[var(--border-default)]">
                             <div className="text-white font-bold text-base">
                               {(() => {
-                                const activeCriteria = criteria.filter(crit => (crit.round_type || 'teamwork') === (scoringTypeFilter || 'teamwork'));
+                                const activeCriteria = getScoringCriteriaForCandidate(c);
                                 const activeCritList = scoringTypeFilter === 'phongvan'
                                   ? activeCriteria.filter(crit => selectedQuestions[crit.id])
                                   : activeCriteria;
@@ -2036,9 +2086,6 @@ export const InternalRecruitment = () => {
                                 return (
                                   <div className="flex flex-wrap items-center gap-2">
                                     <span>Tổng điểm: <strong className="text-emerald-400 text-lg">{sum}</strong></span>
-                                    <span className="text-xs text-slate-400 font-normal">
-                                      (ĐTB {scoringTypeFilter === 'don' ? 'Đơn' : scoringTypeFilter === 'thuthach_ketqua' ? 'TT Kết quả' : 'vòng'}: <strong className="text-blue-400">{avg}</strong> tính trên {count} tiêu chí{isDonOrTtKetqua ? '' : ' > 0đ'})
-                                    </span>
                                   </div>
                                 );
                               })()}
@@ -2070,260 +2117,18 @@ export const InternalRecruitment = () => {
       })()}
 
       {/* Results Tab - for all department members */}
-      {activeTab === 'results' && currentSeason && (() => {
-        const scoringTypes = (() => {
-          if (!currentSeason || !currentSeason.scoring_type) return [];
-          const raw = currentSeason.scoring_type;
-          if (Array.isArray(raw)) return raw;
-          if (typeof raw === 'string') {
-            try {
-              const parsed = JSON.parse(raw);
-              if (Array.isArray(parsed)) return parsed;
-            } catch (e) { }
-            return [raw];
-          }
-          return [];
-        })();
-
-        const hasDon = scoringTypes.includes('don') || scoresSummary.some(s => s.round_scores?.don !== undefined);
-        const hasPv = scoringTypes.includes('phongvan') || scoresSummary.some(s => s.round_scores?.phongvan !== undefined);
-        const hasTw = scoringTypes.includes('teamwork') || scoresSummary.some(s => s.round_scores?.teamwork !== undefined);
-        const hasTtQuatrinh = scoringTypes.includes('thuthach_quatrinh') || scoringTypes.includes('thuthach') || scoresSummary.some(s => s.round_scores?.thuthach_quatrinh !== undefined);
-        const hasTtKetqua = scoringTypes.includes('thuthach_ketqua') || scoringTypes.includes('thuthach') || scoresSummary.some(s => s.round_scores?.thuthach_ketqua !== undefined);
-
-        // Build summary list: use scoresSummary if available, else fallback to candidates list
-        let summaryList = [];
-        if (Array.isArray(candidates) && candidates.length > 0) {
-          summaryList = candidates.map((c, idx) => {
-            const matchSummary = (scoresSummary || []).find(s =>
-              String(s.candidate_id).trim() === String(c.id).trim() ||
-              String(s.candidate_id).trim() === String(c.interview_code || '').trim() ||
-              String(s.interview_code || '').trim() === String(c.interview_code || '').trim() ||
-              String(s.interview_code || '').trim() === String(c.id).trim() ||
-              (s.full_name && c.full_name && String(s.full_name).trim().toLowerCase() === String(c.full_name).trim().toLowerCase())
-            );
-            if (matchSummary) {
-              return {
-                ...c,
-                ...matchSummary,
-                candidate_id: c.id,
-                interview_code: c.interview_code || matchSummary.interview_code || c.id,
-                full_name: c.full_name || matchSummary.full_name,
-                class_name: c.class_name || matchSummary.class_name,
-                desired_dept: c.desired_dept || matchSummary.desired_dept || currentSeason.department || 'N/A'
-              };
-            }
-            return {
-              candidate_id: c.id,
-              interview_code: c.interview_code || c.id,
-              full_name: c.full_name,
-              class_name: c.class_name,
-              desired_dept: c.desired_dept || currentSeason.department || 'N/A',
-              status: c.status || 'pending',
-              notes: c.notes || '',
-              comments: [],
-              round_scores: {},
-              avg_score: 0,
-              total_score: 0,
-              result_status: c.status || 'pending',
-              rank: idx + 1
-            };
-          });
-          summaryList.sort((a, b) => b.total_score - a.total_score || b.avg_score - a.avg_score || (a.interview_code || '').localeCompare(b.interview_code || '', undefined, { numeric: true, sensitivity: 'base' }));
-          summaryList.forEach((item, idx) => { item.rank = idx + 1; });
-        } else if (Array.isArray(scoresSummary) && scoresSummary.length > 0) {
-          summaryList = scoresSummary;
-        }
-
-
-        return (
-          <div className="space-y-4">
-            <div className="ds-card p-5 bg-gradient-to-r from-[#0f172a] via-[#111827] to-[#0f172a] border border-slate-800 rounded-2xl">
-              <div className="flex justify-between items-center flex-wrap gap-3">
-                <div>
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <span className="relative flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                    </span>
-                    <h2 className="text-xl font-bold text-white">Bảng Tổng Hợp Kết Quả - {currentSeason.name}</h2>
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-950 text-emerald-300 border border-emerald-700/50">
-                      🟢 Đồng bộ tự động (4s)
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    if (currentSeason?.id) {
-                      fetchCandidates(currentSeason.id);
-                      fetchScoresSummary(currentSeason.id);
-                    }
-                  }}
-                  className="ds-btn ds-btn-secondary text-xs flex items-center gap-2"
-                >
-                  <span>🔄 Cập Nhật Kết Quả</span>
-                </button>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-slate-800/80">
-                <div className="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/80 text-center">
-                  <div className="text-slate-400 text-[11px]">👥 Tổng Ứng Viên</div>
-                  <div className="text-lg font-bold text-white mt-0.5">{summaryList.length}</div>
-                </div>
-                <div className="bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-800/50 text-center">
-                  <div className="text-emerald-400 text-[11px] font-medium">🟢 Đã Có Điểm</div>
-                  <div className="text-lg font-bold text-emerald-300 mt-0.5">
-                    {summaryList.filter(item => (item.total_score && item.total_score > 0) || (item.avg_score && item.avg_score > 0) || Object.keys(item.round_scores || {}).length > 0).length}
-                  </div>
-                </div>
-                <div className="bg-amber-950/40 p-2.5 rounded-xl border border-amber-800/50 text-center">
-                  <div className="text-amber-400 text-[11px] font-medium">⚪ Chưa Có Điểm</div>
-                  <div className="text-lg font-bold text-amber-300 mt-0.5">
-                    {summaryList.length - summaryList.filter(item => (item.total_score && item.total_score > 0) || (item.avg_score && item.avg_score > 0) || Object.keys(item.round_scores || {}).length > 0).length}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="ds-card overflow-x-auto">
-              <table className="ds-table w-full text-left">
-                <thead>
-                  <tr className="border-b border-slate-800 text-slate-400 text-xs font-semibold uppercase tracking-wider">
-                    <th className="py-3 px-3">Xếp Hạng</th>
-                    <th className="py-3 px-3">Mã PV</th>
-                    <th className="py-3 px-3">Họ Tên</th>
-                    <th className="py-3 px-3">Lớp</th>
-                    <th className="py-3 px-3">Ban Mong Muốn</th>
-                    {hasDon && <th className="py-3 px-3 text-center">📝 TB Đơn</th>}
-                    {hasPv && <th className="py-3 px-3 text-center">🎙️ TB PV</th>}
-                    {hasTw && <th className="py-3 px-3 text-center">👥 TB TW</th>}
-                    {hasTtQuatrinh && <th className="py-3 px-3 text-center text-amber-300">⚡ TT Quá Trình</th>}
-                    {hasTtKetqua && <th className="py-3 px-3 text-center text-purple-300">🏆 TT Kết Quả</th>}
-                    <th className="py-3 px-3 text-center">Tổng Điểm</th>
-                    <th className="py-3 px-3 text-center">Kết Quả</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60 text-xs">
-                  {summaryList.length === 0 ? (
-                    <tr>
-                      <td colSpan={12} className="text-center py-8 text-slate-500 italic">
-                        Chưa có ứng viên nào trong mùa tuyển sinh này.
-                      </td>
-                    </tr>
-                  ) : (
-                    summaryList.map((s, idx) => {
-                      const code = s.interview_code || s.candidate_code || (candidates.find(c => c.id === s.candidate_id)?.interview_code) || s.candidate_id;
-                      const rScores = s.round_scores || {};
-                      const getRoundScore = (rk) => {
-                        if (rScores[rk] !== undefined) return rScores[rk];
-                        if ((rk === 'phongvan' || rk === 'don') && rScores.teamwork !== undefined) return rScores.teamwork;
-                        const vals = Object.values(rScores);
-                        return vals.length > 0 ? vals[0] : undefined;
-                      };
-                      const displayTotal = (s.total_score && s.total_score > 0) ? s.total_score : (Object.values(rScores).length > 0 ? parseFloat(Object.values(rScores).reduce((a, b) => a + (parseFloat(b) || 0), 0).toFixed(2)) : 0);
-
-                      const getRankBadge = (rank) => {
-                        if (rank === 1) return <span className="ds-badge bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold px-2 py-0.5">🥇 #1</span>;
-                        if (rank === 2) return <span className="ds-badge bg-slate-300/20 text-slate-200 border border-slate-400/40 font-bold px-2 py-0.5">🥈 #2</span>;
-                        if (rank === 3) return <span className="ds-badge bg-amber-700/20 text-amber-500 border border-amber-700/40 font-bold px-2 py-0.5">🥉 #3</span>;
-                        return <span className="font-mono text-slate-400 font-semibold px-2">#{rank}</span>;
-                      };
-
-                      return (
-                        <React.Fragment key={s.candidate_id}>
-                          <tr className="hover:bg-slate-800/40 transition-colors">
-                            <td className="py-3 px-3">{getRankBadge(s.rank || idx + 1)}</td>
-                            <td className="py-3 px-3">
-                              <span className="ds-badge ds-badge-cyan font-mono font-bold text-xs py-1 px-2">
-                                {code}
-                              </span>
-                            </td>
-                            <td className="py-3 px-3 font-bold text-slate-100">{s.full_name}</td>
-                            <td className="py-3 px-3 text-slate-300">{s.class_name}</td>
-                            <td className="py-3 px-3 text-slate-300">{s.desired_dept}</td>
-                            {hasDon && (
-                              <td className="py-3 px-3 text-center font-mono text-slate-200">
-                                {getRoundScore('don') !== undefined ? getRoundScore('don') : <span className="text-slate-600">-</span>}
-                              </td>
-                            )}
-                            {hasPv && (
-                              <td className="py-3 px-3 text-center font-mono text-blue-300">
-                                {getRoundScore('phongvan') !== undefined ? getRoundScore('phongvan') : <span className="text-slate-600">-</span>}
-                              </td>
-                            )}
-                            {hasTw && (
-                              <td className="py-3 px-3 text-center font-mono text-emerald-300">
-                                {getRoundScore('teamwork') !== undefined ? getRoundScore('teamwork') : <span className="text-slate-600">-</span>}
-                              </td>
-                            )}
-                            {hasTtQuatrinh && (
-                              <td className="py-3 px-3 text-center font-mono text-amber-300">
-                                {getRoundScore('thuthach_quatrinh') !== undefined ? getRoundScore('thuthach_quatrinh') : <span className="text-slate-600">-</span>}
-                              </td>
-                            )}
-                            {hasTtKetqua && (
-                              <td className="py-3 px-3 text-center font-mono text-purple-300">
-                                {getRoundScore('thuthach_ketqua') !== undefined ? getRoundScore('thuthach_ketqua') : <span className="text-slate-600">-</span>}
-                              </td>
-                            )}
-                            <td className="py-3 px-3 text-center font-bold text-white font-mono text-sm">
-                              {displayTotal}
-                            </td>
-                            <td className="py-3 px-3 text-center">
-                              {(() => {
-                                const candObj = candidates.find(cand => String(cand.id) === String(s.candidate_id)) || s;
-                                const stage = getCandidateStageInfo(candObj);
-                                return (
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setProgressCandidate(candObj);
-                                      setShowProgressModal(true);
-                                    }}
-                                    className={`ds-badge text-[11px] font-semibold px-2 py-0.5 border rounded-lg flex items-center justify-center gap-1 transition-all cursor-pointer hover:scale-105 mx-auto ${stage.badgeClass}`}
-                                    title="Nhấn vào đây để xem chi tiết tiến trình đánh giá của ứng viên"
-                                  >
-                                    <span>{stage.label}</span>
-                                    <ChevronRight className="w-3 h-3 opacity-70" />
-                                  </button>
-                                );
-                              })()}
-                            </td>
-                          </tr>
-                          {s.comments && s.comments.length > 0 && (
-                            <tr className="bg-slate-900/60 border-b border-slate-800/80">
-                              <td colSpan={12} className="py-2.5 px-4 text-xs">
-                                <div className="space-y-1.5">
-                                  <span className="text-[11px] font-semibold text-amber-400 flex items-center gap-1">
-                                    💬 Nhận xét theo vòng ({s.comments.length}):
-                                  </span>
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                    {s.comments.map((cmt, cIdx) => (
-                                      <div key={cIdx} className="bg-[#0f172a] p-2.5 rounded-lg border border-slate-800 text-slate-200 text-xs leading-relaxed space-y-1">
-                                        <div className="flex items-center text-[10px] text-slate-400 mb-1">
-                                          <span className="ds-badge ds-badge-secondary py-0.5 px-2 text-[9.5px] uppercase font-semibold">
-                                            {cmt.round_type === 'don' ? '📝 Vòng Đơn' : cmt.round_type === 'phongvan' ? '🎙️ Vòng Phỏng Vấn' : cmt.round_type === 'teamwork' ? '👥 Vòng Teamwork' : cmt.round_type === 'thuthach_quatrinh' ? '⚡ Thử Thách Quá Trình' : '🏆 Thử Thách Kết Quả'}
-                                          </span>
-                                        </div>
-                                        <p className="text-slate-300 italic">"{cmt.comments}"</p>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              </td>
-                            </tr>
-                          )}
-                        </React.Fragment>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-      })()}
+      {activeTab === 'results' && currentSeason && (
+        <RecruitmentSummaryTable
+          currentSeason={currentSeason}
+          candidates={candidates}
+          scoresSummary={scoresSummary}
+          fetchCandidates={fetchCandidates}
+          fetchScoresSummary={fetchScoresSummary}
+          getCandidateStageInfo={getCandidateStageInfo}
+          setProgressCandidate={setProgressCandidate}
+          setShowProgressModal={setShowProgressModal}
+        />
+      )}
 
       <SeasonModal
         show={showSeasonModal}
@@ -2421,7 +2226,6 @@ export const InternalRecruitment = () => {
         setLeadInterviewerId={setLeadInterviewerId}
         onSubmit={() => {
           assignCandidateToInterviewer(selectedCandidate.id, selectedCandidateInterviewers, leadInterviewerId);
-          setShowCandidateInterviewerModal(false);
         }}
         loading={loading}
       />
@@ -2439,7 +2243,6 @@ export const InternalRecruitment = () => {
         setSelectedScorers={setSelectedCandidateTeamworkScorers}
         onSubmit={() => {
           assignCandidateTeamworkScorers(selectedCandidate.id, selectedCandidateTeamworkScorers);
-          setShowCandidateTeamworkModal(false);
         }}
         loading={loading}
       />

@@ -30,7 +30,7 @@ import {
   CheckCircle2,
   MoreVertical
 } from 'lucide-react';
-import { NewAccountModal } from '../components/members/NewAccountModal';
+import { NewAccountModal, generateRandomVmcUsername } from '../components/members/NewAccountModal';
 import { MemberDetailModal } from '../components/members/MemberDetailModal';
 import { EditMemberModal } from '../components/members/EditMemberModal';
 import { MilestoneModal } from '../components/members/MilestoneModal';
@@ -189,15 +189,15 @@ export const InternalMembers = () => {
   const hasSuperAdmin = members.some(m => m.roleTitle?.includes('Super Admin'));
 
   const [formData, setFormData] = useState({
-    username: '',
+    username: generateRandomVmcUsername(members),
     name: '',
     class: '10A1',
     role: 'member',
     roleTitle: 'Thành viên',
     department: 'production',
-    deptName: 'Ban Sản Xuất',
-    term: 'Gen 6',
-    termName: 'Gen 6',
+    deptName: 'Ban Sản Xuất Media',
+    term: 'Gen 8',
+    termName: 'Gen 8',
     phone: '',
     email: '',
     dob: '01/01/2009',
@@ -266,7 +266,7 @@ export const InternalMembers = () => {
   };
 
   const handleSubmitNewAccount = (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (!formData.username || !formData.name || !formData.phone) {
       showToast('Vui lòng nhập đầy đủ Tên đăng nhập, Họ tên và Số điện thoại!', 'warning');
       return;
@@ -274,9 +274,9 @@ export const InternalMembers = () => {
     createMemberAccount(formData);
     setIsNewAccountModalOpen(false);
     setFormData({
-      username: '', name: '', class: '10A1', role: 'member',
-      roleTitle: 'Thành Viên VMC', department: 'production', deptName: 'Ban Sản Xuất',
-      term: 'Gen 6', termName: 'Gen 6', phone: '', email: '',
+      username: generateRandomVmcUsername(members), name: '', class: '10A1', role: 'member',
+      roleTitle: 'Thành viên', department: 'production', deptName: 'Ban Sản Xuất Media',
+      term: 'Gen 8', termName: 'Gen 8', phone: '', email: '',
       dob: '01/01/2009', address: 'Thị trấn Vĩnh Bảo, Vĩnh Bảo, Hải Phòng',
       facebook: 'https://facebook.com/'
     });
@@ -316,7 +316,7 @@ export const InternalMembers = () => {
   }, [nonAdminMembers, searchQuery, selectedTerm, selectedDept]);
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-20">
+    <div className="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-20">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -325,9 +325,6 @@ export const InternalMembers = () => {
             <Users className="w-6 h-6 text-blue-400 shrink-0" />
             <span>Danh Sách Thành Viên</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Tìm kiếm thông tin thành viên qua từng thời kỳ từ khóa sáng lập đến đương nhiệm.
-          </p>
         </div>
 
         <button
@@ -336,6 +333,10 @@ export const InternalMembers = () => {
               showToast('⛔ Quyền bị từ chối! Chỉ có bộ phận kỹ thuật ban Đối Ngoại - Nhân Sự mới có quyền cấp tài khoản thành viên mới!', 'error');
               return;
             }
+            setFormData(prev => ({
+              ...prev,
+              username: generateRandomVmcUsername(members)
+            }));
             setIsNewAccountModalOpen(true);
           }}
           className={`ds-btn ds-btn-primary text-xs shrink-0 ${!isAdmin ? 'opacity-60 cursor-not-allowed' : ''}`}
@@ -449,7 +450,7 @@ export const InternalMembers = () => {
                     {m.roleTitle}
                   </span>
                   <span className="text-xs text-slate-400 font-mono block truncate min-w-0 leading-tight mt-0.5">
-                    Mã TV: {m.memberCode} • Lớp {m.class}
+                    Mã TV: {m.memberCode}
                   </span>
                 </div>
               </div>
@@ -653,6 +654,8 @@ export const InternalMembers = () => {
         setFormData={setFormData}
         onSubmit={handleSubmitNewAccount}
         loading={false}
+        generations={generations}
+        existingMembers={members}
       />
 
       <MilestoneModal

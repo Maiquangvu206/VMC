@@ -4,7 +4,7 @@ import { Plus, X } from 'lucide-react';
 export const CriteriaModal = ({ show, onClose, criteriaForm, setCriteriaForm, onSubmit, loading }) => {
   if (!show) return null;
 
-  const isChallenge = (criteriaForm.round_type || '').startsWith('thuthach');
+  const isChallenge = (criteriaForm.round_type || '') === 'thuthach';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
@@ -31,22 +31,23 @@ export const CriteriaModal = ({ show, onClose, criteriaForm, setCriteriaForm, on
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="ds-field-label">Vòng / Mục</label>
-              <select
-                value={criteriaForm.round_type || 'teamwork'}
-                onChange={(e) => setCriteriaForm({ ...criteriaForm, round_type: e.target.value })}
-                className="ds-input w-full bg-slate-900 border border-slate-700 text-white font-medium"
-              >
-                <option value="don">📝 Vòng Đơn</option>
-                <option value="phongvan">🎙️ Vòng Phỏng Vấn</option>
-                <option value="thuthach">⚡ Kho Đề Thử Thách</option>
-                <option value="teamwork">👥 Vòng Teamwork</option>
-              </select>
-            </div>
+          <div>
+            <label className="ds-field-label">Vòng / Mục</label>
+            <select
+              value={criteriaForm.round_type || 'teamwork'}
+              onChange={(e) => setCriteriaForm({ ...criteriaForm, round_type: e.target.value })}
+              className="ds-input w-full bg-slate-900 border border-slate-700 text-white font-medium"
+            >
+              <option value="don">📝 Vòng Đơn</option>
+              <option value="phongvan">🎙️ Vòng Phỏng Vấn</option>
+              <option value="thuthach_quatrinh">⚡ Thử Thách Quá Trình (Tiêu chí)</option>
+              <option value="thuthach">⚡ Kho Đề Thử Thách (Tính điểm TT Kết Quả)</option>
+              <option value="teamwork">👥 Vòng Teamwork</option>
+            </select>
+          </div>
 
-            {isChallenge ? (
+          <div className="grid grid-cols-2 gap-3">
+            {isChallenge && (
               <div>
                 <label className="ds-field-label">Mức độ đề</label>
                 <select
@@ -59,19 +60,19 @@ export const CriteriaModal = ({ show, onClose, criteriaForm, setCriteriaForm, on
                   <option value="Khó">🔴 Khó</option>
                 </select>
               </div>
-            ) : (
-              <div>
-                <label className="ds-field-label">Điểm tối đa</label>
-                <input
-                  type="number"
-                  min="1"
-                  value={criteriaForm.max_score || 10}
-                  onChange={(e) => setCriteriaForm({ ...criteriaForm, max_score: parseInt(e.target.value) || 10 })}
-                  className="ds-input w-full"
-                  placeholder="10"
-                />
-              </div>
             )}
+
+            <div className={isChallenge ? '' : 'col-span-2'}>
+              <label className="ds-field-label">Điểm tối đa</label>
+              <input
+                type="number"
+                min="1"
+                value={criteriaForm.max_score || 10}
+                onChange={(e) => setCriteriaForm({ ...criteriaForm, max_score: parseInt(e.target.value) || 10 })}
+                className="ds-input w-full"
+                placeholder="10"
+              />
+            </div>
           </div>
         </div>
 

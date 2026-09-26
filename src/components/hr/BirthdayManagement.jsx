@@ -190,7 +190,7 @@ export const BirthdayManagement = () => {
     setAssignForm({ ...assignForm, memberId: '' });
   };
 
-const handleConfirmMemberSubmit = async (e) => {
+  const handleConfirmMemberSubmit = async (e) => {
     e.preventDefault();
     if (!activeAssignmentId || !submittingMemberId) return;
 
@@ -202,13 +202,13 @@ const handleConfirmMemberSubmit = async (e) => {
       setIsUploading(true);
       try {
         const user = currentUser || {};
-        
+
         // 1. Tìm thông tin chi tiết thành viên được chúc mừng sinh nhật
         const targetBirthdayMember = (members || []).find(m => String(m.id) === String(submittingMemberId));
-        
+
         // 2. Lấy đợt phân công sinh nhật hiện tại
         const currentAssignment = (birthdayAssignments || []).find(a => String(a.id) === String(activeAssignmentId));
-        
+
         // Lấy tháng sinh từ dob (ví dụ "10/08/2008" -> lấy 8) hoặc lấy từ đợt assignment.month
         let bdayMonth = currentAssignment?.month;
         if (targetBirthdayMember?.dob) {
@@ -289,9 +289,6 @@ const handleConfirmMemberSubmit = async (e) => {
             <Gift className="text-pink-400" />
             <span>Phân Công & Quản Lý Dữ Liệu Sinh Nhật</span>
           </h3>
-          <p className="text-xs text-slate-400 mt-1">
-            Nộp ảnh/bài đăng cho từng cá nhân sinh nhật trong tháng. Hạn chót nộp tư liệu đến ngày 28 của tháng trước, hạn trực kết thúc cuối tháng.
-          </p>
         </div>
       </div>
 
@@ -300,7 +297,7 @@ const handleConfirmMemberSubmit = async (e) => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h4 className="font-heading text-sm font-bold text-white flex items-center gap-2">
             <Calendar className="w-4 h-4 text-pink-400" />
-            <span>Sinh Nhật Thành Viên (Tháng Này & Tháng Tới)</span>
+            <span>Sinh Nhật Thành Viên</span>
           </h4>
           <span className="text-xs text-pink-300 font-mono">
             Tổng cộng: {upcomingBirthdays.length} thành viên
@@ -317,13 +314,12 @@ const handleConfirmMemberSubmit = async (e) => {
               return (
                 <div
                   key={m.id}
-                  className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 transition-all ${
-                    isToday
-                      ? 'bg-pink-500/20 border-pink-500/50 shadow-md shadow-pink-500/10'
-                      : isTomorrow
+                  className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 transition-all ${isToday
+                    ? 'bg-pink-500/20 border-pink-500/50 shadow-md shadow-pink-500/10'
+                    : isTomorrow
                       ? 'bg-purple-500/15 border-purple-500/40'
                       : 'bg-[#0f172a] border-[#1f2937]'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <img

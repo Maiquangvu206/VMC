@@ -118,7 +118,9 @@ export const LoginModal = () => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 z-10 flex items-center justify-center text-slate-400 hover:text-slate-200 focus:outline-none"
+                className="absolute right-3 z-20 flex items-center justify-center p-1.5 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-slate-800/50 focus:outline-none cursor-pointer transition-colors"
+                title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>

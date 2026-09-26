@@ -4,14 +4,14 @@ import { Plus, Users, Clock, CheckCircle2, FileText, AlertCircle } from 'lucide-
 
 export const MeetingManagement = () => {
   const { meetings, createMeeting, cancelMeeting, updateMeeting, members, submitMeetingAttendance, submitMeetingMinutes, currentUser, isHRHead } = useClub();
-  
+
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ title: '', date: '', time: '', attendanceTakerId: '', minuteTakerId: '' });
   const [editMeetingId, setEditMeetingId] = useState(null);
   const [editDate, setEditDate] = useState('');
   const [editTime, setEditTime] = useState('');
   const todayDate = new Date().toISOString().split('T')[0];
-  
+
   const [activeAttendanceMeeting, setActiveAttendanceMeeting] = useState(null);
   const [attendanceState, setAttendanceState] = useState({});
 
@@ -62,22 +62,22 @@ export const MeetingManagement = () => {
         <form onSubmit={handleCreate} className="ds-card p-5 border border-purple-500/30 space-y-4">
           <div>
             <label className="ds-field-label">Tên cuộc họp</label>
-            <input required type="text" className="ds-input" placeholder="VD: Họp giao ban đầu tháng" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} />
+            <input required type="text" className="ds-input" placeholder="VD: Họp giao ban đầu tháng" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="ds-field-label">Ngày họp</label>
-              <input required type="date" min={todayDate} className="ds-input" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
+              <input required type="date" min={todayDate} className="ds-input" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} />
             </div>
             <div>
               <label className="ds-field-label">Giờ họp</label>
-              <input required type="time" className="ds-input" value={formData.time} onChange={e => setFormData({...formData, time: e.target.value})} />
+              <input required type="time" className="ds-input" value={formData.time} onChange={e => setFormData({ ...formData, time: e.target.value })} />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="ds-field-label">Người điểm danh</label>
-              <select className="ds-input" value={formData.attendanceTakerId} onChange={e => setFormData({...formData, attendanceTakerId: e.target.value})}>
+              <select className="ds-input" value={formData.attendanceTakerId} onChange={e => setFormData({ ...formData, attendanceTakerId: e.target.value })}>
                 <option value="">-- Chọn thành viên --</option>
                 {members
                   .filter(m => m.deptName?.toLowerCase().includes('đối ngoại') || m.deptName?.toLowerCase().includes('nhân sự'))
@@ -86,7 +86,7 @@ export const MeetingManagement = () => {
             </div>
             <div>
               <label className="ds-field-label">Người ghi biên bản</label>
-              <select className="ds-input" value={formData.minuteTakerId} onChange={e => setFormData({...formData, minuteTakerId: e.target.value})}>
+              <select className="ds-input" value={formData.minuteTakerId} onChange={e => setFormData({ ...formData, minuteTakerId: e.target.value })}>
                 <option value="">-- Chọn thành viên --</option>
                 {members
                   .filter(m => m.deptName?.toLowerCase().includes('đối ngoại') || m.deptName?.toLowerCase().includes('nhân sự'))
@@ -101,7 +101,7 @@ export const MeetingManagement = () => {
       {/* Danh sách cuộc họp */}
       <div className="space-y-4">
         {meetings.length === 0 && <p className="text-sm text-slate-500 italic ds-card p-6 text-center">Chưa có lịch họp nào.</p>}
-        
+
         {meetings.map(m => {
           const attendanceTaker = members.find(mem => String(mem.id) === String(m.attendanceTakerId));
           const minuteTaker = members.find(mem => String(mem.id) === String(m.minuteTakerId));
@@ -127,11 +127,11 @@ export const MeetingManagement = () => {
 
               <div className="grid grid-cols-2 gap-4 text-xs ds-card p-3 border border-[var(--border-default)]">
                 <div>
-                  <span className="text-slate-500">Phụ trách điểm danh:</span><br/>
+                  <span className="text-slate-500">Phụ trách điểm danh:</span><br />
                   <span className="font-semibold text-blue-300">{attendanceTaker?.name || 'Chưa phân công'}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500">Ghi biên bản:</span><br/>
+                  <span className="text-slate-500">Ghi biên bản:</span><br />
                   <span className="font-semibold text-rose-300">{minuteTaker?.name || 'Chưa phân công'}</span>
                 </div>
               </div>
@@ -143,7 +143,7 @@ export const MeetingManagement = () => {
                     <CheckCircle2 className="w-4 h-4" /> Bắt đầu điểm danh
                   </button>
                 )}
-                
+
                 {m.status === 'pending_minutes' && (isMinuteTaker || isHRHead) && (
                   <button onClick={() => handleMinuteSubmit(m.id)} className="ds-btn ds-btn-primary ds-btn-xs">
                     <FileText className="w-4 h-4" /> Nộp link biên bản
@@ -154,7 +154,7 @@ export const MeetingManagement = () => {
                     Xem biên bản
                   </a>
                 )}
-                
+
                 {(m.status === 'pending' || m.status === 'postponed') && isHRHead && (
                   <>
                     <button onClick={() => {
@@ -209,11 +209,10 @@ export const MeetingManagement = () => {
                 Điểm danh: {activeAttendanceMeeting.title}
               </h3>
             </div>
-            
+
             <div className="p-6 overflow-y-auto space-y-2 flex-1">
               <div className="ds-card p-4 border border-amber-500/30 bg-amber-500/10 mb-4 flex gap-3 text-sm text-amber-200/80">
                 <AlertCircle className="w-5 h-5 shrink-0 text-amber-400" />
-                <p>Thành viên bị đánh dấu "Đi muộn" hoặc "Vắng không phép" sẽ bị trừ điểm tự động ngay khi bạn chốt điểm danh.</p>
               </div>
 
               {members.filter(m => {
@@ -228,29 +227,29 @@ export const MeetingManagement = () => {
                     <div className="text-[10px] text-slate-500">{m.deptName}</div>
                   </div>
                   <div className="flex gap-2">
-                    <button 
-                      onClick={() => setAttendanceState({...attendanceState, [m.id]: 'present'})}
+                    <button
+                      onClick={() => setAttendanceState({ ...attendanceState, [m.id]: 'present' })}
                       className={`ds-btn ds-btn-xs ${attendanceState[m.id] === 'present' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50' : 'bg-[var(--bg-input)] text-slate-400 hover:bg-slate-700 border border-transparent'}`}
                     >
                       Có mặt
                     </button>
-                    <button 
-                      onClick={() => setAttendanceState({...attendanceState, [m.id]: 'late'})}
+                    <button
+                      onClick={() => setAttendanceState({ ...attendanceState, [m.id]: 'late' })}
                       className={`ds-btn ds-btn-xs ${attendanceState[m.id] === 'late' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' : 'bg-[var(--bg-input)] text-slate-400 hover:bg-slate-700 border border-transparent'}`}
                     >
-                      Đi muộn (-5đ)
+                      Đi muộn
                     </button>
-                    <button 
-                      onClick={() => setAttendanceState({...attendanceState, [m.id]: 'absent_excused'})}
+                    <button
+                      onClick={() => setAttendanceState({ ...attendanceState, [m.id]: 'absent_excused' })}
                       className={`ds-btn ds-btn-xs ${attendanceState[m.id] === 'absent_excused' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50' : 'bg-[var(--bg-input)] text-slate-400 hover:bg-slate-700 border border-transparent'}`}
                     >
-                      Vắng (Có phép)
+                      Có phép
                     </button>
-                    <button 
-                      onClick={() => setAttendanceState({...attendanceState, [m.id]: 'absent'})}
+                    <button
+                      onClick={() => setAttendanceState({ ...attendanceState, [m.id]: 'absent' })}
                       className={`ds-btn ds-btn-xs ${attendanceState[m.id] === 'absent' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/50' : 'bg-[var(--bg-input)] text-slate-400 hover:bg-slate-700 border border-transparent'}`}
                     >
-                      Vắng (-10đ)
+                      Vắng
                     </button>
                   </div>
                 </div>

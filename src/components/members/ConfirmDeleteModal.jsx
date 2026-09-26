@@ -22,7 +22,6 @@ export const ConfirmDeleteModal = ({ show, onClose, onConfirm, member, loading }
               <h3 className="font-heading text-base sm:text-lg font-bold text-white flex items-center gap-1.5">
                 <span>Xác Nhận Xóa Vĩnh Viễn</span>
               </h3>
-              <p className="text-xs text-rose-400 font-medium">Hành động này không thể hoàn tác</p>
             </div>
           </div>
           <button
@@ -59,9 +58,9 @@ export const ConfirmDeleteModal = ({ show, onClose, onConfirm, member, loading }
         <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-300 flex items-start gap-2.5">
           <ShieldAlert className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
           <div className="space-y-1">
-            <p className="font-semibold text-rose-200">Cảnh báo bảo mật hệ thống:</p>
+            <p className="font-semibold text-rose-200">Cảnh báo hệ thống:</p>
             <p className="text-rose-300/90 leading-relaxed">
-              Bạn có chắc chắn muốn xóa vĩnh viễn tài khoản của <strong className="text-white">{memberName}</strong>? Tất cả thông tin tài khoản, cột mốc lịch sử, dữ liệu điểm danh và phiên đăng nhập trên hệ thống CSDL MySQL sẽ bị xóa bỏ hoàn toàn.
+              Bạn có chắc chắn muốn xóa vĩnh viễn tài khoản của <strong className="text-white">{memberName} - {memberCode} </strong>?
             </p>
           </div>
         </div>
@@ -83,7 +82,7 @@ export const ConfirmDeleteModal = ({ show, onClose, onConfirm, member, loading }
             className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-all shadow-lg shadow-rose-600/20 cursor-pointer"
           >
             <Trash2 className="w-4 h-4" />
-            <span>{loading ? 'Đang xóa...' : 'Đồng Ý Xóa Vĩnh Viễn'}</span>
+            <span>{loading ? 'Đang xóa...' : 'Đồng Ý'}</span>
           </button>
         </div>
       </div>

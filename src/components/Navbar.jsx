@@ -56,7 +56,7 @@ export const Navbar = () => {
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
     roleTitle: 'Thành Viên VMC',
     memberCode: 'VMC-MEMBER',
-    class: '10A1',
+    class: '',
   };
 
   const pendingTasksCount = tasks?.filter(t => t.status !== 'done')?.length || 0;
@@ -66,7 +66,7 @@ export const Navbar = () => {
     { id: 'dashboard', label: 'Tổng Quan', icon: LayoutDashboard, badge: 0 },
     { id: 'tasks', label: 'Phân Công', icon: CheckSquare, badge: pendingTasksCount },
     { id: 'drafts', label: 'Duyệt Bài', icon: FileText, badge: pendingDraftsCount },
-    { id: 'hr_dashboard', label: 'Quản Lý Nhân Sự', icon: Sparkles, badge: 0 },
+    { id: 'hr_dashboard', label: 'QLNS', icon: Sparkles, badge: 0 },
     ...(isSuperAdmin || isRecruitmentSeasonActive ? [{ id: 'recruitment', label: 'Tuyển Gen', icon: UserPlus, badge: 0 }] : []),
     ...(isSuperAdmin ? [{ id: 'admin_sessions', label: 'Hoạt Động', icon: ShieldCheck, badge: 0 }] : []),
     { id: 'members', label: 'Thành Viên', icon: Users, badge: 0 },
@@ -116,8 +116,8 @@ export const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-[#0b0f19]/95 backdrop-blur-md border-b border-[#1f2937] w-full">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 w-full gap-2 sm:gap-4">
+      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 w-full gap-3 sm:gap-6">
 
           {/* BRAND LOGO & TITLE */}
           <div
@@ -131,14 +131,11 @@ export const Navbar = () => {
               <span className="font-heading font-black text-xs sm:text-sm tracking-tight text-slate-100 block leading-none">
                 VMC PORTAL
               </span>
-              <span className="text-[8.5px] block text-slate-400 font-medium mt-0.5 tracking-wider uppercase leading-none">
-                THPT Vĩnh Bảo
-              </span>
             </div>
           </div>
 
           {/* DESKTOP NAVIGATION BAR */}
-          <nav className="hidden xl:flex items-center gap-1 bg-[#111827] px-2 py-1 rounded-xl border border-[#1f2937] shrink-0 max-w-full overflow-x-auto">
+          <nav className="hidden xl:flex items-center gap-1.5 bg-[#111827] px-2.5 py-1.5 rounded-xl border border-[#1f2937] shrink min-w-0 max-w-full overflow-x-auto scrollbar-none">
             {navItems.map(item => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -146,9 +143,9 @@ export const Navbar = () => {
                 <button
                   key={item.id}
                   onClick={() => handleNavClick(item.id)}
-                  className={`relative flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11.5px] font-semibold tracking-wide transition-all whitespace-nowrap ${isActive
-                      ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-[#1f2937] border border-transparent'
+                  className={`relative flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs sm:text-[12.5px] font-semibold tracking-wide transition-all whitespace-nowrap ${isActive
+                    ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-[#1f2937] border border-transparent'
                     }`}
                 >
                   <Icon className="w-3.5 h-3.5 shrink-0 opacity-90" />
@@ -165,7 +162,7 @@ export const Navbar = () => {
           </nav>
 
           {/* RIGHT UTILITIES & USER PROFILE */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2.5 shrink-0 ml-auto xl:ml-0">
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
@@ -183,15 +180,16 @@ export const Navbar = () => {
                 onClick={(e) => {
                   e.stopPropagation();
                   setIsUserDropdownOpen(prev => !prev);
+                  setIsMobileMenuOpen(false);
                 }}
-                className="user-dropdown-toggle flex items-center gap-2 px-2 py-1.5 rounded-xl bg-[#111827] border border-[#1f2937] hover:border-slate-700 hover:bg-[#1f2937] transition-all cursor-pointer"
+                className="user-dropdown-toggle flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-[#111827] border border-[#1f2937] hover:border-slate-700 hover:bg-[#1f2937] transition-all cursor-pointer"
               >
                 <img
                   src={safeUser.avatar}
                   alt={safeUser.name}
-                  className="w-6 h-6 rounded-lg object-cover border border-slate-700 shrink-0 pointer-events-none"
+                  className="w-6.5 h-6.5 rounded-lg object-cover border border-slate-700 shrink-0 pointer-events-none"
                 />
-                <div className="text-left max-w-[90px] sm:max-w-[110px] truncate hidden md:block pointer-events-none">
+                <div className="text-left max-w-[100px] sm:max-w-[130px] xl:max-w-[160px] truncate hidden md:block pointer-events-none">
                   <div className="font-semibold text-slate-200 text-xs truncate leading-tight">{safeUser.name}</div>
                   <div className="text-[9.5px] text-blue-400 font-medium truncate leading-tight">{safeUser.roleTitle}</div>
                 </div>
@@ -201,7 +199,7 @@ export const Navbar = () => {
               {/* User Dropdown Menu */}
               {isUserDropdownOpen && (
                 <div
-                  className="user-dropdown-menu absolute right-0 top-full mt-2 w-64 bg-[#111827] border border-[#1f2937] rounded-xl p-2.5 shadow-xl z-50 space-y-1 animate-slide-up"
+                  className="user-dropdown-menu absolute right-0 top-full mt-2 w-64 bg-[#111827] border border-[#1f2937] rounded-xl p-2.5 shadow-xl z-50 space-y-1 animate-slide-up pointer-events-auto"
                   onMouseDown={(e) => e.stopPropagation()}
                 >
                   <div className="p-2.5 rounded-lg bg-[#0f172a] border border-[#1f2937] space-y-1">
@@ -216,8 +214,8 @@ export const Navbar = () => {
                       onClick={handleAttendanceClick}
                       className="w-full flex items-center justify-between p-2.5 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 hover:bg-emerald-600 hover:text-white font-semibold text-xs transition-all cursor-pointer"
                     >
-                      <div className="flex items-center gap-2 pointer-events-none">
-                        <UserCheck className="w-4 h-4" />
+                      <div className="flex items-center gap-2">
+                        <UserCheck className="w-4 h-4 shrink-0" />
                         <span>Điểm Danh Sinh Hoạt</span>
                       </div>
                     </button>
@@ -228,8 +226,8 @@ export const Navbar = () => {
                     onClick={handleProfileClick}
                     className="w-full flex items-center gap-2 p-2.5 rounded-lg hover:bg-[#1f2937] text-slate-300 hover:text-slate-100 transition-all text-xs font-medium cursor-pointer"
                   >
-                    <User className="w-4 h-4 pointer-events-none" />
-                    <span className="pointer-events-none">Xem Hồ Sơ Cá Nhân</span>
+                    <User className="w-4 h-4 shrink-0" />
+                    <span>Xem Hồ Sơ Cá Nhân</span>
                   </button>
 
                   <div className="border-t border-[#1f2937] my-1" />
@@ -239,8 +237,8 @@ export const Navbar = () => {
                     onClick={handleLogoutClick}
                     className="w-full flex items-center justify-center gap-2 p-2.5 rounded-lg bg-rose-500/10 hover:bg-rose-600 text-rose-300 hover:text-white font-semibold text-xs transition-all cursor-pointer"
                   >
-                    <LogOut className="w-4 h-4 pointer-events-none" />
-                    <span className="pointer-events-none">Đăng Xuất</span>
+                    <LogOut className="w-4 h-4 shrink-0" />
+                    <span>Đăng Xuất</span>
                   </button>
                 </div>
               )}
@@ -248,7 +246,11 @@ export const Navbar = () => {
 
             {/* Mobile / Tablet Drawer Toggle Button */}
             <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMobileMenuOpen(prev => !prev);
+                setIsUserDropdownOpen(false);
+              }}
               className="xl:hidden p-2 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-[#1f2937] border border-[#1f2937] transition-all shrink-0"
               aria-label="Toggle Menu"
             >
@@ -260,7 +262,7 @@ export const Navbar = () => {
 
       {/* MOBILE / TABLET DRAWER */}
       {isMobileMenuOpen && (
-        <div className="xl:hidden bg-[#111827] border-t border-[#1f2937] px-4 py-3 space-y-1">
+        <div className="xl:hidden bg-[#111827] border-t border-[#1f2937] px-4 py-3 space-y-1 shadow-2xl">
           {navItems.map(item => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -269,8 +271,8 @@ export const Navbar = () => {
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
                 className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg font-semibold text-xs transition-all ${isActive
-                    ? 'bg-blue-600/15 text-blue-300 border border-blue-500/30'
-                    : 'text-slate-300 hover:bg-[#1f2937] border border-transparent'
+                  ? 'bg-blue-600/15 text-blue-300 border border-blue-500/30'
+                  : 'text-slate-300 hover:bg-[#1f2937] border border-transparent'
                   }`}
               >
                 <div className="flex items-center gap-2.5">

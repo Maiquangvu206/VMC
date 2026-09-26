@@ -144,18 +144,14 @@ export const InternalDrafts = () => {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-20">
+    <div className="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-20">
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div>
-          <span className="ds-badge ds-badge-amber">Content Studio VMC</span>
           <h1 className="font-heading text-3xl font-extrabold text-slate-100 mt-2">
             Kho Kịch Bản & <span className="text-blue-400">Duyệt Bài Fanpage</span>
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Khu vực biên tập kịch bản video, bài viết truyền thông THPT Vĩnh Bảo trước khi duyệt đăng chính thức.
-          </p>
         </div>
 
         <button
@@ -465,11 +461,10 @@ export const InternalDrafts = () => {
                         <span>≥ 3 Cmt (+1/ -1)</span>
                       </label>
 
-                      <div className={`font-mono font-bold text-xs px-2 py-0.5 rounded-md min-w-[50px] text-center ${
-                        score > 0 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 
-                        score < 0 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 
-                        'bg-slate-800 text-slate-400'
-                      }`}>
+                      <div className={`font-mono font-bold text-xs px-2 py-0.5 rounded-md min-w-[50px] text-center ${score > 0 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
+                          score < 0 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
+                            'bg-slate-800 text-slate-400'
+                        }`}>
                         {score > 0 ? `+${score}đ` : `${score}đ`}
                       </div>
                     </div>

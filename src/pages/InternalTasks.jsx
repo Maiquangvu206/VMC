@@ -1,26 +1,26 @@
 import React, { useState, useMemo } from 'react';
 import { useClub } from '../context/ClubContext';
-import { 
-  CheckSquare, 
-  Plus, 
-  Clock, 
-  User, 
-  AlertCircle, 
+import {
+  CheckSquare,
+  Plus,
+  Clock,
+  User,
+  AlertCircle,
   AlertTriangle,
-  CheckCircle, 
+  CheckCircle,
   ArrowRight,
   Filter,
   X
 } from 'lucide-react';
 
 export const InternalTasks = () => {
-  const { 
-    tasks, 
+  const {
+    tasks,
     members,
-    addTask, 
-    updateTaskStatus, 
+    addTask,
+    updateTaskStatus,
     deleteTask,
-    isNewTaskModalOpen, 
+    isNewTaskModalOpen,
     setIsNewTaskModalOpen,
     currentUser,
     showToast
@@ -69,9 +69,9 @@ export const InternalTasks = () => {
       const assigneeName = getTaskAssignee(task);
       if (!assigneeName || assigneeName === 'Chưa phân công' || assigneeName === 'Thành viên còn thiếu') return;
 
-      const memberObj = members.find(m => 
-        m.name === assigneeName || 
-        String(m.id) === String(task.assigneeId || task.assignee_id) || 
+      const memberObj = members.find(m =>
+        m.name === assigneeName ||
+        String(m.id) === String(task.assigneeId || task.assignee_id) ||
         String(m.memberCode) === String(task.assigneeId || task.assignee_id)
       ) || {
         id: assigneeName,
@@ -111,7 +111,7 @@ export const InternalTasks = () => {
   };
 
   const getDeptBadge = (deptId) => {
-    switch(deptId) {
+    switch (deptId) {
       case 'bcn': return { label: 'BAN CHỦ NHIỆM', class: 'ds-badge ds-badge-pink' };
       case 'content_radio': return { label: 'NỘI DUNG - PHÁT THANH', class: 'ds-badge ds-badge-cyan' };
       case 'production': return { label: 'SẢN XUẤT', class: 'ds-badge ds-badge-purple' };
@@ -136,18 +136,14 @@ export const InternalTasks = () => {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8 pb-20">
-      
+    <div className="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8 pb-20">
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
         <div>
-          <span className="ds-badge ds-badge-purple">VMC Operations</span>
           <h1 className="font-heading text-3xl font-extrabold text-slate-100 mt-2">
-            Phân Công & <span className="text-blue-400">Nhiệm Vụ 4 Ban</span>
+            Công Việc Được Giao
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Quản lý công việc Ban Chủ Nhiệm, Ban Nội Dung - Phát Thanh, Ban Sản Xuất và Ban Đối Ngoại - Nhân Sự.
-          </p>
         </div>
 
         <button
@@ -164,7 +160,7 @@ export const InternalTasks = () => {
         <div className="flex items-center justify-between">
           <h3 className="font-heading text-sm font-bold text-white flex items-center gap-2">
             <User className="w-4 h-4 text-blue-400" />
-            <span>Theo Dõi Deadline Theo Thành Viên (Chỉ Hiện TV Có Deadline)</span>
+            <span>Theo Dõi Deadline Theo Thành Viên</span>
           </h3>
           <span className="text-xs text-blue-400 font-mono">
             {membersWithDeadlines.length} thành viên đang có công việc
@@ -183,13 +179,12 @@ export const InternalTasks = () => {
                 <button
                   key={item.member.id || item.member.name}
                   onClick={() => setSelectedMemberDeadline(item)}
-                  className={`p-3 rounded-xl border flex items-center justify-between gap-3 text-left transition-all hover:border-blue-500/50 ${
-                    overdueCount > 0
-                      ? 'bg-rose-500/10 border-rose-500/30'
-                      : pendingCount > 0
+                  className={`p-3 rounded-xl border flex items-center justify-between gap-3 text-left transition-all hover:border-blue-500/50 ${overdueCount > 0
+                    ? 'bg-rose-500/10 border-rose-500/30'
+                    : pendingCount > 0
                       ? 'bg-blue-500/10 border-blue-500/30'
                       : 'bg-emerald-500/10 border-emerald-500/30'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <img
@@ -248,7 +243,7 @@ export const InternalTasks = () => {
 
       {/* Kanban Board Columns */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
+
         {/* Column 1: Cần Thực Hiện (To Do) */}
         <div className="ds-card p-5 space-y-4">
           <div className="ds-section-header pb-4 border-b border-[var(--border-default)] mb-0">
@@ -398,245 +393,247 @@ export const InternalTasks = () => {
       </div>
 
       {/* New Task Modal */}
-      {isNewTaskModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
-          <div className="relative w-full max-w-lg ds-card ds-card-elevated border border-blue-500/30 p-6 shadow-2xl text-white space-y-6">
-            
-            <div className="flex justify-between items-center pb-4 border-b border-[var(--border-default)]">
-              <h3 className="font-heading font-bold text-lg text-slate-100">Giao Nhiệm Vụ Mới</h3>
-              <button onClick={() => setIsNewTaskModalOpen(false)} className="text-slate-400 hover:text-white p-2 transition-colors">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+      {
+        isNewTaskModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
+            <div className="relative w-full max-w-lg ds-card ds-card-elevated border border-blue-500/30 p-6 shadow-2xl text-white space-y-6">
 
-            <form onSubmit={handleSubmitNewTask} className="space-y-5">
-              <div>
-                <label className="ds-field-label">Tên công việc / Sự kiện *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="Kịch bản radio số 09 / Dựng clip RECAP Khai giảng..."
-                  className="ds-input"
-                />
+              <div className="flex justify-between items-center pb-4 border-b border-[var(--border-default)]">
+                <h3 className="font-heading font-bold text-lg text-slate-100">Giao Nhiệm Vụ Mới</h3>
+                <button onClick={() => setIsNewTaskModalOpen(false)} className="text-slate-400 hover:text-white p-2 transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <form onSubmit={handleSubmitNewTask} className="space-y-5">
                 <div>
-                  <label className="ds-field-label">Ban phụ trách *</label>
-                  <select
-                    value={formData.department}
-                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    className="ds-input ds-select"
-                  >
-                    <option value="bcn">👑 Ban Chủ Nhiệm</option>
-                    <option value="content_radio">🎙️ Ban Nội Dung - Phát Thanh</option>
-                    <option value="production">🎬 Ban Sản Xuất</option>
-                    <option value="hr_external">🤝 Ban Đối Ngoại - Nhân Sự</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="ds-field-label">Độ ưu tiên *</label>
-                  <select
-                    value={formData.priority}
-                    onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                    className="ds-input ds-select"
-                  >
-                    <option value="High">🔴 Cao (High)</option>
-                    <option value="Medium">🟡 Trung bình (Medium)</option>
-                    <option value="Low">🔵 Thấp (Low)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="ds-field-label">Hạn hoàn thành *</label>
+                  <label className="ds-field-label">Tên công việc / Sự kiện *</label>
                   <input
-                    type="date"
+                    type="text"
                     required
-                    value={formData.deadline}
-                    onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="Kịch bản radio số 09 / Dựng clip RECAP Khai giảng..."
                     className="ds-input"
                   />
                 </div>
-              </div>
 
-              <div>
-                <label className="ds-field-label">Người phụ trách chính *</label>
-                <select
-                  required
-                  value={formData.assignee}
-                  onChange={(e) => setFormData({ ...formData, assignee: e.target.value })}
-                  className="ds-input ds-select"
-                >
-                  <option value="" disabled hidden>-- Chọn người phụ trách --</option>
-                  {members.filter(m => {
-                    const isSystemAdmin = m.roleTitle?.includes('Super Admin') || m.role === 'admin' || m.memberCode === 'ADMIN' || m.name?.includes('Quản Trị Viên') || m.name?.includes('Super Admin');
-                    if (isSystemAdmin) return false;
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="ds-field-label">Ban phụ trách *</label>
+                    <select
+                      value={formData.department}
+                      onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                      className="ds-input ds-select"
+                    >
+                      <option value="bcn">👑 Ban Chủ Nhiệm</option>
+                      <option value="content_radio">🎙️ Ban Nội Dung - Phát Thanh</option>
+                      <option value="production">🎬 Ban Sản Xuất</option>
+                      <option value="hr_external">🤝 Ban Đối Ngoại - Nhân Sự</option>
+                    </select>
+                  </div>
 
-                    const deptMapping = {
-                      'bcn': 'Ban Chủ Nhiệm',
-                      'content_radio': 'Ban Nội Dung - Phát Thanh',
-                      'production': 'Ban Sản Xuất',
-                      'hr_external': 'Ban Đối Ngoại - Nhân Sự'
-                    };
-                    const selectedDeptName = deptMapping[formData.department];
-                    
-                    const isSelectedDept = m.department === formData.department || m.deptName === selectedDeptName;
-                    const isBCN = m.department === 'bcn' || m.deptName === 'Ban Chủ Nhiệm';
-                    
-                    return isSelectedDept || isBCN;
-                  }).map(m => (
-                    <option key={m.id} value={m.name}>{m.name} - {m.roleTitle} ({m.deptName || m.department})</option>
-                  ))}
-                  <option value="Cả Ban">Cả Ban (Tất cả thành viên)</option>
-                </select>
-              </div>
+                  <div>
+                    <label className="ds-field-label">Độ ưu tiên *</label>
+                    <select
+                      value={formData.priority}
+                      onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                      className="ds-input ds-select"
+                    >
+                      <option value="High">🔴 Cao (High)</option>
+                      <option value="Medium">🟡 Trung bình (Medium)</option>
+                      <option value="Low">🔵 Thấp (Low)</option>
+                    </select>
+                  </div>
 
-              <div>
-                <label className="ds-field-label">Mô tả & Yêu cầu sản phẩm</label>
-                <textarea
-                  rows={3}
-                  value={formData.desc}
-                  onChange={(e) => setFormData({ ...formData, desc: e.target.value })}
-                  placeholder="Yêu cầu nộp kịch bản radio trước 17:00 Thứ 2..."
-                  className="w-full bg-[#0f172a] border border-[#1f2937] focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-xl p-3 text-xs text-slate-100 placeholder:text-slate-500 leading-relaxed resize-y mt-1 transition-all block"
-                />
-              </div>
-
-              <div className="pt-4 flex justify-end gap-3 border-t border-[var(--border-default)]">
-                <button
-                  type="button"
-                  onClick={() => setIsNewTaskModalOpen(false)}
-                  className="ds-btn ds-btn-secondary"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="ds-btn ds-btn-primary"
-                >
-                  Xác Nhận Giao Việc
-                </button>
-              </div>
-            </form>
-
-          </div>
-        </div>
-      )}
-
-      {/* Member Deadline Detail Modal */}
-      {selectedMemberDeadline && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className="ds-card w-full max-w-2xl bg-[#111827] border border-[#1f2937] p-6 rounded-2xl shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
-            
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-[#1f2937] pb-4">
-              <div className="flex items-center gap-3">
-                <img
-                  src={selectedMemberDeadline.member.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400'}
-                  alt={selectedMemberDeadline.member.name}
-                  className="w-12 h-12 rounded-xl object-cover border border-blue-500/30 shrink-0"
-                />
-                <div>
-                  <h3 className="font-heading font-bold text-lg text-slate-100">{selectedMemberDeadline.member.name}</h3>
-                  <div className="text-xs text-blue-400 font-medium">
-                    {selectedMemberDeadline.member.roleTitle} • {selectedMemberDeadline.member.deptName || selectedMemberDeadline.member.department}
+                  <div>
+                    <label className="ds-field-label">Hạn hoàn thành *</label>
+                    <input
+                      type="date"
+                      required
+                      value={formData.deadline}
+                      onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                      className="ds-input"
+                    />
                   </div>
                 </div>
-              </div>
 
-              <button
-                onClick={() => setSelectedMemberDeadline(null)}
-                className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#1f2937] transition-all"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Deadlines List */}
-            <div className="space-y-3">
-              <h4 className="font-heading text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Danh Sách Tất Cả Deadline Đã Giao ({selectedMemberDeadline.tasks.length})
-              </h4>
-
-              {selectedMemberDeadline.tasks.map(task => {
-                const overdue = task.status !== 'done' && isOverdue(task.deadline);
-                const deptInfo = getDeptBadge(task.department);
-
-                return (
-                  <div
-                    key={task.id}
-                    className={`p-4 rounded-xl border space-y-3 transition-all ${
-                      task.status === 'done'
-                        ? 'bg-emerald-500/5 border-emerald-500/20'
-                        : overdue
-                        ? 'bg-rose-500/10 border-rose-500/30'
-                        : 'bg-[#0f172a] border-[#1f2937]'
-                    }`}
+                <div>
+                  <label className="ds-field-label">Người phụ trách chính *</label>
+                  <select
+                    required
+                    value={formData.assignee}
+                    onChange={(e) => setFormData({ ...formData, assignee: e.target.value })}
+                    className="ds-input ds-select"
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="space-y-1.5 min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className={deptInfo.class}>{deptInfo.label}</span>
-                          {overdue && (
-                            <span className="ds-badge ds-badge-rose text-[10px]">
-                              ⚠️ QUÁ HẠN
-                            </span>
-                          )}
-                          <span className={`ds-badge ${
-                            task.status === 'done'
-                              ? 'ds-badge-emerald'
-                              : task.status === 'doing'
-                              ? 'ds-badge-blue'
-                              : 'ds-badge-amber'
-                          }`}>
-                            {task.status === 'done' ? '✓ HOÀN THÀNH' : task.status === 'doing' ? '⏳ ĐANG LÀM' : '📋 CẦN LÀM'}
-                          </span>
-                        </div>
-                        <h5 className="font-bold text-sm text-slate-100">{task.title}</h5>
-                      </div>
+                    <option value="" disabled hidden>-- Chọn người phụ trách --</option>
+                    {members.filter(m => {
+                      const isSystemAdmin = m.roleTitle?.includes('Super Admin') || m.role === 'admin' || m.memberCode === 'ADMIN' || m.name?.includes('Quản Trị Viên') || m.name?.includes('Super Admin');
+                      if (isSystemAdmin) return false;
 
-                      <select
-                        value={task.status}
-                        onChange={(e) => updateTaskStatus(task.id, e.target.value)}
-                        className="bg-[#1e293b] text-slate-100 border border-slate-700 text-xs py-1.5 px-3 rounded-lg focus:outline-none focus:border-blue-500 shrink-0 cursor-pointer self-start sm:self-auto"
-                      >
-                        <option value="todo">📋 Cần Làm</option>
-                        <option value="doing">⏳ Đang Làm</option>
-                        <option value="done">✓ Hoàn Thành</option>
-                      </select>
-                    </div>
+                      const deptMapping = {
+                        'bcn': 'Ban Chủ Nhiệm',
+                        'content_radio': 'Ban Nội Dung - Phát Thanh',
+                        'production': 'Ban Sản Xuất',
+                        'hr_external': 'Ban Đối Ngoại - Nhân Sự'
+                      };
+                      const selectedDeptName = deptMapping[formData.department];
 
-                    {task.desc && (
-                      <p className="text-xs text-slate-300 bg-[#111827] p-2.5 rounded-lg border border-[#1f2937]">
-                        {task.desc}
-                      </p>
-                    )}
+                      const isSelectedDept = m.department === formData.department || m.deptName === selectedDeptName;
+                      const isBCN = m.department === 'bcn' || m.deptName === 'Ban Chủ Nhiệm';
 
-                    <div className="flex items-center justify-between text-xs text-slate-400 font-mono pt-1">
-                      <span>Hạn: <strong className={overdue ? 'text-rose-400' : 'text-slate-200'}>{task.deadline}</strong></span>
-                      <span>Ưu tiên: <strong className={getPriorityInfo(task.priority).class}>{getPriorityInfo(task.priority).label}</strong></span>
+                      return isSelectedDept || isBCN;
+                    }).map(m => (
+                      <option key={m.id} value={m.name}>{m.name} - {m.roleTitle} ({m.deptName || m.department})</option>
+                    ))}
+                    <option value="Cả Ban">Cả Ban (Tất cả thành viên)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="ds-field-label">Mô tả & Yêu cầu sản phẩm</label>
+                  <textarea
+                    rows={3}
+                    value={formData.desc}
+                    onChange={(e) => setFormData({ ...formData, desc: e.target.value })}
+                    placeholder="Yêu cầu nộp kịch bản radio trước 17:00 Thứ 2..."
+                    className="w-full bg-[#0f172a] border border-[#1f2937] focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 rounded-xl p-3 text-xs text-slate-100 placeholder:text-slate-500 leading-relaxed resize-y mt-1 transition-all block"
+                  />
+                </div>
+
+                <div className="pt-4 flex justify-end gap-3 border-t border-[var(--border-default)]">
+                  <button
+                    type="button"
+                    onClick={() => setIsNewTaskModalOpen(false)}
+                    className="ds-btn ds-btn-secondary"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="submit"
+                    className="ds-btn ds-btn-primary"
+                  >
+                    Xác Nhận Giao Việc
+                  </button>
+                </div>
+              </form>
+
+            </div>
+          </div>
+        )
+      }
+
+      {/* Member Deadline Detail Modal */}
+      {
+        selectedMemberDeadline && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+            <div className="ds-card w-full max-w-2xl bg-[#111827] border border-[#1f2937] p-6 rounded-2xl shadow-2xl space-y-6 max-h-[90vh] overflow-y-auto">
+
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-[#1f2937] pb-4">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={selectedMemberDeadline.member.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400'}
+                    alt={selectedMemberDeadline.member.name}
+                    className="w-12 h-12 rounded-xl object-cover border border-blue-500/30 shrink-0"
+                  />
+                  <div>
+                    <h3 className="font-heading font-bold text-lg text-slate-100">{selectedMemberDeadline.member.name}</h3>
+                    <div className="text-xs text-blue-400 font-medium">
+                      {selectedMemberDeadline.member.roleTitle} • {selectedMemberDeadline.member.deptName || selectedMemberDeadline.member.department}
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
 
-            <div className="pt-4 border-t border-[#1f2937] flex justify-end">
-              <button
-                onClick={() => setSelectedMemberDeadline(null)}
-                className="ds-btn ds-btn-primary text-xs"
-              >
-                Đóng
-              </button>
-            </div>
+                <button
+                  onClick={() => setSelectedMemberDeadline(null)}
+                  className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-[#1f2937] transition-all"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
+              {/* Deadlines List */}
+              <div className="space-y-3">
+                <h4 className="font-heading text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  Danh Sách Tất Cả Deadline Đã Giao ({selectedMemberDeadline.tasks.length})
+                </h4>
+
+                {selectedMemberDeadline.tasks.map(task => {
+                  const overdue = task.status !== 'done' && isOverdue(task.deadline);
+                  const deptInfo = getDeptBadge(task.department);
+
+                  return (
+                    <div
+                      key={task.id}
+                      className={`p-4 rounded-xl border space-y-3 transition-all ${task.status === 'done'
+                        ? 'bg-emerald-500/5 border-emerald-500/20'
+                        : overdue
+                          ? 'bg-rose-500/10 border-rose-500/30'
+                          : 'bg-[#0f172a] border-[#1f2937]'
+                        }`}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="space-y-1.5 min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={deptInfo.class}>{deptInfo.label}</span>
+                            {overdue && (
+                              <span className="ds-badge ds-badge-rose text-[10px]">
+                                ⚠️ QUÁ HẠN
+                              </span>
+                            )}
+                            <span className={`ds-badge ${task.status === 'done'
+                              ? 'ds-badge-emerald'
+                              : task.status === 'doing'
+                                ? 'ds-badge-blue'
+                                : 'ds-badge-amber'
+                              }`}>
+                              {task.status === 'done' ? '✓ HOÀN THÀNH' : task.status === 'doing' ? '⏳ ĐANG LÀM' : '📋 CẦN LÀM'}
+                            </span>
+                          </div>
+                          <h5 className="font-bold text-sm text-slate-100">{task.title}</h5>
+                        </div>
+
+                        <select
+                          value={task.status}
+                          onChange={(e) => updateTaskStatus(task.id, e.target.value)}
+                          className="bg-[#1e293b] text-slate-100 border border-slate-700 text-xs py-1.5 px-3 rounded-lg focus:outline-none focus:border-blue-500 shrink-0 cursor-pointer self-start sm:self-auto"
+                        >
+                          <option value="todo">📋 Cần Làm</option>
+                          <option value="doing">⏳ Đang Làm</option>
+                          <option value="done">✓ Hoàn Thành</option>
+                        </select>
+                      </div>
+
+                      {task.desc && (
+                        <p className="text-xs text-slate-300 bg-[#111827] p-2.5 rounded-lg border border-[#1f2937]">
+                          {task.desc}
+                        </p>
+                      )}
+
+                      <div className="flex items-center justify-between text-xs text-slate-400 font-mono pt-1">
+                        <span>Hạn: <strong className={overdue ? 'text-rose-400' : 'text-slate-200'}>{task.deadline}</strong></span>
+                        <span>Ưu tiên: <strong className={getPriorityInfo(task.priority).class}>{getPriorityInfo(task.priority).label}</strong></span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="pt-4 border-t border-[#1f2937] flex justify-end">
+                <button
+                  onClick={() => setSelectedMemberDeadline(null)}
+                  className="ds-btn ds-btn-primary text-xs"
+                >
+                  Đóng
+                </button>
+              </div>
+
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
-    </div>
+    </div >
   );
 };

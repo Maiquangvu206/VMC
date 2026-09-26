@@ -23,16 +23,7 @@ export const CandidateProgressModal = ({
     (s.full_name && candidate.full_name && String(s.full_name).trim().toLowerCase() === String(candidate.full_name).trim().toLowerCase())
   ) || {};
 
-  const rScoresRaw = summary.round_scores || candidate.round_scores || {};
-  const rScores = { ...rScoresRaw };
-  const rawVals = Object.values(rScoresRaw).filter(v => typeof v === 'number' && !isNaN(v) && v > 0);
-  const firstScore = rawVals.length > 0 ? rawVals[0] : (summary.avg_score || summary.total_score || undefined);
-
-  if (firstScore !== undefined) {
-    if (rScores.don === undefined) rScores.don = firstScore;
-    if (rScores.phongvan === undefined) rScores.phongvan = firstScore;
-    if (rScores.teamwork === undefined) rScores.teamwork = firstScore;
-  }
+  const rScores = summary.round_scores || candidate.round_scores || {};
 
   const comments = summary.comments || candidate.comments || [];
   const submittedScorersMap = summary.submitted_scorers || candidate.submitted_scorers || {};
@@ -74,7 +65,13 @@ export const CandidateProgressModal = ({
       } else if (submitted.length > 0) {
         return { isDone: false, statusText: `Đang chấm (${submitted.length}/${assigned.length})`, badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/30 animate-pulse' };
       } else {
-        return { isDone: false, statusText: 'Đang chấm', badgeClass: 'bg-blue-500/20 text-blue-300 border-blue-500/30' };
+        const roundOrder = { don: 1, phongvan: 2, thuthach: 3, thuthach_quatrinh: 3, thuthach_ketqua: 3, teamwork: 4, all: 5 };
+        const currentOrder = roundOrder[activeRound] || 1;
+        const minOrder = roundOrder[minRoundStage] || 1;
+        if (currentOrder >= minOrder) {
+          return { isDone: false, statusText: 'Đang chấm', badgeClass: 'bg-blue-500/20 text-blue-300 border-blue-500/30' };
+        }
+        return { isDone: false, statusText: 'Chưa mở', badgeClass: 'bg-slate-800 text-slate-400 border-slate-700' };
       }
     }
 
@@ -126,56 +123,7 @@ export const CandidateProgressModal = ({
   const v4Assigned = candidate.teamwork_scorer_ids || summary.teamwork_scorer_ids || [];
   const v4Status = checkRoundCompletion(v4Assigned, 'teamwork', 'teamwork');
 
-  // Define recruitment steps
-  const steps = [
-    {
-      key: 'don',
-      stepNum: 1,
-      title: 'Vòng 1: Đơn Đăng Ký',
-      icon: FileText,
-      score: rScores.don,
-      isCompleted: v1Status.isDone,
-      statusText: v1Status.statusText,
-      comments: comments.filter(c => c.round_type === 'don'),
-      scorers: []
-    },
-    {
-      key: 'phongvan',
-      stepNum: 2,
-      title: 'Vòng 2: Phỏng Vấn',
-      icon: Users,
-      score: rScores.phongvan,
-      isCompleted: v2Status.isDone,
-      statusText: v2Status.statusText,
-      comments: comments.filter(c => c.round_type === 'phongvan'),
-      scorers: interviewers
-    },
-    {
-      key: 'thuthach',
-      stepNum: 3,
-      title: 'Vòng 3: Thử Thách',
-      icon: Zap,
-      score: rScores.thuthach,
-      scoreProcess: rScores.thuthach_quatrinh ?? rScores.thuthach,
-      scoreResult: rScores.thuthach_ketqua ?? rScores.thuthach,
-      isCompleted: v3Status.isDone,
-      statusText: v3Status.statusText,
-      comments: comments.filter(c => c.round_type === 'thuthach_quatrinh' || c.round_type === 'thuthach_ketqua' || c.round_type === 'thuthach'),
-      scorersProcess: challengeProcessScorers,
-      scorersResult: challengeResultScorers
-    },
-    {
-      key: 'teamwork',
-      stepNum: 4,
-      title: 'Vòng 4: Teamwork',
-      icon: Sparkles,
-      score: rScores.teamwork,
-      isCompleted: v4Status.isDone,
-      statusText: v4Status.statusText,
-      comments: comments.filter(c => c.round_type === 'teamwork'),
-      scorers: teamworkScorers
-    }
-  ];
+
 
   // Determine overall status
   const currentStatus = candidate.status || summary.result_status || 'pending';
@@ -222,43 +170,7 @@ export const CandidateProgressModal = ({
           </button>
         </div>
 
-        {/* Horizontal Timeline Progress Bar */}
-        <div className="bg-[#111827] p-4 sm:p-5 rounded-xl border border-slate-800/80 space-y-3">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-400" />
-            <span>Tiến Trình Đánh Giá Mùa Tuyển</span>
-          </h4>
 
-          <div className="grid grid-cols-4 gap-2 pt-2 relative">
-            {steps.map((st, idx) => {
-              const isCompleted = st.isCompleted;
-              const isCurrent = !isCompleted && (idx === 0 || steps[idx - 1].isCompleted);
-              const StepIcon = st.icon;
-
-              return (
-                <div key={st.key} className="flex flex-col items-center text-center">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
-                    isCompleted 
-                      ? 'bg-emerald-500/20 text-emerald-400 border-2 border-emerald-500/60 shadow-lg shadow-emerald-950' 
-                      : isCurrent 
-                      ? 'bg-blue-600/30 text-blue-400 border-2 border-blue-500 animate-pulse shadow-lg shadow-blue-950' 
-                      : 'bg-slate-800 text-slate-500 border border-slate-700'
-                  }`}>
-                    {isCompleted ? <CheckCircle2 className="w-5 h-5" /> : <StepIcon className="w-4 h-4" />}
-                  </div>
-                  <span className={`text-[11px] font-semibold mt-2 leading-tight ${
-                    isCompleted ? 'text-emerald-300' : isCurrent ? 'text-blue-300 font-bold' : 'text-slate-500'
-                  }`}>
-                    {st.title.replace('Vòng ', 'V').split(':')[0]}
-                  </span>
-                  <span className="text-[10px] text-slate-400 mt-0.5 truncate max-w-[75px]">
-                    {st.score !== undefined ? `${st.score}đ` : st.statusText}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
 
         {/* Detailed Rounds Timeline Cards */}
         <div className="space-y-3">
@@ -318,11 +230,6 @@ export const CandidateProgressModal = ({
                 <span className="font-bold text-slate-200 text-sm">Vòng 3: Thử Thách Chuyên Môn</span>
               </div>
               <div className="flex items-center gap-2">
-                {rScores.thuthach !== undefined && rScores.thuthach_quatrinh === undefined && (
-                  <span className="ds-badge text-[11px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                    Điểm: {rScores.thuthach}đ
-                  </span>
-                )}
                 {rScores.thuthach_quatrinh !== undefined && (
                   <span className="ds-badge text-[11px] font-mono bg-amber-500/20 text-amber-300 border border-amber-500/30">
                     Quá trình: {rScores.thuthach_quatrinh}đ
@@ -331,6 +238,11 @@ export const CandidateProgressModal = ({
                 {rScores.thuthach_ketqua !== undefined && (
                   <span className="ds-badge text-[11px] font-mono bg-purple-500/20 text-purple-300 border border-purple-500/30">
                     Kết quả: {rScores.thuthach_ketqua}đ
+                  </span>
+                )}
+                {rScores.thuthach !== undefined && (
+                  <span className="ds-badge text-[11px] font-mono bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 font-bold">
+                    Tổng V3: {rScores.thuthach}đ
                   </span>
                 )}
                 <span className={`ds-badge text-xs font-mono font-bold ${v3Status.badgeClass}`}>
@@ -376,9 +288,28 @@ export const CandidateProgressModal = ({
             <div>
               <span className="text-xs text-slate-400 font-medium block">Tổng điểm tích lũy</span>
               <span className="text-2xl font-black font-mono text-cyan-300">
-                {(summary.total_score !== undefined && summary.total_score > 0)
-                  ? summary.total_score
-                  : (candidate.total_score || (Object.values(rScores).length > 0 ? parseFloat(Object.values(rScores).reduce((a, b) => a + (parseFloat(b) || 0), 0).toFixed(2)) : 0))} PTS
+                {(() => {
+                  const don = rScores.don !== undefined ? parseFloat(rScores.don) : undefined;
+                  const pv = rScores.phongvan !== undefined ? parseFloat(rScores.phongvan) : undefined;
+                  const tw = rScores.teamwork !== undefined ? parseFloat(rScores.teamwork) : undefined;
+
+                  const proc = rScores.thuthach_quatrinh !== undefined ? parseFloat(rScores.thuthach_quatrinh) : undefined;
+                  const res = rScores.thuthach_ketqua !== undefined ? parseFloat(rScores.thuthach_ketqua) : undefined;
+
+                  let tt = rScores.thuthach !== undefined ? parseFloat(rScores.thuthach) : undefined;
+                  if (proc !== undefined && res !== undefined) {
+                    tt = parseFloat(((2/3) * proc + (1/3) * res).toFixed(2));
+                  } else if (proc !== undefined) tt = proc;
+                  else if (res !== undefined) tt = res;
+
+                  const roundHeads = [don, pv, tt, tw].filter(v => v !== undefined && !isNaN(v));
+                  if (roundHeads.length > 0) {
+                    return parseFloat(roundHeads.reduce((a, b) => a + b, 0).toFixed(2));
+                  }
+                  if (summary.total_score !== undefined && summary.total_score > 0) return summary.total_score;
+                  if (candidate.total_score) return candidate.total_score;
+                  return 0;
+                })()} PTS
               </span>
             </div>
             {summary.rank && (

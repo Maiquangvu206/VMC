@@ -128,7 +128,7 @@ export const InternalResources = () => {
   };
 
   return (
-    <div className="page-wrap space-y-10 pb-20">
+    <div className="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-10 pb-20">
       
       {/* Header Banner */}
       <div className="ds-card p-6 sm:p-8 relative overflow-hidden">

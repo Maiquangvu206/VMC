@@ -817,17 +817,30 @@ setCurrentUser(acc);
       return false;
     }
 
-    const generatedCode = "VMC-" + Math.floor(1000 + Math.random() * 9000);
+    const existingCodes = new Set(
+      (db.members || []).map(m => (m.memberCode || m.username || m.member_code || '').toUpperCase())
+    );
+
+    let generatedCode = newAcc.username || newAcc.memberCode;
+    if (!generatedCode || existingCodes.has(String(generatedCode).toUpperCase())) {
+      let attempts = 0;
+      do {
+        generatedCode = "VMC-" + Math.floor(1000 + Math.random() * 9000);
+        attempts++;
+      } while (existingCodes.has(generatedCode.toUpperCase()) && attempts < 10000);
+    }
+
     const accountObj = {
       id: "vmc-acc-" + Math.floor(100 + Math.random() * 900),
-      memberCode: generatedCode,
-      password: generatedCode,
       term: newAcc.term || newAcc.generation || 'Gen 6 (2025-2026)',
       isFirstLogin: true,
       avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=400",
       points: 100,
       status: "Active",
-      ...newAcc
+      ...newAcc,
+      memberCode: generatedCode,
+      username: generatedCode,
+      password: generatedCode
     };
 
     const firstMilestone = {

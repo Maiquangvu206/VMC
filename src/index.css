@@ -287,9 +287,23 @@ h1, h2, h3, h4, h5, h6 {
   padding-left: 2.75rem !important;
 }
 
-.relative > .absolute {
+/* Decorative icons inside .relative: Only SVG icons preceding input/select should ignore clicks */
+.relative > svg.absolute:not(button):not(a):not(.pointer-events-auto),
+.relative > .input-icon {
   pointer-events: none !important;
   z-index: 10 !important;
+}
+
+/* Ensure all interactive buttons, links, dropdowns, menus, and popovers have full pointer-events */
+.relative > button.absolute,
+.relative > a.absolute,
+.relative > .user-dropdown-menu,
+.relative > [class*="dropdown"],
+.relative > [class*="popover"],
+.relative > [class*="menu"],
+.relative > .pointer-events-auto {
+  pointer-events: auto !important;
+  z-index: 50 !important;
 }
 
 .ds-select {

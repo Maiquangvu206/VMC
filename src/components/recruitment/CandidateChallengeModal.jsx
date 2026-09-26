@@ -46,7 +46,7 @@ export const CandidateChallengeModal = ({
               {candidate ? `Ứng viên: ${candidate.full_name}` : season ? `Mùa tuyển: ${season.name}` : ''}
             </p>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white p-1">
+          <button type="button" onClick={onClose} className="text-slate-400 hover:text-white p-1">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -89,6 +89,7 @@ export const CandidateChallengeModal = ({
         {/* Sub-tab selection */}
         <div className="flex gap-2 p-1 bg-slate-900 rounded-xl border border-slate-800 shrink-0 text-xs">
           <button
+            type="button"
             onClick={() => setActiveSubTab('process')}
             className={`flex-1 py-2 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all ${
               activeSubTab === 'process'
@@ -101,6 +102,7 @@ export const CandidateChallengeModal = ({
           </button>
 
           <button
+            type="button"
             onClick={() => setActiveSubTab('result')}
             className={`flex-1 py-2 rounded-lg font-semibold flex items-center justify-center gap-1.5 transition-all ${
               activeSubTab === 'result'
@@ -121,9 +123,11 @@ export const CandidateChallengeModal = ({
             </div>
           ) : (
             availableInterviewers.map(m => {
-              const currentList = activeSubTab === 'process' ? selectedProcessScorers : selectedResultScorers;
+              const currentList = activeSubTab === 'process' ? (selectedProcessScorers || []) : (selectedResultScorers || []);
+              const safeList = (Array.isArray(currentList) ? currentList : []).map(id => String(id));
               const setList = activeSubTab === 'process' ? setSelectedProcessScorers : setSelectedResultScorers;
-              const isChecked = currentList.includes(m.id);
+              const mIdStr = String(m.id);
+              const isChecked = safeList.includes(mIdStr);
 
               return (
                 <div 
@@ -155,9 +159,9 @@ export const CandidateChallengeModal = ({
                       checked={isChecked} 
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setList([...currentList, m.id]);
+                          setList([...safeList, mIdStr]);
                         } else {
-                          setList(currentList.filter(id => id !== m.id));
+                          setList(safeList.filter(id => id !== mIdStr));
                         }
                       }}
                       className="sr-only peer" 
@@ -175,12 +179,14 @@ export const CandidateChallengeModal = ({
         {/* Footer */}
         <div className="flex gap-3 pt-4 border-t border-[#1f2937] shrink-0">
           <button 
+            type="button"
             onClick={onClose}
             className="ds-btn ds-btn-secondary text-xs flex-1"
           >
             Hủy
           </button>
           <button 
+            type="button"
             onClick={onSubmit}
             disabled={loading}
             className="ds-btn ds-btn-primary text-xs flex-1"

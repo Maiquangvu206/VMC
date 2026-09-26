@@ -3,10 +3,10 @@ import { useClub } from '../context/ClubContext';
 import { CheckCircle, Clock, ShieldCheck, X, AlertTriangle, ArrowRight, Camera } from 'lucide-react';
 
 export const InternalEquipment = () => {
-  const { 
-    equipment, 
-    borrowEquipment, 
-    returnEquipment, 
+  const {
+    equipment,
+    borrowEquipment,
+    returnEquipment,
     currentUser,
     addEquipment,
     showToast
@@ -35,8 +35,8 @@ export const InternalEquipment = () => {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-20">
-      
+    <div className="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-20">
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="min-w-0">
@@ -44,9 +44,6 @@ export const InternalEquipment = () => {
           <h1 className="font-heading text-2xl sm:text-3xl font-extrabold text-slate-100 mt-2 truncate">
             Quản Lý & <span className="text-blue-400">Mượn Máy Ảnh CLB</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Hệ thống đăng ký mượn máy ảnh Canon/Sony, Lens, Gimbal DJI, Micro không dây cho các sự kiện trường.
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 shrink-0">
@@ -56,7 +53,7 @@ export const InternalEquipment = () => {
             </div>
             <div className="text-[11px] text-slate-400">Mượn trước 24h • Kiểm tra pin & thẻ nhớ trước khi trả</div>
           </div>
-          
+
           {isAdmin && (
             <button onClick={() => setShowAddForm(true)} className="ds-btn ds-btn-primary text-xs">
               + Thêm Thiết Bị
@@ -71,17 +68,17 @@ export const InternalEquipment = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
               <label className="ds-field-label">Tên thiết bị</label>
-              <input required type="text" className="ds-input" placeholder="VD: Máy ảnh Sony A7IV" value={newEq.name} onChange={e => setNewEq({...newEq, name: e.target.value})} />
+              <input required type="text" className="ds-input" placeholder="VD: Máy ảnh Sony A7IV" value={newEq.name} onChange={e => setNewEq({ ...newEq, name: e.target.value })} />
             </div>
             <div>
               <label className="ds-field-label">Mã quản lý</label>
-              <input required type="text" className="ds-input" placeholder="VD: VMC-CAM-03" value={newEq.code} onChange={e => setNewEq({...newEq, code: e.target.value})} />
+              <input required type="text" className="ds-input" placeholder="VD: VMC-CAM-03" value={newEq.code} onChange={e => setNewEq({ ...newEq, code: e.target.value })} />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
               <label className="ds-field-label">Loại</label>
-              <select className="ds-input ds-select" value={newEq.category} onChange={e => setNewEq({...newEq, category: e.target.value})}>
+              <select className="ds-input ds-select" value={newEq.category} onChange={e => setNewEq({ ...newEq, category: e.target.value })}>
                 <option value="CAMERA">CAMERA</option>
                 <option value="ỐNG KÍNH">ỐNG KÍNH</option>
                 <option value="GIMBAL">GIMBAL</option>
@@ -91,7 +88,7 @@ export const InternalEquipment = () => {
             </div>
             <div>
               <label className="ds-field-label">Tình trạng</label>
-              <input required type="text" className="ds-input" placeholder="VD: Tốt / Hỏng móp méo..." value={newEq.condition} onChange={e => setNewEq({...newEq, condition: e.target.value})} />
+              <input required type="text" className="ds-input" placeholder="VD: Tốt / Hỏng móp méo..." value={newEq.condition} onChange={e => setNewEq({ ...newEq, condition: e.target.value })} />
             </div>
           </div>
           <div className="flex justify-end gap-3 pt-3 border-t border-[#1f2937]">
@@ -131,11 +128,10 @@ export const InternalEquipment = () => {
             </div>
 
             <div className="pt-3 border-t border-[#1f2937] flex items-center justify-between gap-2 shrink-0 min-w-0">
-              <span className={`ds-badge text-[10px] shrink-0 ${
-                item.status === 'available'
-                  ? 'ds-badge-emerald'
-                  : 'ds-badge-amber'
-              }`}>
+              <span className={`ds-badge text-[10px] shrink-0 ${item.status === 'available'
+                ? 'ds-badge-emerald'
+                : 'ds-badge-amber'
+                }`}>
                 {item.status === 'available' ? 'SẴN SÀNG MƯỢN' : 'ĐANG ĐƯỢC MƯỢN'}
               </span>
 
@@ -163,7 +159,7 @@ export const InternalEquipment = () => {
       {selectedEq && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-slide-up">
           <div className="ds-card p-6 w-full max-w-md bg-[#111827] border border-[#1f2937] rounded-2xl shadow-2xl text-white space-y-5">
-            
+
             <div className="flex justify-between items-center pb-3 border-b border-[#1f2937]">
               <h3 className="font-heading font-bold text-base text-slate-100">Đăng Ký Mượn Thiết Bị</h3>
               <button onClick={() => setSelectedEq(null)} className="text-slate-400 hover:text-white p-1 transition-colors">

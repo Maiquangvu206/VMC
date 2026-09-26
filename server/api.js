@@ -1680,29 +1680,29 @@ router.put('/recruitment/seasons/:id', async (req, res) => {
       } catch (e) { oldScorerIds = []; }
     }
 
-    const interviewerIdsVal = interviewer_ids !== undefined
-      ? (Array.isArray(interviewer_ids) ? JSON.stringify(interviewer_ids) : interviewer_ids)
-      : null;
-    const teamworkScorerIdsVal = teamwork_scorer_ids !== undefined
-      ? (Array.isArray(teamwork_scorer_ids) ? JSON.stringify(teamwork_scorer_ids) : teamwork_scorer_ids)
-      : null;
-    const challengeProcessScorerIdsVal = challenge_process_scorer_ids !== undefined
-      ? (Array.isArray(challenge_process_scorer_ids) ? JSON.stringify(challenge_process_scorer_ids) : challenge_process_scorer_ids)
-      : null;
-    const challengeResultScorerIdsVal = challenge_result_scorer_ids !== undefined
-      ? (Array.isArray(challenge_result_scorer_ids) ? JSON.stringify(challenge_result_scorer_ids) : challenge_result_scorer_ids)
-      : null;
-    const selectedQuestionsVal = selected_questions !== undefined
-      ? (Array.isArray(selected_questions) ? JSON.stringify(selected_questions) : selected_questions)
-      : null;
-    const scoringTypeVal = scoring_type !== undefined
-      ? (Array.isArray(scoring_type) ? JSON.stringify(scoring_type) : scoring_type)
-      : null;
+    const updates = [];
+    const params = [];
 
-    await queryDatabase(
-      'UPDATE Recruitment_Seasons SET name = COALESCE(?, name), quota = COALESCE(?, quota), department = COALESCE(?, department), scoring_type = COALESCE(?, scoring_type), is_active = COALESCE(?, is_active), interviewer_ids = COALESCE(?, interviewer_ids), active_round = COALESCE(?, active_round), teamwork_scorer_ids = COALESCE(?, teamwork_scorer_ids), challenge_process_scorer_ids = COALESCE(?, challenge_process_scorer_ids), challenge_result_scorer_ids = COALESCE(?, challenge_result_scorer_ids), lead_interviewer_id = COALESCE(?, lead_interviewer_id), selected_questions = COALESCE(?, selected_questions) WHERE id = ?',
-      [name ?? null, quota ?? null, department ?? null, scoringTypeVal, is_active !== undefined ? (is_active ? 1 : 0) : null, interviewerIdsVal, active_round ?? null, teamworkScorerIdsVal, challengeProcessScorerIdsVal, challengeResultScorerIdsVal, lead_interviewer_id ?? null, selectedQuestionsVal, req.params.id]
-    );
+    if (name !== undefined) { updates.push('name = ?'); params.push(name); }
+    if (quota !== undefined) { updates.push('quota = ?'); params.push(quota); }
+    if (department !== undefined) { updates.push('department = ?'); params.push(department); }
+    if (scoring_type !== undefined) { updates.push('scoring_type = ?'); params.push(Array.isArray(scoring_type) ? JSON.stringify(scoring_type) : scoring_type); }
+    if (is_active !== undefined) { updates.push('is_active = ?'); params.push(is_active ? 1 : 0); }
+    if (interviewer_ids !== undefined) { updates.push('interviewer_ids = ?'); params.push(Array.isArray(interviewer_ids) ? JSON.stringify(interviewer_ids) : interviewer_ids); }
+    if (active_round !== undefined) { updates.push('active_round = ?'); params.push(active_round); }
+    if (teamwork_scorer_ids !== undefined) { updates.push('teamwork_scorer_ids = ?'); params.push(Array.isArray(teamwork_scorer_ids) ? JSON.stringify(teamwork_scorer_ids) : teamwork_scorer_ids); }
+    if (challenge_process_scorer_ids !== undefined) { updates.push('challenge_process_scorer_ids = ?'); params.push(Array.isArray(challenge_process_scorer_ids) ? JSON.stringify(challenge_process_scorer_ids) : challenge_process_scorer_ids); }
+    if (challenge_result_scorer_ids !== undefined) { updates.push('challenge_result_scorer_ids = ?'); params.push(Array.isArray(challenge_result_scorer_ids) ? JSON.stringify(challenge_result_scorer_ids) : challenge_result_scorer_ids); }
+    if (lead_interviewer_id !== undefined) { updates.push('lead_interviewer_id = ?'); params.push(lead_interviewer_id); }
+    if (selected_questions !== undefined) { updates.push('selected_questions = ?'); params.push(Array.isArray(selected_questions) ? JSON.stringify(selected_questions) : selected_questions); }
+
+    if (updates.length > 0) {
+      params.push(req.params.id);
+      await queryDatabase(
+        `UPDATE Recruitment_Seasons SET ${updates.join(', ')} WHERE id = ?`,
+        params
+      );
+    }
 
     // Call assignment mail helper in background for global season level assignments
     if (interviewer_ids !== undefined || teamwork_scorer_ids !== undefined) {
@@ -1842,7 +1842,7 @@ router.put('/recruitment/candidates/:id', async (req, res) => {
     const { full_name, interview_code, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, status, notes, application_answers, lead_interviewer_id, selected_questions, facebook, challenge_topic } = req.body;
     
     // Fetch old data for logs and comparison
-    const current = await queryDatabase('SELECT full_name, interviewer_ids, teamwork_scorer_ids FROM Recruitment_Candidates WHERE id = ?', [req.params.id]);
+    const current = await queryDatabase('SELECT full_name, interviewer_ids, teamwork_scorer_ids FROM Recruitment_Candidates WHERE id = ? OR interview_code = ? LIMIT 1', [req.params.id, req.params.id]);
     let oldInterviewerIds = [];
     let oldScorerIds = [];
     let candName = full_name;
@@ -1856,42 +1856,35 @@ router.put('/recruitment/candidates/:id', async (req, res) => {
       } catch (e) { oldScorerIds = []; }
     }
 
-    const interviewerIdsVal = interviewer_ids !== undefined
-      ? (Array.isArray(interviewer_ids) ? JSON.stringify(interviewer_ids) : interviewer_ids)
-      : null;
-    const teamworkScorerIdsVal = teamwork_scorer_ids !== undefined
-      ? (Array.isArray(teamwork_scorer_ids) ? JSON.stringify(teamwork_scorer_ids) : teamwork_scorer_ids)
-      : null;
-    const challengeProcessScorerIdsVal = challenge_process_scorer_ids !== undefined
-      ? (Array.isArray(challenge_process_scorer_ids) ? JSON.stringify(challenge_process_scorer_ids) : challenge_process_scorer_ids)
-      : null;
-    const challengeResultScorerIdsVal = challenge_result_scorer_ids !== undefined
-      ? (Array.isArray(challenge_result_scorer_ids) ? JSON.stringify(challenge_result_scorer_ids) : challenge_result_scorer_ids)
-      : null;
-    const selectedQuestionsVal = selected_questions !== undefined
-      ? (Array.isArray(selected_questions) ? JSON.stringify(selected_questions) : selected_questions)
-      : null;
+    const updates = [];
+    const params = [];
 
-    await queryDatabase(
-      `UPDATE Recruitment_Candidates SET
-        full_name = COALESCE(?, full_name),
-        interview_code = COALESCE(?, interview_code),
-        class_name = COALESCE(?, class_name),
-        phone = COALESCE(?, phone), email = COALESCE(?, email),
-        desired_dept = COALESCE(?, desired_dept), interviewer_id = COALESCE(?, interviewer_id),
-        interviewer_ids = COALESCE(?, interviewer_ids),
-        teamwork_scorer_ids = COALESCE(?, teamwork_scorer_ids),
-        challenge_process_scorer_ids = COALESCE(?, challenge_process_scorer_ids),
-        challenge_result_scorer_ids = COALESCE(?, challenge_result_scorer_ids),
-        status = COALESCE(?, status), notes = COALESCE(?, notes),
-        application_answers = COALESCE(?, application_answers),
-        lead_interviewer_id = COALESCE(?, lead_interviewer_id),
-        selected_questions = COALESCE(?, selected_questions),
-        facebook = COALESCE(?, facebook),
-        challenge_topic = COALESCE(?, challenge_topic)
-       WHERE id = ?`,
-      [full_name??null, interview_code??null, class_name??null, phone??null, email??null, desired_dept??null, interviewer_id??null, interviewerIdsVal, teamworkScorerIdsVal, challengeProcessScorerIdsVal, challengeResultScorerIdsVal, status??null, notes??null, application_answers??null, lead_interviewer_id??null, selectedQuestionsVal, facebook??null, challenge_topic??null, req.params.id]
-    );
+    if (full_name !== undefined) { updates.push('full_name = ?'); params.push(full_name); }
+    if (interview_code !== undefined) { updates.push('interview_code = ?'); params.push(interview_code); }
+    if (class_name !== undefined) { updates.push('class_name = ?'); params.push(class_name); }
+    if (phone !== undefined) { updates.push('phone = ?'); params.push(phone); }
+    if (email !== undefined) { updates.push('email = ?'); params.push(email); }
+    if (desired_dept !== undefined) { updates.push('desired_dept = ?'); params.push(desired_dept); }
+    if (interviewer_id !== undefined) { updates.push('interviewer_id = ?'); params.push(interviewer_id); }
+    if (interviewer_ids !== undefined) { updates.push('interviewer_ids = ?'); params.push(Array.isArray(interviewer_ids) ? JSON.stringify(interviewer_ids) : interviewer_ids); }
+    if (teamwork_scorer_ids !== undefined) { updates.push('teamwork_scorer_ids = ?'); params.push(Array.isArray(teamwork_scorer_ids) ? JSON.stringify(teamwork_scorer_ids) : teamwork_scorer_ids); }
+    if (challenge_process_scorer_ids !== undefined) { updates.push('challenge_process_scorer_ids = ?'); params.push(Array.isArray(challenge_process_scorer_ids) ? JSON.stringify(challenge_process_scorer_ids) : challenge_process_scorer_ids); }
+    if (challenge_result_scorer_ids !== undefined) { updates.push('challenge_result_scorer_ids = ?'); params.push(Array.isArray(challenge_result_scorer_ids) ? JSON.stringify(challenge_result_scorer_ids) : challenge_result_scorer_ids); }
+    if (status !== undefined) { updates.push('status = ?'); params.push(status); }
+    if (notes !== undefined) { updates.push('notes = ?'); params.push(notes); }
+    if (application_answers !== undefined) { updates.push('application_answers = ?'); params.push(application_answers); }
+    if (lead_interviewer_id !== undefined) { updates.push('lead_interviewer_id = ?'); params.push(lead_interviewer_id); }
+    if (selected_questions !== undefined) { updates.push('selected_questions = ?'); params.push(Array.isArray(selected_questions) ? JSON.stringify(selected_questions) : selected_questions); }
+    if (facebook !== undefined) { updates.push('facebook = ?'); params.push(facebook); }
+    if (challenge_topic !== undefined) { updates.push('challenge_topic = ?'); params.push(challenge_topic); }
+
+    if (updates.length > 0) {
+      params.push(req.params.id, req.params.id);
+      await queryDatabase(
+        `UPDATE Recruitment_Candidates SET ${updates.join(', ')} WHERE id = ? OR interview_code = ?`,
+        params
+      );
+    }
 
     // Call assignment mail helper in background
     if (interviewer_ids !== undefined || teamwork_scorer_ids !== undefined) {
@@ -1969,6 +1962,7 @@ router.post('/recruitment/scores', async (req, res) => {
         const critRows = await queryDatabase('SELECT round_type FROM Recruitment_Criteria WHERE id = ? LIMIT 1', [firstCritId]);
         if (critRows.length > 0 && critRows[0].round_type) {
           rType = critRows[0].round_type;
+          if (rType === 'thuthach') rType = 'thuthach_ketqua';
         }
       }
       const totalSum = scores.reduce((sum, item) => sum + (parseFloat(item.score) || 0), 0);
@@ -2089,7 +2083,7 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
         SELECT 
           s.candidate_id AS cand_id,
           s.interviewer_id,
-          COALESCE(NULLIF(cr.round_type, ''), 'teamwork') AS round_type,
+          COALESCE(NULLIF(CASE WHEN cr.round_type = 'thuthach' THEN 'thuthach_ketqua' ELSE cr.round_type END, ''), 'teamwork') AS round_type,
           SUM(s.score) AS interviewer_total,
           AVG(s.score) AS interviewer_avg
         FROM recruitment_scores s
@@ -2097,7 +2091,7 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
         WHERE (s.season_id = ? OR s.season_id IS NULL OR s.season_id = ''
            OR s.candidate_id IN (SELECT id FROM recruitment_candidates WHERE season_id = ?)
            OR s.candidate_id IN (SELECT interview_code FROM recruitment_candidates WHERE season_id = ?))
-        GROUP BY s.candidate_id, s.interviewer_id, COALESCE(NULLIF(cr.round_type, ''), 'teamwork')
+        GROUP BY s.candidate_id, s.interviewer_id, COALESCE(NULLIF(CASE WHEN cr.round_type = 'thuthach' THEN 'thuthach_ketqua' ELSE cr.round_type END, ''), 'teamwork')
       ) interviewer_scores
       GROUP BY cand_id, round_type
     `, [seasonId, seasonId, seasonId]);
@@ -2118,7 +2112,7 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
       SELECT DISTINCT 
         s.candidate_id, 
         s.interviewer_id, 
-        COALESCE(NULLIF(cr.round_type, ''), 'teamwork') AS round_type
+        COALESCE(NULLIF(CASE WHEN cr.round_type = 'thuthach' THEN 'thuthach_ketqua' ELSE cr.round_type END, ''), 'teamwork') AS round_type
       FROM recruitment_scores s
       LEFT JOIN recruitment_criteria cr ON s.criteria_id = cr.id
       WHERE s.season_id = ? 
@@ -2130,7 +2124,7 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
 
     // Fetch comments left by interviewers for each candidate
     const commentsRows = await queryDatabase(`
-      SELECT DISTINCT s.candidate_id, s.interviewer_id, s.comments, COALESCE(u.full_name, s.interviewer_id) AS interviewer_name, COALESCE(NULLIF(cr.round_type, ''), 'teamwork') AS round_type
+      SELECT DISTINCT s.candidate_id, s.interviewer_id, s.comments, COALESCE(u.full_name, s.interviewer_id) AS interviewer_name, COALESCE(NULLIF(CASE WHEN cr.round_type = 'thuthach' THEN 'thuthach_ketqua' ELSE cr.round_type END, ''), 'teamwork') AS round_type
       FROM recruitment_scores s
       LEFT JOIN members u ON (s.interviewer_id = u.id OR s.interviewer_id = u.member_code OR s.interviewer_id = u.username)
       LEFT JOIN recruitment_criteria cr ON s.criteria_id = cr.id
@@ -2143,7 +2137,7 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
       SELECT s.candidate_id, s.interviewer_id, s.criteria_id, s.score, s.comments, s.created_at,
              COALESCE(u.full_name, s.interviewer_id) AS interviewer_name,
              cr.criteria_name AS criteria_title,
-             COALESCE(NULLIF(cr.round_type, ''), 'teamwork') AS round_type
+             COALESCE(NULLIF(CASE WHEN cr.round_type = 'thuthach' THEN 'thuthach_ketqua' ELSE cr.round_type END, ''), 'teamwork') AS round_type
       FROM recruitment_scores s
       LEFT JOIN members u ON (s.interviewer_id = u.id OR s.interviewer_id = u.member_code OR s.interviewer_id = u.username)
       LEFT JOIN recruitment_criteria cr ON s.criteria_id = cr.id
@@ -2201,74 +2195,186 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
       });
     });
 
-    // Group scores and evaluations by candidate and round_type, calculating average across interviewers
-    const evalGroups = {};
+    // Group detailed score entries by candidate key and round_type
+    const candidateScoresGroup = {}; // key -> { round_type -> [scoreEntries] }
+    detailedScoresRows.forEach(r => {
+      const keys = findCandidateKeys(r.candidate_id);
+      const rType = r.round_type || 'don';
+      keys.forEach(k => {
+        if (k) {
+          if (!candidateScoresGroup[k]) candidateScoresGroup[k] = {};
+          if (!candidateScoresGroup[k][rType]) candidateScoresGroup[k][rType] = [];
+          candidateScoresGroup[k][rType].push(r);
+        }
+      });
+    });
+
+    // Group evaluation rows by candidate key and round_type
+    const evalGroupsMap = {};
     evalRows.forEach(r => {
       const keys = findCandidateKeys(r.candidate_id, r.interview_code);
       const tot = parseFloat(r.total_score || 0);
       const avg = parseFloat(r.avg_score || 0);
       const rType = r.round_type || 'don';
-
+      const scoreVal = (rType === 'phongvan') ? tot : (avg > 0 ? avg : tot);
       keys.forEach(k => {
-        if (k) {
-          if (!evalGroups[k]) evalGroups[k] = {};
-          if (!evalGroups[k][rType]) evalGroups[k][rType] = { totals: [], avgs: [] };
-          if (tot > 0) evalGroups[k][rType].totals.push(tot);
-          if (avg > 0) evalGroups[k][rType].avgs.push(avg);
+        if (k && scoreVal > 0) {
+          if (!evalGroupsMap[k]) evalGroupsMap[k] = {};
+          if (!evalGroupsMap[k][rType]) evalGroupsMap[k][rType] = [];
+          evalGroupsMap[k][rType].push(scoreVal);
         }
       });
     });
 
     const roundScoresMap = {};
     const roundTotalsMap = {};
-
-    // Calculate average score & average total score per round type per candidate
-    Object.keys(evalGroups).forEach(k => {
-      if (!roundScoresMap[k]) roundScoresMap[k] = {};
-      if (!roundTotalsMap[k]) roundTotalsMap[k] = {};
-      Object.keys(evalGroups[k]).forEach(rType => {
-        const { totals, avgs } = evalGroups[k][rType];
-        if (totals.length > 0) {
-          const avgTotal = parseFloat((totals.reduce((a, b) => a + b, 0) / totals.length).toFixed(2));
-          roundTotalsMap[k][rType] = avgTotal;
-        }
-        if (avgs.length > 0) {
-          const avgScore = parseFloat((avgs.reduce((a, b) => a + b, 0) / avgs.length).toFixed(2));
-          roundScoresMap[k][rType] = avgScore;
-        }
-      });
-    });
-
-    // Merge / fallback from roundScoresRows (subquery grouped by interviewer and averaged)
-    roundScoresRows.forEach(r => {
-      const keys = findCandidateKeys(r.candidate_id);
-      const avgVal = parseFloat(r.round_avg) || 0;
-      const sumVal = parseFloat(r.round_sum) || 0;
-      const rType = r.round_type || 'don';
-      keys.forEach(k => {
-        if (k) {
-          if (!roundScoresMap[k]) roundScoresMap[k] = {};
-          if (!roundTotalsMap[k]) roundTotalsMap[k] = {};
-          if (roundScoresMap[k][rType] === undefined || roundScoresMap[k][rType] === 0) {
-            roundScoresMap[k][rType] = avgVal;
-          }
-          if (roundTotalsMap[k][rType] === undefined || roundTotalsMap[k][rType] === 0) {
-            roundTotalsMap[k][rType] = sumVal;
-          }
-        }
-      });
-    });
-
-    // Compute total score per candidate (sum of averages of distinct round types)
     const totalScoreMap = {};
-    Object.keys(roundScoresMap).forEach(k => {
-      const rMap = roundScoresMap[k];
-      const rTotMap = roundTotalsMap[k] || {};
-      const keysToSum = (Object.keys(rMap).includes('thuthach_quatrinh') || Object.keys(rMap).includes('thuthach_ketqua'))
-        ? Object.keys(rMap).filter(rk => rk !== 'thuthach')
-        : Object.keys(rMap);
-      const sum = keysToSum.reduce((a, b) => a + (parseFloat(rTotMap[b] || rMap[b]) || 0), 0);
-      totalScoreMap[k] = parseFloat(sum.toFixed(2));
+
+    const allCandidateKeys = new Set([
+      ...Object.keys(candidateScoresGroup),
+      ...Object.keys(evalGroupsMap),
+      ...candidates.map(c => String(c.candidate_id).trim()),
+      ...candidates.map(c => String(c.interview_code || '').trim()).filter(Boolean)
+    ]);
+
+    allCandidateKeys.forEach(k => {
+      if (!k) return;
+      roundScoresMap[k] = {};
+      roundTotalsMap[k] = {};
+
+      const rounds = candidateScoresGroup[k] || {};
+
+      // 1. Vòng đơn: Trung bình của điểm trung bình từng giám khảo
+      if (rounds.don && rounds.don.length > 0) {
+        const byScorer = {};
+        rounds.don.forEach(s => {
+          if (!byScorer[s.interviewer_id]) byScorer[s.interviewer_id] = [];
+          byScorer[s.interviewer_id].push(parseFloat(s.score) || 0);
+        });
+        const scorerAvgs = Object.values(byScorer).map(arr => arr.reduce((a, b) => a + b, 0) / arr.length);
+        if (scorerAvgs.length > 0) {
+          roundScoresMap[k].don = parseFloat((scorerAvgs.reduce((a, b) => a + b, 0) / scorerAvgs.length).toFixed(2));
+        }
+      }
+
+      // 2. Vòng phỏng vấn: Tổng điểm trung bình từng câu (mỗi câu chia cho đúng số giám khảo thực tế đã chấm câu đó: 1, 2, 3, 4... người)
+      if (rounds.phongvan && rounds.phongvan.length > 0) {
+        const byCrit = {};
+        rounds.phongvan.forEach(s => {
+          if (!byCrit[s.criteria_id]) byCrit[s.criteria_id] = [];
+          byCrit[s.criteria_id].push(parseFloat(s.score) || 0);
+        });
+        let pvSum = 0;
+        Object.values(byCrit).forEach(scoresList => {
+          if (scoresList.length > 0) {
+            const critAvg = scoresList.reduce((a, b) => a + b, 0) / scoresList.length;
+            pvSum += critAvg;
+          }
+        });
+        roundScoresMap[k].phongvan = parseFloat(pvSum.toFixed(2));
+      }
+
+      // 3. Vòng thử thách: 2/3 quá trình + 1/3 kết quả
+      if (rounds.thuthach_quatrinh && rounds.thuthach_quatrinh.length > 0) {
+        const byScorer = {};
+        rounds.thuthach_quatrinh.forEach(s => {
+          if (!byScorer[s.interviewer_id]) byScorer[s.interviewer_id] = [];
+          byScorer[s.interviewer_id].push(parseFloat(s.score) || 0);
+        });
+        const scorerAvgs = Object.values(byScorer).map(arr => arr.reduce((a, b) => a + b, 0) / arr.length);
+        if (scorerAvgs.length > 0) {
+          roundScoresMap[k].thuthach_quatrinh = parseFloat((scorerAvgs.reduce((a, b) => a + b, 0) / scorerAvgs.length).toFixed(2));
+        }
+      }
+
+      if (rounds.thuthach_ketqua && rounds.thuthach_ketqua.length > 0) {
+        const byScorer = {};
+        rounds.thuthach_ketqua.forEach(s => {
+          if (!byScorer[s.interviewer_id]) byScorer[s.interviewer_id] = [];
+          byScorer[s.interviewer_id].push(parseFloat(s.score) || 0);
+        });
+        const scorerAvgs = Object.values(byScorer).map(arr => arr.reduce((a, b) => a + b, 0) / arr.length);
+        if (scorerAvgs.length > 0) {
+          roundScoresMap[k].thuthach_ketqua = parseFloat((scorerAvgs.reduce((a, b) => a + b, 0) / scorerAvgs.length).toFixed(2));
+        }
+      }
+
+      if (rounds.thuthach && rounds.thuthach.length > 0 && roundScoresMap[k].thuthach_ketqua === undefined) {
+        const byScorer = {};
+        rounds.thuthach.forEach(s => {
+          if (!byScorer[s.interviewer_id]) byScorer[s.interviewer_id] = [];
+          byScorer[s.interviewer_id].push(parseFloat(s.score) || 0);
+        });
+        const scorerAvgs = Object.values(byScorer).map(arr => arr.reduce((a, b) => a + b, 0) / arr.length);
+        if (scorerAvgs.length > 0) {
+          roundScoresMap[k].thuthach_ketqua = parseFloat((scorerAvgs.reduce((a, b) => a + b, 0) / scorerAvgs.length).toFixed(2));
+        }
+      }
+
+      const procScore = roundScoresMap[k].thuthach_quatrinh;
+      const resScore = roundScoresMap[k].thuthach_ketqua;
+
+      if (procScore !== undefined && resScore !== undefined) {
+        roundScoresMap[k].thuthach = parseFloat(((2 / 3) * procScore + (1 / 3) * resScore).toFixed(2));
+      } else if (procScore !== undefined) {
+        roundScoresMap[k].thuthach = procScore;
+      } else if (resScore !== undefined) {
+        roundScoresMap[k].thuthach = resScore;
+      }
+
+      // 4. Vòng teamwork: Tính như điểm vòng đơn (trung bình của điểm trung bình từng giám khảo)
+      if (rounds.teamwork && rounds.teamwork.length > 0) {
+        const byScorer = {};
+        rounds.teamwork.forEach(s => {
+          if (!byScorer[s.interviewer_id]) byScorer[s.interviewer_id] = [];
+          byScorer[s.interviewer_id].push(parseFloat(s.score) || 0);
+        });
+        const scorerAvgs = Object.values(byScorer).map(arr => arr.reduce((a, b) => a + b, 0) / arr.length);
+        if (scorerAvgs.length > 0) {
+          roundScoresMap[k].teamwork = parseFloat((scorerAvgs.reduce((a, b) => a + b, 0) / scorerAvgs.length).toFixed(2));
+        }
+      }
+
+      // Fallback from evalGroupsMap if detailed criteria scores are not present
+      ['don', 'phongvan', 'thuthach_quatrinh', 'thuthach_ketqua', 'teamwork'].forEach(rType => {
+        if (roundScoresMap[k][rType] === undefined && evalGroupsMap[k] && evalGroupsMap[k][rType] && evalGroupsMap[k][rType].length > 0) {
+          const totals = evalGroupsMap[k][rType];
+          roundScoresMap[k][rType] = parseFloat((totals.reduce((a, b) => a + b, 0) / totals.length).toFixed(2));
+          if (rType === 'thuthach_ketqua' || rType === 'thuthach_quatrinh') {
+            const p = roundScoresMap[k].thuthach_quatrinh;
+            const r = roundScoresMap[k].thuthach_ketqua;
+            if (p !== undefined && r !== undefined) {
+              roundScoresMap[k].thuthach = parseFloat(((2 / 3) * p + (1 / 3) * r).toFixed(2));
+            } else if (p !== undefined) roundScoresMap[k].thuthach = p;
+            else if (r !== undefined) roundScoresMap[k].thuthach = r;
+          }
+        }
+      });
+
+      // Also fallback from roundScoresRows if still undefined
+      roundScoresRows.forEach(rsr => {
+        const keys = findCandidateKeys(rsr.candidate_id);
+        if (keys.includes(k)) {
+          const rType = rsr.round_type || 'don';
+          if (roundScoresMap[k][rType] === undefined) {
+            const scoreVal = rType === 'phongvan' ? parseFloat(rsr.round_sum || 0) : parseFloat(rsr.round_avg || rsr.round_sum || 0);
+            if (scoreVal > 0) {
+              roundScoresMap[k][rType] = scoreVal;
+            }
+          }
+        }
+      });
+
+      // 5. Tổng điểm tích lũy = sum of 4 round heads (don + phongvan + thuthach + teamwork)
+      const v1 = roundScoresMap[k].don;
+      const v2 = roundScoresMap[k].phongvan;
+      const v3 = roundScoresMap[k].thuthach;
+      const v4 = roundScoresMap[k].teamwork;
+
+      const activeScores = [v1, v2, v3, v4].filter(v => v !== undefined && !isNaN(v));
+      totalScoreMap[k] = activeScores.length > 0
+        ? parseFloat(activeScores.reduce((a, b) => a + b, 0).toFixed(2))
+        : 0;
     });
 
     const data = candidates.map(c => {
@@ -2285,16 +2391,8 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
         ...(roundTotalsMap[codeStr] || {})
       };
 
-      // Fallback round scores across all round types so scores are never hidden
       const rScores = { ...rScoresRaw };
       const rawVals = Object.values(rScoresRaw).filter(v => typeof v === 'number' && !isNaN(v) && v > 0);
-      const firstScore = rawVals.length > 0 ? rawVals[0] : undefined;
-
-      if (firstScore !== undefined) {
-        if (rScores.don === undefined) rScores.don = firstScore;
-        if (rScores.phongvan === undefined) rScores.phongvan = firstScore;
-        if (rScores.teamwork === undefined) rScores.teamwork = firstScore;
-      }
 
       const totalVals = Object.values(rTotalsRaw).filter(v => typeof v === 'number' && !isNaN(v) && v > 0);
       const sumTotals = totalVals.length > 0 ? parseFloat(totalVals.reduce((a, b) => a + b, 0).toFixed(2)) : 0;

@@ -5,8 +5,8 @@ export const CandidateInterviewerModal = ({
   show, 
   onClose, 
   candidate, 
-  availableInterviewers, 
-  selectedInterviewers, 
+  availableInterviewers = [], 
+  selectedInterviewers = [], 
   setSelectedInterviewers, 
   leadInterviewerId,
   setLeadInterviewerId,
@@ -16,6 +16,7 @@ export const CandidateInterviewerModal = ({
   if (!show || !candidate) return null;
 
   const targetDept = (candidate?.desired_dept || '').toLowerCase().trim();
+  const safeSelected = (Array.isArray(selectedInterviewers) ? selectedInterviewers : []).map(id => String(id));
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
@@ -25,7 +26,7 @@ export const CandidateInterviewerModal = ({
             <h3 className="font-heading text-base font-bold text-white">Phân Công Phỏng Vấn Ứng Viên</h3>
             <p className="text-xs text-blue-400 font-medium mt-0.5">{candidate.full_name} • Ban nguyện vọng: {candidate.desired_dept || 'Mặc định'}</p>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white p-1">
+          <button type="button" onClick={onClose} className="text-slate-400 hover:text-white p-1">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -37,6 +38,8 @@ export const CandidateInterviewerModal = ({
             availableInterviewers.map(m => {
               const memberDept = (m.deptName || m.department || '').toLowerCase().trim();
               const isDeptInCharge = targetDept && (memberDept.includes(targetDept) || targetDept.includes(memberDept));
+              const mIdStr = String(m.id);
+              const isChecked = safeSelected.includes(mIdStr);
 
               return (
                 <div 
@@ -72,12 +75,12 @@ export const CandidateInterviewerModal = ({
                   <label className="relative inline-flex items-center cursor-pointer shrink-0">
                     <input 
                       type="checkbox" 
-                      checked={selectedInterviewers.includes(m.id)} 
+                      checked={isChecked} 
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedInterviewers([...selectedInterviewers, m.id]);
+                          setSelectedInterviewers([...safeSelected, mIdStr]);
                         } else {
-                          setSelectedInterviewers(selectedInterviewers.filter(id => id !== m.id));
+                          setSelectedInterviewers(safeSelected.filter(id => id !== mIdStr));
                         }
                       }}
                       className="sr-only peer" 
@@ -91,20 +94,20 @@ export const CandidateInterviewerModal = ({
         </div>
 
         {/* Lead Interviewer Selection */}
-        {selectedInterviewers.length > 0 && (
+        {safeSelected.length > 0 && (
           <div className="flex flex-col gap-1.5 pt-3 border-t border-[#1f2937] shrink-0">
             <label className="text-xs font-semibold text-slate-350 flex items-center gap-1.5">
               👑 Người phỏng vấn chính *
             </label>
             <select
-              value={leadInterviewerId || ''}
+              value={leadInterviewerId ? String(leadInterviewerId) : ''}
               onChange={(e) => setLeadInterviewerId(e.target.value)}
               className="ds-input bg-slate-900 border border-slate-700 text-white text-xs py-2"
               required
             >
               <option value="">-- Chọn người phỏng vấn chính --</option>
-              {selectedInterviewers.map(id => {
-                const m = availableInterviewers.find(x => x.id === id);
+              {safeSelected.map(id => {
+                const m = availableInterviewers.find(x => String(x.id) === String(id));
                 return (
                   <option key={id} value={id}>{m ? m.name : id}</option>
                 );
@@ -115,12 +118,14 @@ export const CandidateInterviewerModal = ({
 
         <div className="flex gap-3 pt-4 border-t border-[#1f2937] shrink-0">
           <button 
+            type="button"
             onClick={onClose}
             className="ds-btn ds-btn-secondary text-xs flex-1"
           >
             Hủy
           </button>
           <button 
+            type="button"
             onClick={onSubmit}
             disabled={loading}
             className="ds-btn ds-btn-primary text-xs flex-1"
@@ -132,3 +137,4 @@ export const CandidateInterviewerModal = ({
     </div>
   );
 };
+

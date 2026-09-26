@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useClub } from '../context/ClubContext';
-import { 
-  ShieldCheck, 
-  Monitor, 
-  Smartphone, 
-  Activity, 
-  RefreshCw, 
-  LogOut, 
-  Search, 
+import {
+  ShieldCheck,
+  Monitor,
+  Smartphone,
+  Activity,
+  RefreshCw,
+  LogOut,
+  Search,
   AlertTriangle,
   Clock,
   Wifi,
@@ -17,15 +17,15 @@ import {
 } from 'lucide-react';
 
 export const InternalAdminSessions = () => {
-  const { 
-    currentUser, 
-    isSuperAdmin, 
-    sessions, 
+  const {
+    currentUser,
+    isSuperAdmin,
+    sessions,
     members,
-    currentSessionId, 
-    loadSqlSessions, 
-    revokeSession, 
-    revokeAllSessions 
+    currentSessionId,
+    loadSqlSessions,
+    revokeSession,
+    revokeAllSessions
   } = useClub();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -52,9 +52,6 @@ export const InternalAdminSessions = () => {
           <AlertTriangle className="w-8 h-8" />
         </div>
         <h2 className="text-xl font-bold text-white">Quyền Truy Cập Bị Hạn Chế</h2>
-        <p className="text-sm text-slate-400 max-w-md mx-auto">
-          Trang quản trị phiên làm việc chỉ dành riêng cho tài khoản **Super Admin** của CLB VMC. Vui lòng liên hệ Chủ nhiệm CLB nếu bạn cần hỗ trợ.
-        </p>
       </div>
     );
   }
@@ -69,7 +66,7 @@ export const InternalAdminSessions = () => {
   const desktopCount = activeSessions.length - mobileCount;
 
   const filteredSessions = sessions.filter(s => {
-    const matchesSearch = 
+    const matchesSearch =
       (s.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (s.username || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (s.ip_address || '').includes(searchTerm);
@@ -82,8 +79,8 @@ export const InternalAdminSessions = () => {
   });
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-20">
-      
+    <div className="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-20">
+
       {/* Header Banner */}
       <div className="ds-card p-5 sm:p-6 border border-cyan-500/30 relative overflow-hidden bg-[var(--bg-primary)] rounded-xl shadow-lg">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 relative z-10 min-w-0">
@@ -94,13 +91,7 @@ export const InternalAdminSessions = () => {
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="font-heading font-black text-lg sm:text-xl text-white tracking-tight truncate">Quản Lý Phiên Làm Việc</h1>
-                <span className="ds-badge ds-badge-cyan text-[10px] font-mono font-bold px-2 py-0.5 shrink-0">
-                  Super Admin
-                </span>
               </div>
-              <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                Theo dõi toàn bộ các phiên đăng nhập, thiết bị di động/máy tính & cưỡng chế đăng xuất từ xa.
-              </p>
             </div>
           </div>
 
@@ -128,7 +119,6 @@ export const InternalAdminSessions = () => {
             <Wifi className="w-4 h-4 text-emerald-400 animate-pulse shrink-0" />
           </div>
           <div className="text-2xl font-black text-emerald-400 font-mono">{activeSessions.length}</div>
-          <div className="text-[11px] text-slate-400">Phiên đang kết nối thực tế</div>
         </div>
 
         <div className="ds-card p-5 border border-slate-700 rounded-xl space-y-1">
@@ -137,7 +127,6 @@ export const InternalAdminSessions = () => {
             <Clock className="w-4 h-4 text-slate-400 shrink-0" />
           </div>
           <div className="text-2xl font-black text-slate-300 font-mono">{endedSessions.length}</div>
-          <div className="text-[11px] text-slate-400">Tự đăng xuất hoặc hết hạn</div>
         </div>
 
         <div className="ds-card p-5 border border-rose-500/30 rounded-xl space-y-1">
@@ -146,7 +135,6 @@ export const InternalAdminSessions = () => {
             <XCircle className="w-4 h-4 text-rose-400 shrink-0" />
           </div>
           <div className="text-2xl font-black text-rose-400 font-mono">{revokedSessions.length}</div>
-          <div className="text-[11px] text-slate-400">Admin cưỡng chế thu hồi</div>
         </div>
 
         <div className="ds-card p-5 border border-purple-500/30 rounded-xl space-y-1">
@@ -162,7 +150,6 @@ export const InternalAdminSessions = () => {
               <Smartphone className="w-3.5 h-3.5 shrink-0" /> {mobileCount} Mobile
             </span>
           </div>
-          <div className="text-[11px] text-slate-400">Máy tính / Điện thoại</div>
         </div>
       </div>
 
@@ -183,25 +170,22 @@ export const InternalAdminSessions = () => {
           <span className="text-xs text-slate-400 font-semibold shrink-0">Lọc:</span>
           <button
             onClick={() => setStatusFilter('all')}
-            className={`ds-btn ds-btn-xs shrink-0 ${
-              statusFilter === 'all' ? 'bg-cyan-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-700'
-            }`}
+            className={`ds-btn ds-btn-xs shrink-0 ${statusFilter === 'all' ? 'bg-cyan-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-700'
+              }`}
           >
             Tất Cả ({sessions.length})
           </button>
           <button
             onClick={() => setStatusFilter('active')}
-            className={`ds-btn ds-btn-xs shrink-0 ${
-              statusFilter === 'active' ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-700'
-            }`}
+            className={`ds-btn ds-btn-xs shrink-0 ${statusFilter === 'active' ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-700'
+              }`}
           >
             🟢 Đang Hoạt Động ({activeSessions.length})
           </button>
           <button
             onClick={() => setStatusFilter('ended')}
-            className={`ds-btn ds-btn-xs shrink-0 ${
-              statusFilter === 'ended' ? 'bg-slate-700 text-white' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-700'
-            }`}
+            className={`ds-btn ds-btn-xs shrink-0 ${statusFilter === 'ended' ? 'bg-slate-700 text-white' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-700'
+              }`}
           >
             ⏸️ Kết Thúc Phiên ({endedSessions.length})
           </button>
@@ -232,9 +216,9 @@ export const InternalAdminSessions = () => {
                   const isCurrent = s.id === currentSessionId;
                   const isActive = Number(s.is_active) === 1;
                   const isMobile = (s.device_type || '').toLowerCase().includes('mobile');
-                  
-                  const memberObj = (members || []).find(m => 
-                    String(m.id) === String(s.member_id) || 
+
+                  const memberObj = (members || []).find(m =>
+                    String(m.id) === String(s.member_id) ||
                     String(m.memberCode || '').toUpperCase() === String(s.member_id || '').toUpperCase() ||
                     String(m.username || '').toLowerCase() === String(s.username || '').toLowerCase()
                   );

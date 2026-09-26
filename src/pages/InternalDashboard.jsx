@@ -196,7 +196,7 @@ export const InternalDashboard = () => {
   ];
 
   return (
-    <div className="page-wrap p-4 sm:p-6 lg:p-8 space-y-8 pb-20">
+    <div className="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8 pb-20">
 
       {/* Welcome Banner */}
       <div className="ds-card p-4 sm:p-6 lg:p-8 relative overflow-hidden">
@@ -332,7 +332,6 @@ export const InternalDashboard = () => {
                 </div>
                 <div>
                   <h3 className="font-heading font-bold text-lg text-slate-100">Nhiệm Vụ Đang Phân Công</h3>
-                  <p className="text-sm text-slate-400">Các nhiệm vụ đang thực hiện</p>
                 </div>
               </div>
               <button
@@ -369,8 +368,7 @@ export const InternalDashboard = () => {
                   <FileText className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-heading font-bold text-lg text-slate-100">Kịch Bản Radio & Bài Đăng Chờ Duyệt</h3>
-                  <p className="text-sm text-slate-400">Duyệt bài trước khi đăng</p>
+                  <h3 className="font-heading font-bold text-lg text-slate-100">Kịch Bản & Bài Đăng Chờ Duyệt</h3>
                 </div>
               </div>
               <button
@@ -416,8 +414,7 @@ export const InternalDashboard = () => {
                   <Bell className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-heading font-bold text-lg text-slate-100">Thông Báo Ban Chủ Nhiệm</h3>
-                  <p className="text-sm text-slate-400">Thông báo chính thức</p>
+                  <h3 className="font-heading font-bold text-lg text-slate-100">Thông Báo</h3>
                 </div>
               </div>
               {canManageAnnouncements && (

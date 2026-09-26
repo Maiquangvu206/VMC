@@ -6,13 +6,13 @@ import { BirthdayManagement } from '../components/hr/BirthdayManagement';
 import { PointManagement } from '../components/hr/PointManagement';
 
 const Loading = () => (
-  <div className="w-full max-w-7xl mx-auto px-4 flex items-center justify-center min-h-[60vh]">
+  <div className="w-full max-w-[1720px] mx-auto px-4 flex items-center justify-center min-h-[60vh]">
     <div className="text-slate-400 text-sm font-mono animate-pulse">Đang tải dữ liệu Nhân sự...</div>
   </div>
 );
 
 export const InternalHRDashboard = () => {
-  const { 
+  const {
     members, tasks, currentUser, isHRMember, isHRHead, isAdmin, finances, addFinanceRecord, updateFinanceStatus,
     meetings, createMeeting, submitMeetingAttendance, submitMeetingMinutes, penalizeMember, updateMemberPoints,
     birthdayAssignments, assignBirthdayDuty, submitBirthdayImage
@@ -21,12 +21,12 @@ export const InternalHRDashboard = () => {
   if (!currentUser) {
     return <Loading />;
   }
-  
+
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('points'); // 'points', 'birthdays', 'deadlines', 'finance', 'meetings'
 
   const [financeForm, setFinanceForm] = useState({ type: 'income', amount: '', description: '', date: '' });
-  
+
   // Meeting Form State
   const [meetingForm, setMeetingForm] = useState({ title: '', date: '', time: '' });
   const [showCreateMeeting, setShowCreateMeeting] = useState(false);
@@ -179,9 +179,9 @@ export const InternalHRDashboard = () => {
   const handleAddFinance = (e) => {
     e.preventDefault();
     if (!financeForm.amount || !financeForm.description) return;
-    
+
     const finalDate = financeForm.date || new Date().toLocaleDateString('en-CA');
-    
+
     addFinanceRecord({
       type: financeForm.type,
       amount: parseInt(financeForm.amount, 10),
@@ -199,7 +199,7 @@ export const InternalHRDashboard = () => {
   const totalBalance = (finances || []).filter(f => f.status === 'approved').reduce((acc, curr) => curr.type === 'income' ? acc + curr.amount : acc - curr.amount, 0);
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8 pb-20">
+    <div className="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8 pb-20">
       {/* Header Banner */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
@@ -208,12 +208,9 @@ export const InternalHRDashboard = () => {
             <h1 className="font-heading text-2xl sm:text-3xl font-extrabold text-slate-100 mt-1">
               Thi Đua & Sinh Nhật
             </h1>
-            <p className="text-sm text-slate-400 mt-1">
-              Theo dõi điểm số, sinh nhật, deadline và thu chi quỹ CLB.
-            </p>
           </div>
         </div>
-        
+
         <div className="relative flex items-center w-full md:w-72">
           <Search className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
           <input
@@ -257,235 +254,231 @@ export const InternalHRDashboard = () => {
             onClick={() => setActiveTab('finance')}
             className={`ds-btn ${activeTab === 'finance' ? 'ds-btn-primary' : 'ds-btn-secondary'} shrink-0`}
           >
-            <Wallet className="w-5 h-5" /> Quản Lý Thu Chi (Quỹ CLB)
+            <Wallet className="w-5 h-5" /> Quản Lý Thu Chi
           </button>
         )}
       </div>
 
       {/* Content Area */}
       <div className="ds-card p-6">
-         {/* POINTS TAB */}
-         {activeTab === 'points' && (
-           <div className="space-y-6">
-             <h3 className="text-xl font-bold text-slate-100 mb-4 flex items-center gap-3">
-               <Award className="text-amber-400" /> Bảng Điểm Thi Đua (Ranking)
-             </h3>
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-               {rankedMembers.map((m) => (
-                 <div 
-                   key={m.id} 
-                   onClick={() => setSelectedMember(m)}
-                   className="ds-card p-5 flex items-center gap-4 cursor-pointer hover:border-amber-500/50 hover:scale-[1.01] transition-all group"
-                   title="Bấm để xem chi tiết thông tin thành viên"
-                 >
-                   <div className={`w-12 h-12 shrink-0 rounded-xl flex items-center justify-center font-bold text-lg ${
-                     m.displayRank === 1 
-                       ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' 
-                       : m.displayRank === 2 
-                       ? 'bg-slate-300/20 text-slate-300 border border-slate-400/50' 
-                       : m.displayRank === 3 
-                       ? 'bg-orange-600/20 text-orange-400 border border-orange-600/50' 
-                       : 'bg-slate-800 text-slate-500'
-                   }`}>
-                     {m.displayRank}
-                   </div>
-                   <div className="flex-1 min-w-0">
-                     <div className="text-base font-bold text-slate-100 truncate group-hover:text-amber-300 transition-colors">{m.name}</div>
-                     <div className="text-sm text-slate-400 truncate">{m.deptName || m.department}</div>
-                   </div>
-                   <div className="text-right shrink-0">
-                     <div className="text-xl font-black text-blue-400 font-mono">{m.points || 0}</div>
-                     <div className="text-xs text-slate-500">PTS</div>
-                   </div>
-                 </div>
-               ))}
-             </div>
-             
-             <div className="mt-8 pt-8 border-t border-[var(--border-default)]">
-               <PointManagement />
-             </div>
-           </div>
-         )}
+        {/* POINTS TAB */}
+        {activeTab === 'points' && (
+          <div className="space-y-6">
+            <h3 className="text-xl font-bold text-slate-100 mb-4 flex items-center gap-3">
+              <Award className="text-amber-400" /> Bảng Điểm Thi Đua
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {rankedMembers.map((m) => (
+                <div
+                  key={m.id}
+                  onClick={() => setSelectedMember(m)}
+                  className="ds-card p-5 flex items-center gap-4 cursor-pointer hover:border-amber-500/50 hover:scale-[1.01] transition-all group"
+                  title="Bấm để xem chi tiết thông tin thành viên"
+                >
+                  <div className={`w-12 h-12 shrink-0 rounded-xl flex items-center justify-center font-bold text-lg ${m.displayRank === 1
+                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50'
+                    : m.displayRank === 2
+                      ? 'bg-slate-300/20 text-slate-300 border border-slate-400/50'
+                      : m.displayRank === 3
+                        ? 'bg-orange-600/20 text-orange-400 border border-orange-600/50'
+                        : 'bg-slate-800 text-slate-500'
+                    }`}>
+                    {m.displayRank}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-base font-bold text-slate-100 truncate group-hover:text-amber-300 transition-colors">{m.name}</div>
+                    <div className="text-sm text-slate-400 truncate">{m.deptName || m.department}</div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-xl font-black text-blue-400 font-mono">{m.points || 0}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-         {/* BIRTHDAYS TAB */}
-         {activeTab === 'birthdays' && (
-           <BirthdayManagement 
-             upcomingBirthdays={upcomingBirthdays}
-             allHumanMembers={allHumanMembers}
-             birthdayAssignments={birthdayAssignments}
-             assignBirthdayDuty={assignBirthdayDuty}
-             submitBirthdayImage={submitBirthdayImage}
-             isAllowedBirthdayDuty={isAllowedBirthdayDuty}
-             currentUser={currentUser}
-           />
-         )}
+            <div className="mt-8 pt-8 border-t border-[var(--border-default)]">
+              <PointManagement />
+            </div>
+          </div>
+        )}
 
-         {/* DEADLINES TAB */}
-         {activeTab === 'deadlines' && (
-           <div className="space-y-6">
-             <h3 className="text-xl font-bold text-slate-100 mb-4 flex items-center gap-3">
-               <Clock className="text-blue-400" /> Theo Dõi Tiến Độ & Deadline Thành Viên
-             </h3>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               {allHumanMembers.map(m => {
-                 const mTasks = getMemberTasks(m);
-                 const pendingTasks = mTasks.filter(t => t.status !== 'completed' && t.status !== 'done');
-                 const completedTasks = mTasks.filter(t => t.status === 'completed' || t.status === 'done');
-                 return (
-                   <div key={m.id} className="ds-card p-5 space-y-4">
-                     <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-3">
-                       <div className="flex items-center gap-3">
-                         <div className="w-10 h-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold">
-                           {m.name?.substring(0, 1) || 'V'}
-                         </div>
-                         <div>
-                           <div className="font-bold text-slate-100">{m.name}</div>
-                           <div className="text-xs text-slate-400">{m.deptName || m.department} • {m.memberCode}</div>
-                         </div>
-                       </div>
-                       <div className="text-right">
-                         <span className="text-xs font-semibold px-2 py-1 rounded bg-blue-500/20 text-blue-300">
-                           {completedTasks.length}/{mTasks.length} Hoàn thành
-                         </span>
-                       </div>
-                     </div>
-                     <div className="space-y-2">
-                       {mTasks.length === 0 ? (
-                         <div className="text-xs text-slate-500 italic py-2">Chưa được phân công nhiệm vụ nào.</div>
-                       ) : (
-                         mTasks.map(t => (
-                           <div key={t.id} className="flex items-center justify-between text-xs p-2 rounded bg-slate-900/50 border border-slate-800">
-                             <span className="text-slate-300 truncate max-w-[200px]">{t.title}</span>
-                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                               t.status === 'completed' || t.status === 'done'
-                                 ? 'bg-emerald-500/20 text-emerald-400'
-                                 : 'bg-amber-500/20 text-amber-400'
-                             }`}>
-                               {t.status === 'completed' || t.status === 'done' ? 'Xong' : t.dueDate || 'Đang làm'}
-                             </span>
-                           </div>
-                         ))
-                       )}
-                     </div>
-                   </div>
-                 );
-               })}
-             </div>
-           </div>
-         )}
+        {/* BIRTHDAYS TAB */}
+        {activeTab === 'birthdays' && (
+          <BirthdayManagement
+            upcomingBirthdays={upcomingBirthdays}
+            allHumanMembers={allHumanMembers}
+            birthdayAssignments={birthdayAssignments}
+            assignBirthdayDuty={assignBirthdayDuty}
+            submitBirthdayImage={submitBirthdayImage}
+            isAllowedBirthdayDuty={isAllowedBirthdayDuty}
+            currentUser={currentUser}
+          />
+        )}
 
-         {/* MEETINGS TAB */}
-         {activeTab === 'meetings' && (
-           <MeetingManagement 
-             meetings={meetings}
-             members={allHumanMembers}
-             createMeeting={createMeeting}
-             submitMeetingAttendance={submitMeetingAttendance}
-             submitMeetingMinutes={submitMeetingMinutes}
-             penalizeMember={penalizeMember}
-             currentUser={currentUser}
-             isHRMember={isHRMember}
-             isHRHead={isHRHead}
-             isAdmin={isAdmin}
-           />
-         )}
+        {/* DEADLINES TAB */}
+        {activeTab === 'deadlines' && (
+          <div className="space-y-6">
+            <h3 className="text-xl font-bold text-slate-100 mb-4 flex items-center gap-3">
+              <Clock className="text-blue-400" /> Theo Dõi Tiến Độ & Deadline
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {allHumanMembers.map(m => {
+                const mTasks = getMemberTasks(m);
+                const pendingTasks = mTasks.filter(t => t.status !== 'completed' && t.status !== 'done');
+                const completedTasks = mTasks.filter(t => t.status === 'completed' || t.status === 'done');
+                return (
+                  <div key={m.id} className="ds-card p-5 space-y-4">
+                    <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold">
+                          {m.name?.substring(0, 1) || 'V'}
+                        </div>
+                        <div>
+                          <div className="font-bold text-slate-100">{m.name}</div>
+                          <div className="text-xs text-slate-400">{m.deptName || m.department} • {m.memberCode}</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs font-semibold px-2 py-1 rounded bg-blue-500/20 text-blue-300">
+                          {completedTasks.length}/{mTasks.length} Hoàn thành
+                        </span>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      {mTasks.length === 0 ? (
+                        <div className="text-xs text-slate-500 italic py-2">Chưa được phân công nhiệm vụ nào.</div>
+                      ) : (
+                        mTasks.map(t => (
+                          <div key={t.id} className="flex items-center justify-between text-xs p-2 rounded bg-slate-900/50 border border-slate-800">
+                            <span className="text-slate-300 truncate max-w-[200px]">{t.title}</span>
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${t.status === 'completed' || t.status === 'done'
+                              ? 'bg-emerald-500/20 text-emerald-400'
+                              : 'bg-amber-500/20 text-amber-400'
+                              }`}>
+                              {t.status === 'completed' || t.status === 'done' ? 'Xong' : t.dueDate || 'Đang làm'}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-         {/* FINANCE TAB */}
-         {activeTab === 'finance' && (
-           <div className="space-y-6">
-             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[var(--border-default)] pb-4">
-               <div>
-                 <h3 className="text-xl font-bold text-slate-100 flex items-center gap-3">
-                   <Wallet className="text-emerald-400" /> Quản Lý Quỹ & Thu Chi CLB
-                 </h3>
-                 <p className="text-sm text-slate-400 mt-1">Số dư quỹ hiện tại đã duyệt: <span className="font-bold text-emerald-400">{totalBalance.toLocaleString('vi-VN')} VNĐ</span></p>
-               </div>
-             </div>
+        {/* MEETINGS TAB */}
+        {activeTab === 'meetings' && (
+          <MeetingManagement
+            meetings={meetings}
+            members={allHumanMembers}
+            createMeeting={createMeeting}
+            submitMeetingAttendance={submitMeetingAttendance}
+            submitMeetingMinutes={submitMeetingMinutes}
+            penalizeMember={penalizeMember}
+            currentUser={currentUser}
+            isHRMember={isHRMember}
+            isHRHead={isHRHead}
+            isAdmin={isAdmin}
+          />
+        )}
 
-             <form onSubmit={handleAddFinance} className="grid grid-cols-1 sm:grid-cols-4 gap-4 bg-slate-900/40 p-4 rounded-xl border border-slate-800">
-               <div>
-                 <label className="text-xs text-slate-400 mb-1 block">Loại khoản</label>
-                 <select 
-                   value={financeForm.type}
-                   onChange={e => setFinanceForm({ ...financeForm, type: e.target.value })}
-                   className="ds-input text-xs"
-                 >
-                   <option value="income">➕ Thu Quỹ / Tài Trợ</option>
-                   <option value="expense">➖ Chi Phí Hoạt Động</option>
-                 </select>
-               </div>
-               <div>
-                 <label className="text-xs text-slate-400 mb-1 block">Số tiền (VNĐ)</label>
-                 <input 
-                   type="number"
-                   placeholder="100000"
-                   value={financeForm.amount}
-                   onChange={e => setFinanceForm({ ...financeForm, amount: e.target.value })}
-                   className="ds-input text-xs"
-                   required
-                 />
-               </div>
-               <div>
-                 <label className="text-xs text-slate-400 mb-1 block">Nội dung chi tiết</label>
-                 <input 
-                   type="text"
-                   placeholder="Nội dung thu/chi..."
-                   value={financeForm.description}
-                   onChange={e => setFinanceForm({ ...financeForm, description: e.target.value })}
-                   className="ds-input text-xs"
-                   required
-                 />
-               </div>
-               <div className="flex items-end">
-                 <button type="submit" className="ds-btn ds-btn-primary text-xs w-full justify-center">
-                   <Plus className="w-4 h-4" /> Thêm Thu Chi
-                 </button>
-               </div>
-             </form>
+        {/* FINANCE TAB */}
+        {activeTab === 'finance' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[var(--border-default)] pb-4">
+              <div>
+                <h3 className="text-xl font-bold text-slate-100 flex items-center gap-3">
+                  <Wallet className="text-emerald-400" /> Quản Lý Quỹ & Thu Chi
+                </h3>
+                <p className="text-sm text-slate-400 mt-1">Số dư quỹ hiện tại đã duyệt: <span className="font-bold text-emerald-400">{totalBalance.toLocaleString('vi-VN')} VNĐ</span></p>
+              </div>
+            </div>
 
-             <div className="space-y-3">
-               <h4 className="font-bold text-slate-200 text-sm">Lịch Sử Thu Chi & Dự Trù</h4>
-               <div className="divide-y divide-slate-800 bg-slate-950/40 rounded-xl border border-slate-800 overflow-hidden">
-                 {(finances || []).length === 0 ? (
-                   <div className="p-6 text-center text-slate-500 text-sm">Chưa có bản ghi thu chi nào.</div>
-                 ) : (
-                   finances.map(item => (
-                     <div key={item.id} className="p-4 flex items-center justify-between text-sm hover:bg-slate-900/50 transition-colors">
-                       <div className="flex items-center gap-3">
-                         {item.type === 'income' ? (
-                           <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400"><ArrowDownRight className="w-4 h-4" /></div>
-                         ) : (
-                           <div className="p-2 rounded-lg bg-rose-500/20 text-rose-400"><ArrowUpRight className="w-4 h-4" /></div>
-                         )}
-                         <div>
-                           <div className="font-bold text-slate-200">{item.description}</div>
-                           <div className="text-xs text-slate-400">{item.date} • Ghi bởi {item.loggedBy || 'VMC'}</div>
-                         </div>
-                       </div>
-                       <div className="text-right">
-                         <div className={`font-mono font-bold ${item.type === 'income' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                           {item.type === 'income' ? '+' : '-'}{item.amount?.toLocaleString('vi-VN')} VNĐ
-                         </div>
-                         <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${
-                           item.status === 'approved' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
-                         }`}>
-                           {item.status === 'approved' ? 'Đã duyệt' : 'Chờ duyệt'}
-                         </span>
-                       </div>
-                     </div>
-                   ))
-                 )}
-               </div>
-             </div>
-           </div>
-         )}
+            <form onSubmit={handleAddFinance} className="grid grid-cols-1 sm:grid-cols-4 gap-4 bg-slate-900/40 p-4 rounded-xl border border-slate-800">
+              <div>
+                <label className="text-xs text-slate-400 mb-1 block">Loại khoản</label>
+                <select
+                  value={financeForm.type}
+                  onChange={e => setFinanceForm({ ...financeForm, type: e.target.value })}
+                  className="ds-input text-xs"
+                >
+                  <option value="income">➕ Thu Quỹ / Tài Trợ</option>
+                  <option value="expense">➖ Chi Phí Hoạt Động</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-slate-400 mb-1 block">Số tiền (VNĐ)</label>
+                <input
+                  type="number"
+                  placeholder="100000"
+                  value={financeForm.amount}
+                  onChange={e => setFinanceForm({ ...financeForm, amount: e.target.value })}
+                  className="ds-input text-xs"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-xs text-slate-400 mb-1 block">Nội dung chi tiết</label>
+                <input
+                  type="text"
+                  placeholder="Nội dung thu/chi..."
+                  value={financeForm.description}
+                  onChange={e => setFinanceForm({ ...financeForm, description: e.target.value })}
+                  className="ds-input text-xs"
+                  required
+                />
+              </div>
+              <div className="flex items-end">
+                <button type="submit" className="ds-btn ds-btn-primary text-xs w-full justify-center">
+                  <Plus className="w-4 h-4" /> Thêm Thu Chi
+                </button>
+              </div>
+            </form>
+
+            <div className="space-y-3">
+              <h4 className="font-bold text-slate-200 text-sm">Lịch Sử Thu Chi & Dự Trù</h4>
+              <div className="divide-y divide-slate-800 bg-slate-950/40 rounded-xl border border-slate-800 overflow-hidden">
+                {(finances || []).length === 0 ? (
+                  <div className="p-6 text-center text-slate-500 text-sm">Chưa có bản ghi thu chi nào.</div>
+                ) : (
+                  finances.map(item => (
+                    <div key={item.id} className="p-4 flex items-center justify-between text-sm hover:bg-slate-900/50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        {item.type === 'income' ? (
+                          <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400"><ArrowDownRight className="w-4 h-4" /></div>
+                        ) : (
+                          <div className="p-2 rounded-lg bg-rose-500/20 text-rose-400"><ArrowUpRight className="w-4 h-4" /></div>
+                        )}
+                        <div>
+                          <div className="font-bold text-slate-200">{item.description}</div>
+                          <div className="text-xs text-slate-400">{item.date} • Ghi bởi {item.loggedBy || 'VMC'}</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className={`font-mono font-bold ${item.type === 'income' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {item.type === 'income' ? '+' : '-'}{item.amount?.toLocaleString('vi-VN')} VNĐ
+                        </div>
+                        <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${item.status === 'approved' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
+                          }`}>
+                          {item.status === 'approved' ? 'Đã duyệt' : 'Chờ duyệt'}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Member Details Modal */}
       {selectedMember && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="ds-card max-w-lg w-full p-6 space-y-6 relative border-amber-500/30">
-            <button 
+            <button
               onClick={() => setSelectedMember(null)}
               className="absolute top-4 right-4 text-slate-400 hover:text-white p-1"
             >

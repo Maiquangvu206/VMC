@@ -1,32 +1,32 @@
 import React, { useState } from 'react';
 import { useClub } from '../context/ClubContext';
-import { 
-  User, 
-  ShieldCheck, 
-  LogOut, 
-  Phone, 
-  Mail, 
-  Calendar, 
-  MapPin, 
-  Globe, 
+import {
+  User,
+  ShieldCheck,
+  LogOut,
+  Phone,
+  Mail,
+  Calendar,
+  MapPin,
+  Globe,
   GraduationCap,
   Briefcase,
   Hash,
-  Save, 
-  CheckCircle, 
-  Laptop, 
-  Sparkles, 
-  Edit3, 
-  History, 
-  Award, 
-  UserPlus, 
-  Clock, 
-  Lock, 
-  Check, 
-  Camera, 
-  Upload, 
+  Save,
+  CheckCircle,
+  Laptop,
+  Sparkles,
+  Edit3,
+  History,
+  Award,
+  UserPlus,
+  Clock,
+  Lock,
+  Check,
+  Camera,
+  Upload,
   AlertCircle,
-  X 
+  X
 } from 'lucide-react';
 
 const Loading = () => (
@@ -136,23 +136,14 @@ export const InternalProfile = () => {
   ];
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-20">
-      
+    <div className="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 pb-20">
+
       {/* Header Banner */}
       <div className="ds-card-glass p-5 sm:p-6 lg:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-xl border border-gray-800 shadow-xl min-w-0">
         <div className="flex flex-col gap-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="ds-badge ds-badge-cyan flex items-center gap-1.5 text-[11px] shrink-0">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-              HỒ SƠ THÀNH VIÊN VMC
-            </span>
-          </div>
           <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-white tracking-tight truncate">
-            Thông Tin Cá Nhân & <span className="text-cyan-400">Tài Khoản VMC</span>
+            Thông Tin Cá Nhân
           </h1>
-          <p className="text-xs text-slate-400">
-            Hệ thống quản lý thông tin thành viên CLB Truyền Thông THPT Vĩnh Bảo
-          </p>
         </div>
 
         <button
@@ -166,23 +157,23 @@ export const InternalProfile = () => {
 
       {/* Main Layout Grid - 1 Col Mobile/Tablet, 12 Cols Desktop (4/8 split) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full items-start">
-        
+
         {/* Left Column (4 cols on desktop) */}
         <div className="lg:col-span-4 space-y-6 w-full min-w-0">
-          
-           <div className="ds-card-glass p-5 sm:p-6 flex flex-col items-center text-center gap-5 rounded-xl border border-gray-800 shadow-xl overflow-hidden min-w-0">
-            
+
+          <div className="ds-card-glass p-5 sm:p-6 flex flex-col items-center text-center gap-5 rounded-xl border border-gray-800 shadow-xl overflow-hidden min-w-0">
+
             {/* Avatar Circle with Interactive Edit Trigger */}
-            <div 
+            <div
               className="relative group cursor-pointer shrink-0"
               onClick={() => setIsAvatarModalOpen(true)}
               title="Click để đổi ảnh đại diện"
             >
               <div className="w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-cyan-500 to-blue-600 shadow-md shrink-0 relative overflow-hidden">
-                <img 
-                  src={cu.avatar} 
-                  alt={cu.name} 
-                  className="w-full h-full object-cover rounded-full group-hover:opacity-75 transition-opacity" 
+                <img
+                  src={cu.avatar}
+                  alt={cu.name}
+                  className="w-full h-full object-cover rounded-full group-hover:opacity-75 transition-opacity"
                 />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white rounded-full">
                   <Camera className="w-6 h-6 mb-0.5" />
@@ -201,9 +192,6 @@ export const InternalProfile = () => {
               <span className="ds-badge ds-badge-cyan flex items-center gap-1.5 text-[11px] truncate max-w-full" title={cu.roleTitle}>
                 {cu.roleTitle}
               </span>
-              <p className="text-xs text-slate-400 font-medium pt-0.5 truncate w-full">
-                Lớp {cu.class} • THPT Vĩnh Bảo
-              </p>
             </div>
 
             {/* Member Code Block */}
@@ -229,7 +217,7 @@ export const InternalProfile = () => {
 
         {/* Right Column: Information & Timeline Cards (8 cols on desktop) */}
         <div className="lg:col-span-8 space-y-6 w-full min-w-0">
-          
+
           {/* Card 1: Tech Info */}
           <div className="ds-card p-5 sm:p-6 space-y-4 rounded-xl border border-gray-800 shadow-xl bg-[#111827]">
             <div className="flex items-center gap-3 border-b border-[#1f2937] pb-3.5">
@@ -237,30 +225,29 @@ export const InternalProfile = () => {
                 <Laptop className="w-4.5 h-4.5" />
               </div>
               <div className="min-w-0">
-                <h3 className="font-heading font-bold text-sm text-slate-100">Thông Tin Do Kỹ Thuật Quản Lý</h3>
-                <p className="text-xs text-slate-400">Các trường thông tin cố định do Tổ Kỹ thuật cấp</p>
+                <h3 className="font-heading font-bold text-sm text-slate-100">Thông Tin Mặc Định</h3>
               </div>
             </div>
 
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-               {techOnlyFields.map((field, idx) => {
-                 const Icon = field.icon;
-                 return (
-                   <div 
-                     key={idx} 
-                     className="ds-card p-4 flex flex-col gap-1 rounded-lg bg-slate-900/40 border border-slate-800/80"
-                   >
-                     <span className="text-xs font-medium text-slate-400 flex items-center gap-2 mb-1">
-                       <Icon className="w-4 h-4 text-cyan-400 shrink-0" />
-                       {field.label}
-                     </span>
-                     <div className={`text-sm sm:text-base font-bold text-slate-100 truncate ${field.isMono ? 'font-mono' : ''} ${field.color}`}>
-                       {field.value}
-                     </div>
-                   </div>
-                 );
-               })}
-             </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {techOnlyFields.map((field, idx) => {
+                const Icon = field.icon;
+                return (
+                  <div
+                    key={idx}
+                    className="ds-card p-4 flex flex-col gap-1 rounded-lg bg-slate-900/40 border border-slate-800/80"
+                  >
+                    <span className="text-xs font-medium text-slate-400 flex items-center gap-2 mb-1">
+                      <Icon className="w-4 h-4 text-cyan-400 shrink-0" />
+                      {field.label}
+                    </span>
+                    <div className={`text-sm sm:text-base font-bold text-slate-100 truncate ${field.isMono ? 'font-mono' : ''} ${field.color}`}>
+                      {field.value}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Card 2: Self-Update Info */}
@@ -271,24 +258,20 @@ export const InternalProfile = () => {
                   <Edit3 className="w-4.5 h-4.5" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-heading font-bold text-sm text-slate-100">Thông Tin Tự Cập Nhật</h3>
-                  <p className="text-xs text-slate-400 truncate">Số Điện Thoại, Email, Địa Chỉ & Facebook cá nhân</p>
+                  <h3 className="font-heading font-bold text-sm text-slate-100">Thông Tin Cá Nhân</h3>
                 </div>
               </div>
-              <span className="ds-badge ds-badge-emerald shrink-0 text-xs">
-                ✏️ Cho phép sửa
-              </span>
             </div>
 
-             {savedSuccess && (
-               <div className="ds-card p-4 text-emerald-400 text-xs font-semibold flex items-center gap-2.5 border border-emerald-500/30 animate-slide-up">
-                 <CheckCircle className="w-5 h-5 shrink-0" />
-                 <span>Đã lưu cập nhật thành công thông tin cá nhân mới!</span>
-               </div>
-             )}
+            {savedSuccess && (
+              <div className="ds-card p-4 text-emerald-400 text-xs font-semibold flex items-center gap-2.5 border border-emerald-500/30 animate-slide-up">
+                <CheckCircle className="w-5 h-5 shrink-0" />
+                <span>Đã lưu cập nhật thành công thông tin cá nhân mới!</span>
+              </div>
+            )}
 
             <form onSubmit={handleSelfUpdate} className="space-y-4">
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="ds-field-label">Số Điện Thoại / Zalo *</label>
@@ -306,7 +289,7 @@ export const InternalProfile = () => {
                 </div>
 
                 <div>
-                  <label className="ds-field-label">Email Học Sinh *</label>
+                  <label className="ds-field-label">Email *</label>
                   <div className="relative flex items-center w-full">
                     <Mail className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
                     <input
@@ -336,7 +319,7 @@ export const InternalProfile = () => {
                 </div>
 
                 <div>
-                  <label className="ds-field-label">Liên Hệ Facebook Cá Nhân *</label>
+                  <label className="ds-field-label">Facebook Cá Nhân *</label>
                   <div className="relative flex items-center w-full">
                     <Globe className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
                     <input
@@ -352,7 +335,7 @@ export const InternalProfile = () => {
               </div>
 
               <div>
-                <label className="ds-field-label">Địa Chỉ Thường Trú *</label>
+                <label className="ds-field-label">Địa Chỉ *</label>
                 <div className="relative flex items-center w-full">
                   <MapPin className="absolute left-4 w-4 h-4 text-slate-400 shrink-0" />
                   <input
@@ -378,296 +361,295 @@ export const InternalProfile = () => {
             </form>
           </div>
 
-           {/* Card 3: Lịch Sử Chức Vụ & Trạng Thái Thành Viên (Vertical Timeline) */}
-           <div className="ds-card ds-card-elevated p-5 sm:p-6 space-y-6 rounded-xl border border-gray-800 shadow-xl">
-             
-             {/* Header Khối với Badge Phân Quyền */}
-             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--border-default)] pb-4 gap-3">
-               <div className="flex items-center gap-3">
-                 <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shrink-0">
-                   <History className="w-5 h-5" />
-                 </div>
-                 <div className="flex flex-col">
-                   <h3 className="text-lg font-bold text-white">Lịch Sử Chức Vụ & Trạng Thái Thành Viên</h3>
-                   <p className="text-xs text-slate-400">Ghi nhận tiến trình tham gia, chuyển đổi chức vụ và trạng thái hoạt động tại VMC</p>
-                 </div>
-               </div>
+          {/* Card 3: Lịch Sử Chức Vụ & Trạng Thái Thành Viên (Vertical Timeline) */}
+          <div className="ds-card ds-card-elevated p-5 sm:p-6 space-y-6 rounded-xl border border-gray-800 shadow-xl">
 
-               {/* Action Button */}
-               {isHRMember && (
-                 <button
-                   onClick={() => setIsMilestoneModalOpen(true)}
-                   className="ds-btn ds-btn-primary shrink-0"
-                 >
-                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                   <span>Thêm Cột Mốc Mới</span>
-                 </button>
-               )}
-             </div>
+            {/* Header Khối với Badge Phân Quyền */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[var(--border-default)] pb-4 gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shrink-0">
+                  <History className="w-5 h-5" />
+                </div>
+                <div className="flex flex-col">
+                  <h3 className="text-lg font-bold text-white">Lịch Sử Chức Vụ & Trạng Thái Thành Viên</h3>
+                </div>
+              </div>
 
-             {/* UI Vertical Timeline với Đường Gạch Nối Border */}
-             <div className="relative border-l-2 border-slate-700/80 space-y-6 ml-3 pl-6 py-2">
-               {(() => {
-                 const rawList = (Array.isArray(cu.milestones) && cu.milestones.length > 0)
-                   ? cu.milestones
-                   : [
-                       {
-                         id: 'm1',
-                         date: '12/10/2021',
-                         title: `Gia nhập VMC (Thành viên ${cu.deptName || 'Ban Chuyên Môn'})`,
-                         badgeText: '[Gia Nhập]'
-                       },
-                       {
-                         id: 'm2',
-                         date: '01/06/2022',
-                         title: `Cập nhật chức vụ: ${cu.roleTitle || 'Thành Viên VMC'}`,
-                         badgeText: '[Thăng Chức]'
-                       }
-                     ];
+              {/* Action Button */}
+              {isHRMember && (
+                <button
+                  onClick={() => setIsMilestoneModalOpen(true)}
+                  className="ds-btn ds-btn-primary shrink-0"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Thêm Cột Mốc Mới</span>
+                </button>
+              )}
+            </div>
 
-                 const baseList = rawList.filter(m => {
-                   const b = (m.badgeText || '').toLowerCase();
-                   const t = (m.title || '').toLowerCase();
-                   return !b.includes('đang hoạt động') && !b.includes('tạm nghỉ') && !b.includes('ngừng') && !t.includes('trạng thái:');
-                 });
+            {/* UI Vertical Timeline với Đường Gạch Nối Border */}
+            <div className="relative border-l-2 border-slate-700/80 space-y-6 ml-3 pl-6 py-2">
+              {(() => {
+                const rawList = (Array.isArray(cu.milestones) && cu.milestones.length > 0)
+                  ? cu.milestones
+                  : [
+                    {
+                      id: 'm1',
+                      date: '12/10/2021',
+                      title: `Gia nhập VMC (Thành viên ${cu.deptName || 'Ban Chuyên Môn'})`,
+                      badgeText: '[Gia Nhập]'
+                    },
+                    {
+                      id: 'm2',
+                      date: '01/06/2022',
+                      title: `Cập nhật chức vụ: ${cu.roleTitle || 'Thành Viên VMC'}`,
+                      badgeText: '[Thăng Chức]'
+                    }
+                  ];
 
-                 const isSuspended = cu.status === 'Suspended';
-                 const finalStatusNode = {
-                   id: 'final-status-node',
-                   date: isSuspended 
-                     ? `Ngừng từ ${cu.suspendedAt || new Date().toLocaleDateString('vi-VN')}` 
-                     : 'Hiện tại',
-                   title: isSuspended 
-                     ? 'Trạng Thái: Đã Tạm Nghỉ / Ngừng Hoạt Động tại CLB VMC' 
-                     : 'Trạng Thái: Đang Hoạt Động Tích Cực tại VMC',
-                   badgeText: isSuspended ? '[Tạm Nghỉ]' : '[Đang Hoạt Động]'
-                 };
+                const baseList = rawList.filter(m => {
+                  const b = (m.badgeText || '').toLowerCase();
+                  const t = (m.title || '').toLowerCase();
+                  return !b.includes('đang hoạt động') && !b.includes('tạm nghỉ') && !b.includes('ngừng') && !t.includes('trạng thái:');
+                });
 
-                 const fullList = [...baseList, finalStatusNode];
+                const isSuspended = cu.status === 'Suspended';
+                const finalStatusNode = {
+                  id: 'final-status-node',
+                  date: isSuspended
+                    ? `Ngừng từ ${cu.suspendedAt || new Date().toLocaleDateString('vi-VN')}`
+                    : 'Hiện tại',
+                  title: isSuspended
+                    ? 'Trạng Thái: Đã Tạm Nghỉ / Ngừng Hoạt Động tại CLB VMC'
+                    : 'Trạng Thái: Đang Hoạt Động Tích Cực tại VMC',
+                  badgeText: isSuspended ? '[Tạm Nghỉ]' : '[Đang Hoạt Động]'
+                };
 
-                 return fullList.map((m, index) => {
-                   const b = (m.badgeText || '').toLowerCase();
-                   const t = (m.title || '').toLowerCase();
+                const fullList = [...baseList, finalStatusNode];
 
-                   let badgeStyle = 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40 font-mono font-bold';
-                   let iconBorder = 'border-cyan-500 text-cyan-400 bg-slate-900';
-                   let Icon = m.icon || Clock;
+                return fullList.map((m, index) => {
+                  const b = (m.badgeText || '').toLowerCase();
+                  const t = (m.title || '').toLowerCase();
 
-                   if (b.includes('đang hoạt động') || t.includes('đang hoạt động')) {
-                     badgeStyle = 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50 font-mono font-bold shadow-sm shadow-emerald-500/20';
-                     iconBorder = 'border-emerald-400 text-emerald-300 bg-emerald-950/80';
-                     Icon = ShieldCheck;
-                   } else if (b.includes('tạm nghỉ') || b.includes('ngừng') || b.includes('khóa') || t.includes('tạm nghỉ') || t.includes('ngừng')) {
-                     badgeStyle = 'bg-rose-500/20 text-rose-300 border-rose-500/50 font-mono font-bold shadow-sm shadow-rose-500/20';
-                     iconBorder = 'border-rose-500 text-rose-400 bg-rose-950/80';
-                     Icon = AlertCircle;
-                   } else if (b.includes('gia nhập') || t.includes('gia nhập')) {
-                     badgeStyle = 'bg-teal-500/15 text-teal-300 border-teal-500/40 font-mono font-bold';
-                     iconBorder = 'border-teal-500 text-teal-400 bg-teal-950/80';
-                     Icon = UserPlus;
-                   } else if (b.includes('thăng chức') || b.includes('chức vụ') || t.includes('thăng chức') || t.includes('chức vụ')) {
-                     badgeStyle = 'bg-purple-500/15 text-purple-300 border-purple-500/40 font-mono font-bold';
-                     iconBorder = 'border-purple-500 text-purple-400 bg-purple-950/80';
-                     Icon = Award;
-                   } else if (b.includes('khen thưởng') || b.includes('cột mốc') || t.includes('khen thưởng')) {
-                     badgeStyle = 'bg-amber-500/15 text-amber-300 border-amber-500/40 font-mono font-bold';
-                     iconBorder = 'border-amber-500 text-amber-400 bg-amber-950/80';
-                     Icon = Sparkles;
-                   }
+                  let badgeStyle = 'bg-cyan-500/15 text-cyan-300 border-cyan-500/40 font-mono font-bold';
+                  let iconBorder = 'border-cyan-500 text-cyan-400 bg-slate-900';
+                  let Icon = m.icon || Clock;
 
-                   return (
-                     <div key={m.id || index} className="relative group">
-                       <div className={`absolute -left-[37px] top-0.5 p-1.5 rounded-full border-2 ${iconBorder} shadow-md transition-transform group-hover:scale-110`}>
-                         <Icon className="w-3.5 h-3.5" />
-                       </div>
+                  if (b.includes('đang hoạt động') || t.includes('đang hoạt động')) {
+                    badgeStyle = 'bg-emerald-500/20 text-emerald-300 border-emerald-400/50 font-mono font-bold shadow-sm shadow-emerald-500/20';
+                    iconBorder = 'border-emerald-400 text-emerald-300 bg-emerald-950/80';
+                    Icon = ShieldCheck;
+                  } else if (b.includes('tạm nghỉ') || b.includes('ngừng') || b.includes('khóa') || t.includes('tạm nghỉ') || t.includes('ngừng')) {
+                    badgeStyle = 'bg-rose-500/20 text-rose-300 border-rose-500/50 font-mono font-bold shadow-sm shadow-rose-500/20';
+                    iconBorder = 'border-rose-500 text-rose-400 bg-rose-950/80';
+                    Icon = AlertCircle;
+                  } else if (b.includes('gia nhập') || t.includes('gia nhập')) {
+                    badgeStyle = 'bg-teal-500/15 text-teal-300 border-teal-500/40 font-mono font-bold';
+                    iconBorder = 'border-teal-500 text-teal-400 bg-teal-950/80';
+                    Icon = UserPlus;
+                  } else if (b.includes('thăng chức') || b.includes('chức vụ') || t.includes('thăng chức') || t.includes('chức vụ')) {
+                    badgeStyle = 'bg-purple-500/15 text-purple-300 border-purple-500/40 font-mono font-bold';
+                    iconBorder = 'border-purple-500 text-purple-400 bg-purple-950/80';
+                    Icon = Award;
+                  } else if (b.includes('khen thưởng') || b.includes('cột mốc') || t.includes('khen thưởng')) {
+                    badgeStyle = 'bg-amber-500/15 text-amber-300 border-amber-500/40 font-mono font-bold';
+                    iconBorder = 'border-amber-500 text-amber-400 bg-amber-950/80';
+                    Icon = Sparkles;
+                  }
 
-                       <div className="ds-card p-4 transition-all hover:border-slate-700 space-y-1.5 rounded-lg">
-                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
-                           <div className="flex items-center gap-2 text-xs font-mono font-semibold text-slate-400">
-                             <Clock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                             <span>{m.date}</span>
-                           </div>
+                  return (
+                    <div key={m.id || index} className="relative group">
+                      <div className={`absolute -left-[37px] top-0.5 p-1.5 rounded-full border-2 ${iconBorder} shadow-md transition-transform group-hover:scale-110`}>
+                        <Icon className="w-3.5 h-3.5" />
+                      </div>
 
-                           <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-md border shrink-0 w-fit ${badgeStyle}`}>
-                             {m.badgeText}
-                           </span>
-                         </div>
+                      <div className="ds-card p-4 transition-all hover:border-slate-700 space-y-1.5 rounded-lg">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                          <div className="flex items-center gap-2 text-xs font-mono font-semibold text-slate-400">
+                            <Clock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                            <span>{m.date}</span>
+                          </div>
 
-                         <h4 className="text-sm font-bold text-white leading-snug">
-                           {m.title}
-                         </h4>
-                       </div>
-                     </div>
-                   );
-                 });
-               })()}
-             </div>
+                          <span className={`text-[10px] font-mono px-2.5 py-0.5 rounded-md border shrink-0 w-fit ${badgeStyle}`}>
+                            {m.badgeText}
+                          </span>
+                        </div>
 
-           </div>
+                        <h4 className="text-sm font-bold text-white leading-snug">
+                          {m.title}
+                        </h4>
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+
+          </div>
 
         </div>
 
       </div>
 
-       {/* Modal: Chỉnh Sửa Ảnh Đại Diện Thành Viên */}
-       {isAvatarModalOpen && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md">
-           <div className="relative w-full max-w-md ds-card ds-card-elevated border border-blue-500/40 p-6 sm:p-8 shadow-2xl space-y-6 text-white animate-slide-up rounded-xl">
-             
-             <div className="flex items-center justify-between pb-4 border-b border-[var(--border-default)]">
-               <div className="flex items-center gap-2">
-                 <Camera className="w-5 h-5 text-cyan-400" />
-                 <h3 className="font-heading font-bold text-base text-white">Chỉnh Sửa Ảnh Đại Diện</h3>
-               </div>
-               <button 
-                 onClick={() => setIsAvatarModalOpen(false)}
-                 className="text-slate-400 hover:text-white p-1"
-               >
-                 <X className="w-5 h-5" />
-               </button>
-             </div>
+      {/* Modal: Chỉnh Sửa Ảnh Đại Diện Thành Viên */}
+      {isAvatarModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md">
+          <div className="relative w-full max-w-md ds-card ds-card-elevated border border-blue-500/40 p-6 sm:p-8 shadow-2xl space-y-6 text-white animate-slide-up rounded-xl">
 
-             <form onSubmit={handleSaveAvatar} className="space-y-5 text-xs">
-               
-               <div className="flex flex-col items-center gap-2">
-                 <div className="w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-cyan-500 to-blue-600 shadow-md overflow-hidden">
-                   <img 
-                     src={avatarPreview || cu.avatar} 
-                     alt="Avatar Preview" 
-                     className="w-full h-full object-cover rounded-full"
-                   />
-                 </div>
-                 <span className="text-[11px] text-slate-400">Xem trước ảnh đại diện</span>
-               </div>
+            <div className="flex items-center justify-between pb-4 border-b border-[var(--border-default)]">
+              <div className="flex items-center gap-2">
+                <Camera className="w-5 h-5 text-cyan-400" />
+                <h3 className="font-heading font-bold text-base text-white">Chỉnh Sửa Ảnh Đại Diện</h3>
+              </div>
+              <button
+                onClick={() => setIsAvatarModalOpen(false)}
+                className="text-slate-400 hover:text-white p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-               <div className="space-y-2">
-                 <label className="ds-field-label text-center">Tải Ảnh Mới Từ Thiết Bị</label>
-                  <label className="w-full py-4 px-4 rounded-2xl bg-[var(--bg-primary)] hover:bg-[var(--bg-input)] border-2 border-dashed border-blue-500/50 hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center gap-2 text-slate-300 hover:text-white transition-all group">
-                   <div className="p-3 rounded-full bg-blue-500/10 text-cyan-400 group-hover:scale-110 transition-transform">
-                     <Upload className="w-6 h-6" />
-                   </div>
-                   <span className="font-bold text-xs">Nhấp vào đây để chọn file ảnh từ máy tính</span>
-                   <span className="text-[10px] text-slate-400">Định dạng JPG, PNG, WEBP (Tối đa 5MB)</span>
-                   <input 
-                     type="file" 
-                     accept="image/*" 
-                     onChange={handleFileChange} 
-                     className="hidden" 
-                   />
-                 </label>
-               </div>
+            <form onSubmit={handleSaveAvatar} className="space-y-5 text-xs">
 
-               <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border-default)]">
-                 <button
-                   type="button"
-                   onClick={() => setIsAvatarModalOpen(false)}
-                   className="ds-btn ds-btn-secondary"
-                 >
-                   Hủy Bỏ
-                 </button>
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-cyan-500 to-blue-600 shadow-md overflow-hidden">
+                  <img
+                    src={avatarPreview || cu.avatar}
+                    alt="Avatar Preview"
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                </div>
+                <span className="text-[11px] text-slate-400">Xem trước ảnh đại diện</span>
+              </div>
 
-                 <button
-                   type="submit"
-                   className="ds-btn ds-btn-primary"
-                 >
-                   <CheckCircle className="w-4 h-4" />
-                   <span>Lưu Ảnh Đại Diện</span>
-                 </button>
-               </div>
+              <div className="space-y-2">
+                <label className="ds-field-label text-center">Tải Ảnh Mới Từ Thiết Bị</label>
+                <label className="w-full py-4 px-4 rounded-2xl bg-[var(--bg-primary)] hover:bg-[var(--bg-input)] border-2 border-dashed border-blue-500/50 hover:border-blue-400 cursor-pointer flex flex-col items-center justify-center gap-2 text-slate-300 hover:text-white transition-all group">
+                  <div className="p-3 rounded-full bg-blue-500/10 text-cyan-400 group-hover:scale-110 transition-transform">
+                    <Upload className="w-6 h-6" />
+                  </div>
+                  <span className="font-bold text-xs">Nhấp vào đây để chọn file ảnh từ máy tính</span>
+                  <span className="text-[10px] text-slate-400">Định dạng JPG, PNG, WEBP (Tối đa 5MB)</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
 
-             </form>
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border-default)]">
+                <button
+                  type="button"
+                  onClick={() => setIsAvatarModalOpen(false)}
+                  className="ds-btn ds-btn-secondary"
+                >
+                  Hủy Bỏ
+                </button>
 
-           </div>
-         </div>
-       )}
+                <button
+                  type="submit"
+                  className="ds-btn ds-btn-primary"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  <span>Lưu Ảnh Đại Diện</span>
+                </button>
+              </div>
 
-       {/* Modal: Thêm Cột Mốc Lịch Sử Chức Vụ (Ban ĐN-NS / Admin) */}
-       {isMilestoneModalOpen && (
-         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md">
-           <div className="relative w-full max-w-md ds-card ds-card-elevated border border-cyan-500/40 p-6 sm:p-8 shadow-2xl space-y-5 text-white animate-slide-up rounded-xl">
-             
-             <div className="flex items-center justify-between pb-3 border-b border-[var(--border-default)]">
-               <div className="flex items-center gap-2">
-                 <Sparkles className="w-5 h-5 text-amber-400" />
-                 <h3 className="font-heading font-bold text-base text-white">Thêm Cột Mốc Chức Vụ Mới</h3>
-               </div>
-               <button 
-                 onClick={() => setIsMilestoneModalOpen(false)}
-                 className="text-slate-400 hover:text-white p-1"
-               >
-                 <X className="w-5 h-5" />
-               </button>
-             </div>
+            </form>
 
-             <form onSubmit={(e) => {
-               e.preventDefault();
-               if (!newMilestone.title.trim()) {
-                 showToast('Vui lòng nhập nội dung cột mốc chức vụ!', 'warning');
-                 return;
-               }
-               addMemberMilestone(cu.id, newMilestone);
-               setIsMilestoneModalOpen(false);
-               setNewMilestone({ date: new Date().toLocaleDateString('vi-VN'), title: '', badgeText: '[Chức vụ]' });
-             }} className="space-y-4 text-xs">
-               
-               <div>
-                 <label className="ds-field-label">1. Ngày Ghi Nhận (Ngày/Tháng/Năm) *</label>
-                 <input
-                   type="text"
-                   required
-                   value={newMilestone.date}
-                   onChange={(e) => setNewMilestone({ ...newMilestone, date: e.target.value })}
-                   placeholder="vd: 15/08/2025"
-                   className="ds-input font-mono"
-                 />
-               </div>
+          </div>
+        </div>
+      )}
 
-               <div>
-                 <label className="ds-field-label">2. Nội Dung Cột Mốc / Chức Vụ Mới *</label>
-                 <input
-                   type="text"
-                   required
-                   value={newMilestone.title}
-                   onChange={(e) => setNewMilestone({ ...newMilestone, title: e.target.value })}
-                   placeholder="vd: Thăng chức Trưởng Ban Đối Ngoại - Nhân Sự"
-                   className="ds-input"
-                 />
-               </div>
+      {/* Modal: Thêm Cột Mốc Lịch Sử Chức Vụ (Ban ĐN-NS / Admin) */}
+      {isMilestoneModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md">
+          <div className="relative w-full max-w-md ds-card ds-card-elevated border border-cyan-500/40 p-6 sm:p-8 shadow-2xl space-y-5 text-white animate-slide-up rounded-xl">
 
-               <div>
-                 <label className="ds-field-label">3. Nhãn Thẻ (Badge Text)</label>
-                 <input
-                   type="text"
-                   required
-                   value={newMilestone.badgeText}
-                   onChange={(e) => setNewMilestone({ ...newMilestone, badgeText: e.target.value })}
-                   placeholder="vd: [Thăng chức] / [Gia nhập]"
-                   className="ds-input"
-                 />
-               </div>
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--border-default)]">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-amber-400" />
+                <h3 className="font-heading font-bold text-base text-white">Thêm Cột Mốc Chức Vụ Mới</h3>
+              </div>
+              <button
+                onClick={() => setIsMilestoneModalOpen(false)}
+                className="text-slate-400 hover:text-white p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-               <div className="flex items-center justify-end gap-3 pt-3 border-t border-[var(--border-default)]">
-                 <button
-                   type="button"
-                   onClick={() => setIsMilestoneModalOpen(false)}
-                   className="ds-btn ds-btn-secondary"
-                 >
-                   Hủy Bỏ
-                 </button>
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (!newMilestone.title.trim()) {
+                showToast('Vui lòng nhập nội dung cột mốc chức vụ!', 'warning');
+                return;
+              }
+              addMemberMilestone(cu.id, newMilestone);
+              setIsMilestoneModalOpen(false);
+              setNewMilestone({ date: new Date().toLocaleDateString('vi-VN'), title: '', badgeText: '[Chức vụ]' });
+            }} className="space-y-4 text-xs">
 
-                 <button
-                   type="submit"
-                   className="ds-btn ds-btn-primary"
-                 >
-                   <Sparkles className="w-4 h-4 text-amber-400" />
-                   <span>Xác Nhận Thêm Cột Mốc</span>
-                 </button>
-               </div>
+              <div>
+                <label className="ds-field-label">1. Ngày Ghi Nhận (Ngày/Tháng/Năm) *</label>
+                <input
+                  type="text"
+                  required
+                  value={newMilestone.date}
+                  onChange={(e) => setNewMilestone({ ...newMilestone, date: e.target.value })}
+                  placeholder="vd: 15/08/2025"
+                  className="ds-input font-mono"
+                />
+              </div>
 
-             </form>
-           </div>
-         </div>
-       )}
+              <div>
+                <label className="ds-field-label">2. Nội Dung Cột Mốc / Chức Vụ Mới *</label>
+                <input
+                  type="text"
+                  required
+                  value={newMilestone.title}
+                  onChange={(e) => setNewMilestone({ ...newMilestone, title: e.target.value })}
+                  placeholder="vd: Thăng chức Trưởng Ban Đối Ngoại - Nhân Sự"
+                  className="ds-input"
+                />
+              </div>
+
+              <div>
+                <label className="ds-field-label">3. Nhãn Thẻ (Badge Text)</label>
+                <input
+                  type="text"
+                  required
+                  value={newMilestone.badgeText}
+                  onChange={(e) => setNewMilestone({ ...newMilestone, badgeText: e.target.value })}
+                  placeholder="vd: [Thăng chức] / [Gia nhập]"
+                  className="ds-input"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-[var(--border-default)]">
+                <button
+                  type="button"
+                  onClick={() => setIsMilestoneModalOpen(false)}
+                  className="ds-btn ds-btn-secondary"
+                >
+                  Hủy Bỏ
+                </button>
+
+                <button
+                  type="submit"
+                  className="ds-btn ds-btn-primary"
+                >
+                  <Sparkles className="w-4 h-4 text-amber-400" />
+                  <span>Xác Nhận Thêm Cột Mốc</span>
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -19,7 +19,7 @@ export const Footer = () => {
     <footer className="relative bg-[var(--bg-primary)] border-t border-[var(--border-subtle)] pt-12 pb-8 overflow-hidden text-slate-400">
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-blue-600/10 blur-xl rounded-full pointer-events-none" />
 
-      <div className="page-wrap relative z-10">
+      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-8">
 
           {/* Brand */}
@@ -30,7 +30,7 @@ export const Footer = () => {
               </div>
               <div>
                 <span className="font-heading font-extrabold text-lg tracking-tight text-white block">
-                  VMC <span className="text-blue-400">THPT Vĩnh Bảo</span>
+                  VMC <span className="text-blue-400"> THPT Vĩnh Bảo</span>
                 </span>
                 <span className="text-[10px] text-slate-400 block font-mono">VINH BAO HIGH SCHOOL MEDIA CLUB</span>
               </div>
