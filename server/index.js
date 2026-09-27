@@ -47,101 +47,101 @@ app.use(express.static(DIST_DIR));
 const failedLoginTracker = new Map();
 
 // Tự động mở rộng cột avatar_url trong CSDL MySQL sang LONGTEXT để lưu ảnh base64
-queryDatabase('ALTER TABLE Members MODIFY COLUMN avatar_url LONGTEXT').catch(err => {
+queryDatabase('ALTER TABLE `Members` MODIFY COLUMN `avatar_url` LONGTEXT').catch(err => {
   console.log('ℹ️ CSDL status avatar_url:', err.message);
 });
-queryDatabase('ALTER TABLE Members ADD COLUMN milestones LONGTEXT').catch(err => {
+queryDatabase('ALTER TABLE `Members` ADD COLUMN `milestones` LONGTEXT').catch(err => {
   console.log('ℹ️ CSDL status milestones:', err.message);
 });
-queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN active_round VARCHAR(50) DEFAULT "don"').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN teamwork_scorer_ids TEXT').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN challenge_process_scorer_ids TEXT').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN challenge_result_scorer_ids TEXT').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN lead_interviewer_id VARCHAR(100)').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN selected_questions TEXT').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Criteria ADD COLUMN round_type VARCHAR(50) DEFAULT "teamwork"').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Criteria ADD COLUMN difficulty VARCHAR(50) DEFAULT "Trung bình"').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN application_answers TEXT').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN challenge_process_scorer_ids TEXT').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN challenge_result_scorer_ids TEXT').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN lead_interviewer_id VARCHAR(100)').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN selected_questions TEXT').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN facebook TEXT').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN challenge_topic TEXT').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN interview_code VARCHAR(100)').catch(() => {});
-queryDatabase("UPDATE Recruitment_Candidates SET interview_code = id WHERE interview_code IS NULL OR interview_code = ''").catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Seasons` ADD COLUMN `active_round` VARCHAR(50) DEFAULT "don"').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Seasons` ADD COLUMN `teamwork_scorer_ids` TEXT').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Seasons` ADD COLUMN `challenge_process_scorer_ids` TEXT').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Seasons` ADD COLUMN `challenge_result_scorer_ids` TEXT').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Seasons` ADD COLUMN `lead_interviewer_id` VARCHAR(100)').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Seasons` ADD COLUMN `selected_questions` TEXT').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Criteria` ADD COLUMN `round_type` VARCHAR(50) DEFAULT "teamwork"').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Criteria` ADD COLUMN `difficulty` VARCHAR(50) DEFAULT "Trung bình"').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Candidates` ADD COLUMN `application_answers` TEXT').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Candidates` ADD COLUMN `challenge_process_scorer_ids` TEXT').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Candidates` ADD COLUMN `challenge_result_scorer_ids` TEXT').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Candidates` ADD COLUMN `lead_interviewer_id` VARCHAR(100)').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Candidates` ADD COLUMN `selected_questions` TEXT').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Candidates` ADD COLUMN `facebook` TEXT').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Candidates` ADD COLUMN `challenge_topic` TEXT').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Candidates` ADD COLUMN `interview_code` VARCHAR(100)').catch(() => {});
+queryDatabase("UPDATE `Recruitment_Candidates` SET `interview_code` = `id` WHERE `interview_code` IS NULL OR `interview_code` = ''").catch(() => {});
 
 queryDatabase(`
-  CREATE TABLE IF NOT EXISTS Recruitment_Evaluations (
-    id VARCHAR(100) PRIMARY KEY,
-    season_id VARCHAR(100) NOT NULL,
-    candidate_id VARCHAR(100) NOT NULL,
-    interview_code VARCHAR(100),
-    interviewer_id VARCHAR(100) NOT NULL,
-    round_type VARCHAR(50) NOT NULL,
-    total_score DECIMAL(5,2) DEFAULT 0,
-    avg_score DECIMAL(5,2) DEFAULT 0,
-    scores_json LONGTEXT,
-    comments TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY candidate_interviewer_round (candidate_id, interviewer_id, round_type)
+  CREATE TABLE IF NOT EXISTS \`Recruitment_Evaluations\` (
+    \`id\` VARCHAR(100) PRIMARY KEY,
+    \`season_id\` VARCHAR(100) NOT NULL,
+    \`candidate_id\` VARCHAR(100) NOT NULL,
+    \`interview_code\` VARCHAR(100),
+    \`interviewer_id\` VARCHAR(100) NOT NULL,
+    \`round_type\` VARCHAR(50) NOT NULL,
+    \`total_score\` DECIMAL(5,2) DEFAULT 0,
+    \`avg_score\` DECIMAL(5,2) DEFAULT 0,
+    \`scores_json\` LONGTEXT,
+    \`comments\` TEXT,
+    \`created_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    \`updated_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY \`candidate_interviewer_round\` (\`candidate_id\`, \`interviewer_id\`, \`round_type\`)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 `).then(async () => {
   try {
     await queryDatabase(`
-      INSERT INTO Recruitment_Evaluations (id, candidate_id, interview_code, season_id, interviewer_id, round_type, total_score, avg_score, comments)
+      INSERT INTO \`Recruitment_Evaluations\` (\`id\`, \`candidate_id\`, \`interview_code\`, \`season_id\`, \`interviewer_id\`, \`round_type\`, \`total_score\`, \`avg_score\`, \`comments\`)
       SELECT 
-        CONCAT('eval-', s.candidate_id, '-', COALESCE(s.interviewer_id, '0'), '-', COALESCE(cr.round_type, 'don')) AS id,
-        s.candidate_id,
-        COALESCE(c.interview_code, s.candidate_id),
-        COALESCE(s.season_id, c.season_id, 'season-1790279561020'),
-        s.interviewer_id,
-        COALESCE(NULLIF(cr.round_type, ''), 'don') AS round_type,
-        ROUND(SUM(s.score), 2) AS total_score,
-        ROUND(AVG(s.score), 2) AS avg_score,
-        MAX(s.comments) AS comments
-      FROM Recruitment_Scores s
-      LEFT JOIN Recruitment_Criteria cr ON s.criteria_id = cr.id
-      LEFT JOIN Recruitment_Candidates c ON (s.candidate_id = c.id OR s.candidate_id = c.interview_code)
-      GROUP BY s.candidate_id, s.interviewer_id, COALESCE(NULLIF(cr.round_type, ''), 'don')
+        CONCAT('eval-', \`s\`.\`candidate_id\`, '-', COALESCE(\`s\`.\`interviewer_id\`, '0'), '-', COALESCE(\`cr\`.\`round_type\`, 'don')) AS \`id\`,
+        \`s\`.\`candidate_id\`,
+        COALESCE(\`c\`.\`interview_code\`, \`s\`.\`candidate_id\`),
+        COALESCE(\`s\`.\`season_id\`, \`c\`.\`season_id\`, 'season-1790279561020'),
+        \`s\`.\`interviewer_id\`,
+        COALESCE(NULLIF(\`cr\`.\`round_type\`, ''), 'don') AS \`round_type\`,
+        ROUND(SUM(\`s\`.\`score\`), 2) AS \`total_score\`,
+        ROUND(AVG(\`s\`.\`score\`), 2) AS \`avg_score\`,
+        MAX(\`s\`.\`comments\`) AS \`comments\`
+      FROM \`Recruitment_Scores\` \`s\`
+      LEFT JOIN \`Recruitment_Criteria\` \`cr\` ON \`s\`.\`criteria_id\` = \`cr\`.\`id\`
+      LEFT JOIN \`Recruitment_Candidates\` \`c\` ON (\`s\`.\`candidate_id\` = \`c\`.\`id\` OR \`s\`.\`candidate_id\` = \`c\`.\`interview_code\`)
+      GROUP BY \`s\`.\`candidate_id\`, \`s\`.\`interviewer_id\`, COALESCE(NULLIF(\`cr\`.\`round_type\`, ''), 'don')
       ON DUPLICATE KEY UPDATE 
-        total_score = VALUES(total_score),
-        avg_score = VALUES(avg_score),
-        comments = VALUES(comments),
-        season_id = VALUES(season_id)
+        \`total_score\` = VALUES(\`total_score\`),
+        \`avg_score\` = VALUES(\`avg_score\`),
+        \`comments\` = VALUES(\`comments\`),
+        \`season_id\` = VALUES(\`season_id\`)
     `);
   } catch (e) {}
 }).catch(() => {});
 queryDatabase(`
-  CREATE TABLE IF NOT EXISTS Birthday_Mail_Logs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    member_id VARCHAR(100) NOT NULL,
-    sent_date DATE NOT NULL,
-    sent_year INT NOT NULL,
-    status VARCHAR(50) DEFAULT 'success',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE KEY unique_member_year (member_id, sent_year)
+  CREATE TABLE IF NOT EXISTS \`Birthday_Mail_Logs\` (
+    \`id\` INT AUTO_INCREMENT PRIMARY KEY,
+    \`member_id\` VARCHAR(100) NOT NULL,
+    \`sent_date\` DATE NOT NULL,
+    \`sent_year\` INT NOT NULL,
+    \`status\` VARCHAR(50) DEFAULT 'success',
+    \`created_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY \`unique_member_year\` (\`member_id\`, \`sent_year\`)
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 `).then(() => {
   const currentYear = new Date().getFullYear();
-  queryDatabase('DELETE FROM Birthday_Mail_Logs WHERE sent_year < ?', [currentYear - 1]).catch(() => {});
+  queryDatabase('DELETE FROM `Birthday_Mail_Logs` WHERE `sent_year` < ?', [currentYear - 1]).catch(() => {});
 }).catch(() => {});
 
 queryDatabase(`
-  CREATE TABLE IF NOT EXISTS Member_Milestones (
-    id VARCHAR(100) PRIMARY KEY,
-    member_id VARCHAR(100) NOT NULL,
-    date VARCHAR(50),
-    title TEXT,
-    badge_text VARCHAR(100),
-    badge_style VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  CREATE TABLE IF NOT EXISTS \`Member_Milestones\` (
+    \`id\` VARCHAR(100) PRIMARY KEY,
+    \`member_id\` VARCHAR(100) NOT NULL,
+    \`date\` VARCHAR(50),
+    \`title\` TEXT,
+    \`badge_text\` VARCHAR(100),
+    \`badge_style\` VARCHAR(255),
+    \`created_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )
 `).then(async () => {
-  const countRes = await queryDatabase('SELECT COUNT(*) as cnt FROM Member_Milestones').catch(() => []);
+  const countRes = await queryDatabase('SELECT COUNT(*) AS `cnt` FROM `Member_Milestones`').catch(() => []);
   if (countRes && countRes[0] && countRes[0].cnt === 0) {
-    const members = await queryDatabase('SELECT id, department, milestones FROM Members').catch(() => []);
+    const members = await queryDatabase('SELECT `id`, `department`, `milestones` FROM `Members`').catch(() => []);
     for (const m of members) {
       let msList = [];
       if (m.milestones) {
@@ -160,7 +160,7 @@ queryDatabase(`
       }
       for (const ms of msList) {
         await queryDatabase(
-          `INSERT IGNORE INTO Member_Milestones (id, member_id, date, title, badge_text, badge_style) VALUES (?, ?, ?, ?, ?, ?)`,
+          `INSERT IGNORE INTO \`Member_Milestones\` (\`id\`, \`member_id\`, \`date\`, \`title\`, \`badge_text\`, \`badge_style\`) VALUES (?, ?, ?, ?, ?, ?)`,
           [ms.id || ('m-' + Date.now()), String(m.id), ms.date || '20/09/2024', ms.title || 'Cột mốc mới', ms.badgeText || '[Cột mốc]', ms.badgeStyle || 'bg-blue-500/10 text-blue-400 border-blue-500/30']
         ).catch(() => { });
       }
@@ -172,15 +172,15 @@ queryDatabase(`
 
 // Tự động khởi tạo bảng Generations (Thế hệ Gen) riêng trong MySQL
 queryDatabase(`
-  CREATE TABLE IF NOT EXISTS Generations (
-    id VARCHAR(50) PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    years VARCHAR(100),
-    description VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  CREATE TABLE IF NOT EXISTS \`Generations\` (
+    \`id\` VARCHAR(50) PRIMARY KEY,
+    \`name\` VARCHAR(100) NOT NULL,
+    \`years\` VARCHAR(100),
+    \`description\` VARCHAR(255),
+    \`created_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )
 `).then(async () => {
-  const countRes = await queryDatabase('SELECT COUNT(*) as cnt FROM Generations').catch(() => []);
+  const countRes = await queryDatabase('SELECT COUNT(*) AS `cnt` FROM `Generations`').catch(() => []);
   if (countRes && countRes[0] && countRes[0].cnt === 0) {
     const defaultGens = [
       { id: 'gen-6', name: 'Gen 6', years: '2025-2026', description: '✨ Gen 6 (2025 - 2026)' },
@@ -192,7 +192,7 @@ queryDatabase(`
     ];
     for (const g of defaultGens) {
       await queryDatabase(
-        `INSERT IGNORE INTO Generations (id, name, years, description) VALUES (?, ?, ?, ?)`,
+        `INSERT IGNORE INTO \`Generations\` (\`id\`, \`name\`, \`years\`, \`description\`) VALUES (?, ?, ?, ?)`,
         [g.id, g.name, g.years, g.description]
       ).catch(() => { });
     }
@@ -203,71 +203,71 @@ queryDatabase(`
 
 // Tự động khởi tạo bảng User_Sessions (Phiên làm việc)
 queryDatabase(`
-  CREATE TABLE IF NOT EXISTS User_Sessions (
-    id VARCHAR(100) PRIMARY KEY,
-    member_id VARCHAR(100) NOT NULL,
-    username VARCHAR(100),
-    name VARCHAR(255),
-    role_title VARCHAR(100),
-    ip_address VARCHAR(100),
-    user_agent TEXT,
-    device_type VARCHAR(50),
-    login_time DATETIME DEFAULT CURRENT_TIMESTAMP,
-    last_active DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    is_active TINYINT DEFAULT 1,
-    logout_reason VARCHAR(50) DEFAULT NULL
+  CREATE TABLE IF NOT EXISTS \`User_Sessions\` (
+    \`id\` VARCHAR(100) PRIMARY KEY,
+    \`member_id\` VARCHAR(100) NOT NULL,
+    \`username\` VARCHAR(100),
+    \`name\` VARCHAR(255),
+    \`role_title\` VARCHAR(100),
+    \`ip_address\` VARCHAR(100),
+    \`user_agent\` TEXT,
+    \`device_type\` VARCHAR(50),
+    \`login_time\` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    \`last_active\` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    \`is_active\` TINYINT DEFAULT 1,
+    \`logout_reason\` VARCHAR(50) DEFAULT NULL
   )
 `).catch(err => {
   console.log('ℹ️ CSDL status User_Sessions table:', err.message);
 });
 
-queryDatabase('ALTER TABLE User_Sessions ADD COLUMN logout_reason VARCHAR(50) DEFAULT NULL').catch(() => { });
+queryDatabase('ALTER TABLE `User_Sessions` ADD COLUMN `logout_reason` VARCHAR(50) DEFAULT NULL').catch(() => { });
 
-queryDatabase('ALTER TABLE Fanpage_Drafts ADD COLUMN likes_count INT DEFAULT 0').catch(() => { });
-queryDatabase('ALTER TABLE Fanpage_Drafts ADD COLUMN shares_count INT DEFAULT 0').catch(() => { });
-queryDatabase('ALTER TABLE Fanpage_Drafts ADD COLUMN comments_count INT DEFAULT 0').catch(() => { });
-queryDatabase('ALTER TABLE Fanpage_Drafts ADD COLUMN content_score INT DEFAULT 0').catch(() => { });
-queryDatabase('ALTER TABLE Fanpage_Drafts ADD COLUMN final_score INT DEFAULT 0').catch(() => { });
+queryDatabase('ALTER TABLE `Fanpage_Drafts` ADD COLUMN `likes_count` INT DEFAULT 0').catch(() => { });
+queryDatabase('ALTER TABLE `Fanpage_Drafts` ADD COLUMN `shares_count` INT DEFAULT 0').catch(() => { });
+queryDatabase('ALTER TABLE `Fanpage_Drafts` ADD COLUMN `comments_count` INT DEFAULT 0').catch(() => { });
+queryDatabase('ALTER TABLE `Fanpage_Drafts` ADD COLUMN `content_score` INT DEFAULT 0').catch(() => { });
+queryDatabase('ALTER TABLE `Fanpage_Drafts` ADD COLUMN `final_score` INT DEFAULT 0').catch(() => { });
 
-queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN submissions LONGTEXT').catch(() => { });
-queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN excuse_reason TEXT').catch(() => { });
-queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN excuse_status VARCHAR(50) DEFAULT "none"').catch(() => { });
-queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN is_penalized TINYINT DEFAULT 0').catch(() => { });
-queryDatabase('ALTER TABLE Birthday_Assignments ADD COLUMN wishes_template TEXT').catch(() => { });
+queryDatabase('ALTER TABLE `Birthday_Assignments` ADD COLUMN `submissions` LONGTEXT').catch(() => { });
+queryDatabase('ALTER TABLE `Birthday_Assignments` ADD COLUMN `excuse_reason` TEXT').catch(() => { });
+queryDatabase('ALTER TABLE `Birthday_Assignments` ADD COLUMN `excuse_status` VARCHAR(50) DEFAULT "none"').catch(() => { });
+queryDatabase('ALTER TABLE `Birthday_Assignments` ADD COLUMN `is_penalized` TINYINT DEFAULT 0').catch(() => { });
+queryDatabase('ALTER TABLE `Birthday_Assignments` ADD COLUMN `wishes_template` TEXT').catch(() => { });
 
 queryDatabase(`
-  CREATE TABLE IF NOT EXISTS Resources (
-    id VARCHAR(100) PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    description TEXT,
-    category VARCHAR(100),
-    link TEXT,
-    uploader_id VARCHAR(100),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  CREATE TABLE IF NOT EXISTS \`Resources\` (
+    \`id\` VARCHAR(100) PRIMARY KEY,
+    \`title\` VARCHAR(255) NOT NULL,
+    \`description\` TEXT,
+    \`category\` VARCHAR(100),
+    \`link\` TEXT,
+    \`uploader_id\` VARCHAR(100),
+    \`created_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )
 `).catch(err => console.log('ℹ️ CSDL status Resources table:', err.message));
 
 // Tự động khởi tạo bảng Finances (Quản lý thu chi)
 queryDatabase(`
-  CREATE TABLE IF NOT EXISTS Finances (
-    id VARCHAR(100) PRIMARY KEY,
-    type VARCHAR(50) NOT NULL,
-    amount INT NOT NULL,
-    description TEXT,
-    date VARCHAR(50),
-    logged_by VARCHAR(255),
-    status VARCHAR(50) DEFAULT 'approved',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  CREATE TABLE IF NOT EXISTS \`Finances\` (
+    \`id\` VARCHAR(100) PRIMARY KEY,
+    \`type\` VARCHAR(50) NOT NULL,
+    \`amount\` INT NOT NULL,
+    \`description\` TEXT,
+    \`date\` VARCHAR(50),
+    \`logged_by\` VARCHAR(255),
+    \`status\` VARCHAR(50) DEFAULT 'approved',
+    \`created_at\` DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `).catch(err => console.log('ℹ️ CSDL status Finances table:', err.message));
 
 // Tự động khởi tạo bảng Department_Drives (Drive Ban Chuyên Môn)
 queryDatabase(`
-  CREATE TABLE IF NOT EXISTS Department_Drives (
-    id VARCHAR(100) PRIMARY KEY,
-    dept_name VARCHAR(100) NOT NULL UNIQUE,
-    drive_link TEXT,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  CREATE TABLE IF NOT EXISTS \`Department_Drives\` (
+    \`id\` VARCHAR(100) PRIMARY KEY,
+    \`dept_name\` VARCHAR(100) NOT NULL UNIQUE,
+    \`drive_link\` TEXT,
+    \`updated_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
   )
 `).then(async () => {
   const defaultDrives = [
@@ -279,7 +279,7 @@ queryDatabase(`
   ];
   for (const d of defaultDrives) {
     await queryDatabase(
-      'INSERT IGNORE INTO Department_Drives (id, dept_name, drive_link) VALUES (?, ?, ?)',
+      'INSERT IGNORE INTO `Department_Drives` (`id`, `dept_name`, `drive_link`) VALUES (?, ?, ?)',
       [d.id, d.dept_name, d.drive_link]
     ).catch(() => { });
   }
@@ -287,40 +287,40 @@ queryDatabase(`
 
 // Tự động khởi tạo bảng Attendance_Records (Điểm danh sinh hoạt định kỳ)
 queryDatabase(`
-  CREATE TABLE IF NOT EXISTS Attendance_Records (
-    id VARCHAR(100) PRIMARY KEY,
-    session_name VARCHAR(255),
-    record_date VARCHAR(50),
-    present_members LONGTEXT,
-    status VARCHAR(50) DEFAULT 'approved',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  CREATE TABLE IF NOT EXISTS \`Attendance_Records\` (
+    \`id\` VARCHAR(100) PRIMARY KEY,
+    \`session_name\` VARCHAR(255),
+    \`record_date\` VARCHAR(50),
+    \`present_members\` LONGTEXT,
+    \`status\` VARCHAR(50) DEFAULT 'approved',
+    \`created_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   )
 `).catch(err => console.log('ℹ️ CSDL status Attendance_Records table:', err.message));
 
 // Recruitment module — thêm cột interviewer_ids, department và scoring_type vào Recruitment_Seasons nếu chưa có
-queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN interviewer_ids TEXT').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN department VARCHAR(100)').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN scoring_type TEXT').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN interviewer_ids TEXT').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN teamwork_scorer_ids TEXT').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN challenge_process_scorer_ids TEXT').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN challenge_result_scorer_ids TEXT').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN lead_interviewer_id VARCHAR(100)').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Candidates ADD COLUMN selected_questions TEXT').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN challenge_process_scorer_ids TEXT').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Seasons ADD COLUMN challenge_result_scorer_ids TEXT').catch(() => {});
-queryDatabase('ALTER TABLE Recruitment_Scores ADD COLUMN comments TEXT').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Seasons` ADD COLUMN `interviewer_ids` TEXT').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Seasons` ADD COLUMN `department` VARCHAR(100)').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Seasons` ADD COLUMN `scoring_type` TEXT').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Candidates` ADD COLUMN `interviewer_ids` TEXT').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Candidates` ADD COLUMN `teamwork_scorer_ids` TEXT').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Candidates` ADD COLUMN `challenge_process_scorer_ids` TEXT').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Candidates` ADD COLUMN `challenge_result_scorer_ids` TEXT').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Candidates` ADD COLUMN `lead_interviewer_id` VARCHAR(100)').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Candidates` ADD COLUMN `selected_questions` TEXT').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Seasons` ADD COLUMN `challenge_process_scorer_ids` TEXT').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Seasons` ADD COLUMN `challenge_result_scorer_ids` TEXT').catch(() => {});
+queryDatabase('ALTER TABLE `Recruitment_Scores` ADD COLUMN `comments` TEXT').catch(() => {});
 
 // Tự động khởi tạo bảng System_Settings
 queryDatabase(`
-  CREATE TABLE IF NOT EXISTS System_Settings (
-    setting_key VARCHAR(100) PRIMARY KEY,
-    setting_value TEXT,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  CREATE TABLE IF NOT EXISTS \`System_Settings\` (
+    \`setting_key\` VARCHAR(100) PRIMARY KEY,
+    \`setting_value\` TEXT,
+    \`updated_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
   )
 `).then(async () => {
   await queryDatabase(
-    `INSERT IGNORE INTO System_Settings (setting_key, setting_value) VALUES ('recruitment_season_active', '0')`,
+    `INSERT IGNORE INTO \`System_Settings\` (\`setting_key\`, \`setting_value\`) VALUES ('recruitment_season_active', '0')`,
     []
   ).catch(() => {});
 }).catch(err => console.log('ℹ️ CSDL status System_Settings table:', err.message));
@@ -435,7 +435,7 @@ app.post('/api/members/reset-password', async (req, res) => {
 
     // 1. Cập nhật CSDL: Mật khẩu mặc định và đánh dấu is_first_login = 1
     await queryDatabase(
-      'UPDATE Members SET password = ?, is_first_login = 1 WHERE CAST(id AS CHAR) = ? OR UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?)',
+      'UPDATE `Members` SET `password` = ?, `is_first_login` = 1 WHERE CAST(`id` AS CHAR) = ? OR UPPER(`member_code`) = UPPER(?) OR LOWER(`username`) = LOWER(?)',
       [hashedPwd, String(memberId || ''), String(memberId || ''), String(memberId || '')]
     );
 
@@ -504,9 +504,9 @@ app.post('/api/auth/login', async (req, res) => {
   try {
     const sql = `
       SELECT 
-        id, member_code, username, password, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, address, facebook, points, is_first_login, status, milestones
-      FROM Members
-      WHERE (UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?))
+        \`id\`, \`member_code\`, \`username\`, \`password\`, \`full_name\`, \`role\`, \`role_title\`, \`class_name\`, \`department\`, \`term\`, \`avatar_url\`, \`phone\`, \`email\`, \`dob\`, \`address\`, \`facebook\`, \`points\`, \`is_first_login\`, \`status\`, \`milestones\`
+      FROM \`Members\`
+      WHERE (UPPER(\`member_code\`) = UPPER(?) OR LOWER(\`username\`) = LOWER(?))
       LIMIT 1
     `;
     const rows = await queryDatabase(sql, [memberCode, memberCode]);
@@ -526,7 +526,7 @@ app.post('/api/auth/login', async (req, res) => {
       if (isValidPassword) {
         // Migrate legacy plain-text passwords to bcrypt on first successful login.
         const hashed = hashPassword(password);
-        await queryDatabase('UPDATE Members SET password = ? WHERE id = ? OR member_code = ? OR username = ?', [hashed, String(user.id), String(user.member_code), String(user.username)]).catch(() => {});
+        await queryDatabase('UPDATE `Members` SET `password` = ? WHERE `id` = ? OR `member_code` = ? OR `username` = ?', [hashed, String(user.id), String(user.member_code), String(user.username)]).catch(() => {});
       }
     }
 
@@ -583,13 +583,13 @@ app.get('/api/members', async (req, res) => {
   try {
     const sql = `
       SELECT 
-        id, member_code, username, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, address, facebook, points, is_first_login, status, milestones
-      FROM Members 
-      WHERE LOWER(username) != 'admin' AND UPPER(member_code) != 'ADMIN'
-      ORDER BY id ASC
+        \`id\`, \`member_code\`, \`username\`, \`full_name\`, \`role\`, \`role_title\`, \`class_name\`, \`department\`, \`term\`, \`avatar_url\`, \`phone\`, \`email\`, \`dob\`, \`address\`, \`facebook\`, \`points\`, \`is_first_login\`, \`status\`, \`milestones\`
+      FROM \`Members\` 
+      WHERE LOWER(\`username\`) != 'admin' AND UPPER(\`member_code\`) != 'ADMIN'
+      ORDER BY \`id\` ASC
     `;
     const members = await queryDatabase(sql);
-    const tableMilestones = await queryDatabase('SELECT * FROM Member_Milestones ORDER BY created_at ASC').catch(() => []);
+    const tableMilestones = await queryDatabase('SELECT * FROM `Member_Milestones` ORDER BY `created_at` ASC').catch(() => []);
 
     res.json({
       success: true,
@@ -663,7 +663,7 @@ app.put('/api/members/:id', async (req, res) => {
   } = req.body;
 
   try {
-    const membersList = await queryDatabase('SELECT id, member_code FROM Members WHERE CAST(id AS CHAR) = ? OR UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?)', [id, id, id]);
+    const membersList = await queryDatabase('SELECT `id`, `member_code` FROM `Members` WHERE CAST(`id` AS CHAR) = ? OR UPPER(`member_code`) = UPPER(?) OR LOWER(`username`) = LOWER(?)', [id, id, id]);
     const targetMember = membersList && membersList.length > 0 ? membersList[0] : null;
 
     const isFirstLoginVal = is_first_login !== undefined
@@ -675,27 +675,27 @@ app.put('/api/members/:id', async (req, res) => {
       : null;
 
     const sql = `
-      UPDATE Members 
+      UPDATE \`Members\` 
       SET 
-        full_name = COALESCE(?, full_name), 
-        role = COALESCE(?, role), 
-        role_title = COALESCE(?, role_title),
-        member_code = COALESCE(?, member_code), 
-        class_name = COALESCE(?, class_name), 
-        department = COALESCE(?, department), 
-        term = COALESCE(?, term),
-        phone = COALESCE(?, phone), 
-        dob = COALESCE(?, dob), 
-        email = COALESCE(?, email),
-        points = COALESCE(?, points),
-        address = COALESCE(?, address),
-        facebook = COALESCE(?, facebook),
-        avatar_url = COALESCE(?, COALESCE(?, avatar_url)),
-        status = COALESCE(?, status),
-        password = COALESCE(?, password),
-        is_first_login = COALESCE(?, is_first_login),
-        milestones = COALESCE(?, milestones)
-      WHERE (CAST(id AS CHAR) = ? OR UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?))
+        \`full_name\` = COALESCE(?, \`full_name\`), 
+        \`role\` = COALESCE(?, \`role\`), 
+        \`role_title\` = COALESCE(?, \`role_title\`),
+        \`member_code\` = COALESCE(?, \`member_code\`), 
+        \`class_name\` = COALESCE(?, \`class_name\`), 
+        \`department\` = COALESCE(?, \`department\`), 
+        \`term\` = COALESCE(?, \`term\`),
+        \`phone\` = COALESCE(?, \`phone\`), 
+        \`dob\` = COALESCE(?, \`dob\`), 
+        \`email\` = COALESCE(?, \`email\`),
+        \`points\` = COALESCE(?, \`points\`),
+        \`address\` = COALESCE(?, \`address\`),
+        \`facebook\` = COALESCE(?, \`facebook\`),
+        \`avatar_url\` = COALESCE(?, COALESCE(?, \`avatar_url\`)),
+        \`status\` = COALESCE(?, \`status\`),
+        \`password\` = COALESCE(?, \`password\`),
+        \`is_first_login\` = COALESCE(?, \`is_first_login\`),
+        \`milestones\` = COALESCE(?, \`milestones\`)
+      WHERE (CAST(\`id\` AS CHAR) = ? OR UPPER(\`member_code\`) = UPPER(?) OR LOWER(\`username\`) = LOWER(?))
     `;
 
     // Chỉ hash password khi được cung cấp dưới dạng string không rỗng
@@ -727,7 +727,7 @@ app.put('/api/members/:id', async (req, res) => {
     // Đồng bộ vào bảng Member_Milestones
     if (milestones !== undefined && targetMember) {
       await queryDatabase(
-        'DELETE FROM Member_Milestones WHERE member_id = ? OR member_id = ?',
+        'DELETE FROM `Member_Milestones` WHERE `member_id` = ? OR `member_id` = ?',
         [String(targetMember.id), String(targetMember.member_code)]
       ).catch(e => { });
 
@@ -736,7 +736,7 @@ app.put('/api/members/:id', async (req, res) => {
           if (ms.title) {
             const msId = ms.id || ('m-' + Date.now() + Math.random().toString(36).substring(2, 5));
             await queryDatabase(
-              `INSERT INTO Member_Milestones (id, member_id, date, title, badge_text, badge_style) 
+              `INSERT INTO \`Member_Milestones\` (\`id\`, \`member_id\`, \`date\`, \`title\`, \`badge_text\`, \`badge_style\`) 
                VALUES (?, ?, ?, ?, ?, ?)`,
               [
                 msId,
@@ -772,7 +772,7 @@ app.delete('/api/members/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const members = await queryDatabase(
-      'SELECT id, member_code, username FROM Members WHERE (CAST(id AS CHAR) = ? OR UPPER(member_code) = UPPER(?) OR LOWER(username) = LOWER(?))',
+      'SELECT `id`, `member_code`, `username` FROM `Members` WHERE (CAST(`id` AS CHAR) = ? OR UPPER(`member_code`) = UPPER(?) OR LOWER(`username`) = LOWER(?))',
       [id, id, id]
     );
 
@@ -786,16 +786,16 @@ app.delete('/api/members/:id', async (req, res) => {
     const mUser = String(m.username || '');
 
     // Xóa toàn bộ dữ liệu liên quan ở các bảng (Milestones, Birthday_Assignments, Sessions, Logins, Attendance, etc.)
-    await queryDatabase('DELETE FROM Member_Milestones WHERE member_id = ? OR member_id = ?', [mId, mCode]).catch(() => { });
-    await queryDatabase('DELETE FROM Birthday_Assignments WHERE member_id = ? OR member_id = ?', [mId, mCode]).catch(() => { });
-    await queryDatabase('DELETE FROM Birthday_Mail_Logs WHERE member_id = ? OR member_id = ?', [mId, mCode]).catch(() => { });
-    await queryDatabase('DELETE FROM Meeting_Attendance WHERE member_id = ? OR member_id = ?', [mId, mCode]).catch(() => { });
-    await queryDatabase('DELETE FROM User_Sessions WHERE member_id = ? OR member_id = ? OR username = ?', [mId, mCode, mUser]).catch(() => { });
-    await queryDatabase('DELETE FROM User_Logins WHERE member_id = ? OR member_id = ? OR username = ?', [mId, mCode, mUser]).catch(() => { });
-    await queryDatabase('DELETE FROM Tasks WHERE assignee_id = ? OR created_by = ?', [mId, mId]).catch(() => { });
+    await queryDatabase('DELETE FROM `Member_Milestones` WHERE `member_id` = ? OR `member_id` = ?', [mId, mCode]).catch(() => { });
+    await queryDatabase('DELETE FROM `Birthday_Assignments` WHERE `member_id` = ? OR `member_id` = ?', [mId, mCode]).catch(() => { });
+    await queryDatabase('DELETE FROM `Birthday_Mail_Logs` WHERE `member_id` = ? OR `member_id` = ?', [mId, mCode]).catch(() => { });
+    await queryDatabase('DELETE FROM `Meeting_Attendance` WHERE `member_id` = ? OR `member_id` = ?', [mId, mCode]).catch(() => { });
+    await queryDatabase('DELETE FROM `User_Sessions` WHERE `member_id` = ? OR `member_id` = ? OR `username` = ?', [mId, mCode, mUser]).catch(() => { });
+    await queryDatabase('DELETE FROM `User_Logins` WHERE `member_id` = ? OR `member_id` = ? OR `username` = ?', [mId, mCode, mUser]).catch(() => { });
+    await queryDatabase('DELETE FROM `Tasks` WHERE `assignee_id` = ? OR `created_by` = ?', [mId, mId]).catch(() => { });
 
     // Xóa chính thành viên khỏi bảng Members
-    await queryDatabase('DELETE FROM Members WHERE id = ?', [m.id]);
+    await queryDatabase('DELETE FROM `Members` WHERE `id` = ?', [m.id]);
 
     console.log(`✅ Đã xóa vĩnh viễn toàn bộ dữ liệu thành viên khỏi CSDL MySQL: [${mCode || mId}]`);
     res.json({ success: true, message: 'Đã xóa vĩnh viễn toàn bộ dữ liệu thành viên khỏi CSDL MySQL!' });
@@ -811,8 +811,8 @@ app.post('/api/members/create', async (req, res) => {
 
   try {
     const sql = `
-      INSERT INTO Members 
-        (member_code, username, password, full_name, role, role_title, class_name, department, term, avatar_url, phone, email, dob, address, facebook, is_first_login, status)
+      INSERT INTO \`Members\` 
+        (\`member_code\`, \`username\`, \`password\`, \`full_name\`, \`role\`, \`role_title\`, \`class_name\`, \`department\`, \`term\`, \`avatar_url\`, \`phone\`, \`email\`, \`dob\`, \`address\`, \`facebook\`, \`is_first_login\`, \`status\`)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, TRUE, 'Active')
     `;
     const result = await queryDatabase(sql, [
@@ -840,7 +840,7 @@ app.post('/api/members/create', async (req, res) => {
     const milestoneTitle = `Bắt đầu làm thành viên VMC (${department || 'Ban Chuyên Môn'})`;
 
     await queryDatabase(
-      `INSERT INTO Member_Milestones (id, member_id, date, title, badge_text, badge_style) VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO \`Member_Milestones\` (\`id\`, \`member_id\`, \`date\`, \`title\`, \`badge_text\`, \`badge_style\`) VALUES (?, ?, ?, ?, ?, ?)`,
       [
         firstMilestoneId,
         createdId,
@@ -878,7 +878,7 @@ const checkAndSendDailyBirthdayEmails = async () => {
 
     // Lấy mẫu lời chúc sinh nhật do Người phụ trách sinh nhật tháng này biên soạn
     const bdayAssignments = await queryDatabase(
-      'SELECT wishes_template FROM Birthday_Assignments WHERE assign_month = ? ORDER BY assign_year DESC, created_at DESC LIMIT 1',
+      'SELECT `wishes_template` FROM `Birthday_Assignments` WHERE `assign_month` = ? ORDER BY `assign_year` DESC, `created_at` DESC LIMIT 1',
       [todayMonth]
     );
 
@@ -887,7 +887,7 @@ const checkAndSendDailyBirthdayEmails = async () => {
       : '';
 
     const members = await queryDatabase(
-      'SELECT id, member_code, full_name, email, dob, class_name, department, status FROM Members WHERE email IS NOT NULL AND email != "" AND (status IS NULL OR status = "Active")'
+      'SELECT `id`, `member_code`, `full_name`, `email`, `dob`, `class_name`, `department`, `status` FROM `Members` WHERE `email` IS NOT NULL AND `email` != "" AND (`status` IS NULL OR `status` = "Active")'
     );
 
     for (const m of members) {
@@ -909,7 +909,7 @@ const checkAndSendDailyBirthdayEmails = async () => {
       if (dDay === todayDay && dMonth === todayMonth) {
         const currentYear = today.getFullYear();
         const logs = await queryDatabase(
-          'SELECT id FROM Birthday_Mail_Logs WHERE member_id = ? AND sent_year = ? LIMIT 1',
+          'SELECT `id` FROM `Birthday_Mail_Logs` WHERE `member_id` = ? AND `sent_year` = ? LIMIT 1',
           [m.id, currentYear]
         );
         if (logs && logs.length > 0) {
@@ -983,7 +983,7 @@ const checkAndSendDailyBirthdayEmails = async () => {
           // Log to database
           const sentDateStr = `${currentYear}-${String(todayMonth).padStart(2, '0')}-${String(todayDay).padStart(2, '0')}`;
           await queryDatabase(
-            'INSERT IGNORE INTO Birthday_Mail_Logs (member_id, sent_date, sent_year, status) VALUES (?, ?, ?, "success")',
+            'INSERT IGNORE INTO `Birthday_Mail_Logs` (`member_id`, `sent_date`, `sent_year`, `status`) VALUES (?, ?, ?, "success")',
             [m.id, sentDateStr, currentYear]
           );
         } catch (mailErr) {
@@ -1011,18 +1011,18 @@ async function checkAndSendTaskDeadlineReminders() {
     console.log(`⏰ [Task Reminder] Running daily check for deadlines (Today: ${todayStr}, Tomorrow: ${tomorrowStr})...`);
 
     await queryDatabase(`
-      CREATE TABLE IF NOT EXISTS Task_Deadline_Mail_Logs (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        task_id VARCHAR(100) NOT NULL,
-        sent_date DATE NOT NULL,
-        type VARCHAR(50) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE KEY unique_task_date (task_id, sent_date)
+      CREATE TABLE IF NOT EXISTS \`Task_Deadline_Mail_Logs\` (
+        \`id\` INT AUTO_INCREMENT PRIMARY KEY,
+        \`task_id\` VARCHAR(100) NOT NULL,
+        \`sent_date\` DATE NOT NULL,
+        \`type\` VARCHAR(50) NOT NULL,
+        \`created_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY \`unique_task_date\` (\`task_id\`, \`sent_date\`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     `).catch(() => {});
 
     const tasks = await queryDatabase(
-      "SELECT id, title, description, assignee_id, deadline, status FROM Tasks WHERE status != 'done' AND deadline IS NOT NULL AND (DATE(deadline) = ? OR DATE(deadline) = ?)",
+      "SELECT `id`, `title`, `description`, `assignee_id`, `deadline`, `status` FROM `Tasks` WHERE `status` != 'done' AND `deadline` IS NOT NULL AND (DATE(`deadline`) = ? OR DATE(`deadline`) = ?)",
       [todayStr, tomorrowStr]
     );
 
@@ -1032,13 +1032,13 @@ async function checkAndSendTaskDeadlineReminders() {
       const type = isDueToday ? 'today' : 'tomorrow';
 
       const logs = await queryDatabase(
-        'SELECT id FROM Task_Deadline_Mail_Logs WHERE task_id = ? AND sent_date = ? LIMIT 1',
+        'SELECT `id` FROM `Task_Deadline_Mail_Logs` WHERE `task_id` = ? AND `sent_date` = ? LIMIT 1',
         [t.id, todayStr]
       );
       if (logs && logs.length > 0) continue;
 
       const assignees = await queryDatabase(
-        'SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? LIMIT 1',
+        'SELECT `email`, `full_name` FROM `Members` WHERE `id` = ? OR `member_code` = ? LIMIT 1',
         [t.assignee_id, t.assignee_id]
       );
       if (!assignees || assignees.length === 0 || !assignees[0].email) continue;
@@ -1093,7 +1093,7 @@ async function checkAndSendTaskDeadlineReminders() {
       });
 
       await queryDatabase(
-        'INSERT IGNORE INTO Task_Deadline_Mail_Logs (task_id, sent_date, type) VALUES (?, ?, ?)',
+        'INSERT IGNORE INTO `Task_Deadline_Mail_Logs` (`task_id`, `sent_date`, `type`) VALUES (?, ?, ?)',
         [t.id, todayStr, type]
       );
       console.log(`✅ [Task Reminder] Sent deadline reminder email for task "${t.title}" to ${assignee.email}`);

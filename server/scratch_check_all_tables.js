@@ -11,7 +11,7 @@ async function verify() {
   for (const table of tables) {
     try {
       console.log(`\n🔍 Checking table: ${table}`);
-      const columns = await queryDatabase(`DESCRIBE ${table}`);
+      const columns = await queryDatabase(`DESCRIBE \`${table}\``);
       console.log(`✅ Table [${table}] EXISTS. Columns:`);
       console.table(columns.map(c => ({
         Field: c.Field,

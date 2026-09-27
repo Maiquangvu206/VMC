@@ -28,11 +28,11 @@ const toId = (val) => (val !== undefined && val !== null && val !== '') ? String
 router.get('/tasks', async (req, res) => {
   try {
     const tasks = await queryDatabase(`
-            SELECT t.*,
-        (SELECT m2.full_name FROM Members m2 WHERE m2.id = t.assignee_id LIMIT 1) AS assignee_name_by_id,
-        (SELECT m3.full_name FROM Members m3 WHERE m3.member_code = t.assignee_id LIMIT 1) AS assignee_name_by_code
-      FROM Tasks t 
-      ORDER BY t.created_at DESC
+      SELECT \`t\`.*,
+        (SELECT \`m2\`.\`full_name\` FROM \`Members\` \`m2\` WHERE \`m2\`.\`id\` = \`t\`.\`assignee_id\` LIMIT 1) AS \`assignee_name_by_id\`,
+        (SELECT \`m3\`.\`full_name\` FROM \`Members\` \`m3\` WHERE \`m3\`.\`member_code\` = \`t\`.\`assignee_id\` LIMIT 1) AS \`assignee_name_by_code\`
+      FROM \`Tasks\` \`t\` 
+      ORDER BY \`t\`.\`created_at\` DESC
     `);
     const data = tasks.map(t => ({
       id: t.id,
@@ -65,7 +65,7 @@ router.post('/tasks', async (req, res) => {
       const creatorId = toId(created_by || rootCreatorId);
 
       await queryDatabase(
-        'INSERT INTO Tasks (id, title, description, assignee_id, created_by, deadline, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO `Tasks` (`id`, `title`, `description`, `assignee_id`, `created_by`, `deadline`, `status`) VALUES (?, ?, ?, ?, ?, ?, ?)',
         [taskId, title, description || '', assId, creatorId, deadline || null, status || 'todo']
       );
 
@@ -73,7 +73,7 @@ router.post('/tasks', async (req, res) => {
       if (assId) {
         try {
           const assignees = await queryDatabase(
-            'SELECT email, full_name FROM Members WHERE CAST(id AS CHAR) = ? OR member_code = ? OR full_name = ? OR username = ? LIMIT 1',
+            'SELECT `email`, `full_name` FROM `Members` WHERE CAST(`id` AS CHAR) = ? OR `member_code` = ? OR `full_name` = ? OR `username` = ? LIMIT 1',
             [assId, assId, assId, assId]
           );
           if (assignees && assignees.length > 0 && assignees[0].email) {
@@ -116,11 +116,11 @@ router.put('/tasks/:id', async (req, res) => {
     const assId = (assignee_id !== undefined || assigneeId !== undefined) ? toId(assignee_id || assigneeId) : undefined;
 
     // Lấy thông tin task trước khi cập nhật để kiểm tra chuyển sang trạng thái hoàn thành (done)
-    const oldTasks = await queryDatabase('SELECT * FROM Tasks WHERE id = ?', [req.params.id]);
+    const oldTasks = await queryDatabase('SELECT * FROM `Tasks` WHERE `id` = ?', [req.params.id]);
     const oldTask = oldTasks && oldTasks.length > 0 ? oldTasks[0] : null;
 
     await queryDatabase(
-      'UPDATE Tasks SET status = COALESCE(?, status), title = COALESCE(?, title), description = COALESCE(?, description), deadline = COALESCE(?, deadline), assignee_id = COALESCE(?, assignee_id) WHERE id = ?',
+      'UPDATE `Tasks` SET `status` = COALESCE(?, `status`), `title` = COALESCE(?, `title`), `description` = COALESCE(?, `description`), `deadline` = COALESCE(?, `deadline`), `assignee_id` = COALESCE(?, `assignee_id`) WHERE `id` = ?',
       [
         status !== undefined ? status : null,
         title !== undefined ? title : null,
@@ -134,8 +134,8 @@ router.put('/tasks/:id', async (req, res) => {
     // Gửi email thông báo hoàn thành nhiệm vụ nếu chuyển trạng thái sang 'done'
     if (oldTask && status === 'done' && oldTask.status !== 'done') {
       try {
-        const creatorEmailResult = await queryDatabase('SELECT email, full_name FROM Members WHERE CAST(id AS CHAR) = ? OR member_code = ? LIMIT 1', [oldTask.created_by, oldTask.created_by]);
-        const assigneeResult = await queryDatabase('SELECT full_name FROM Members WHERE CAST(id AS CHAR) = ? OR member_code = ? LIMIT 1', [oldTask.assignee_id, oldTask.assignee_id]);
+        const creatorEmailResult = await queryDatabase('SELECT `email`, `full_name` FROM `Members` WHERE CAST(`id` AS CHAR) = ? OR `member_code` = ? LIMIT 1', [oldTask.created_by, oldTask.created_by]);
+        const assigneeResult = await queryDatabase('SELECT `full_name` FROM `Members` WHERE CAST(`id` AS CHAR) = ? OR `member_code` = ? LIMIT 1', [oldTask.assignee_id, oldTask.assignee_id]);
 
         const creator = creatorEmailResult && creatorEmailResult.length > 0 ? creatorEmailResult[0] : null;
         const assigneeName = assigneeResult && assigneeResult.length > 0 ? assigneeResult[0].full_name : 'Thành viên VMC';
@@ -172,7 +172,7 @@ router.put('/tasks/:id', async (req, res) => {
 
 router.delete('/tasks/:id', async (req, res) => {
   try {
-    await queryDatabase('DELETE FROM Tasks WHERE id = ?', [req.params.id]);
+    await queryDatabase('DELETE FROM `Tasks` WHERE `id` = ?', [req.params.id]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -182,7 +182,7 @@ router.delete('/tasks/:id', async (req, res) => {
 // ======================= DRAFTS =======================
 router.get('/drafts', async (req, res) => {
   try {
-    const drafts = await queryDatabase('SELECT * FROM Fanpage_Drafts ORDER BY created_at DESC');
+    const drafts = await queryDatabase('SELECT * FROM `Fanpage_Drafts` ORDER BY `created_at` DESC');
     const data = drafts.map(d => ({
       id: d.id,
       title: d.title,
@@ -215,7 +215,7 @@ router.post('/drafts', async (req, res) => {
     const grId = toId(graderId);
 
     await queryDatabase(
-      'INSERT INTO Fanpage_Drafts (id, title, content_link, author_id, status, publishDate, graderId, gradingStatus, content, author) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO `Fanpage_Drafts` (`id`, `title`, `content_link`, `author_id`, `status`, `publishDate`, `graderId`, `gradingStatus`, `content`, `author`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         draftId,
         title,
@@ -239,11 +239,11 @@ router.put('/drafts/:id', async (req, res) => {
   try {
     const { status, publishDate, graderId, gradingStatus, title, content, content_link, author, likesCount, sharesCount, commentsCount, contentScore, finalScore, gradingDeadline, grading_deadline } = req.body;
     const grId = graderId !== undefined ? toId(graderId) : undefined;
-    const oldDrafts = await queryDatabase('SELECT * FROM Fanpage_Drafts WHERE id = ?', [req.params.id]);
+    const oldDrafts = await queryDatabase('SELECT * FROM `Fanpage_Drafts` WHERE `id` = ?', [req.params.id]);
     const oldDraft = oldDrafts && oldDrafts.length > 0 ? oldDrafts[0] : {};
 
     await queryDatabase(
-      'UPDATE Fanpage_Drafts SET status = COALESCE(?, status), publishDate = COALESCE(?, publishDate), graderId = COALESCE(?, graderId), gradingStatus = COALESCE(?, gradingStatus), title = COALESCE(?, title), content = COALESCE(?, content), content_link = COALESCE(?, content_link), author = COALESCE(?, author), likes_count = COALESCE(?, likes_count), shares_count = COALESCE(?, shares_count), comments_count = COALESCE(?, comments_count), content_score = COALESCE(?, content_score), final_score = COALESCE(?, final_score) WHERE id = ?',
+      'UPDATE `Fanpage_Drafts` SET `status` = COALESCE(?, `status`), `publishDate` = COALESCE(?, `publishDate`), `graderId` = COALESCE(?, `graderId`), `gradingStatus` = COALESCE(?, `gradingStatus`), `title` = COALESCE(?, `title`), `content` = COALESCE(?, `content`), `content_link` = COALESCE(?, `content_link`), `author` = COALESCE(?, `author`), `likes_count` = COALESCE(?, `likes_count`), `shares_count` = COALESCE(?, `shares_count`), `comments_count` = COALESCE(?, `comments_count`), `content_score` = COALESCE(?, `content_score`), `final_score` = COALESCE(?, `final_score`) WHERE `id` = ?',
       [
         status !== undefined ? status : null,
         publishDate !== undefined ? publishDate : null,
@@ -287,7 +287,7 @@ router.put('/drafts/:id', async (req, res) => {
     if (grId) {
       try {
         const graders = await queryDatabase(
-          'SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? OR full_name = ? OR username = ? LIMIT 1',
+          'SELECT `email`, `full_name` FROM `Members` WHERE `id` = ? OR `member_code` = ? OR `full_name` = ? OR `username` = ? LIMIT 1',
           [grId, grId, grId, grId]
         );
         if (graders && graders.length > 0 && graders[0].email) {
@@ -325,7 +325,7 @@ router.put('/drafts/:id', async (req, res) => {
 // ======================= EQUIPMENT =======================
 router.get('/equipment', async (req, res) => {
   try {
-    const equipment = await queryDatabase('SELECT * FROM Equipment ORDER BY id ASC');
+    const equipment = await queryDatabase('SELECT * FROM `Equipment` ORDER BY `id` ASC');
     const data = equipment.map(e => ({
       id: e.id,
       code: e.code,
@@ -349,7 +349,7 @@ router.post('/equipment', async (req, res) => {
     const bId = toId(borrower_id);
 
     await queryDatabase(
-      'INSERT INTO Equipment (id, code, name, category, condition_status, status, borrower_id, return_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO `Equipment` (`id`, `code`, `name`, `category`, `condition_status`, `status`, `borrower_id`, `return_date`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [eqId, code, name, category, condition_status || 'Tốt', status || 'available', bId, return_date || null]
     );
     res.json({ success: true, data: { id: eqId, code, name, category, condition_status, status } });
@@ -363,7 +363,7 @@ router.put('/equipment/:id', async (req, res) => {
     const { status, condition_status, borrower_id, return_date } = req.body;
     const bId = borrower_id !== undefined ? toId(borrower_id) : undefined;
     await queryDatabase(
-      'UPDATE Equipment SET status = COALESCE(?, status), condition_status = COALESCE(?, condition_status), borrower_id = ?, return_date = ? WHERE id = ?',
+      'UPDATE `Equipment` SET `status` = COALESCE(?, `status`), `condition_status` = COALESCE(?, `condition_status`), `borrower_id` = ?, `return_date` = ? WHERE `id` = ?',
       [
         status !== undefined ? status : null,
         condition_status !== undefined ? condition_status : null,
@@ -381,7 +381,7 @@ router.put('/equipment/:id', async (req, res) => {
 // ======================= ANNOUNCEMENTS =======================
 router.get('/announcements', async (req, res) => {
   try {
-    const announcements = await queryDatabase('SELECT * FROM Internal_Announcements ORDER BY is_pinned DESC, created_at DESC');
+    const announcements = await queryDatabase('SELECT * FROM `Internal_Announcements` ORDER BY `is_pinned` DESC, `created_at` DESC');
     const data = announcements.map(a => ({
       id: a.id,
       title: a.title,
@@ -404,7 +404,7 @@ router.post('/announcements', async (req, res) => {
     const pinned = (is_pinned || isPinned) ? 1 : 0;
 
     await queryDatabase(
-      'INSERT INTO Internal_Announcements (id, title, content, author_id, is_pinned) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO `Internal_Announcements` (`id`, `title`, `content`, `author_id`, `is_pinned`) VALUES (?, ?, ?, ?, ?)',
       [annId, title, content, autId, pinned]
     );
     res.json({ success: true, data: { id: annId, title, content, author_id: autId, is_pinned: Boolean(pinned) } });
@@ -415,7 +415,7 @@ router.post('/announcements', async (req, res) => {
 
 router.delete('/announcements/:id', async (req, res) => {
   try {
-    await queryDatabase('DELETE FROM Internal_Announcements WHERE id = ?', [req.params.id]);
+    await queryDatabase('DELETE FROM `Internal_Announcements` WHERE `id` = ?', [req.params.id]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -428,7 +428,7 @@ const sendAssignmentEmails = async (candidateName, oldInterviewerIds, newIntervi
     // 1. Send to newly assigned Interviewers
     const addedInterviewers = newInterviewerIds.filter(id => !oldInterviewerIds.includes(id));
     for (const memberId of addedInterviewers) {
-      const members = await queryDatabase('SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? LIMIT 1', [memberId, memberId]);
+      const members = await queryDatabase('SELECT `email`, `full_name` FROM `Members` WHERE `id` = ? OR `member_code` = ? LIMIT 1', [memberId, memberId]);
       if (members && members.length > 0 && members[0].email) {
         const m = members[0];
         await sendMailHelper(
@@ -455,7 +455,7 @@ const sendAssignmentEmails = async (candidateName, oldInterviewerIds, newIntervi
     // 2. Send to newly assigned Teamwork Scorers
     const addedScorers = newScorerIds.filter(id => !oldScorerIds.includes(id));
     for (const memberId of addedScorers) {
-      const members = await queryDatabase('SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? LIMIT 1', [memberId, memberId]);
+      const members = await queryDatabase('SELECT `email`, `full_name` FROM `Members` WHERE `id` = ? OR `member_code` = ? LIMIT 1', [memberId, memberId]);
       if (members && members.length > 0 && members[0].email) {
         const m = members[0];
         await sendMailHelper(
@@ -528,7 +528,7 @@ const sendMailHelper = async (to, subject, html) => {
 // ======================= FINANCES =======================
 router.get('/finances', async (req, res) => {
   try {
-    const rows = await queryDatabase('SELECT * FROM Finances ORDER BY created_at DESC');
+    const rows = await queryDatabase('SELECT * FROM `Finances` ORDER BY `created_at` DESC');
     const data = rows.map(r => {
       const d = r.record_date || r.date ? String(r.record_date || r.date).slice(0, 10) : '';
       const by = r.recorded_by || r.logged_by || 'Thành viên VMC';
@@ -561,7 +561,7 @@ router.post('/finances', async (req, res) => {
     const stat = status || 'approved';
 
     await queryDatabase(
-      'INSERT INTO Finances (id, type, amount, description, record_date, recorded_by, date, logged_by, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO `Finances` (`id`, `type`, `amount`, `description`, `record_date`, `recorded_by`, `date`, `logged_by`, `status`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [finId, type || 'income', parseFloat(amount) || 0, description || '', recDate, recBy, recDate, recBy, stat]
     );
 
@@ -569,7 +569,7 @@ router.post('/finances', async (req, res) => {
     if (stat === 'pending') {
       try {
         const reviewers = await queryDatabase(
-          `SELECT email FROM Members WHERE role = 'admin' OR LOWER(department) LIKE '%đối ngoại%' OR LOWER(department) LIKE '%nhân sự%' OR LOWER(department) LIKE '%đn-ns%'`
+          `SELECT \`email\` FROM \`Members\` WHERE \`role\` = 'admin' OR LOWER(\`department\`) LIKE '%đối ngoại%' OR LOWER(\`department\`) LIKE '%nhân sự%' OR LOWER(\`department\`) LIKE '%đn-ns%'`
         );
         const emails = reviewers.filter(r => r.email).map(r => r.email);
         if (emails.length > 0) {
@@ -608,15 +608,15 @@ router.post('/finances', async (req, res) => {
 router.put('/finances/:id', async (req, res) => {
   try {
     const { status } = req.body;
-    const records = await queryDatabase('SELECT * FROM Finances WHERE id = ?', [req.params.id]);
+    const records = await queryDatabase('SELECT * FROM `Finances` WHERE `id` = ?', [req.params.id]);
 
     if (records && records.length > 0) {
       const record = records[0];
-      await queryDatabase('UPDATE Finances SET status = ? WHERE id = ?', [status, req.params.id]);
+      await queryDatabase('UPDATE `Finances` SET `status` = ? WHERE `id` = ?', [status, req.params.id]);
 
       // Gửi email thông báo cho người yêu cầu về kết quả duyệt
       const requesters = await queryDatabase(
-        'SELECT email, full_name FROM Members WHERE full_name = ? OR member_code = ? LIMIT 1',
+        'SELECT `email`, `full_name` FROM `Members` WHERE `full_name` = ? OR `member_code` = ? LIMIT 1',
         [record.recorded_by, record.recorded_by]
       );
       if (requesters && requesters.length > 0 && requesters[0].email) {
@@ -645,7 +645,7 @@ router.put('/finances/:id', async (req, res) => {
         );
       }
     } else {
-      await queryDatabase('UPDATE Finances SET status = ? WHERE id = ?', [status, req.params.id]);
+      await queryDatabase('UPDATE `Finances` SET `status` = ? WHERE `id` = ?', [status, req.params.id]);
     }
 
     res.json({ success: true });
@@ -656,7 +656,7 @@ router.put('/finances/:id', async (req, res) => {
 
 router.delete('/finances/:id', async (req, res) => {
   try {
-    await queryDatabase('DELETE FROM Finances WHERE id = ?', [req.params.id]);
+    await queryDatabase('DELETE FROM `Finances` WHERE `id` = ?', [req.params.id]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -666,8 +666,8 @@ router.delete('/finances/:id', async (req, res) => {
 // ======================= MEETINGS & MEETING ATTENDANCE =======================
 router.get('/meetings', async (req, res) => {
   try {
-    const meetings = await queryDatabase('SELECT * FROM Meetings ORDER BY meeting_date DESC, created_at DESC');
-    const attendance = await queryDatabase('SELECT * FROM Meeting_Attendance');
+    const meetings = await queryDatabase('SELECT * FROM `Meetings` ORDER BY `meeting_date` DESC, `created_at` DESC');
+    const attendance = await queryDatabase('SELECT * FROM `Meeting_Attendance`');
 
     const data = meetings.map(m => {
       const attList = attendance
@@ -712,7 +712,7 @@ router.post('/meetings', async (req, res) => {
     const minTaker = toId(minute_taker_id || minuteTakerId);
 
     await queryDatabase(
-      'INSERT INTO Meetings (id, title, meeting_date, meeting_time, attendance_taker_id, minute_taker_id, status, minutes_link) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO `Meetings` (`id`, `title`, `meeting_date`, `meeting_time`, `attendance_taker_id`, `minute_taker_id`, `status`, `minutes_link`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [mtgId, title, date || new Date().toISOString().slice(0, 10), time || '08:00', attTaker, minTaker, status || 'pending', minutes_link || null]
     );
 
@@ -721,7 +721,7 @@ router.post('/meetings', async (req, res) => {
       if (!memberId) return;
       try {
         const rows = await queryDatabase(
-          'SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? OR full_name = ? OR username = ? LIMIT 1',
+          'SELECT `email`, `full_name` FROM `Members` WHERE `id` = ? OR `member_code` = ? OR `full_name` = ? OR `username` = ? LIMIT 1',
           [memberId, memberId, memberId, memberId]
         );
         if (rows && rows.length > 0 && rows[0].email) {
@@ -764,7 +764,7 @@ router.put('/meetings/:id', async (req, res) => {
     const link = minutes_link !== undefined ? minutes_link : minutesLink;
 
     await queryDatabase(
-      'UPDATE Meetings SET title = COALESCE(?, title), meeting_date = COALESCE(?, meeting_date), meeting_time = COALESCE(?, meeting_time), status = COALESCE(?, status), minutes_link = COALESCE(?, minutes_link) WHERE id = ?',
+      'UPDATE `Meetings` SET `title` = COALESCE(?, `title`), `meeting_date` = COALESCE(?, `meeting_date`), `meeting_time` = COALESCE(?, `meeting_time`), `status` = COALESCE(?, `status`), `minutes_link` = COALESCE(?, `minutes_link`) WHERE `id` = ?',
       [
         title !== undefined ? title : null,
         date !== undefined ? date : null,
@@ -776,12 +776,12 @@ router.put('/meetings/:id', async (req, res) => {
     );
 
     if (Array.isArray(attendanceData)) {
-      await queryDatabase('DELETE FROM Meeting_Attendance WHERE meeting_id = ?', [req.params.id]);
+      await queryDatabase('DELETE FROM `Meeting_Attendance` WHERE `meeting_id` = ?', [req.params.id]);
       for (const att of attendanceData) {
         const memId = toId(att.memberId || att.member_id);
         if (memId) {
           await queryDatabase(
-            'INSERT INTO Meeting_Attendance (meeting_id, member_id, status) VALUES (?, ?, ?)',
+            'INSERT INTO `Meeting_Attendance` (`meeting_id`, `member_id`, `status`) VALUES (?, ?, ?)',
             [req.params.id, memId, att.status || 'present']
           );
         }
@@ -796,8 +796,8 @@ router.put('/meetings/:id', async (req, res) => {
 
 router.delete('/meetings/:id', async (req, res) => {
   try {
-    await queryDatabase('DELETE FROM Meeting_Attendance WHERE meeting_id = ?', [req.params.id]);
-    await queryDatabase('DELETE FROM Meetings WHERE id = ?', [req.params.id]);
+    await queryDatabase('DELETE FROM `Meeting_Attendance` WHERE `meeting_id` = ?', [req.params.id]);
+    await queryDatabase('DELETE FROM `Meetings` WHERE `id` = ?', [req.params.id]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -807,7 +807,7 @@ router.delete('/meetings/:id', async (req, res) => {
 // ======================= BIRTHDAY ASSIGNMENTS =======================
 router.get('/birthday-assignments', async (req, res) => {
   try {
-    const rows = await queryDatabase('SELECT * FROM Birthday_Assignments ORDER BY assign_year DESC, assign_month DESC');
+    const rows = await queryDatabase('SELECT * FROM `Birthday_Assignments` ORDER BY `assign_year` DESC, `assign_month` DESC');
     const data = rows.map(b => {
       let subs = {};
       try {
@@ -845,21 +845,21 @@ router.post('/birthday-assignments', async (req, res) => {
     const subsStr = typeof submissions === 'object' ? JSON.stringify(submissions) : (submissions || '{}');
 
     await queryDatabase(
-      'INSERT INTO Birthday_Assignments (id, assign_month, assign_year, member_id, link_image, status, submissions) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO `Birthday_Assignments` (`id`, `assign_month`, `assign_year`, `member_id`, `link_image`, `status`, `submissions`) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [bdayId, mMonth, mYear, memId, link || link_image || null, status || 'pending', subsStr]
     );
 
     if (memId) {
       try {
         const assignees = await queryDatabase(
-          'SELECT email, full_name FROM Members WHERE id = ? OR member_code = ? OR full_name = ? OR username = ? LIMIT 1',
+          'SELECT `email`, `full_name` FROM `Members` WHERE `id` = ? OR `member_code` = ? OR `full_name` = ? OR `username` = ? LIMIT 1',
           [memId, memId, memId, memId]
         );
         if (assignees && assignees.length > 0 && assignees[0].email) {
           const assignee = assignees[0];
 
           // Lấy danh sách tổng quan các thành viên có sinh nhật trong tháng mMonth
-          const allMembers = await queryDatabase('SELECT full_name, class_name, department, dob, phone FROM Members');
+          const allMembers = await queryDatabase('SELECT `full_name`, `class_name`, `department`, `dob`, `phone` FROM `Members`');
           const monthMembers = (allMembers || []).filter(m => {
             if (!m.dob) return false;
             const parts = String(m.dob).split(/[\/\-]/);
@@ -938,7 +938,7 @@ router.put('/birthday-assignments/:id', async (req, res) => {
     // Kiểm tra xem có lý do không nộp ảnh mới nào được nộp không
     if (submissions !== undefined) {
       try {
-        const oldAssignments = await queryDatabase('SELECT submissions, assignee_id, month, year FROM Birthday_Assignments WHERE id = ?', [req.params.id]);
+        const oldAssignments = await queryDatabase('SELECT `submissions`, `member_id` AS `assignee_id`, `assign_month` AS `month`, `assign_year` AS `year` FROM `Birthday_Assignments` WHERE `id` = ?', [req.params.id]);
         if (oldAssignments && oldAssignments.length > 0) {
           const oldAssignment = oldAssignments[0];
           const oldSubs = oldAssignment.submissions ? JSON.parse(oldAssignment.submissions) : {};
@@ -958,16 +958,16 @@ router.put('/birthday-assignments/:id', async (req, res) => {
 
           if (newNoPhotoMemberId) {
             // Lấy thông tin thành viên đó
-            const members = await queryDatabase('SELECT full_name FROM Members WHERE id = ? LIMIT 1', [newNoPhotoMemberId]);
+            const members = await queryDatabase('SELECT `full_name` FROM `Members` WHERE `id` = ? LIMIT 1', [newNoPhotoMemberId]);
             const memberName = (members && members.length > 0) ? members[0].full_name : 'Thành viên';
 
             // Lấy thông tin người phụ trách (assignee)
-            const assignees = await queryDatabase('SELECT full_name FROM Members WHERE id = ? OR member_code = ? LIMIT 1', [oldAssignment.assignee_id, oldAssignment.assignee_id]);
+            const assignees = await queryDatabase('SELECT `full_name` FROM `Members` WHERE `id` = ? OR `member_code` = ? LIMIT 1', [oldAssignment.assignee_id, oldAssignment.assignee_id]);
             const assigneeName = (assignees && assignees.length > 0) ? assignees[0].full_name : 'Người phụ trách';
 
             // Tìm Trưởng Ban Đối Ngoại - Nhân Sự (HR Head/Admin)
             const reviewers = await queryDatabase(
-              `SELECT email, full_name FROM Members WHERE role = 'admin' OR LOWER(department) LIKE '%đối ngoại%' OR LOWER(department) LIKE '%nhân sự%' OR LOWER(department) LIKE '%đn-ns%'`
+              `SELECT \`email\`, \`full_name\` FROM \`Members\` WHERE \`role\` = 'admin' OR LOWER(\`department\`) LIKE '%đối ngoại%' OR LOWER(\`department\`) LIKE '%nhân sự%' OR LOWER(\`department\`) LIKE '%đn-ns%'`
             );
 
             const emails = reviewers.map(r => r.email).filter(Boolean);
@@ -998,7 +998,7 @@ router.put('/birthday-assignments/:id', async (req, res) => {
     }
 
     await queryDatabase(
-      'UPDATE Birthday_Assignments SET link_image = COALESCE(?, link_image), status = COALESCE(?, status), submissions = COALESCE(?, submissions), excuse_reason = COALESCE(?, excuse_reason), excuse_status = COALESCE(?, excuse_status), is_penalized = COALESCE(?, is_penalized) WHERE id = ?',
+      'UPDATE `Birthday_Assignments` SET `link_image` = COALESCE(?, `link_image`), `status` = COALESCE(?, `status`), `submissions` = COALESCE(?, `submissions`), `excuse_reason` = COALESCE(?, `excuse_reason`), `excuse_status` = COALESCE(?, `excuse_status`), `is_penalized` = COALESCE(?, `is_penalized`) WHERE `id` = ?',
       [
         imageLink !== undefined ? imageLink : null,
         status !== undefined ? status : null,
@@ -1021,7 +1021,7 @@ router.get('/birthday-config', async (req, res) => {
     const { month, year } = req.query;
     if (!month || !year) return res.status(400).json({ success: false, error: 'Thiếu tham số month/year' });
     const rows = await queryDatabase(
-      'SELECT * FROM Monthly_Birthday_Config WHERE config_month = ? AND config_year = ? LIMIT 1',
+      'SELECT * FROM `Monthly_Birthday_Config` WHERE `config_month` = ? AND `config_year` = ? LIMIT 1',
       [parseInt(month), parseInt(year)]
     );
     res.json({ success: true, data: rows.length > 0 ? { wishTemplate: rows[0].wish_template || '', cardUrl: rows[0].card_url || '' } : { wishTemplate: '', cardUrl: '' } });
@@ -1036,9 +1036,9 @@ router.put('/birthday-config', async (req, res) => {
     if (!month || !year) return res.status(400).json({ success: false, error: 'Thiếu tham số month/year' });
     const id = `bday-cfg-${month}-${year}`;
     await queryDatabase(
-      `INSERT INTO Monthly_Birthday_Config (id, config_month, config_year, wish_template, card_url)
+      `INSERT INTO \`Monthly_Birthday_Config\` (\`id\`, \`config_month\`, \`config_year\`, \`wish_template\`, \`card_url\`)
        VALUES (?, ?, ?, ?, ?)
-       ON DUPLICATE KEY UPDATE wish_template = VALUES(wish_template), card_url = VALUES(card_url)`,
+       ON DUPLICATE KEY UPDATE \`wish_template\` = VALUES(\`wish_template\`), \`card_url\` = VALUES(\`card_url\`)`,
       [id, parseInt(month), parseInt(year), wishTemplate || '', cardUrl || '']
     );
     res.json({ success: true });
@@ -1093,7 +1093,7 @@ const authDrive = () => {
 
 const getHRDriveFolderId = async () => {
   try {
-    const rows = await queryDatabase('SELECT drive_link FROM Department_Drives WHERE dept_name = ? OR dept_name = ? LIMIT 1', ['Ban Đối Ngoại - Nhân Sự', 'Ban Đối Ngoại - Nhân sự']);
+    const rows = await queryDatabase('SELECT `drive_link` FROM `Department_Drives` WHERE `dept_name` = ? OR `dept_name` = ? LIMIT 1', ['Ban Đối Ngoại - Nhân Sự', 'Ban Đối Ngoại - Nhân sự']);
     if (rows && rows.length > 0) {
       const link = rows[0].drive_link;
       const match = link.match(/\/folders\/([a-zA-Z0-9-_]+)/);
@@ -1173,20 +1173,20 @@ router.post('/birthday/upload', upload.single('file'), async (req, res) => {
 router.get('/sessions', async (req, res) => {
   try {
     // Tự động quét và đánh dấu phiên hết hạn (không nhận heartbeat trong 1 phút qua) là ngừng hoạt động
-    await queryDatabase("UPDATE User_Sessions SET is_active = 0, logout_reason = 'timeout' WHERE is_active = 1 AND last_active < NOW() - INTERVAL 1 MINUTE");
+    await queryDatabase("UPDATE `User_Sessions` SET `is_active` = 0, `logout_reason` = 'timeout' WHERE `is_active` = 1 AND `last_active` < NOW() - INTERVAL 1 MINUTE");
 
     const sql = `
       SELECT 
-        s.*,
-        COALESCE(NULLIF(m.full_name, ''), s.name) AS real_name,
-        COALESCE(NULLIF(m.role_title, ''), s.role_title) AS real_role_title
-      FROM User_Sessions s
-      LEFT JOIN Members m ON (
-        s.member_id = m.id
-        OR s.username = m.username
-        OR s.member_id = m.member_code
+        \`s\`.*,
+        COALESCE(NULLIF(\`m\`.\`full_name\`, ''), \`s\`.\`name\`) AS \`real_name\`,
+        COALESCE(NULLIF(\`m\`.\`role_title\`, ''), \`s\`.\`role_title\`) AS \`real_role_title\`
+      FROM \`User_Sessions\` \`s\`
+      LEFT JOIN \`Members\` \`m\` ON (
+        \`s\`.\`member_id\` = \`m\`.\`id\`
+        OR \`s\`.\`username\` = \`m\`.\`username\`
+        OR \`s\`.\`member_id\` = \`m\`.\`member_code\`
       )
-      ORDER BY s.login_time DESC, s.last_active DESC
+      ORDER BY \`s\`.\`login_time\` DESC, \`s\`.\`last_active\` DESC
     `;
     const sessions = await queryDatabase(sql);
     res.json({
@@ -1212,7 +1212,7 @@ router.post('/sessions/login', async (req, res) => {
 
     if (memberId || username) {
       const mems = await queryDatabase(
-        'SELECT full_name, role_title FROM Members WHERE CAST(id AS CHAR) = ? OR username = ? OR member_code = ? LIMIT 1',
+        'SELECT `full_name`, `role_title` FROM `Members` WHERE CAST(`id` AS CHAR) = ? OR `username` = ? OR `member_code` = ? LIMIT 1',
         [String(memberId || ''), String(username || ''), String(username || '')]
       );
       if (mems && mems.length > 0 && mems[0].full_name && mems[0].full_name !== 'Quản Trị Viên') {
@@ -1231,7 +1231,7 @@ router.post('/sessions/login', async (req, res) => {
 
     let sId = sessionId;
     if (sId) {
-      const existing = await queryDatabase('SELECT is_active FROM User_Sessions WHERE id = ?', [sId]);
+      const existing = await queryDatabase('SELECT `is_active` FROM `User_Sessions` WHERE `id` = ?', [sId]);
       if (existing && existing.length > 0 && Number(existing[0].is_active) === 0) {
         sId = 'sess-' + Date.now() + '-' + Math.random().toString(36).substring(2, 8);
       }
@@ -1244,9 +1244,9 @@ router.post('/sessions/login', async (req, res) => {
     const deviceType = isMobile ? 'Mobile Phone' : 'Desktop / PC';
 
     await queryDatabase(
-      `INSERT INTO User_Sessions (id, member_id, username, name, role_title, ip_address, user_agent, device_type, login_time, last_active, is_active)
+      `INSERT INTO \`User_Sessions\` (\`id\`, \`member_id\`, \`username\`, \`name\`, \`role_title\`, \`ip_address\`, \`user_agent\`, \`device_type\`, \`login_time\`, \`last_active\`, \`is_active\`)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), 1)
-       ON DUPLICATE KEY UPDATE last_active = NOW(), is_active = 1, name = VALUES(name), role_title = VALUES(role_title), ip_address = VALUES(ip_address), user_agent = VALUES(user_agent), device_type = VALUES(device_type)`,
+       ON DUPLICATE KEY UPDATE \`last_active\` = NOW(), \`is_active\` = 1, \`name\` = VALUES(\`name\`), \`role_title\` = VALUES(\`role_title\`), \`ip_address\` = VALUES(\`ip_address\`), \`user_agent\` = VALUES(\`user_agent\`), \`device_type\` = VALUES(\`device_type\`)`,
       [sId, String(memberId), username || '', realName, realRole, ip, userAgent || '', deviceType]
     );
 
@@ -1262,14 +1262,14 @@ router.post('/sessions/heartbeat', async (req, res) => {
     if (!sessionId) return res.json({ success: true, isActive: true });
 
     const rows = await queryDatabase(
-      `SELECT s.is_active, m.status
-       FROM User_Sessions s
-       LEFT JOIN Members m ON (
-         s.member_id = m.id
-         OR s.username = m.username
-         OR s.member_id = m.member_code
+      `SELECT \`s\`.\`is_active\`, \`m\`.\`status\`
+       FROM \`User_Sessions\` \`s\`
+       LEFT JOIN \`Members\` \`m\` ON (
+         \`s\`.\`member_id\` = \`m\`.\`id\`
+         OR \`s\`.\`username\` = \`m\`.\`username\`
+         OR \`s\`.\`member_id\` = \`m\`.\`member_code\`
        )
-       WHERE s.id = ?`,
+       WHERE \`s\`.\`id\` = ?`,
       [sessionId]
     );
 
@@ -1280,12 +1280,12 @@ router.post('/sessions/heartbeat', async (req, res) => {
       }
 
       if (String(sessionRow.status).toLowerCase() === 'suspended') {
-        await queryDatabase("UPDATE User_Sessions SET is_active = 0, logout_reason = 'suspended' WHERE id = ?", [sessionId]);
+        await queryDatabase("UPDATE `User_Sessions` SET `is_active` = 0, `logout_reason` = 'suspended' WHERE `id` = ?", [sessionId]);
         return res.json({ success: true, isActive: false, message: 'Tài khoản đã bị tạm khóa. Phiên đăng nhập sẽ bị ngắt.' });
       }
     }
 
-    await queryDatabase('UPDATE User_Sessions SET last_active = NOW() WHERE id = ?', [sessionId]);
+    await queryDatabase('UPDATE `User_Sessions` SET `last_active` = NOW() WHERE `id` = ?', [sessionId]);
     res.json({ success: true, isActive: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -1294,7 +1294,7 @@ router.post('/sessions/heartbeat', async (req, res) => {
 
 router.delete('/sessions/:id', async (req, res) => {
   try {
-    await queryDatabase("UPDATE User_Sessions SET is_active = 0, logout_reason = 'revoked' WHERE id = ?", [req.params.id]);
+    await queryDatabase("UPDATE `User_Sessions` SET `is_active` = 0, `logout_reason` = 'revoked' WHERE `id` = ?", [req.params.id]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -1306,13 +1306,13 @@ router.post('/sessions/logout', async (req, res) => {
     const { sessionId, memberId, username } = req.body;
     if (sessionId) {
       await queryDatabase(
-        "UPDATE User_Sessions SET is_active = 0, logout_reason = 'logout', last_active = NOW() WHERE id = ?",
+        "UPDATE `User_Sessions` SET `is_active` = 0, `logout_reason` = 'logout', `last_active` = NOW() WHERE `id` = ?",
         [sessionId]
       );
     }
     if (memberId || username) {
       await queryDatabase(
-        "UPDATE User_Sessions SET is_active = 0, logout_reason = 'logout', last_active = NOW() WHERE is_active = 1 AND (member_id = ? OR username = ? OR member_id = ?)",
+        "UPDATE `User_Sessions` SET `is_active` = 0, `logout_reason` = 'logout', `last_active` = NOW() WHERE `is_active` = 1 AND (\`member_id\` = ? OR \`username\` = ? OR \`member_id\` = ?)",
         [String(memberId || ''), String(username || ''), String(username || '')]
       );
     }
@@ -1325,7 +1325,7 @@ router.post('/sessions/logout', async (req, res) => {
 router.post('/sessions/revoke-all', async (req, res) => {
   try {
     const { currentSessionId } = req.body;
-    await queryDatabase("UPDATE User_Sessions SET is_active = 0, logout_reason = 'revoked' WHERE id != ?", [currentSessionId || '']);
+    await queryDatabase("UPDATE `User_Sessions` SET `is_active` = 0, `logout_reason` = 'revoked' WHERE `id` != ?", [currentSessionId || '']);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -1335,7 +1335,7 @@ router.post('/sessions/revoke-all', async (req, res) => {
 // ======================= MEMBER MILESTONES =======================
 router.get('/milestones', async (req, res) => {
   try {
-    const milestones = await queryDatabase('SELECT * FROM Member_Milestones ORDER BY created_at ASC');
+    const milestones = await queryDatabase('SELECT * FROM `Member_Milestones` ORDER BY `created_at` ASC');
     const data = milestones.map(m => ({
       id: m.id,
       memberId: m.member_id,
@@ -1358,7 +1358,7 @@ router.post('/milestones', async (req, res) => {
     const targetMemId = String(memberId || member_id);
 
     await queryDatabase(
-      'INSERT INTO Member_Milestones (id, member_id, date, title, badge_text, badge_style) VALUES (?, ?, ?, ?, ?, ?)',
+      'INSERT INTO `Member_Milestones` (`id`, `member_id`, `date`, `title`, `badge_text`, `badge_style`) VALUES (?, ?, ?, ?, ?, ?)',
       [
         msId,
         targetMemId,
@@ -1377,7 +1377,7 @@ router.post('/milestones', async (req, res) => {
 
 router.delete('/milestones/:id', async (req, res) => {
   try {
-    await queryDatabase('DELETE FROM Member_Milestones WHERE id = ?', [req.params.id]);
+    await queryDatabase('DELETE FROM `Member_Milestones` WHERE `id` = ?', [req.params.id]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -1387,7 +1387,7 @@ router.delete('/milestones/:id', async (req, res) => {
 // ======================= GENERATIONS =======================
 router.get('/generations', async (req, res) => {
   try {
-    const rows = await queryDatabase('SELECT * FROM Generations ORDER BY id DESC');
+    const rows = await queryDatabase('SELECT * FROM `Generations` ORDER BY `id` DESC');
     res.json({ success: true, data: rows });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -1399,7 +1399,7 @@ router.post('/generations', async (req, res) => {
     const { id, name, years, description } = req.body;
     const genId = id || ('gen-' + Date.now());
     await queryDatabase(
-      'INSERT INTO Generations (id, name, years, description) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE name = VALUES(name), years = VALUES(years), description = VALUES(description)',
+      'INSERT INTO `Generations` (`id`, `name`, `years`, `description`) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `years` = VALUES(`years`), `description` = VALUES(`description`)',
       [genId, name, years || '', description || '']
     );
     res.json({ success: true, data: { id: genId, name, years, description } });
@@ -1410,7 +1410,7 @@ router.post('/generations', async (req, res) => {
 
 router.delete('/generations/:id', async (req, res) => {
   try {
-    await queryDatabase('DELETE FROM Generations WHERE id = ?', [req.params.id]);
+    await queryDatabase('DELETE FROM `Generations` WHERE `id` = ?', [req.params.id]);
     res.json({ success: true, message: 'Đã xóa Gen thành công' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -1420,7 +1420,7 @@ router.delete('/generations/:id', async (req, res) => {
 // ======================= RESOURCES =======================
 router.get('/resources', async (req, res) => {
   try {
-    const rows = await queryDatabase('SELECT * FROM Resources ORDER BY created_at DESC');
+    const rows = await queryDatabase('SELECT * FROM `Resources` ORDER BY `created_at` DESC');
     const data = rows.map(r => ({
       id: r.id,
       title: r.title,
@@ -1443,7 +1443,7 @@ router.post('/resources', async (req, res) => {
     const upId = toId(uploaderId || uploader_id);
 
     await queryDatabase(
-      'INSERT INTO Resources (id, title, description, category, link, uploader_id) VALUES (?, ?, ?, ?, ?, ?)',
+      'INSERT INTO `Resources` (`id`, `title`, `description`, `category`, `link`, `uploader_id`) VALUES (?, ?, ?, ?, ?, ?)',
       [resId, title, description || '', category || 'Chung', link, upId]
     );
     res.json({ success: true, data: { id: resId, title, description, category, link, uploaderId: upId } });
@@ -1454,7 +1454,7 @@ router.post('/resources', async (req, res) => {
 
 router.delete('/resources/:id', async (req, res) => {
   try {
-    await queryDatabase('DELETE FROM Resources WHERE id = ?', [req.params.id]);
+    await queryDatabase('DELETE FROM `Resources` WHERE `id` = ?', [req.params.id]);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -1464,7 +1464,7 @@ router.delete('/resources/:id', async (req, res) => {
 // ======================= DEPARTMENT DRIVES =======================
 router.get('/department-drives', async (req, res) => {
   try {
-    const rows = await queryDatabase('SELECT * FROM Department_Drives ORDER BY id ASC');
+    const rows = await queryDatabase('SELECT * FROM `Department_Drives` ORDER BY `id` ASC');
     const data = rows.map(d => ({
       id: d.id,
       deptName: d.dept_name,
@@ -1484,7 +1484,7 @@ router.put('/department-drives/:id', async (req, res) => {
     const dLink = link !== undefined ? link : drive_link;
 
     await queryDatabase(
-      'UPDATE Department_Drives SET drive_link = ? WHERE id = ? OR dept_name = ?',
+      'UPDATE `Department_Drives` SET `drive_link` = ? WHERE `id` = ? OR `dept_name` = ?',
       [dLink, req.params.id, req.params.id]
     );
     res.json({ success: true });
@@ -1496,7 +1496,7 @@ router.put('/department-drives/:id', async (req, res) => {
 // ======================= ATTENDANCE RECORDS =======================
 router.get('/attendance-records', async (req, res) => {
   try {
-    const rows = await queryDatabase('SELECT * FROM Attendance_Records ORDER BY created_at DESC');
+    const rows = await queryDatabase('SELECT * FROM `Attendance_Records` ORDER BY `created_at` DESC');
     const data = rows.map(a => {
       let presentIds = [];
       try {
@@ -1527,7 +1527,7 @@ router.post('/attendance-records', async (req, res) => {
     const pMembersStr = Array.isArray(presentMemberIds) ? JSON.stringify(presentMemberIds) : (present_members || '[]');
 
     await queryDatabase(
-      'INSERT INTO Attendance_Records (id, session_name, record_date, present_members, status) VALUES (?, ?, ?, ?, ?)',
+      'INSERT INTO `Attendance_Records` (`id`, `session_name`, `record_date`, `present_members`, `status`) VALUES (?, ?, ?, ?, ?)',
       [recId, sName, rDate, pMembersStr, status || 'approved']
     );
     res.json({ success: true, data: { id: recId, sessionName: sName, date: rDate, presentMemberIds: presentMemberIds || [] } });
@@ -1545,11 +1545,11 @@ router.put('/attendance-records/:id', async (req, res) => {
     const params = [];
 
     if (status !== undefined) {
-      setClauses.push('status = ?');
+      setClauses.push('`status` = ?');
       params.push(status);
     }
     if (pMembersStr !== undefined) {
-      setClauses.push('present_members = ?');
+      setClauses.push('`present_members` = ?');
       params.push(pMembersStr);
     }
 
@@ -1558,7 +1558,7 @@ router.put('/attendance-records/:id', async (req, res) => {
     }
 
     await queryDatabase(
-      `UPDATE Attendance_Records SET ${setClauses.join(', ')} WHERE id = ?`,
+      `UPDATE \`Attendance_Records\` SET ${setClauses.join(', ')} WHERE \`id\` = ?`,
       [...params, req.params.id]
     );
 
@@ -1571,7 +1571,7 @@ router.put('/attendance-records/:id', async (req, res) => {
 // ======================= GENERATIONS =======================
 router.get('/generations', async (req, res) => {
   try {
-    const rows = await queryDatabase('SELECT * FROM Generations ORDER BY id DESC');
+    const rows = await queryDatabase('SELECT * FROM `Generations` ORDER BY `id` DESC');
     const data = rows.map(g => ({
       id: g.id,
       name: g.name,
@@ -1589,7 +1589,7 @@ router.post('/generations', async (req, res) => {
     const { id, name, years, description } = req.body;
     const genId = id || ('gen-' + Date.now());
     await queryDatabase(
-      'INSERT INTO Generations (id, name, years, description) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE name = VALUES(name), years = VALUES(years), description = VALUES(description)',
+      'INSERT INTO `Generations` (`id`, `name`, `years`, `description`) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE `name` = VALUES(`name`), `years` = VALUES(`years`), `description` = VALUES(`description`)',
       [genId, name, years || '', description || '']
     );
     res.json({ success: true, data: { id: genId, name, years, description } });
@@ -1600,7 +1600,7 @@ router.post('/generations', async (req, res) => {
 
 router.delete('/generations/:id', async (req, res) => {
   try {
-    await queryDatabase('DELETE FROM Generations WHERE id = ?', [req.params.id]);
+    await queryDatabase('DELETE FROM `Generations` WHERE `id` = ?', [req.params.id]);
     res.json({ success: true, message: 'Đã xóa Gen thành công' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -1612,7 +1612,7 @@ router.delete('/generations/:id', async (req, res) => {
 // --- Seasons ---
 router.get('/recruitment/seasons', async (req, res) => {
   try {
-    const rows = await queryDatabase('SELECT * FROM Recruitment_Seasons ORDER BY created_at DESC');
+    const rows = await queryDatabase('SELECT * FROM `Recruitment_Seasons` ORDER BY `created_at` DESC');
     const data = rows.map(r => ({
       ...r,
       interviewer_ids: (() => { try { return r.interviewer_ids ? JSON.parse(r.interviewer_ids) : []; } catch { return []; } })(),
@@ -1643,13 +1643,13 @@ router.post('/recruitment/seasons', async (req, res) => {
 
     try {
       await queryDatabase(
-        'INSERT INTO Recruitment_Seasons (id, name, quota, department, scoring_type, created_by) VALUES (?, ?, ?, ?, ?, ?)',
+        'INSERT INTO `Recruitment_Seasons` (`id`, `name`, `quota`, `department`, `scoring_type`, `created_by`) VALUES (?, ?, ?, ?, ?, ?)',
         [sid, name, parseInt(quota) || 0, department || null, scoringTypeVal, creatorId]
       );
     } catch (dbErr) {
       console.warn('⚠️ Fallback query for POST recruitment/seasons:', dbErr.message);
       await queryDatabase(
-        'INSERT INTO Recruitment_Seasons (id, name, quota, department, scoring_type) VALUES (?, ?, ?, ?, ?)',
+        'INSERT INTO `Recruitment_Seasons` (`id`, `name`, `quota`, `department`, `scoring_type`) VALUES (?, ?, ?, ?, ?)',
         [sid, name, parseInt(quota) || 0, department || null, scoringTypeVal]
       );
     }
@@ -1666,7 +1666,7 @@ router.put('/recruitment/seasons/:id', async (req, res) => {
     const { name, quota, department, scoring_type, is_active, interviewer_ids, active_round, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, lead_interviewer_id, selected_questions } = req.body;
 
     // Fetch old season data for assignment email notifications
-    const current = await queryDatabase('SELECT name, interviewer_ids, teamwork_scorer_ids FROM Recruitment_Seasons WHERE id = ?', [req.params.id]);
+    const current = await queryDatabase('SELECT `name`, `interviewer_ids`, `teamwork_scorer_ids` FROM `Recruitment_Seasons` WHERE `id` = ?', [req.params.id]);
     let oldInterviewerIds = [];
     let oldScorerIds = [];
     let seasonName = name;
@@ -1683,23 +1683,23 @@ router.put('/recruitment/seasons/:id', async (req, res) => {
     const updates = [];
     const params = [];
 
-    if (name !== undefined) { updates.push('name = ?'); params.push(name); }
-    if (quota !== undefined) { updates.push('quota = ?'); params.push(quota); }
-    if (department !== undefined) { updates.push('department = ?'); params.push(department); }
-    if (scoring_type !== undefined) { updates.push('scoring_type = ?'); params.push(Array.isArray(scoring_type) ? JSON.stringify(scoring_type) : scoring_type); }
-    if (is_active !== undefined) { updates.push('is_active = ?'); params.push(is_active ? 1 : 0); }
-    if (interviewer_ids !== undefined) { updates.push('interviewer_ids = ?'); params.push(Array.isArray(interviewer_ids) ? JSON.stringify(interviewer_ids) : interviewer_ids); }
-    if (active_round !== undefined) { updates.push('active_round = ?'); params.push(active_round); }
-    if (teamwork_scorer_ids !== undefined) { updates.push('teamwork_scorer_ids = ?'); params.push(Array.isArray(teamwork_scorer_ids) ? JSON.stringify(teamwork_scorer_ids) : teamwork_scorer_ids); }
-    if (challenge_process_scorer_ids !== undefined) { updates.push('challenge_process_scorer_ids = ?'); params.push(Array.isArray(challenge_process_scorer_ids) ? JSON.stringify(challenge_process_scorer_ids) : challenge_process_scorer_ids); }
-    if (challenge_result_scorer_ids !== undefined) { updates.push('challenge_result_scorer_ids = ?'); params.push(Array.isArray(challenge_result_scorer_ids) ? JSON.stringify(challenge_result_scorer_ids) : challenge_result_scorer_ids); }
-    if (lead_interviewer_id !== undefined) { updates.push('lead_interviewer_id = ?'); params.push(lead_interviewer_id); }
-    if (selected_questions !== undefined) { updates.push('selected_questions = ?'); params.push(Array.isArray(selected_questions) ? JSON.stringify(selected_questions) : selected_questions); }
+    if (name !== undefined) { updates.push('`name` = ?'); params.push(name); }
+    if (quota !== undefined) { updates.push('`quota` = ?'); params.push(quota); }
+    if (department !== undefined) { updates.push('`department` = ?'); params.push(department); }
+    if (scoring_type !== undefined) { updates.push('`scoring_type` = ?'); params.push(Array.isArray(scoring_type) ? JSON.stringify(scoring_type) : scoring_type); }
+    if (is_active !== undefined) { updates.push('`is_active` = ?'); params.push(is_active ? 1 : 0); }
+    if (interviewer_ids !== undefined) { updates.push('`interviewer_ids` = ?'); params.push(Array.isArray(interviewer_ids) ? JSON.stringify(interviewer_ids) : interviewer_ids); }
+    if (active_round !== undefined) { updates.push('`active_round` = ?'); params.push(active_round); }
+    if (teamwork_scorer_ids !== undefined) { updates.push('`teamwork_scorer_ids` = ?'); params.push(Array.isArray(teamwork_scorer_ids) ? JSON.stringify(teamwork_scorer_ids) : teamwork_scorer_ids); }
+    if (challenge_process_scorer_ids !== undefined) { updates.push('`challenge_process_scorer_ids` = ?'); params.push(Array.isArray(challenge_process_scorer_ids) ? JSON.stringify(challenge_process_scorer_ids) : challenge_process_scorer_ids); }
+    if (challenge_result_scorer_ids !== undefined) { updates.push('`challenge_result_scorer_ids` = ?'); params.push(Array.isArray(challenge_result_scorer_ids) ? JSON.stringify(challenge_result_scorer_ids) : challenge_result_scorer_ids); }
+    if (lead_interviewer_id !== undefined) { updates.push('`lead_interviewer_id` = ?'); params.push(lead_interviewer_id); }
+    if (selected_questions !== undefined) { updates.push('`selected_questions` = ?'); params.push(Array.isArray(selected_questions) ? JSON.stringify(selected_questions) : selected_questions); }
 
     if (updates.length > 0) {
       params.push(req.params.id);
       await queryDatabase(
-        `UPDATE Recruitment_Seasons SET ${updates.join(', ')} WHERE id = ?`,
+        `UPDATE \`Recruitment_Seasons\` SET ${updates.join(', ')} WHERE \`id\` = ?`,
         params
       );
     }
@@ -1717,7 +1717,7 @@ router.put('/recruitment/seasons/:id', async (req, res) => {
 
 router.delete('/recruitment/seasons/:id', async (req, res) => {
   try {
-    await queryDatabase('DELETE FROM Recruitment_Seasons WHERE id = ?', [req.params.id]);
+    await queryDatabase('DELETE FROM `Recruitment_Seasons` WHERE `id` = ?', [req.params.id]);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
@@ -1726,7 +1726,7 @@ router.delete('/recruitment/seasons/:id', async (req, res) => {
 router.get('/recruitment/criteria/:seasonId', async (req, res) => {
   try {
     let rows = await queryDatabase(
-      'SELECT * FROM Recruitment_Criteria WHERE season_id = ? ORDER BY sort_order ASC, id ASC',
+      'SELECT * FROM `Recruitment_Criteria` WHERE `season_id` = ? ORDER BY `sort_order` ASC, `id` ASC',
       [req.params.seasonId]
     );
     if (rows.length === 0 && req.params.seasonId) {
@@ -1740,12 +1740,12 @@ router.get('/recruitment/criteria/:seasonId', async (req, res) => {
       for (const dc of defaultCriteria) {
         const cid = 'crit-' + req.params.seasonId + '-' + dc.round;
         await queryDatabase(
-          'INSERT INTO Recruitment_Criteria (id, season_id, criteria_name, max_score, sort_order, round_type, difficulty) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO `Recruitment_Criteria` (`id`, `season_id`, `criteria_name`, `max_score`, `sort_order`, `round_type`, `difficulty`) VALUES (?, ?, ?, ?, ?, ?, ?)',
           [cid, req.params.seasonId, dc.name, dc.max, dc.sort, dc.round, dc.difficulty]
         ).catch(() => { });
       }
       rows = await queryDatabase(
-        'SELECT * FROM Recruitment_Criteria WHERE season_id = ? ORDER BY sort_order ASC, id ASC',
+        'SELECT * FROM `Recruitment_Criteria` WHERE `season_id` = ? ORDER BY `sort_order` ASC, `id` ASC',
         [req.params.seasonId]
       );
     }
@@ -1758,7 +1758,7 @@ router.post('/recruitment/criteria', async (req, res) => {
     const { id, season_id, criteria_name, max_score, sort_order, round_type, difficulty } = req.body;
     const cid = id || ('crit-' + Date.now());
     await queryDatabase(
-      'INSERT INTO Recruitment_Criteria (id, season_id, criteria_name, max_score, sort_order, round_type, difficulty) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO `Recruitment_Criteria` (`id`, `season_id`, `criteria_name`, `max_score`, `sort_order`, `round_type`, `difficulty`) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [cid, season_id, criteria_name, max_score || 10, sort_order || 0, round_type || 'teamwork', difficulty || 'Trung bình']
     );
     res.json({ success: true, data: { id: cid, season_id, criteria_name, max_score: max_score || 10, round_type: round_type || 'teamwork', difficulty: difficulty || 'Trung bình' } });
@@ -1769,7 +1769,7 @@ router.put('/recruitment/criteria/:id', async (req, res) => {
   try {
     const { criteria_name, max_score, round_type, difficulty } = req.body;
     await queryDatabase(
-      'UPDATE Recruitment_Criteria SET criteria_name = COALESCE(?, criteria_name), max_score = COALESCE(?, max_score), round_type = COALESCE(?, round_type), difficulty = COALESCE(?, difficulty) WHERE id = ?',
+      'UPDATE `Recruitment_Criteria` SET `criteria_name` = COALESCE(?, `criteria_name`), `max_score` = COALESCE(?, `max_score`), `round_type` = COALESCE(?, `round_type`), `difficulty` = COALESCE(?, `difficulty`) WHERE `id` = ?',
       [criteria_name ?? null, max_score ?? null, round_type ?? null, difficulty ?? null, req.params.id]
     );
     res.json({ success: true });
@@ -1778,7 +1778,7 @@ router.put('/recruitment/criteria/:id', async (req, res) => {
 
 router.delete('/recruitment/criteria/:id', async (req, res) => {
   try {
-    await queryDatabase('DELETE FROM Recruitment_Criteria WHERE id = ?', [req.params.id]);
+    await queryDatabase('DELETE FROM `Recruitment_Criteria` WHERE `id` = ?', [req.params.id]);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
@@ -1787,14 +1787,14 @@ router.delete('/recruitment/criteria/:id', async (req, res) => {
 router.get('/recruitment/candidates/:seasonId', async (req, res) => {
   try {
     const { interviewer_id } = req.query;
-    let sql = 'SELECT id, interview_code, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, status, notes, application_answers, lead_interviewer_id, selected_questions, facebook, challenge_topic, created_at FROM Recruitment_Candidates WHERE season_id = ?';
+    let sql = 'SELECT `id`, `interview_code`, `season_id`, `full_name`, `class_name`, `phone`, `email`, `desired_dept`, `interviewer_id`, `interviewer_ids`, `teamwork_scorer_ids`, `challenge_process_scorer_ids`, `challenge_result_scorer_ids`, `status`, `notes`, `application_answers`, `lead_interviewer_id`, `selected_questions`, `facebook`, `challenge_topic`, `created_at` FROM `Recruitment_Candidates` WHERE `season_id` = ?';
     const params = [req.params.seasonId];
     // Interviewer chỉ thấy ứng viên được gán cho mình
     if (interviewer_id) {
-      sql += ' AND (interviewer_id = ? OR interviewer_ids LIKE ? OR teamwork_scorer_ids LIKE ? OR challenge_process_scorer_ids LIKE ? OR challenge_result_scorer_ids LIKE ?)';
+      sql += ' AND (`interviewer_id` = ? OR `interviewer_ids` LIKE ? OR `teamwork_scorer_ids` LIKE ? OR `challenge_process_scorer_ids` LIKE ? OR `challenge_result_scorer_ids` LIKE ?)';
       params.push(interviewer_id, `%"${interviewer_id}"%`, `%"${interviewer_id}"%`, `%"${interviewer_id}"%`, `%"${interviewer_id}"%`);
     }
-    sql += ' ORDER BY created_at ASC';
+    sql += ' ORDER BY `created_at` ASC';
     const rows = await queryDatabase(sql, params);
     const data = rows.map(r => ({
       ...r,
@@ -1830,7 +1830,7 @@ router.post('/recruitment/candidates', async (req, res) => {
       ? (Array.isArray(selected_questions) ? JSON.stringify(selected_questions) : selected_questions)
       : null;
     await queryDatabase(
-      'INSERT INTO Recruitment_Candidates (id, interview_code, season_id, full_name, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, notes, application_answers, lead_interviewer_id, selected_questions, facebook, challenge_topic) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO `Recruitment_Candidates` (`id`, `interview_code`, `season_id`, `full_name`, `class_name`, `phone`, `email`, `desired_dept`, `interviewer_id`, `interviewer_ids`, `teamwork_scorer_ids`, `challenge_process_scorer_ids`, `challenge_result_scorer_ids`, `notes`, `application_answers`, `lead_interviewer_id`, `selected_questions`, `facebook`, `challenge_topic`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [cid, codeVal, season_id, full_name, class_name || null, phone || null, email || null, desired_dept || null, interviewer_id || null, interviewerIdsVal, teamworkScorerIdsVal, challengeProcessScorerIdsVal, challengeResultScorerIdsVal, notes || null, application_answers || null, lead_interviewer_id || null, selectedQuestionsVal, facebook || null, challenge_topic || null]
     );
     res.json({ success: true, data: { id: cid, interview_code: codeVal, season_id, full_name, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, facebook, challenge_topic, status: 'pending' } });
@@ -1842,7 +1842,7 @@ router.put('/recruitment/candidates/:id', async (req, res) => {
     const { full_name, interview_code, class_name, phone, email, desired_dept, interviewer_id, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids, status, notes, application_answers, lead_interviewer_id, selected_questions, facebook, challenge_topic } = req.body;
 
     // Fetch old data for logs and comparison
-    const current = await queryDatabase('SELECT full_name, interviewer_ids, teamwork_scorer_ids FROM Recruitment_Candidates WHERE id = ? OR interview_code = ? LIMIT 1', [req.params.id, req.params.id]);
+    const current = await queryDatabase('SELECT `full_name`, `interviewer_ids`, `teamwork_scorer_ids` FROM `Recruitment_Candidates` WHERE `id` = ? OR `interview_code` = ? LIMIT 1', [req.params.id, req.params.id]);
     let oldInterviewerIds = [];
     let oldScorerIds = [];
     let candName = full_name;
@@ -1859,29 +1859,29 @@ router.put('/recruitment/candidates/:id', async (req, res) => {
     const updates = [];
     const params = [];
 
-    if (full_name !== undefined) { updates.push('full_name = ?'); params.push(full_name); }
-    if (interview_code !== undefined) { updates.push('interview_code = ?'); params.push(interview_code); }
-    if (class_name !== undefined) { updates.push('class_name = ?'); params.push(class_name); }
-    if (phone !== undefined) { updates.push('phone = ?'); params.push(phone); }
-    if (email !== undefined) { updates.push('email = ?'); params.push(email); }
-    if (desired_dept !== undefined) { updates.push('desired_dept = ?'); params.push(desired_dept); }
-    if (interviewer_id !== undefined) { updates.push('interviewer_id = ?'); params.push(interviewer_id); }
-    if (interviewer_ids !== undefined) { updates.push('interviewer_ids = ?'); params.push(Array.isArray(interviewer_ids) ? JSON.stringify(interviewer_ids) : interviewer_ids); }
-    if (teamwork_scorer_ids !== undefined) { updates.push('teamwork_scorer_ids = ?'); params.push(Array.isArray(teamwork_scorer_ids) ? JSON.stringify(teamwork_scorer_ids) : teamwork_scorer_ids); }
-    if (challenge_process_scorer_ids !== undefined) { updates.push('challenge_process_scorer_ids = ?'); params.push(Array.isArray(challenge_process_scorer_ids) ? JSON.stringify(challenge_process_scorer_ids) : challenge_process_scorer_ids); }
-    if (challenge_result_scorer_ids !== undefined) { updates.push('challenge_result_scorer_ids = ?'); params.push(Array.isArray(challenge_result_scorer_ids) ? JSON.stringify(challenge_result_scorer_ids) : challenge_result_scorer_ids); }
-    if (status !== undefined) { updates.push('status = ?'); params.push(status); }
-    if (notes !== undefined) { updates.push('notes = ?'); params.push(notes); }
-    if (application_answers !== undefined) { updates.push('application_answers = ?'); params.push(application_answers); }
-    if (lead_interviewer_id !== undefined) { updates.push('lead_interviewer_id = ?'); params.push(lead_interviewer_id); }
-    if (selected_questions !== undefined) { updates.push('selected_questions = ?'); params.push(Array.isArray(selected_questions) ? JSON.stringify(selected_questions) : selected_questions); }
-    if (facebook !== undefined) { updates.push('facebook = ?'); params.push(facebook); }
-    if (challenge_topic !== undefined) { updates.push('challenge_topic = ?'); params.push(challenge_topic); }
+    if (full_name !== undefined) { updates.push('`full_name` = ?'); params.push(full_name); }
+    if (interview_code !== undefined) { updates.push('`interview_code` = ?'); params.push(interview_code); }
+    if (class_name !== undefined) { updates.push('`class_name` = ?'); params.push(class_name); }
+    if (phone !== undefined) { updates.push('`phone` = ?'); params.push(phone); }
+    if (email !== undefined) { updates.push('`email` = ?'); params.push(email); }
+    if (desired_dept !== undefined) { updates.push('`desired_dept` = ?'); params.push(desired_dept); }
+    if (interviewer_id !== undefined) { updates.push('`interviewer_id` = ?'); params.push(interviewer_id); }
+    if (interviewer_ids !== undefined) { updates.push('`interviewer_ids` = ?'); params.push(Array.isArray(interviewer_ids) ? JSON.stringify(interviewer_ids) : interviewer_ids); }
+    if (teamwork_scorer_ids !== undefined) { updates.push('`teamwork_scorer_ids` = ?'); params.push(Array.isArray(teamwork_scorer_ids) ? JSON.stringify(teamwork_scorer_ids) : teamwork_scorer_ids); }
+    if (challenge_process_scorer_ids !== undefined) { updates.push('`challenge_process_scorer_ids` = ?'); params.push(Array.isArray(challenge_process_scorer_ids) ? JSON.stringify(challenge_process_scorer_ids) : challenge_process_scorer_ids); }
+    if (challenge_result_scorer_ids !== undefined) { updates.push('`challenge_result_scorer_ids` = ?'); params.push(Array.isArray(challenge_result_scorer_ids) ? JSON.stringify(challenge_result_scorer_ids) : challenge_result_scorer_ids); }
+    if (status !== undefined) { updates.push('`status` = ?'); params.push(status); }
+    if (notes !== undefined) { updates.push('`notes` = ?'); params.push(notes); }
+    if (application_answers !== undefined) { updates.push('`application_answers` = ?'); params.push(application_answers); }
+    if (lead_interviewer_id !== undefined) { updates.push('`lead_interviewer_id` = ?'); params.push(lead_interviewer_id); }
+    if (selected_questions !== undefined) { updates.push('`selected_questions` = ?'); params.push(Array.isArray(selected_questions) ? JSON.stringify(selected_questions) : selected_questions); }
+    if (facebook !== undefined) { updates.push('`facebook` = ?'); params.push(facebook); }
+    if (challenge_topic !== undefined) { updates.push('`challenge_topic` = ?'); params.push(challenge_topic); }
 
     if (updates.length > 0) {
       params.push(req.params.id, req.params.id);
       await queryDatabase(
-        `UPDATE Recruitment_Candidates SET ${updates.join(', ')} WHERE id = ? OR interview_code = ?`,
+        `UPDATE \`Recruitment_Candidates\` SET ${updates.join(', ')} WHERE \`id\` = ? OR \`interview_code\` = ?`,
         params
       );
     }
@@ -1900,7 +1900,7 @@ router.put('/recruitment/candidates/:id', async (req, res) => {
 
 router.delete('/recruitment/candidates/:id', async (req, res) => {
   try {
-    await queryDatabase('DELETE FROM Recruitment_Candidates WHERE id = ?', [req.params.id]);
+    await queryDatabase('DELETE FROM `Recruitment_Candidates` WHERE `id` = ?', [req.params.id]);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ success: false, error: e.message }); }
 });
@@ -1912,7 +1912,7 @@ router.put('/recruitment/candidates/:id/result', async (req, res) => {
     const allowed = ['passed', 'failed', 'reserve', 'pending', 'scored'];
     if (!allowed.includes(status)) return res.status(400).json({ success: false, error: 'Trạng thái không hợp lệ' });
     await queryDatabase(
-      'UPDATE Recruitment_Candidates SET status = ?, notes = COALESCE(?, notes) WHERE id = ?',
+      'UPDATE `Recruitment_Candidates` SET `status` = ?, `notes` = COALESCE(?, `notes`) WHERE `id` = ?',
       [status, notes ?? null, req.params.id]
     );
     res.json({ success: true });
@@ -1928,7 +1928,7 @@ router.post('/recruitment/scores', async (req, res) => {
 
     // Lookup candidate to resolve both ID and interview_code
     const cRows = await queryDatabase(
-      'SELECT id, interview_code FROM Recruitment_Candidates WHERE id = ? OR interview_code = ? LIMIT 1',
+      'SELECT `id`, `interview_code` FROM `Recruitment_Candidates` WHERE `id` = ? OR `interview_code` = ? LIMIT 1',
       [candidate_id, candidate_id]
     );
     const targetId = cRows.length > 0 ? cRows[0].id : candidate_id;
@@ -1936,18 +1936,18 @@ router.post('/recruitment/scores', async (req, res) => {
 
     for (const s of scores) {
       const existing = await queryDatabase(
-        `SELECT id FROM Recruitment_Scores WHERE (candidate_id = ? OR candidate_id = ?) AND interviewer_id = ? AND criteria_id = ?`,
+        `SELECT \`id\` FROM \`Recruitment_Scores\` WHERE (\`candidate_id\` = ? OR \`candidate_id\` = ?) AND \`interviewer_id\` = ? AND \`criteria_id\` = ?`,
         [targetId, targetCode, interviewer_id, s.criteria_id]
       );
       if (existing.length > 0) {
         await queryDatabase(
-          `UPDATE Recruitment_Scores SET score = ?, comments = ?, season_id = ? WHERE id = ?`,
+          `UPDATE \`Recruitment_Scores\` SET \`score\` = ?, \`comments\` = ?, \`season_id\` = ? WHERE \`id\` = ?`,
           [s.score, s.comments || comments || null, season_id, existing[0].id]
         );
       } else {
         const sid = 'score-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
         await queryDatabase(
-          `INSERT INTO Recruitment_Scores (id, season_id, candidate_id, interviewer_id, criteria_id, score, comments)
+          `INSERT INTO \`Recruitment_Scores\` (\`id\`, \`season_id\`, \`candidate_id\`, \`interviewer_id\`, \`criteria_id\`, \`score\`, \`comments\`)
            VALUES (?, ?, ?, ?, ?, ?, ?)`,
           [sid, season_id, targetId, interviewer_id, s.criteria_id, s.score, s.comments || comments || null]
         );
@@ -1959,7 +1959,7 @@ router.post('/recruitment/scores', async (req, res) => {
       const firstCritId = scores[0]?.criteria_id;
       let rType = 'teamwork';
       if (firstCritId) {
-        const critRows = await queryDatabase('SELECT round_type FROM Recruitment_Criteria WHERE id = ? LIMIT 1', [firstCritId]);
+        const critRows = await queryDatabase('SELECT `round_type` FROM `Recruitment_Criteria` WHERE `id` = ? LIMIT 1', [firstCritId]);
         if (critRows.length > 0 && critRows[0].round_type) {
           rType = critRows[0].round_type;
           if (rType === 'thuthach') rType = 'thuthach_ketqua';
@@ -1970,21 +1970,21 @@ router.post('/recruitment/scores', async (req, res) => {
       const evalId = 'eval-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
 
       await queryDatabase(`
-        INSERT INTO Recruitment_Evaluations (id, season_id, candidate_id, interview_code, interviewer_id, round_type, total_score, avg_score, scores_json, comments)
+        INSERT INTO \`Recruitment_Evaluations\` (\`id\`, \`season_id\`, \`candidate_id\`, \`interview_code\`, \`interviewer_id\`, \`round_type\`, \`total_score\`, \`avg_score\`, \`scores_json\`, \`comments\`)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
-          total_score = VALUES(total_score),
-          avg_score = VALUES(avg_score),
-          scores_json = VALUES(scores_json),
-          comments = VALUES(comments),
-          updated_at = CURRENT_TIMESTAMP
+          \`total_score\` = VALUES(\`total_score\`),
+          \`avg_score\` = VALUES(\`avg_score\`),
+          \`scores_json\` = VALUES(\`scores_json\`),
+          \`comments\` = VALUES(\`comments\`),
+          \`updated_at\` = CURRENT_TIMESTAMP
       `, [evalId, season_id, targetId, targetCode, interviewer_id, rType, totalSum, avgScore, JSON.stringify(scores), comments || null]);
     } catch (evalErr) {
       console.warn('⚠️ Recruitment_Evaluations upsert warning:', evalErr.message);
     }
 
     await queryDatabase(
-      "UPDATE Recruitment_Candidates SET status = 'scored' WHERE id = ? OR interview_code = ?",
+      "UPDATE `Recruitment_Candidates` SET `status` = 'scored' WHERE `id` = ? OR `interview_code` = ?",
       [targetId, targetCode]
     );
     res.json({ success: true });
@@ -1999,21 +1999,21 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
 
     // Auto deduplicate historical score rows if any exist
     await queryDatabase(`
-      DELETE s1 FROM recruitment_scores s1
-      INNER JOIN recruitment_scores s2 
-      WHERE s1.candidate_id = s2.candidate_id 
-        AND s1.interviewer_id = s2.interviewer_id 
-        AND s1.criteria_id = s2.criteria_id 
-        AND s1.created_at < s2.created_at
+      DELETE \`s1\` FROM \`Recruitment_Scores\` \`s1\`
+      INNER JOIN \`Recruitment_Scores\` \`s2\` 
+      WHERE \`s1\`.\`candidate_id\` = \`s2\`.\`candidate_id\` 
+        AND \`s1\`.\`interviewer_id\` = \`s2\`.\`interviewer_id\` 
+        AND \`s1\`.\`criteria_id\` = \`s2\`.\`criteria_id\` 
+        AND \`s1\`.\`created_at\` < \`s2\`.\`created_at\`
     `).catch(() => { });
 
     // Get season quota
-    const seasonRow = await queryDatabase('SELECT quota FROM  WHERE id = ?', [seasonId]);
+    const seasonRow = await queryDatabase('SELECT `quota` FROM `Recruitment_Seasons` WHERE `id` = ?', [seasonId]);
     const quota = seasonRow[0]?.quota || 0;
 
     // Fetch all candidates for this season
     const candRows = await queryDatabase(
-      'SELECT id AS candidate_id, interview_code, full_name, class_name, desired_dept, status, notes, interviewer_ids, teamwork_scorer_ids, challenge_process_scorer_ids, challenge_result_scorer_ids FROM recruitment_candidates WHERE season_id = ? OR season_id IS NULL OR season_id = ""',
+      'SELECT `id` AS `candidate_id`, `interview_code`, `full_name`, `class_name`, `desired_dept`, `status`, `notes`, `interviewer_ids`, `teamwork_scorer_ids`, `challenge_process_scorer_ids`, `challenge_result_scorer_ids` FROM `Recruitment_Candidates` WHERE `season_id` = ? OR `season_id` IS NULL OR `season_id` = ""',
       [seasonId]
     );
     const candidates = candRows.map(c => ({
@@ -2024,29 +2024,29 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
     // Auto-backfill scores from recruitment_scores into recruitment_evaluations table
     try {
       await queryDatabase(`
-        INSERT INTO recruitment_evaluations (id, candidate_id, interview_code, season_id, interviewer_id, round_type, total_score, avg_score, comments)
+        INSERT INTO \`Recruitment_Evaluations\` (\`id\`, \`candidate_id\`, \`interview_code\`, \`season_id\`, \`interviewer_id\`, \`round_type\`, \`total_score\`, \`avg_score\`, \`comments\`)
         SELECT 
-          CONCAT('eval-', s.candidate_id, '-', COALESCE(s.interviewer_id, '0'), '-', COALESCE(cr.round_type, 'don')) AS id,
-          s.candidate_id,
-          COALESCE(c.interview_code, s.candidate_id),
-          COALESCE(s.season_id, c.season_id, ?),
-          s.interviewer_id,
-          COALESCE(NULLIF(cr.round_type, ''), 'don') AS round_type,
-          ROUND(SUM(s.score), 2) AS total_score,
-          ROUND(AVG(s.score), 2) AS avg_score,
-          MAX(s.comments) AS comments
-        FROM recruitment_scores s
-        LEFT JOIN recruitment_criteria cr ON s.criteria_id = cr.id
-        LEFT JOIN recruitment_candidates c ON (s.candidate_id = c.id OR s.candidate_id = c.interview_code)
-        WHERE (s.season_id = ? OR s.season_id IS NULL OR s.season_id = ''
-           OR s.candidate_id IN (SELECT id FROM recruitment_candidates WHERE season_id = ?)
-           OR s.candidate_id IN (SELECT interview_code FROM recruitment_candidates WHERE season_id = ?))
-        GROUP BY s.candidate_id, s.interviewer_id, COALESCE(NULLIF(cr.round_type, ''), 'don')
+          CONCAT('eval-', \`s\`.\`candidate_id\`, '-', COALESCE(\`s\`.\`interviewer_id\`, '0'), '-', COALESCE(\`cr\`.\`round_type\`, 'don')) AS \`id\`,
+          \`s\`.\`candidate_id\`,
+          COALESCE(\`c\`.\`interview_code\`, \`s\`.\`candidate_id\`),
+          COALESCE(\`s\`.\`season_id\`, \`c\`.\`season_id\`, ?),
+          \`s\`.\`interviewer_id\`,
+          COALESCE(NULLIF(\`cr\`.\`round_type\`, ''), 'don') AS \`round_type\`,
+          ROUND(SUM(\`s\`.\`score\`), 2) AS \`total_score\`,
+          ROUND(AVG(\`s\`.\`score\`), 2) AS \`avg_score\`,
+          MAX(\`s\`.\`comments\`) AS \`comments\`
+        FROM \`Recruitment_Scores\` \`s\`
+        LEFT JOIN \`Recruitment_Criteria\` \`cr\` ON \`s\`.\`criteria_id\` = \`cr\`.\`id\`
+        LEFT JOIN \`Recruitment_Candidates\` \`c\` ON (\`s\`.\`candidate_id\` = \`c\`.\`id\` OR \`s\`.\`candidate_id\` = \`c\`.\`interview_code\`)
+        WHERE (\`s\`.\`season_id\` = ? OR \`s\`.\`season_id\` IS NULL OR \`s\`.\`season_id\` = ''
+           OR \`s\`.\`candidate_id\` IN (SELECT \`id\` FROM \`Recruitment_Candidates\` WHERE \`season_id\` = ?)
+           OR \`s\`.\`candidate_id\` IN (SELECT \`interview_code\` FROM \`Recruitment_Candidates\` WHERE \`season_id\` = ?))
+        GROUP BY \`s\`.\`candidate_id\`, \`s\`.\`interviewer_id\`, COALESCE(NULLIF(\`cr\`.\`round_type\`, ''), 'don')
         ON DUPLICATE KEY UPDATE 
-          total_score = VALUES(total_score),
-          avg_score = VALUES(avg_score),
-          comments = VALUES(comments),
-          season_id = VALUES(season_id)
+          \`total_score\` = VALUES(\`total_score\`),
+          \`avg_score\` = VALUES(\`avg_score\`),
+          \`comments\` = VALUES(\`comments\`),
+          \`season_id\` = VALUES(\`season_id\`)
       `, [seasonId, seasonId, seasonId, seasonId]);
     } catch (e) {
       console.warn('Notice: Auto backfill recruitment_evaluations:', e.message);
@@ -2075,75 +2075,75 @@ router.get('/recruitment/scores/summary/:seasonId', async (req, res) => {
     // Fetch average scores for each candidate per round_type across all interviewers who evaluated that candidate
     const roundScoresRows = await queryDatabase(`
       SELECT 
-        cand_id AS candidate_id,
-        round_type,
-        ROUND(AVG(interviewer_avg), 2) AS round_avg,
-        ROUND(AVG(interviewer_total), 2) AS round_sum
+        \`cand_id\` AS \`candidate_id\`,
+        \`round_type\`,
+        ROUND(AVG(\`interviewer_avg\`), 2) AS \`round_avg\`,
+        ROUND(AVG(\`interviewer_total\`), 2) AS \`round_sum\`
       FROM (
         SELECT 
-          s.candidate_id AS cand_id,
-          s.interviewer_id,
-          COALESCE(NULLIF(CASE WHEN cr.round_type = 'thuthach' THEN 'thuthach_ketqua' ELSE cr.round_type END, ''), 'teamwork') AS round_type,
-          SUM(s.score) AS interviewer_total,
-          AVG(s.score) AS interviewer_avg
-        FROM recruitment_scores s
-        LEFT JOIN recruitment_criteria cr ON s.criteria_id = cr.id
-        WHERE (s.season_id = ? OR s.season_id IS NULL OR s.season_id = ''
-           OR s.candidate_id IN (SELECT id FROM recruitment_candidates WHERE season_id = ?)
-           OR s.candidate_id IN (SELECT interview_code FROM recruitment_candidates WHERE season_id = ?))
-        GROUP BY s.candidate_id, s.interviewer_id, COALESCE(NULLIF(CASE WHEN cr.round_type = 'thuthach' THEN 'thuthach_ketqua' ELSE cr.round_type END, ''), 'teamwork')
-      ) interviewer_scores
-      GROUP BY cand_id, round_type
+          \`s\`.\`candidate_id\` AS \`cand_id\`,
+          \`s\`.\`interviewer_id\`,
+          COALESCE(NULLIF(CASE WHEN \`cr\`.\`round_type\` = 'thuthach' THEN 'thuthach_ketqua' ELSE \`cr\`.\`round_type\` END, ''), 'teamwork') AS \`round_type\`,
+          SUM(\`s\`.\`score\`) AS \`interviewer_total\`,
+          AVG(\`s\`.\`score\`) AS \`interviewer_avg\`
+        FROM \`Recruitment_Scores\` \`s\`
+        LEFT JOIN \`Recruitment_Criteria\` \`cr\` ON \`s\`.\`criteria_id\` = \`cr\`.\`id\`
+        WHERE (\`s\`.\`season_id\` = ? OR \`s\`.\`season_id\` IS NULL OR \`s\`.\`season_id\` = ''
+           OR \`s\`.\`candidate_id\` IN (SELECT \`id\` FROM \`Recruitment_Candidates\` WHERE \`season_id\` = ?)
+           OR \`s\`.\`candidate_id\` IN (SELECT \`interview_code\` FROM \`Recruitment_Candidates\` WHERE \`season_id\` = ?))
+        GROUP BY \`s\`.\`candidate_id\`, \`s\`.\`interviewer_id\`, COALESCE(NULLIF(CASE WHEN \`cr\`.\`round_type\` = 'thuthach' THEN 'thuthach_ketqua' ELSE \`cr\`.\`round_type\` END, ''), 'teamwork')
+      ) \`interviewer_scores\`
+      GROUP BY \`cand_id\`, \`round_type\`
     `, [seasonId, seasonId, seasonId]);
 
     // Also fetch from dedicated recruitment_evaluations database table if present
     const evalRows = await queryDatabase(`
-      SELECT candidate_id, interview_code, interviewer_id, round_type, total_score, avg_score, comments
-      FROM recruitment_evaluations
-      WHERE season_id = ?
-         OR season_id IS NULL
-         OR season_id = ''
-         OR candidate_id IN (SELECT id FROM recruitment_candidates WHERE season_id = ?)
-         OR candidate_id IN (SELECT interview_code FROM recruitment_candidates WHERE season_id = ?)
+      SELECT \`candidate_id\`, \`interview_code\`, \`interviewer_id\`, \`round_type\`, \`total_score\`, \`avg_score\`, \`comments\`
+      FROM \`Recruitment_Evaluations\`
+      WHERE \`season_id\` = ?
+         OR \`season_id\` IS NULL
+         OR \`season_id\` = ''
+         OR \`candidate_id\` IN (SELECT \`id\` FROM \`Recruitment_Candidates\` WHERE \`season_id\` = ?)
+         OR \`candidate_id\` IN (SELECT \`interview_code\` FROM \`Recruitment_Candidates\` WHERE \`season_id\` = ?)
     `, [seasonId, seasonId, seasonId]).catch(() => []);
 
     // Fetch distinct submitted scorers for each candidate per round_type
     const submittedScorersRows = await queryDatabase(`
       SELECT DISTINCT 
-        s.candidate_id, 
-        s.interviewer_id, 
-        COALESCE(NULLIF(CASE WHEN cr.round_type = 'thuthach' THEN 'thuthach_ketqua' ELSE cr.round_type END, ''), 'teamwork') AS round_type
-      FROM recruitment_scores s
-      LEFT JOIN recruitment_criteria cr ON s.criteria_id = cr.id
-      WHERE s.season_id = ? 
-         OR s.season_id IS NULL 
-         OR s.season_id = ''
-         OR s.candidate_id IN (SELECT id FROM recruitment_candidates WHERE season_id = ?)
-         OR s.candidate_id IN (SELECT interview_code FROM recruitment_candidates WHERE season_id = ?)
+        \`s\`.\`candidate_id\`, 
+        \`s\`.\`interviewer_id\`, 
+        COALESCE(NULLIF(CASE WHEN \`cr\`.\`round_type\` = 'thuthach' THEN 'thuthach_ketqua' ELSE \`cr\`.\`round_type\` END, ''), 'teamwork') AS \`round_type\`
+      FROM \`Recruitment_Scores\` \`s\`
+      LEFT JOIN \`Recruitment_Criteria\` \`cr\` ON \`s\`.\`criteria_id\` = \`cr\`.\`id\`
+      WHERE \`s\`.\`season_id\` = ? 
+         OR \`s\`.\`season_id\` IS NULL 
+         OR \`s\`.\`season_id\` = ''
+         OR \`s\`.\`candidate_id\` IN (SELECT \`id\` FROM \`Recruitment_Candidates\` WHERE \`season_id\` = ?)
+         OR \`s\`.\`candidate_id\` IN (SELECT \`interview_code\` FROM \`Recruitment_Candidates\` WHERE \`season_id\` = ?)
     `, [seasonId, seasonId, seasonId]);
 
     // Fetch comments left by interviewers for each candidate
     const commentsRows = await queryDatabase(`
-      SELECT DISTINCT s.candidate_id, s.interviewer_id, s.comments, COALESCE(u.full_name, s.interviewer_id) AS interviewer_name, COALESCE(NULLIF(CASE WHEN cr.round_type = 'thuthach' THEN 'thuthach_ketqua' ELSE cr.round_type END, ''), 'teamwork') AS round_type
-      FROM recruitment_scores s
-      LEFT JOIN members u ON (s.interviewer_id = u.id OR s.interviewer_id = u.member_code OR s.interviewer_id = u.username)
-      LEFT JOIN recruitment_criteria cr ON s.criteria_id = cr.id
-      WHERE (s.season_id = ? OR s.season_id IS NULL OR s.season_id = '' OR s.candidate_id IN (SELECT id FROM recruitment_candidates WHERE season_id = ?) OR s.candidate_id IN (SELECT interview_code FROM recruitment_candidates WHERE season_id = ?))
-        AND s.comments IS NOT NULL AND TRIM(s.comments) != ''
+      SELECT DISTINCT \`s\`.\`candidate_id\`, \`s\`.\`interviewer_id\`, \`s\`.\`comments\`, COALESCE(\`u\`.\`full_name\`, \`s\`.\`interviewer_id\`) AS \`interviewer_name\`, COALESCE(NULLIF(CASE WHEN \`cr\`.\`round_type\` = 'thuthach' THEN 'thuthach_ketqua' ELSE \`cr\`.\`round_type\` END, ''), 'teamwork') AS \`round_type\`
+      FROM \`Recruitment_Scores\` \`s\`
+      LEFT JOIN \`Members\` \`u\` ON (\`s\`.\`interviewer_id\` = \`u\`.\`id\` OR \`s\`.\`interviewer_id\` = \`u\`.\`member_code\` OR \`s\`.\`interviewer_id\` = \`u\`.\`username\`)
+      LEFT JOIN \`Recruitment_Criteria\` \`cr\` ON \`s\`.\`criteria_id\` = \`cr\`.\`id\`
+      WHERE (\`s\`.\`season_id\` = ? OR \`s\`.\`season_id\` IS NULL OR \`s\`.\`season_id\` = '' OR \`s\`.\`candidate_id\` IN (SELECT \`id\` FROM \`Recruitment_Candidates\` WHERE \`season_id\` = ?) OR \`s\`.\`candidate_id\` IN (SELECT \`interview_code\` FROM \`Recruitment_Candidates\` WHERE \`season_id\` = ?))
+        AND \`s\`.\`comments\` IS NOT NULL AND TRIM(\`s\`.\`comments\`) != ''
     `, [seasonId, seasonId, seasonId]);
 
     // Fetch detailed score entries per criteria and interviewer
     const detailedScoresRows = await queryDatabase(`
-      SELECT s.candidate_id, s.interviewer_id, s.criteria_id, s.score, s.comments, s.created_at,
-             COALESCE(u.full_name, s.interviewer_id) AS interviewer_name,
-             cr.criteria_name AS criteria_title,
-             COALESCE(NULLIF(CASE WHEN cr.round_type = 'thuthach' THEN 'thuthach_ketqua' ELSE cr.round_type END, ''), 'teamwork') AS round_type
-      FROM recruitment_scores s
-      LEFT JOIN members u ON (s.interviewer_id = u.id OR s.interviewer_id = u.member_code OR s.interviewer_id = u.username)
-      LEFT JOIN recruitment_criteria cr ON s.criteria_id = cr.id
-      WHERE (s.season_id = ? OR s.season_id IS NULL OR s.season_id = '' 
-         OR s.candidate_id IN (SELECT id FROM recruitment_candidates WHERE season_id = ?)
-         OR s.candidate_id IN (SELECT interview_code FROM recruitment_candidates WHERE season_id = ?))
+      SELECT \`s\`.\`candidate_id\`, \`s\`.\`interviewer_id\`, \`s\`.\`criteria_id\`, \`s\`.\`score\`, \`s\`.\`comments\`, \`s\`.\`created_at\`,
+             COALESCE(\`u\`.\`full_name\`, \`s\`.\`interviewer_id\`) AS \`interviewer_name\`,
+             \`cr\`.\`criteria_name\` AS \`criteria_title\`,
+             COALESCE(NULLIF(CASE WHEN \`cr\`.\`round_type\` = 'thuthach' THEN 'thuthach_ketqua' ELSE \`cr\`.\`round_type\` END, ''), 'teamwork') AS \`round_type\`
+      FROM \`Recruitment_Scores\` \`s\`
+      LEFT JOIN \`Members\` \`u\` ON (\`s\`.\`interviewer_id\` = \`u\`.\`id\` OR \`s\`.\`interviewer_id\` = \`u\`.\`member_code\` OR \`s\`.\`interviewer_id\` = \`u\`.\`username\`)
+      LEFT JOIN \`Recruitment_Criteria\` \`cr\` ON \`s\`.\`criteria_id\` = \`cr\`.\`id\`
+      WHERE (\`s\`.\`season_id\` = ? OR \`s\`.\`season_id\` IS NULL OR \`s\`.\`season_id\` = '' 
+         OR \`s\`.\`candidate_id\` IN (SELECT \`id\` FROM \`Recruitment_Candidates\` WHERE \`season_id\` = ?)
+         OR \`s\`.\`candidate_id\` IN (SELECT \`interview_code\` FROM \`Recruitment_Candidates\` WHERE \`season_id\` = ?))
     `, [seasonId, seasonId, seasonId]);
 
     const detailedScoresMap = {};
@@ -2468,22 +2468,22 @@ router.get('/recruitment/scores/submitted', async (req, res) => {
   try {
     const { season_id, interviewer_id, round_type } = req.query;
     let sql = `
-      SELECT DISTINCT s.candidate_id 
-      FROM Recruitment_Scores s
-      LEFT JOIN Recruitment_Criteria cr ON s.criteria_id = cr.id
-      WHERE (s.season_id = ? OR s.season_id IS NULL OR s.season_id = '' OR s.candidate_id IN (SELECT id FROM Recruitment_Candidates WHERE season_id = ?) OR s.candidate_id IN (SELECT interview_code FROM Recruitment_Candidates WHERE season_id = ?))
-        AND s.interviewer_id = ?
+      SELECT DISTINCT \`s\`.\`candidate_id\` 
+      FROM \`Recruitment_Scores\` \`s\`
+      LEFT JOIN \`Recruitment_Criteria\` \`cr\` ON \`s\`.\`criteria_id\` = \`cr\`.\`id\`
+      WHERE (\`s\`.\`season_id\` = ? OR \`s\`.\`season_id\` IS NULL OR \`s\`.\`season_id\` = '' OR \`s\`.\`candidate_id\` IN (SELECT \`id\` FROM \`Recruitment_Candidates\` WHERE \`season_id\` = ?) OR \`s\`.\`candidate_id\` IN (SELECT \`interview_code\` FROM \`Recruitment_Candidates\` WHERE \`season_id\` = ?))
+        AND \`s\`.\`interviewer_id\` = ?
     `;
     const params = [season_id, season_id, season_id, interviewer_id];
     if (round_type) {
-      sql += " AND COALESCE(NULLIF(cr.round_type, ''), 'teamwork') = ?";
+      sql += " AND COALESCE(NULLIF(`cr`.`round_type`, ''), 'teamwork') = ?";
       params.push(round_type);
     }
     const rows = await queryDatabase(sql, params);
 
     // Fetch candidate mapping to return both PK IDs and interview_codes
     const candidates = await queryDatabase(
-      'SELECT id, interview_code FROM Recruitment_Candidates WHERE season_id = ?',
+      'SELECT `id`, `interview_code` FROM `Recruitment_Candidates` WHERE `season_id` = ?',
       [season_id]
     );
 
@@ -2504,7 +2504,7 @@ router.get('/recruitment/scores/submitted', async (req, res) => {
 // ======================= SYSTEM SETTINGS =======================
 router.get('/admin/system-settings', async (req, res) => {
   try {
-    const rows = await queryDatabase('SELECT setting_key, setting_value FROM System_Settings');
+    const rows = await queryDatabase('SELECT `setting_key`, `setting_value` FROM `System_Settings`');
     const settings = {};
     rows.forEach(r => { settings[r.setting_key] = r.setting_value; });
     res.json({ success: true, data: settings });
@@ -2514,13 +2514,13 @@ router.get('/admin/system-settings', async (req, res) => {
 router.put('/admin/recruitment-season/toggle', async (req, res) => {
   try {
     const current = await queryDatabase(
-      `SELECT setting_value FROM System_Settings WHERE setting_key = 'recruitment_season_active'`
+      `SELECT \`setting_value\` FROM \`System_Settings\` WHERE \`setting_key\` = 'recruitment_season_active'`
     );
     const currentVal = current && current.length > 0 ? current[0].setting_value : '0';
     const newVal = currentVal === '1' ? '0' : '1';
     await queryDatabase(
-      `INSERT INTO System_Settings (setting_key, setting_value) VALUES ('recruitment_season_active', ?)
-       ON DUPLICATE KEY UPDATE setting_value = ?`,
+      `INSERT INTO \`System_Settings\` (\`setting_key\`, \`setting_value\`) VALUES ('recruitment_season_active', ?)
+       ON DUPLICATE KEY UPDATE \`setting_value\` = ?`,
       [newVal, newVal]
     );
     res.json({ success: true, isActive: newVal === '1' });

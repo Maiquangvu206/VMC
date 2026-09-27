@@ -11,12 +11,12 @@ async function initTable() {
   try {
     console.log('🚀 Đang khởi tạo bảng Generations trong CSDL MySQL...');
     await queryDatabase(`
-      CREATE TABLE IF NOT EXISTS Generations (
-        id VARCHAR(50) PRIMARY KEY,
-        name VARCHAR(100) NOT NULL,
-        years VARCHAR(100),
-        description VARCHAR(255),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      CREATE TABLE IF NOT EXISTS \`Generations\` (
+        \`id\` VARCHAR(50) PRIMARY KEY,
+        \`name\` VARCHAR(100) NOT NULL,
+        \`years\` VARCHAR(100),
+        \`description\` VARCHAR(255),
+        \`created_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
@@ -31,14 +31,14 @@ async function initTable() {
 
     for (const g of defaultGens) {
       await queryDatabase(
-        `INSERT INTO Generations (id, name, years, description) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE name = VALUES(name), years = VALUES(years), description = VALUES(description)`,
+        `INSERT INTO \`Generations\` (\`id\`, \`name\`, \`years\`, \`description\`) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE \`name\` = VALUES(\`name\`), \`years\` = VALUES(\`years\`), \`description\` = VALUES(\`description\`)`,
         [g.id, g.name, g.years, g.description]
       );
     }
 
     console.log('✅ Đã khởi tạo và nạp thành công bảng Generations vào CSDL MySQL!');
 
-    const tableData = await queryDatabase('SELECT * FROM Generations ORDER BY id DESC');
+    const tableData = await queryDatabase('SELECT * FROM `Generations` ORDER BY `id` DESC');
     console.log('=== KẾT QUẢ BẢNG GENERATIONS TRONG MYSQL ===');
     console.log(JSON.stringify(tableData, null, 2));
 

@@ -9,7 +9,7 @@ config({ path: path.join(__dirname, '.env') });
 
 async function check() {
   try {
-    const gens = await queryDatabase('SELECT * FROM Generations');
+    const gens = await queryDatabase('SELECT * FROM `Generations`');
     console.log('=== GENERATIONS TABLE IN MYSQL ===');
     console.log(JSON.stringify(gens, null, 2));
     process.exit(0);

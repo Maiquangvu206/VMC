@@ -10,7 +10,7 @@ config({ path: path.join(__dirname, '.env') });
 async function migrate() {
   try {
     console.log('🚀 Đang chuyển đổi dữ liệu milestones từ bảng Members sang Member_Milestones...');
-    const members = await queryDatabase('SELECT id, member_code, department, milestones FROM Members');
+    const members = await queryDatabase('SELECT `id`, `member_code`, `department`, `milestones` FROM `Members`');
     let insertedCount = 0;
 
     for (const m of members) {
@@ -38,9 +38,9 @@ async function migrate() {
       for (const ms of msList) {
         const msId = ms.id || ('m-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6));
         await queryDatabase(
-          `INSERT INTO Member_Milestones (id, member_id, date, title, badge_text, badge_style) 
+          `INSERT INTO \`Member_Milestones\` (\`id\`, \`member_id\`, \`date\`, \`title\`, \`badge_text\`, \`badge_style\`) 
            VALUES (?, ?, ?, ?, ?, ?) 
-           ON DUPLICATE KEY UPDATE date = VALUES(date), title = VALUES(title), badge_text = VALUES(badge_text), badge_style = VALUES(badge_style)`,
+           ON DUPLICATE KEY UPDATE \`date\` = VALUES(\`date\`), \`title\` = VALUES(\`title\`), \`badge_text\` = VALUES(\`badge_text\`), \`badge_style\` = VALUES(\`badge_style\`)`,
           [
             msId,
             String(m.id),
@@ -56,7 +56,7 @@ async function migrate() {
 
     console.log(`✅ Đã đẩy thành công ${insertedCount} cột mốc lịch sử vào bảng Member_Milestones trong MySQL!`);
     
-    const finalTable = await queryDatabase('SELECT * FROM Member_Milestones');
+    const finalTable = await queryDatabase('SELECT * FROM `Member_Milestones`');
     console.log('=== KẾT QUẢ BẢNG Member_Milestones SAU KHI ĐẨY ===');
     console.log(JSON.stringify(finalTable, null, 2));
 
