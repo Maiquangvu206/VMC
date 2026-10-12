@@ -20,6 +20,7 @@ import {
   Trash2,
   X,
   ChevronRight,
+  ChevronLeft,
   Filter,
   CheckCircle2,
   Lock,
@@ -33,7 +34,8 @@ import {
   Share2,
   Sun,
   Moon,
-  Info
+  Info,
+  Upload
 } from 'lucide-react';
 import {
   DEFAULT_HOMEPAGE_INFO,
@@ -46,14 +48,43 @@ import {
 } from '../services/homepageService';
 import { getCachedData } from '../services/cacheService';
 
-// Helper trích xuất link embed YouTube nếu là link youtube
-const getYouTubeEmbedUrl = (url) => {
-  if (!url) return null;
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-  const match = url.match(regExp);
-  return (match && match[2].length === 11)
-    ? `https://www.youtube-nocookie.com/embed/${match[2]}?autoplay=1`
-    : null;
+// Helper phân tích và trích xuất link embed Video (Hỗ trợ YouTube, Facebook Video / Reels, và file trực tiếp)
+const getVideoEmbedInfo = (url, autoplay = true) => {
+  if (!url || typeof url !== 'string') return null;
+  const trimmed = url.trim();
+
+  // 1. YouTube (watch, shorts, embed, youtu.be, live)
+  const ytMatch = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|shorts\/|live\/))([\w-]{11})/i) ||
+                  trimmed.match(/[?&]v=([\w-]{11})/i);
+  if (ytMatch && ytMatch[1]) {
+    const videoId = ytMatch[1];
+    const autoParam = autoplay ? 'autoplay=1&mute=0' : 'autoplay=0';
+    return {
+      platform: 'youtube',
+      embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?${autoParam}&rel=0&playsinline=1&enablejsapi=1`
+    };
+  }
+
+  // 2. Facebook (watch, video, reel, fb.watch, share)
+  const isFacebook = /(?:facebook\.com|fb\.watch|fb\.gg)/i.test(trimmed);
+  if (isFacebook) {
+    const autoParam = autoplay ? 'true' : 'false';
+    return {
+      platform: 'facebook',
+      embedUrl: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(trimmed)}&show_text=false&autoplay=${autoParam}&mute=0`
+    };
+  }
+
+  // 3. Direct HTML5 video / Khác
+  return {
+    platform: 'html5',
+    embedUrl: trimmed
+  };
+};
+
+const getYouTubeEmbedUrl = (url, autoplay = true) => {
+  const info = getVideoEmbedInfo(url, autoplay);
+  return info?.platform === 'youtube' ? info.embedUrl : null;
 };
 
 // Helper chuyển đổi định dạng ngày DD/MM/YYYY sang YYYY-MM-DD cho input type="date"
@@ -84,6 +115,200 @@ const fromDateInputValue = (isoStr) => {
     return `${day}/${month}/${year}`;
   }
   return isoStr;
+};
+
+// Helper đọc và tối ưu hóa file ảnh khi người dùng thả file (Drag & Drop) hoặc tải từ máy
+const readAndCompressImage = (file, maxWidth = 1600, quality = 0.85) => {
+  return new Promise((resolve) => {
+    if (!file || !file.type.startsWith('image/')) {
+      resolve(null);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        } catch {
+          resolve(e.target.result);
+        }
+      };
+      img.onerror = () => resolve(e.target.result);
+      img.src = e.target.result;
+    };
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(file);
+  });
+};
+
+// Component hiển thị trình duyệt ảnh (Slider / Carousel) hỗ trợ lướt sang (Swipe / Arrow / Thumbnails)
+const ImageSlider = ({
+  images = [],
+  initialIndex = 0,
+  onImageClick,
+  aspectRatio = 'aspect-video',
+  showThumbnails = true,
+  className = ''
+}) => {
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [touchStart, setTouchStart] = useState(null);
+
+  useEffect(() => {
+    setCurrentIndex(initialIndex);
+  }, [initialIndex]);
+
+  if (!images || images.length === 0) return null;
+
+  const handleNext = (e) => {
+    if (e) e.stopPropagation();
+    setCurrentIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const handlePrev = (e) => {
+    if (e) e.stopPropagation();
+    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  const onTouchStart = (e) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = (e) => {
+    if (touchStart === null) return;
+    const touchEnd = e.changedTouches[0].clientX;
+    const diff = touchStart - touchEnd;
+    if (diff > 40) {
+      handleNext();
+    } else if (diff < -40) {
+      handlePrev();
+    }
+    setTouchStart(null);
+  };
+
+  if (images.length === 1) {
+    return (
+      <div
+        className={`relative group ${aspectRatio} w-full rounded-2xl overflow-hidden bg-[var(--bg-tertiary)] ${className} ${onImageClick ? 'cursor-pointer' : ''}`}
+        onClick={() => onImageClick && onImageClick(images[0], 0)}
+      >
+        <img
+          src={images[0]}
+          alt=""
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
+        {onImageClick && (
+          <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-lg bg-black/70 border border-slate-700/60 text-slate-300 text-2xs flex items-center gap-1.5 backdrop-blur-md pointer-events-none group-hover:bg-cyan-500 group-hover:text-black font-medium transition-all">
+            <Eye className="w-3.5 h-3.5" />
+            <span>Phóng to</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className={`space-y-3 ${className}`}>
+      {/* Khung ảnh chính */}
+      <div
+        className={`relative group ${aspectRatio} w-full rounded-2xl overflow-hidden bg-slate-950 select-none shadow-md border border-[var(--border-default)]`}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
+        <img
+          src={images[currentIndex]}
+          alt={`Ảnh ${currentIndex + 1}`}
+          onClick={() => onImageClick && onImageClick(images[currentIndex], currentIndex)}
+          className={`w-full h-full object-cover transition-opacity duration-300 ${onImageClick ? 'cursor-pointer' : ''}`}
+        />
+
+        {/* Counter Badge */}
+        <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/75 border border-white/20 text-white text-2xs font-semibold backdrop-blur-md flex items-center gap-1.5 z-10">
+          <Camera className="w-3.5 h-3.5 text-cyan-400" />
+          <span>{currentIndex + 1} / {images.length}</span>
+        </div>
+
+        {/* Nhãn hướng dẫn lướt */}
+        <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/65 text-slate-300 text-3xs backdrop-blur-md border border-white/10 flex items-center gap-1 z-10">
+          <span>👈 Lướt sang 👉</span>
+        </div>
+
+        {/* Nút lùi ảnh */}
+        <button
+          type="button"
+          onClick={handlePrev}
+          aria-label="Ảnh trước"
+          className="absolute left-3 top-1/2 -translate-y-1/2 p-2 sm:p-2.5 rounded-full bg-black/60 hover:bg-cyan-600 text-white shadow-xl backdrop-blur-md transition-all active:scale-90 z-20"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+
+        {/* Nút chuyển ảnh tiếp theo */}
+        <button
+          type="button"
+          onClick={handleNext}
+          aria-label="Ảnh tiếp theo"
+          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 sm:p-2.5 rounded-full bg-black/60 hover:bg-cyan-600 text-white shadow-xl backdrop-blur-md transition-all active:scale-90 z-20"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+
+        {/* Chấm tròn chỉ số (Dots) */}
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10">
+          {images.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setCurrentIndex(i); }}
+              className={`h-1.5 rounded-full transition-all duration-300 ${i === currentIndex ? 'w-5 bg-cyan-400' : 'w-1.5 bg-white/50 hover:bg-white/80'}`}
+              title={`Xem ảnh ${i + 1}`}
+            />
+          ))}
+        </div>
+
+        {/* Nút phóng to */}
+        {onImageClick && (
+          <div
+            onClick={() => onImageClick(images[currentIndex], currentIndex)}
+            className="absolute bottom-3 right-3 px-2.5 py-1 rounded-lg bg-black/70 border border-slate-700/60 text-slate-300 text-2xs flex items-center gap-1.5 backdrop-blur-md cursor-pointer hover:bg-cyan-500 hover:text-black font-medium transition-all z-10"
+          >
+            <Eye className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Phóng to</span>
+          </div>
+        )}
+      </div>
+
+      {/* Dải thumbnail xem nhanh */}
+      {showThumbnails && images.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-1 pt-0.5 scrollbar-thin">
+          {images.map((img, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setCurrentIndex(i)}
+              className={`relative shrink-0 w-16 h-11 sm:w-20 sm:h-14 rounded-lg overflow-hidden border-2 transition-all duration-200 ${i === currentIndex ? 'border-cyan-400 ring-2 ring-cyan-400/40 scale-105' : 'border-transparent opacity-60 hover:opacity-100'}`}
+            >
+              <img src={img} alt="" className="w-full h-full object-cover" />
+              <span className="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-black/85 text-white text-[9px] font-mono leading-none">
+                #{i + 1}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 };
 
 // Helper chuẩn hóa danh sách nhân sự phụ trách thành từng hàng (kèm avatar từ CSDL)
@@ -371,6 +596,7 @@ export const HomePage = ({ onOpenLogin }) => {
             const defaultArt = DEFAULT_HOMEPAGE_ARTICLES.find(d => d.id === art.id);
             return {
               ...art,
+              videoUrl: art.videoUrl || defaultArt?.videoUrl || '',
               images: (Array.isArray(art.images) && art.images.length > 0)
                 ? art.images
                 : (defaultArt?.images || [])
@@ -411,6 +637,7 @@ export const HomePage = ({ onOpenLogin }) => {
 
     const cleanArticle = {
       ...articleData,
+      videoUrl: (articleData.videoUrl || '').trim(),
       images: imagesArr
     };
 
@@ -467,6 +694,63 @@ export const HomePage = ({ onOpenLogin }) => {
     await saveHomepageDataAPI('VMC_HOMEPAGE_MEDIA', updated);
     if (addToast) addToast('Đã xóa media thành công!', 'info');
   };
+
+  // Quản lý Lightbox và chuyển ảnh tiếp theo khi xem album / media
+  const handleNextMedia = (e) => {
+    if (e) e.stopPropagation();
+    if (!selectedMedia?.gallery || selectedMedia.gallery.length <= 1) return;
+    const nextIdx = ((selectedMedia.galleryIndex ?? 0) + 1) % selectedMedia.gallery.length;
+    setSelectedMedia(prev => ({
+      ...prev,
+      galleryIndex: nextIdx,
+      mediaUrl: prev.gallery[nextIdx]
+    }));
+  };
+
+  const handlePrevMedia = (e) => {
+    if (e) e.stopPropagation();
+    if (!selectedMedia?.gallery || selectedMedia.gallery.length <= 1) return;
+    const prevIdx = ((selectedMedia.galleryIndex ?? 0) - 1 + selectedMedia.gallery.length) % selectedMedia.gallery.length;
+    setSelectedMedia(prev => ({
+      ...prev,
+      galleryIndex: prevIdx,
+      mediaUrl: prev.gallery[prevIdx]
+    }));
+  };
+
+  const [mediaTouchStart, setMediaTouchStart] = useState(null);
+
+  const onMediaTouchStart = (e) => {
+    setMediaTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onMediaTouchEnd = (e) => {
+    if (mediaTouchStart === null) return;
+    const touchEnd = e.changedTouches[0].clientX;
+    const diff = mediaTouchStart - touchEnd;
+    if (diff > 40) {
+      handleNextMedia();
+    } else if (diff < -40) {
+      handlePrevMedia();
+    }
+    setMediaTouchStart(null);
+  };
+
+  // Điều khiển bàn phím cho Lightbox (Mũi tên trái / phải để lướt ảnh, Esc để đóng)
+  useEffect(() => {
+    if (!selectedMedia) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setSelectedMedia(null);
+      } else if (e.key === 'ArrowRight' && selectedMedia.gallery && selectedMedia.gallery.length > 1) {
+        handleNextMedia();
+      } else if (e.key === 'ArrowLeft' && selectedMedia.gallery && selectedMedia.gallery.length > 1) {
+        handlePrevMedia();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedMedia]);
 
   // Handler cập nhật Info / Stats
   const handleSaveInfo = async (newInfo) => {
@@ -1092,7 +1376,19 @@ export const HomePage = ({ onOpenLogin }) => {
             {filteredMedia.map((item) => (
               <div
                 key={item.id}
-                onClick={() => setSelectedMedia(item)}
+                onClick={() => {
+                  if (item.type === 'video') {
+                    setSelectedMedia(item);
+                  } else {
+                    const imageItems = filteredMedia.filter(m => m.type === 'image');
+                    const imgIdx = imageItems.findIndex(m => m.id === item.id);
+                    setSelectedMedia({
+                      ...item,
+                      gallery: imageItems.map(m => m.mediaUrl || m.thumbnail),
+                      galleryIndex: imgIdx >= 0 ? imgIdx : 0
+                    });
+                  }
+                }}
                 className="group relative rounded-2xl overflow-hidden bg-[var(--bg-card)] border border-[var(--border-default)] hover:border-cyan-500/50 cursor-pointer transition-all duration-300 hover:-translate-y-1 shadow-sm hover:shadow-xl"
               >
                 {/* Thumbnail Container */}
@@ -1196,6 +1492,7 @@ export const HomePage = ({ onOpenLogin }) => {
                     category: 'Giới Thiệu',
                     author: currentUser?.name || 'Ban Biên Tập VMC',
                     date: new Date().toLocaleDateString('vi-VN'),
+                    videoUrl: '',
                     coverImage: '',
                     images: [],
                     summary: '',
@@ -1220,7 +1517,7 @@ export const HomePage = ({ onOpenLogin }) => {
                 onClick={() => setSelectedArticle(art)}
                 className="group flex flex-col rounded-2xl overflow-hidden bg-[var(--bg-card)] border border-[var(--border-default)] hover:border-purple-500/50 cursor-pointer transition-all duration-300 hover:-translate-y-1 shadow-sm hover:shadow-xl"
               >
-                {/* Cover Image */}
+                {/* Cover Image / Video Card */}
                 <div className="relative aspect-video w-full overflow-hidden bg-slate-950">
                   <img
                     src={art.coverImage || 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&q=80&w=1000'}
@@ -1229,10 +1526,24 @@ export const HomePage = ({ onOpenLogin }) => {
                     loading="lazy"
                   />
                   <div className="absolute top-3 left-3 flex items-center gap-1.5">
-                    <span className="px-2.5 py-1 rounded-md text-2xs font-bold uppercase tracking-wider bg-purple-600/90 text-white shadow backdrop-blur-md">
-                      {art.category}
-                    </span>
+                    {art.videoUrl ? (
+                      <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-2xs font-bold uppercase tracking-wider bg-red-600/90 text-white shadow backdrop-blur-md">
+                        <Play className="w-3 h-3 fill-current" />
+                        <span>Video</span>
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-1 rounded-md text-2xs font-bold uppercase tracking-wider bg-purple-600/90 text-white shadow backdrop-blur-md">
+                        {art.category}
+                      </span>
+                    )}
                   </div>
+                  {art.videoUrl && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
+                        <Play className="w-5 h-5 fill-current ml-0.5" />
+                      </div>
+                    </div>
+                  )}
                   {Array.isArray(art.images) && art.images.length > 0 && (
                     <div className="absolute top-3 right-3">
                       <span className="px-2.5 py-1 rounded-md text-2xs font-bold bg-slate-950/80 text-cyan-300 border border-cyan-500/30 backdrop-blur-md shadow flex items-center gap-1.5">
@@ -1304,30 +1615,102 @@ export const HomePage = ({ onOpenLogin }) => {
                 </span>
                 <span>•</span>
                 <span>Tác giả: <strong className="text-[var(--text-primary)]">{selectedArticle.author}</strong></span>
+                {selectedArticle.videoUrl && (
+                  <>
+                    <span>•</span>
+                    <span className="flex items-center gap-1 text-red-500 font-semibold">
+                      <Play className="w-3 h-3 fill-current" />
+                      <span>Bài viết dạng Video (Tự phát)</span>
+                    </span>
+                  </>
+                )}
               </div>
             </div>
 
-            {/* Ảnh Bìa */}
-            {selectedArticle.coverImage && (
-              <div className="relative group aspect-video w-full rounded-2xl overflow-hidden bg-[var(--bg-tertiary)] mb-6 cursor-pointer">
-                <img
-                  src={selectedArticle.coverImage}
-                  alt={selectedArticle.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  onClick={() => setSelectedMedia({
-                    type: 'image',
-                    mediaUrl: selectedArticle.coverImage,
-                    title: selectedArticle.title,
-                    category: selectedArticle.category,
-                    description: selectedArticle.summary || selectedArticle.title
-                  })}
-                />
-                <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-lg bg-black/70 border border-slate-700/60 text-slate-300 text-2xs flex items-center gap-1.5 backdrop-blur-md pointer-events-none group-hover:bg-cyan-500 group-hover:text-black group-hover:border-cyan-400 font-medium transition-all">
-                  <Eye className="w-3.5 h-3.5" />
-                  <span>Bấm vào ảnh để phóng to</span>
-                </div>
+            {/* PHẦN MEDIA ĐẦU BÀI VIẾT:
+                1. NẾU LÀ VIDEO: TỰ ĐỘNG PHÁT NGAY KHI MỞ
+                2. NẾU CÓ NHIỀU ẢNH: SLIDER CAROUSEL LƯỚT SANG HIỆN ẢNH TIẾP THEO
+                3. NẾU 1 ẢNH: HIỂN THỊ ẢNH BÌA
+            */}
+            {selectedArticle.videoUrl ? (
+              <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-black mb-6 shadow-xl border border-[var(--border-default)]">
+                {(() => {
+                  const videoInfo = getVideoEmbedInfo(selectedArticle.videoUrl, true);
+                  if (videoInfo?.platform === 'youtube' || videoInfo?.platform === 'facebook') {
+                    return (
+                      <iframe
+                        src={videoInfo.embedUrl}
+                        title={selectedArticle.title}
+                        className="w-full h-full border-0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                        scrolling="no"
+                      />
+                    );
+                  }
+                  return (
+                    <video
+                      src={selectedArticle.videoUrl}
+                      controls
+                      autoPlay
+                      playsInline
+                      className="w-full h-full object-contain mx-auto"
+                    />
+                  );
+                })()}
               </div>
-            )}
+            ) : (() => {
+              const allImages = Array.from(new Set([
+                selectedArticle.coverImage,
+                ...(Array.isArray(selectedArticle.images) ? selectedArticle.images : [])
+              ].filter(Boolean)));
+
+              if (allImages.length > 1) {
+                return (
+                  <div className="mb-6">
+                    <ImageSlider
+                      images={allImages}
+                      onImageClick={(imgUrl, idx) => setSelectedMedia({
+                        type: 'image',
+                        mediaUrl: imgUrl,
+                        gallery: allImages,
+                        galleryIndex: idx,
+                        title: selectedArticle.title,
+                        category: selectedArticle.category,
+                        description: selectedArticle.summary || selectedArticle.title
+                      })}
+                      showThumbnails={true}
+                    />
+                  </div>
+                );
+              }
+
+              if (selectedArticle.coverImage) {
+                return (
+                  <div className="relative group aspect-video w-full rounded-2xl overflow-hidden bg-[var(--bg-tertiary)] mb-6 cursor-pointer">
+                    <img
+                      src={selectedArticle.coverImage}
+                      alt={selectedArticle.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onClick={() => setSelectedMedia({
+                        type: 'image',
+                        mediaUrl: selectedArticle.coverImage,
+                        gallery: [selectedArticle.coverImage],
+                        galleryIndex: 0,
+                        title: selectedArticle.title,
+                        category: selectedArticle.category,
+                        description: selectedArticle.summary || selectedArticle.title
+                      })}
+                    />
+                    <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-lg bg-black/70 border border-slate-700/60 text-slate-300 text-2xs flex items-center gap-1.5 backdrop-blur-md pointer-events-none group-hover:bg-cyan-500 group-hover:text-black font-medium transition-all">
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>Bấm vào ảnh để phóng to</span>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
 
             {/* Tóm tắt */}
             {selectedArticle.summary && (
@@ -1357,41 +1740,66 @@ export const HomePage = ({ onOpenLogin }) => {
                         </span>
                       </h4>
                       <p className="text-2xs text-[var(--text-secondary)]">
-                        Nhấn vào từng ảnh để xem phóng to chất lượng cao
+                        Lướt sang để xem các ảnh tiếp theo hoặc bấm vào để xem phóng to
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {selectedArticle.images.map((imgUrl, imgIdx) => (
-                    <div
-                      key={imgIdx}
-                      onClick={() => setSelectedMedia({
-                        type: 'image',
-                        mediaUrl: imgUrl,
-                        title: `${selectedArticle.title} (Ảnh ${imgIdx + 1}/${selectedArticle.images.length})`,
-                        category: selectedArticle.category,
-                        description: `Hình ảnh trong bài viết: ${selectedArticle.title}`
-                      })}
-                      className="group relative aspect-video rounded-xl overflow-hidden bg-[var(--bg-tertiary)] border border-[var(--border-default)] hover:border-cyan-500/60 cursor-pointer transition-all duration-300 hover:-translate-y-1 shadow-xs hover:shadow-md"
-                    >
-                      <img
-                        src={imgUrl}
-                        alt={`Ảnh ${imgIdx + 1}`}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        loading="lazy"
-                      />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white text-xs font-semibold backdrop-blur-[2px]">
-                        <Eye className="w-4 h-4 text-cyan-400" />
-                        <span>Xem chi tiết</span>
+                {selectedArticle.videoUrl ? (
+                  <ImageSlider
+                    images={selectedArticle.images}
+                    onImageClick={(imgUrl, idx) => setSelectedMedia({
+                      type: 'image',
+                      mediaUrl: imgUrl,
+                      gallery: selectedArticle.images,
+                      galleryIndex: idx,
+                      title: `${selectedArticle.title} (Ảnh ${idx + 1}/${selectedArticle.images.length})`,
+                      category: selectedArticle.category,
+                      description: `Hình ảnh trong bài viết: ${selectedArticle.title}`
+                    })}
+                    showThumbnails={true}
+                  />
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {selectedArticle.images.map((imgUrl, imgIdx) => (
+                      <div
+                        key={imgIdx}
+                        onClick={() => {
+                          const allImgs = Array.from(new Set([
+                            selectedArticle.coverImage,
+                            ...selectedArticle.images
+                          ].filter(Boolean)));
+                          const targetIdx = allImgs.indexOf(imgUrl);
+                          setSelectedMedia({
+                            type: 'image',
+                            mediaUrl: imgUrl,
+                            gallery: allImgs,
+                            galleryIndex: targetIdx >= 0 ? targetIdx : imgIdx,
+                            title: `${selectedArticle.title} (Ảnh ${imgIdx + 1}/${selectedArticle.images.length})`,
+                            category: selectedArticle.category,
+                            description: `Hình ảnh trong bài viết: ${selectedArticle.title}`
+                          });
+                        }}
+                        className="group relative aspect-video rounded-xl overflow-hidden bg-[var(--bg-tertiary)] border border-[var(--border-default)] hover:border-cyan-500/60 cursor-pointer transition-all duration-300 hover:-translate-y-1 shadow-xs hover:shadow-md"
+                      >
+                        <img
+                          src={imgUrl}
+                          alt={`Ảnh ${imgIdx + 1}`}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white text-xs font-semibold backdrop-blur-[2px]">
+                          <Eye className="w-4 h-4 text-cyan-400" />
+                          <span>Xem chi tiết</span>
+                        </div>
+                        <div className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/75 text-slate-300 text-3xs font-mono">
+                          #{imgIdx + 1}
+                        </div>
                       </div>
-                      <div className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/75 text-slate-300 text-3xs font-mono">
-                        #{imgIdx + 1}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -1412,33 +1820,38 @@ export const HomePage = ({ onOpenLogin }) => {
         </div>
       )}
 
-      {/* 8. MODAL: XEM MEDIA (ẢNH PHÓNG TO HOẶC VIDEO EMBED) */}
+      {/* 8. MODAL: XEM MEDIA (ẢNH PHÓNG TO HOẶC VIDEO EMBED TỰ PHÁT) */}
       {selectedMedia && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
-          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-[var(--bg-card)] border border-[var(--border-default)] rounded-3xl p-4 sm:p-6 shadow-2xl">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-black/90 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-4xl max-h-[92vh] overflow-y-auto bg-[var(--bg-card)] border border-[var(--border-default)] rounded-3xl p-4 sm:p-6 shadow-2xl flex flex-col">
             {/* Nút đóng */}
             <button
               type="button"
               onClick={() => setSelectedMedia(null)}
-              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-[var(--bg-tertiary)] hover:bg-[var(--border-default)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-default)] transition-colors"
+              className="absolute top-4 right-4 z-30 p-2 rounded-full bg-black/60 hover:bg-black/90 text-white border border-white/20 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
 
             {/* Video Player hoặc Hình ảnh */}
-            <div className="w-full rounded-2xl overflow-hidden bg-black mb-4">
+            <div
+              className="relative w-full rounded-2xl overflow-hidden bg-black mb-4 select-none"
+              onTouchStart={onMediaTouchStart}
+              onTouchEnd={onMediaTouchEnd}
+            >
               {selectedMedia.type === 'video' ? (
                 (() => {
-                  const ytEmbed = getYouTubeEmbedUrl(selectedMedia.mediaUrl);
-                  if (ytEmbed) {
+                  const videoInfo = getVideoEmbedInfo(selectedMedia.mediaUrl, true);
+                  if (videoInfo?.platform === 'youtube' || videoInfo?.platform === 'facebook') {
                     return (
                       <div className="aspect-video w-full">
                         <iframe
-                          src={ytEmbed}
+                          src={videoInfo.embedUrl}
                           title={selectedMedia.title}
                           className="w-full h-full rounded-2xl border-0"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                           allowFullScreen
+                          scrolling="no"
                         />
                       </div>
                     );
@@ -1448,24 +1861,86 @@ export const HomePage = ({ onOpenLogin }) => {
                       src={selectedMedia.mediaUrl}
                       controls
                       autoPlay
+                      playsInline
                       className="w-full max-h-[70vh] rounded-2xl object-contain mx-auto"
                     />
                   );
                 })()
               ) : (
-                <img
-                  src={selectedMedia.mediaUrl || selectedMedia.thumbnail}
-                  alt={selectedMedia.title}
-                  className="w-full max-h-[70vh] rounded-2xl object-contain mx-auto"
-                />
+                <div className="relative flex items-center justify-center min-h-[300px]">
+                  <img
+                    src={selectedMedia.mediaUrl || selectedMedia.thumbnail}
+                    alt={selectedMedia.title}
+                    className="w-full max-h-[70vh] rounded-2xl object-contain mx-auto transition-opacity duration-300"
+                  />
+
+                  {/* Nút Previous & Next nếu có nhiều ảnh trong gallery */}
+                  {selectedMedia.gallery && selectedMedia.gallery.length > 1 && (
+                    <>
+                      {/* Nút lùi */}
+                      <button
+                        type="button"
+                        onClick={handlePrevMedia}
+                        aria-label="Ảnh trước"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-full bg-black/60 hover:bg-cyan-600 text-white shadow-xl backdrop-blur-md transition-all active:scale-90 z-20"
+                      >
+                        <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+                      </button>
+
+                      {/* Nút tiến */}
+                      <button
+                        type="button"
+                        onClick={handleNextMedia}
+                        aria-label="Ảnh tiếp theo"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-full bg-black/60 hover:bg-cyan-600 text-white shadow-xl backdrop-blur-md transition-all active:scale-90 z-20"
+                      >
+                        <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+                      </button>
+
+                      {/* Counter Badge */}
+                      <div className="absolute top-3 right-14 px-3 py-1 rounded-full bg-black/75 border border-white/20 text-white text-xs font-semibold backdrop-blur-md flex items-center gap-1.5 z-20">
+                        <Camera className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>{(selectedMedia.galleryIndex ?? 0) + 1} / {selectedMedia.gallery.length}</span>
+                      </div>
+
+                      {/* Hint lướt sang */}
+                      <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/65 text-slate-300 text-3xs backdrop-blur-md border border-white/10 z-20">
+                        👈 Lướt sang / Phím mũi tên 👉
+                      </div>
+                    </>
+                  )}
+                </div>
               )}
             </div>
 
+            {/* Dải thumbnail bên dưới nếu Lightbox có nhiều ảnh */}
+            {selectedMedia.type !== 'video' && selectedMedia.gallery && selectedMedia.gallery.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-3 mb-2 scrollbar-thin">
+                {selectedMedia.gallery.map((gImg, gIdx) => (
+                  <button
+                    key={gIdx}
+                    type="button"
+                    onClick={() => setSelectedMedia(prev => ({
+                      ...prev,
+                      galleryIndex: gIdx,
+                      mediaUrl: gImg
+                    }))}
+                    className={`relative shrink-0 w-16 h-12 rounded-lg overflow-hidden border-2 transition-all duration-200 ${gIdx === (selectedMedia.galleryIndex ?? 0) ? 'border-cyan-400 ring-2 ring-cyan-400/50 scale-105' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                  >
+                    <img src={gImg} alt="" className="w-full h-full object-cover" />
+                    <span className="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-black/85 text-white text-[9px] font-mono leading-none">
+                      #{gIdx + 1}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Media Info */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-[var(--border-default)]">
               <div>
                 <span className="px-2 py-0.5 rounded text-2xs font-semibold bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/25">
-                  {selectedMedia.category} • {selectedMedia.date}
+                  {selectedMedia.category || 'VMC Media'} • {selectedMedia.date || 'Gần đây'}
                 </span>
                 <h3 className="text-base font-bold text-[var(--text-primary)] mt-1">
                   {selectedMedia.title}
@@ -1506,7 +1981,6 @@ export const HomePage = ({ onOpenLogin }) => {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-[var(--text-primary)]">Quản Trị Nội Dung Trang Chủ VMC</h3>
-                  <p className="text-xs text-[var(--text-secondary)]">Đăng bài viết, tải ảnh/video, cập nhật cơ cấu tổ chức & thông tin chung</p>
                 </div>
               </div>
 
@@ -1632,7 +2106,7 @@ export const HomePage = ({ onOpenLogin }) => {
                       <div>
                         <label className="text-2xs font-bold text-[var(--text-secondary)] uppercase block mb-1 flex items-center gap-1.5">
                           <Calendar className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-                          <span>Thời Gian / Ngày Đăng *</span>
+                          <span>Ngày Đăng *</span>
                         </label>
                         <input
                           type="date"
@@ -1644,15 +2118,83 @@ export const HomePage = ({ onOpenLogin }) => {
 
                       <div className="sm:col-span-2">
                         <label className="text-2xs font-bold text-[var(--text-secondary)] uppercase block mb-1">
-                          Link Ảnh Bìa (URL)
+                          Link Video (Tùy chọn - Tự phát khi xem)
                         </label>
                         <input
                           type="text"
-                          value={editingArticle.coverImage || ''}
-                          onChange={(e) => setEditingArticle({ ...editingArticle, coverImage: e.target.value })}
-                          placeholder="https://..."
-                          className="ds-input w-full"
+                          value={editingArticle.videoUrl || ''}
+                          onChange={(e) => setEditingArticle({ ...editingArticle, videoUrl: e.target.value })}
+                          placeholder="Dán link YouTube hoặc Facebook (vd: https://facebook.com/... hoặc youtube.com/...)"
+                          className="ds-input w-full text-xs"
                         />
+                      </div>
+
+                      <div className="sm:col-span-2">
+                        <label className="text-2xs font-bold text-[var(--text-secondary)] uppercase block mb-1">
+                          Ảnh Bìa Bài Viết
+                        </label>
+                        {editingArticle.coverImage ? (
+                          <div className="relative group rounded-xl overflow-hidden bg-[var(--bg-tertiary)] border border-[var(--border-default)] p-2.5 flex items-center gap-3">
+                            <img src={editingArticle.coverImage} alt="Cover Preview" className="w-24 h-16 object-cover rounded-lg border border-[var(--border-default)] shrink-0 bg-slate-900" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-[var(--text-primary)] truncate">Ảnh bìa đã chọn</p>
+                              <p className="text-3xs text-[var(--text-secondary)]">Kéo thả ảnh mới vào đây hoặc bấm Đổi Ảnh</p>
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <label className="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold cursor-pointer transition-colors flex items-center gap-1.5 shadow">
+                                <Upload className="w-3.5 h-3.5" />
+                                <span>Đổi Ảnh</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={async (e) => {
+                                    if (e.target.files && e.target.files[0]) {
+                                      const b64 = await readAndCompressImage(e.target.files[0]);
+                                      if (b64) setEditingArticle({ ...editingArticle, coverImage: b64 });
+                                    }
+                                  }}
+                                />
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => setEditingArticle({ ...editingArticle, coverImage: '' })}
+                                className="p-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white transition-colors"
+                                title="Xóa ảnh bìa"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <label
+                            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            onDrop={async (e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                                const b64 = await readAndCompressImage(e.dataTransfer.files[0]);
+                                if (b64) setEditingArticle({ ...editingArticle, coverImage: b64 });
+                              }
+                            }}
+                            className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-[var(--border-default)] hover:border-cyan-500 rounded-xl bg-[var(--bg-tertiary)]/50 hover:bg-cyan-500/5 cursor-pointer transition-all text-center group"
+                          >
+                            <Upload className="w-6 h-6 text-cyan-500 group-hover:scale-110 transition-transform mb-1.5" />
+                            <span className="text-xs font-bold text-[var(--text-primary)]">Kéo thả file ảnh bìa vào đây hoặc bấm để chọn</span>
+                            <span className="text-3xs text-[var(--text-muted)] mt-0.5">Hỗ trợ JPG, PNG, WebP</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={async (e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                  const b64 = await readAndCompressImage(e.target.files[0]);
+                                  if (b64) setEditingArticle({ ...editingArticle, coverImage: b64 });
+                                }
+                              }}
+                            />
+                          </label>
+                        )}
                       </div>
                     </div>
 
@@ -1663,49 +2205,51 @@ export const HomePage = ({ onOpenLogin }) => {
                           <Camera className="w-3.5 h-3.5" />
                           <span>Album Ảnh Đi Kèm ({Array.isArray(editingArticle.images) ? editingArticle.images.length : 0} ảnh)</span>
                         </label>
-                        <span className="text-3xs text-[var(--text-secondary)]">
-                          Thêm nhiều ảnh để tạo bộ sưu tập hình ảnh cho bài viết
-                        </span>
                       </div>
 
-                      {/* Input thêm nhanh link ảnh */}
-                      <div className="flex gap-2">
+                      {/* Dropzone thả nhiều file ảnh */}
+                      <label
+                        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                        onDrop={async (e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                            const files = Array.from(e.dataTransfer.files);
+                            const b64List = (await Promise.all(files.map(f => readAndCompressImage(f)))).filter(Boolean);
+                            if (b64List.length > 0) {
+                              const currentImgs = Array.isArray(editingArticle.images) ? [...editingArticle.images] : [];
+                              setEditingArticle({ ...editingArticle, images: [...currentImgs, ...b64List] });
+                            }
+                          }
+                        }}
+                        className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-cyan-500/40 hover:border-cyan-500 rounded-xl bg-[var(--bg-card)] hover:bg-cyan-500/5 cursor-pointer transition-all text-center group"
+                      >
+                        <div className="flex items-center gap-2 text-cyan-600 dark:text-cyan-400 group-hover:scale-105 transition-transform mb-1">
+                          <Upload className="w-5 h-5" />
+                          <span className="text-xs font-bold">Thả nhiều file ảnh vào đây hoặc bấm để chọn từ máy</span>
+                        </div>
+                        <span className="text-3xs text-[var(--text-muted)]">Chọn 1 hoặc nhiều ảnh cùng lúc (Hỗ trợ JPG, PNG, WebP)</span>
                         <input
-                          type="text"
-                          value={newArticleImageInput}
-                          onChange={(e) => setNewArticleImageInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              if (newArticleImageInput.trim()) {
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          onChange={async (e) => {
+                            if (e.target.files && e.target.files.length > 0) {
+                              const files = Array.from(e.target.files);
+                              const b64List = (await Promise.all(files.map(f => readAndCompressImage(f)))).filter(Boolean);
+                              if (b64List.length > 0) {
                                 const currentImgs = Array.isArray(editingArticle.images) ? [...editingArticle.images] : [];
-                                setEditingArticle({ ...editingArticle, images: [...currentImgs, newArticleImageInput.trim()] });
-                                setNewArticleImageInput('');
+                                setEditingArticle({ ...editingArticle, images: [...currentImgs, ...b64List] });
                               }
                             }
                           }}
-                          placeholder="Dán URL link ảnh (https://...) và bấm Thêm..."
-                          className="ds-input flex-1 text-xs"
                         />
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (newArticleImageInput.trim()) {
-                              const currentImgs = Array.isArray(editingArticle.images) ? [...editingArticle.images] : [];
-                              setEditingArticle({ ...editingArticle, images: [...currentImgs, newArticleImageInput.trim()] });
-                              setNewArticleImageInput('');
-                            }
-                          }}
-                          className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold shrink-0 flex items-center gap-1.5 shadow"
-                        >
-                          <Plus className="w-3.5 h-3.5" />
-                          <span>Thêm Ảnh</span>
-                        </button>
-                      </div>
+                      </label>
 
                       {/* Danh sách ảnh đã thêm trong album */}
                       {Array.isArray(editingArticle.images) && editingArticle.images.length > 0 && (
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-default)] max-h-48 overflow-y-auto">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-2.5 rounded-xl bg-[var(--bg-card)] border border-[var(--border-default)] max-h-56 overflow-y-auto">
                           {editingArticle.images.map((imgUrl, idx) => (
                             <div key={idx} className="relative group rounded-lg overflow-hidden bg-[var(--bg-tertiary)] border border-[var(--border-default)] aspect-video">
                               <img src={imgUrl} alt="" className="w-full h-full object-cover" />
@@ -1737,32 +2281,6 @@ export const HomePage = ({ onOpenLogin }) => {
                           ))}
                         </div>
                       )}
-
-                      {/* Khu vực dán nhanh nhiều link */}
-                      <details className="text-2xs text-[var(--text-secondary)] group">
-                        <summary className="cursor-pointer hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors select-none flex items-center gap-1 font-medium">
-                          <span>+ Dán nhanh nhiều link ảnh cùng lúc (mỗi dòng 1 link)</span>
-                        </summary>
-                        <div className="mt-2 space-y-1.5">
-                          <textarea
-                            rows={3}
-                            placeholder="Dán các link ảnh tại đây (mỗi link 1 dòng)..."
-                            className="ds-input w-full text-xs font-mono"
-                            onBlur={(e) => {
-                              const val = e.target.value.trim();
-                              if (val) {
-                                const lines = val.split('\n').map(s => s.trim()).filter(Boolean);
-                                const currentImgs = Array.isArray(editingArticle.images) ? [...editingArticle.images] : [];
-                                setEditingArticle({ ...editingArticle, images: [...currentImgs, ...lines] });
-                                e.target.value = '';
-                              }
-                            }}
-                          />
-                          <p className="text-3xs text-[var(--text-muted)] italic">
-                            Mẹo: Dán xong click ra ngoài khung để hệ thống tự động nhận diện và đưa vào danh sách ảnh.
-                          </p>
-                        </div>
-                      </details>
                     </div>
 
                     <div>
@@ -1928,7 +2446,7 @@ export const HomePage = ({ onOpenLogin }) => {
 
                       <div>
                         <label className="text-2xs font-bold text-[var(--text-secondary)] uppercase block mb-1">
-                          Loại Phương Tiện *
+                          Hình Thức *
                         </label>
                         <select
                           value={editingMedia.type || 'image'}
@@ -1936,35 +2454,112 @@ export const HomePage = ({ onOpenLogin }) => {
                           className="ds-input w-full"
                         >
                           <option value="image">Hình Ảnh</option>
-                          <option value="video">Video (YouTube / Direct URL)</option>
+                          <option value="video">Video</option>
                         </select>
                       </div>
 
-                      <div>
-                        <label className="text-2xs font-bold text-[var(--text-secondary)] uppercase block mb-1">
-                          Link Phương Tiện (Ảnh hoặc Video YouTube) *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={editingMedia.mediaUrl || ''}
-                          onChange={(e) => setEditingMedia({ ...editingMedia, mediaUrl: e.target.value })}
-                          placeholder="Link ảnh hoặc Link YouTube (vd: https://youtube.com/watch?v=...)"
-                          className="ds-input w-full"
-                        />
-                      </div>
+                      {editingMedia.type === 'video' ? (
+                        <div>
+                          <label className="text-2xs font-bold text-[var(--text-secondary)] uppercase block mb-1">
+                            Link Video *
+                          </label>
+                          <input
+                            type="text"
+                            required
+                            value={editingMedia.mediaUrl || ''}
+                            onChange={(e) => setEditingMedia({ ...editingMedia, mediaUrl: e.target.value })}
+                            placeholder="Dán link YouTube hoặc Facebook (vd: https://facebook.com/... hoặc youtube.com/...)"
+                            className="ds-input w-full"
+                          />
+                        </div>
+                      ) : (
+                        <div>
+                          <label className="text-2xs font-bold text-[var(--text-secondary)] uppercase block mb-1">
+                            File Hình Ảnh *
+                          </label>
+                          {editingMedia.mediaUrl ? (
+                            <div className="relative group rounded-xl overflow-hidden bg-[var(--bg-tertiary)] border border-[var(--border-default)] p-2 flex items-center gap-3">
+                              <img src={editingMedia.mediaUrl} alt="" className="w-20 h-14 object-cover rounded-lg border border-[var(--border-default)] shrink-0 bg-slate-900" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold text-[var(--text-primary)] truncate">Ảnh đã tải lên</p>
+                                <p className="text-3xs text-[var(--text-secondary)]">Kéo thả ảnh khác để thay thế</p>
+                              </div>
+                              <label className="px-2.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold cursor-pointer transition-colors flex items-center gap-1 shadow shrink-0">
+                                <Upload className="w-3.5 h-3.5" />
+                                <span>Đổi Ảnh</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={async (e) => {
+                                    if (e.target.files && e.target.files[0]) {
+                                      const b64 = await readAndCompressImage(e.target.files[0]);
+                                      if (b64) setEditingMedia({ ...editingMedia, mediaUrl: b64, thumbnail: editingMedia.thumbnail || b64 });
+                                    }
+                                  }}
+                                />
+                              </label>
+                            </div>
+                          ) : (
+                            <label
+                              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                              onDrop={async (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                                  const b64 = await readAndCompressImage(e.dataTransfer.files[0]);
+                                  if (b64) setEditingMedia({ ...editingMedia, mediaUrl: b64, thumbnail: editingMedia.thumbnail || b64 });
+                                }
+                              }}
+                              className="flex flex-col items-center justify-center p-3 border-2 border-dashed border-[var(--border-default)] hover:border-cyan-500 rounded-xl bg-[var(--bg-tertiary)]/50 hover:bg-cyan-500/5 cursor-pointer transition-all text-center group"
+                            >
+                              <Upload className="w-5 h-5 text-cyan-500 mb-1 group-hover:scale-110 transition-transform" />
+                              <span className="text-xs font-bold text-[var(--text-primary)]">Kéo thả file ảnh vào đây hoặc bấm để chọn</span>
+                              <span className="text-3xs text-[var(--text-muted)] mt-0.5">Hỗ trợ JPG, PNG, WebP</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                className="hidden"
+                                onChange={async (e) => {
+                                  if (e.target.files && e.target.files[0]) {
+                                    const b64 = await readAndCompressImage(e.target.files[0]);
+                                    if (b64) setEditingMedia({ ...editingMedia, mediaUrl: b64, thumbnail: editingMedia.thumbnail || b64 });
+                                  }
+                                }}
+                              />
+                            </label>
+                          )}
+                        </div>
+                      )}
 
                       <div>
                         <label className="text-2xs font-bold text-[var(--text-secondary)] uppercase block mb-1">
-                          Link Ảnh Đại Diện (Thumbnail)
+                          {editingMedia.type === 'video' ? 'Ảnh Bìa Video' : 'Ảnh Đại Diện'}
                         </label>
-                        <input
-                          type="text"
-                          value={editingMedia.thumbnail || ''}
-                          onChange={(e) => setEditingMedia({ ...editingMedia, thumbnail: e.target.value })}
-                          placeholder="Để trống nếu muốn tự lấy link ảnh gốc..."
-                          className="ds-input w-full"
-                        />
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={editingMedia.thumbnail || ''}
+                            onChange={(e) => setEditingMedia({ ...editingMedia, thumbnail: e.target.value })}
+                            placeholder={editingMedia.type === 'video' ? 'Dán link ảnh thumbnail hoặc bấm Thả File...' : 'Tự động lấy ảnh gốc nếu để trống...'}
+                            className="ds-input flex-1 text-xs"
+                          />
+                          <label className="px-3 py-2 rounded-xl bg-[var(--bg-tertiary)] hover:bg-[var(--border-default)] border border-[var(--border-default)] text-xs font-semibold cursor-pointer shrink-0 flex items-center gap-1 shadow-xs">
+                            <Upload className="w-3.5 h-3.5 text-cyan-500" />
+                            <span>Thả file</span>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              onChange={async (e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                  const b64 = await readAndCompressImage(e.target.files[0]);
+                                  if (b64) setEditingMedia({ ...editingMedia, thumbnail: b64 });
+                                }
+                              }}
+                            />
+                          </label>
+                        </div>
                       </div>
 
                       <div>
@@ -1983,7 +2578,7 @@ export const HomePage = ({ onOpenLogin }) => {
                       <div>
                         <label className="text-2xs font-bold text-[var(--text-secondary)] uppercase block mb-1 flex items-center gap-1.5">
                           <Calendar className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-                          <span>Thời Gian / Ngày Đăng *</span>
+                          <span>Ngày Đăng *</span>
                         </label>
                         <input
                           type="date"

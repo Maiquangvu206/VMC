@@ -80,6 +80,7 @@ Phát thanh học đường đã và đang trở thành một nét văn hóa đ�
     category: 'Hậu Trường',
     date: '28/09/2026',
     author: 'Ban Sản Xuất VMC',
+    videoUrl: 'https://www.youtube.com/watch?v=ScMzIvxBSi4',
     coverImage: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80&w=1000',
     images: [
       'https://images.unsplash.com/photo-1533727937480-da3a97967e15?auto=format&fit=crop&q=80&w=1000',
