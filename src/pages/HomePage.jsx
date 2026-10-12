@@ -44,7 +44,8 @@ import {
   DEFAULT_HOMEPAGE_ORG,
   saveHomepageDataAPI,
   loadHomepageDataAPI,
-  fetchAllHomepageData
+  fetchAllHomepageData,
+  uploadImageToServer
 } from '../services/homepageService';
 import { getCachedData } from '../services/cacheService';
 
@@ -55,7 +56,7 @@ const getVideoEmbedInfo = (url, autoplay = true) => {
 
   // 1. YouTube (watch, shorts, embed, youtu.be, live)
   const ytMatch = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|shorts\/|live\/))([\w-]{11})/i) ||
-                  trimmed.match(/[?&]v=([\w-]{11})/i);
+    trimmed.match(/[?&]v=([\w-]{11})/i);
   if (ytMatch && ytMatch[1]) {
     const videoId = ytMatch[1];
     const autoParam = autoplay ? 'autoplay=1&mute=0' : 'autoplay=0';
@@ -603,7 +604,19 @@ export const HomePage = ({ onOpenLogin }) => {
             };
           });
           setArticles(mergedArticles);
-          if (Array.isArray(loadedMedia)) setMediaList(loadedMedia);
+          if (Array.isArray(loadedMedia)) {
+            const mergedMedia = loadedMedia.map(m => {
+              const defaultMed = DEFAULT_HOMEPAGE_MEDIA.find(d => d.id === m.id);
+              const loadedImgs = Array.isArray(m.images) && m.images.length > 0
+                ? m.images
+                : (defaultMed?.images || (m.mediaUrl && m.type === 'image' ? [m.mediaUrl] : []));
+              return {
+                ...m,
+                images: loadedImgs
+              };
+            });
+            setMediaList(mergedMedia);
+          }
         }
       } catch (err) {
         console.warn('⚠️ Lỗi nạp dữ liệu trang chủ:', err);
@@ -655,8 +668,12 @@ export const HomePage = ({ onOpenLogin }) => {
     setArticles(updated);
     setEditingArticle(null);
     setIsManageModalOpen(false);
-    await saveHomepageDataAPI('VMC_HOMEPAGE_ARTICLES', updated);
-    if (addToast) addToast('Đã lưu bài viết giới thiệu thành công!', 'success');
+    const ok = await saveHomepageDataAPI('VMC_HOMEPAGE_ARTICLES', updated);
+    if (ok) {
+      if (addToast) addToast('Đã lưu bài viết thành công lên CSDL máy chủ!', 'success');
+    } else {
+      if (addToast) addToast('⚠️ Lỗi: Không thể lưu bài viết lên máy chủ CSDL!', 'error');
+    }
   };
 
   const handleDeleteArticle = async (id) => {
@@ -667,24 +684,45 @@ export const HomePage = ({ onOpenLogin }) => {
     if (addToast) addToast('Đã xóa bài viết thành công!', 'info');
   };
 
-  // Handler cập nhật Media
+  // Handler cập nhật Media (Hỗ trợ đẩy nhiều file ảnh vào 1 mục)
   const handleSaveMedia = async (mediaData) => {
+    let imagesArr = [];
+    if (Array.isArray(mediaData.images)) {
+      imagesArr = mediaData.images.filter(Boolean);
+    } else if (typeof mediaData.images === 'string') {
+      imagesArr = mediaData.images.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
+    } else if (mediaData.type === 'image' && mediaData.mediaUrl) {
+      imagesArr = [mediaData.mediaUrl];
+    }
+
+    const firstImage = imagesArr.length > 0 ? imagesArr[0] : '';
+    const cleanMedia = {
+      ...mediaData,
+      images: imagesArr,
+      mediaUrl: mediaData.type === 'image' ? (firstImage || mediaData.mediaUrl || '') : (mediaData.mediaUrl || ''),
+      thumbnail: mediaData.thumbnail || firstImage || mediaData.mediaUrl || ''
+    };
+
     let updated;
-    if (mediaData.id) {
-      updated = mediaList.map(m => m.id === mediaData.id ? mediaData : m);
+    if (cleanMedia.id) {
+      updated = mediaList.map(m => m.id === cleanMedia.id ? cleanMedia : m);
     } else {
       const newMedia = {
-        ...mediaData,
+        ...cleanMedia,
         id: 'med-' + Date.now(),
-        date: mediaData.date || new Date().toLocaleDateString('vi-VN')
+        date: cleanMedia.date || new Date().toLocaleDateString('vi-VN')
       };
       updated = [newMedia, ...mediaList];
     }
     setMediaList(updated);
     setEditingMedia(null);
     setIsManageModalOpen(false);
-    await saveHomepageDataAPI('VMC_HOMEPAGE_MEDIA', updated);
-    if (addToast) addToast('Đã cập nhật kho media thành công!', 'success');
+    const ok = await saveHomepageDataAPI('VMC_HOMEPAGE_MEDIA', updated);
+    if (ok) {
+      if (addToast) addToast('Đã lưu ảnh/video thành công lên CSDL máy chủ!', 'success');
+    } else {
+      if (addToast) addToast('⚠️ Lỗi: Không thể lưu ảnh/video lên máy chủ CSDL!', 'error');
+    }
   };
 
   const handleDeleteMedia = async (id) => {
@@ -693,6 +731,59 @@ export const HomePage = ({ onOpenLogin }) => {
     setMediaList(updated);
     await saveHomepageDataAPI('VMC_HOMEPAGE_MEDIA', updated);
     if (addToast) addToast('Đã xóa media thành công!', 'info');
+  };
+
+  // Quản lý tải lên nhiều file ảnh cho 1 mục Media (Hỗ trợ kéo thả / chọn nhiều ảnh & upload tĩnh lên server)
+  const handleMediaFilesSelected = async (files) => {
+    if (!files || files.length === 0) return;
+    const fileArray = Array.from(files);
+
+    const uploadPromises = fileArray.map(async (file) => {
+      const serverUrl = await uploadImageToServer(file);
+      if (serverUrl) return serverUrl;
+      return await readAndCompressImage(file);
+    });
+    const newImages = (await Promise.all(uploadPromises)).filter(Boolean);
+    if (newImages.length === 0) return;
+
+    setEditingMedia(prev => {
+      if (!prev) return prev;
+      const existing = Array.isArray(prev.images) && prev.images.length > 0
+        ? prev.images
+        : (prev.mediaUrl ? [prev.mediaUrl] : []);
+      const merged = [...existing, ...newImages];
+      return {
+        ...prev,
+        images: merged,
+        mediaUrl: merged[0] || '',
+        thumbnail: prev.thumbnail || merged[0] || ''
+      };
+    });
+  };
+
+  const handleRemoveMediaImage = (indexToRemove) => {
+    setEditingMedia(prev => {
+      if (!prev) return prev;
+      const existing = Array.isArray(prev.images) ? prev.images : [];
+      const updated = existing.filter((_, i) => i !== indexToRemove);
+      const isRemovedThumb = prev.thumbnail === existing[indexToRemove];
+      return {
+        ...prev,
+        images: updated,
+        mediaUrl: updated[0] || '',
+        thumbnail: isRemovedThumb ? (updated[0] || '') : prev.thumbnail
+      };
+    });
+  };
+
+  const handleSetMediaThumbnail = (imgUrl) => {
+    setEditingMedia(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        thumbnail: imgUrl
+      };
+    });
   };
 
   // Quản lý Lightbox và chuyển ảnh tiếp theo khi xem album / media
@@ -1355,6 +1446,7 @@ export const HomePage = ({ onOpenLogin }) => {
                       type: 'image',
                       mediaUrl: '',
                       thumbnail: '',
+                      images: [],
                       category: 'Ảnh Sự Kiện',
                       date: new Date().toLocaleDateString('vi-VN'),
                       description: ''
@@ -1380,12 +1472,15 @@ export const HomePage = ({ onOpenLogin }) => {
                   if (item.type === 'video') {
                     setSelectedMedia(item);
                   } else {
-                    const imageItems = filteredMedia.filter(m => m.type === 'image');
-                    const imgIdx = imageItems.findIndex(m => m.id === item.id);
+                    const itemGallery = (Array.isArray(item.images) && item.images.length > 0)
+                      ? item.images
+                      : [item.mediaUrl || item.thumbnail].filter(Boolean);
                     setSelectedMedia({
                       ...item,
-                      gallery: imageItems.map(m => m.mediaUrl || m.thumbnail),
-                      galleryIndex: imgIdx >= 0 ? imgIdx : 0
+                      images: itemGallery,
+                      gallery: itemGallery,
+                      galleryIndex: 0,
+                      mediaUrl: itemGallery[0] || item.mediaUrl || item.thumbnail
                     });
                   }
                 }}
@@ -1416,8 +1511,14 @@ export const HomePage = ({ onOpenLogin }) => {
                     )}
                   </div>
 
-                  {/* Category Pill */}
-                  <div className="absolute top-3 right-3">
+                  {/* Category Pill & Multi-photo badge */}
+                  <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                    {item.type === 'image' && Array.isArray(item.images) && item.images.length > 1 && (
+                      <span className="px-2 py-0.5 rounded text-2xs font-semibold bg-cyan-600/90 text-white backdrop-blur-md shadow flex items-center gap-1">
+                        <Camera className="w-3 h-3" />
+                        <span>+{item.images.length} ảnh</span>
+                      </span>
+                    )}
                     <span className="px-2 py-0.5 rounded text-2xs font-semibold bg-slate-900/80 text-cyan-300 border border-cyan-500/20 backdrop-blur-md">
                       {item.category}
                     </span>
@@ -1833,12 +1934,8 @@ export const HomePage = ({ onOpenLogin }) => {
               <X className="w-5 h-5" />
             </button>
 
-            {/* Video Player hoặc Hình ảnh */}
-            <div
-              className="relative w-full rounded-2xl overflow-hidden bg-black mb-4 select-none"
-              onTouchStart={onMediaTouchStart}
-              onTouchEnd={onMediaTouchEnd}
-            >
+            {/* Video Player tự phát hoặc Trình Chiếu Ảnh (ImageSlider chuyển tiếp như bài đăng) */}
+            <div className="relative w-full rounded-2xl overflow-hidden bg-black mb-4 select-none">
               {selectedMedia.type === 'video' ? (
                 (() => {
                   const videoInfo = getVideoEmbedInfo(selectedMedia.mediaUrl, true);
@@ -1867,74 +1964,36 @@ export const HomePage = ({ onOpenLogin }) => {
                   );
                 })()
               ) : (
-                <div className="relative flex items-center justify-center min-h-[300px]">
-                  <img
-                    src={selectedMedia.mediaUrl || selectedMedia.thumbnail}
-                    alt={selectedMedia.title}
-                    className="w-full max-h-[70vh] rounded-2xl object-contain mx-auto transition-opacity duration-300"
-                  />
+                (() => {
+                  const mediaImages = (Array.isArray(selectedMedia.images) && selectedMedia.images.length > 0)
+                    ? selectedMedia.images
+                    : (Array.isArray(selectedMedia.gallery) && selectedMedia.gallery.length > 0)
+                      ? selectedMedia.gallery
+                      : [selectedMedia.mediaUrl || selectedMedia.thumbnail].filter(Boolean);
 
-                  {/* Nút Previous & Next nếu có nhiều ảnh trong gallery */}
-                  {selectedMedia.gallery && selectedMedia.gallery.length > 1 && (
-                    <>
-                      {/* Nút lùi */}
-                      <button
-                        type="button"
-                        onClick={handlePrevMedia}
-                        aria-label="Ảnh trước"
-                        className="absolute left-3 top-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-full bg-black/60 hover:bg-cyan-600 text-white shadow-xl backdrop-blur-md transition-all active:scale-90 z-20"
-                      >
-                        <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
-                      </button>
+                  if (mediaImages.length > 1) {
+                    return (
+                      <ImageSlider
+                        images={mediaImages}
+                        initialIndex={selectedMedia.galleryIndex || 0}
+                        showThumbnails={true}
+                        aspectRatio="aspect-video"
+                      />
+                    );
+                  }
 
-                      {/* Nút tiến */}
-                      <button
-                        type="button"
-                        onClick={handleNextMedia}
-                        aria-label="Ảnh tiếp theo"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 p-2 sm:p-3 rounded-full bg-black/60 hover:bg-cyan-600 text-white shadow-xl backdrop-blur-md transition-all active:scale-90 z-20"
-                      >
-                        <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
-                      </button>
-
-                      {/* Counter Badge */}
-                      <div className="absolute top-3 right-14 px-3 py-1 rounded-full bg-black/75 border border-white/20 text-white text-xs font-semibold backdrop-blur-md flex items-center gap-1.5 z-20">
-                        <Camera className="w-3.5 h-3.5 text-cyan-400" />
-                        <span>{(selectedMedia.galleryIndex ?? 0) + 1} / {selectedMedia.gallery.length}</span>
-                      </div>
-
-                      {/* Hint lướt sang */}
-                      <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/65 text-slate-300 text-3xs backdrop-blur-md border border-white/10 z-20">
-                        👈 Lướt sang / Phím mũi tên 👉
-                      </div>
-                    </>
-                  )}
-                </div>
+                  return (
+                    <div className="relative flex items-center justify-center min-h-[300px] max-h-[70vh]">
+                      <img
+                        src={mediaImages[0] || selectedMedia.mediaUrl || selectedMedia.thumbnail}
+                        alt={selectedMedia.title}
+                        className="w-full max-h-[70vh] rounded-2xl object-contain mx-auto transition-opacity duration-300"
+                      />
+                    </div>
+                  );
+                })()
               )}
             </div>
-
-            {/* Dải thumbnail bên dưới nếu Lightbox có nhiều ảnh */}
-            {selectedMedia.type !== 'video' && selectedMedia.gallery && selectedMedia.gallery.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-3 mb-2 scrollbar-thin">
-                {selectedMedia.gallery.map((gImg, gIdx) => (
-                  <button
-                    key={gIdx}
-                    type="button"
-                    onClick={() => setSelectedMedia(prev => ({
-                      ...prev,
-                      galleryIndex: gIdx,
-                      mediaUrl: gImg
-                    }))}
-                    className={`relative shrink-0 w-16 h-12 rounded-lg overflow-hidden border-2 transition-all duration-200 ${gIdx === (selectedMedia.galleryIndex ?? 0) ? 'border-cyan-400 ring-2 ring-cyan-400/50 scale-105' : 'border-transparent opacity-60 hover:opacity-100'}`}
-                  >
-                    <img src={gImg} alt="" className="w-full h-full object-cover" />
-                    <span className="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-black/85 text-white text-[9px] font-mono leading-none">
-                      #{gIdx + 1}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
 
             {/* Media Info */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-[var(--border-default)]">
@@ -2118,7 +2177,7 @@ export const HomePage = ({ onOpenLogin }) => {
 
                       <div className="sm:col-span-2">
                         <label className="text-2xs font-bold text-[var(--text-secondary)] uppercase block mb-1">
-                          Link Video (Tùy chọn - Tự phát khi xem)
+                          Link Video
                         </label>
                         <input
                           type="text"
@@ -2459,34 +2518,36 @@ export const HomePage = ({ onOpenLogin }) => {
                       </div>
 
                       {editingMedia.type === 'video' ? (
-                        <div>
-                          <label className="text-2xs font-bold text-[var(--text-secondary)] uppercase block mb-1">
-                            Link Video *
-                          </label>
-                          <input
-                            type="text"
-                            required
-                            value={editingMedia.mediaUrl || ''}
-                            onChange={(e) => setEditingMedia({ ...editingMedia, mediaUrl: e.target.value })}
-                            placeholder="Dán link YouTube hoặc Facebook (vd: https://facebook.com/... hoặc youtube.com/...)"
-                            className="ds-input w-full"
-                          />
-                        </div>
-                      ) : (
-                        <div>
-                          <label className="text-2xs font-bold text-[var(--text-secondary)] uppercase block mb-1">
-                            File Hình Ảnh *
-                          </label>
-                          {editingMedia.mediaUrl ? (
-                            <div className="relative group rounded-xl overflow-hidden bg-[var(--bg-tertiary)] border border-[var(--border-default)] p-2 flex items-center gap-3">
-                              <img src={editingMedia.mediaUrl} alt="" className="w-20 h-14 object-cover rounded-lg border border-[var(--border-default)] shrink-0 bg-slate-900" />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-semibold text-[var(--text-primary)] truncate">Ảnh đã tải lên</p>
-                                <p className="text-3xs text-[var(--text-secondary)]">Kéo thả ảnh khác để thay thế</p>
-                              </div>
-                              <label className="px-2.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold cursor-pointer transition-colors flex items-center gap-1 shadow shrink-0">
-                                <Upload className="w-3.5 h-3.5" />
-                                <span>Đổi Ảnh</span>
+                        <>
+                          <div>
+                            <label className="text-2xs font-bold text-[var(--text-secondary)] uppercase block mb-1">
+                              Link Video *
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={editingMedia.mediaUrl || ''}
+                              onChange={(e) => setEditingMedia({ ...editingMedia, mediaUrl: e.target.value })}
+                              placeholder="Dán link YouTube hoặc Facebook (vd: https://facebook.com/... hoặc youtube.com/...)"
+                              className="ds-input w-full"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-2xs font-bold text-[var(--text-secondary)] uppercase block mb-1">
+                              Ảnh Bìa Video
+                            </label>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={editingMedia.thumbnail || ''}
+                                onChange={(e) => setEditingMedia({ ...editingMedia, thumbnail: e.target.value })}
+                                placeholder="Dán link ảnh thumbnail hoặc bấm Thả File..."
+                                className="ds-input flex-1 text-xs"
+                              />
+                              <label className="px-3 py-2 rounded-xl bg-[var(--bg-tertiary)] hover:bg-[var(--border-default)] border border-[var(--border-default)] text-xs font-semibold cursor-pointer shrink-0 flex items-center gap-1 shadow-xs">
+                                <Upload className="w-3.5 h-3.5 text-cyan-500" />
+                                <span>Thả file</span>
                                 <input
                                   type="file"
                                   accept="image/*"
@@ -2494,73 +2555,115 @@ export const HomePage = ({ onOpenLogin }) => {
                                   onChange={async (e) => {
                                     if (e.target.files && e.target.files[0]) {
                                       const b64 = await readAndCompressImage(e.target.files[0]);
-                                      if (b64) setEditingMedia({ ...editingMedia, mediaUrl: b64, thumbnail: editingMedia.thumbnail || b64 });
+                                      if (b64) setEditingMedia({ ...editingMedia, thumbnail: b64 });
                                     }
                                   }}
                                 />
                               </label>
                             </div>
-                          ) : (
-                            <label
-                              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                              onDrop={async (e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                                  const b64 = await readAndCompressImage(e.dataTransfer.files[0]);
-                                  if (b64) setEditingMedia({ ...editingMedia, mediaUrl: b64, thumbnail: editingMedia.thumbnail || b64 });
-                                }
-                              }}
-                              className="flex flex-col items-center justify-center p-3 border-2 border-dashed border-[var(--border-default)] hover:border-cyan-500 rounded-xl bg-[var(--bg-tertiary)]/50 hover:bg-cyan-500/5 cursor-pointer transition-all text-center group"
-                            >
-                              <Upload className="w-5 h-5 text-cyan-500 mb-1 group-hover:scale-110 transition-transform" />
-                              <span className="text-xs font-bold text-[var(--text-primary)]">Kéo thả file ảnh vào đây hoặc bấm để chọn</span>
-                              <span className="text-3xs text-[var(--text-muted)] mt-0.5">Hỗ trợ JPG, PNG, WebP</span>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={async (e) => {
-                                  if (e.target.files && e.target.files[0]) {
-                                    const b64 = await readAndCompressImage(e.target.files[0]);
-                                    if (b64) setEditingMedia({ ...editingMedia, mediaUrl: b64, thumbnail: editingMedia.thumbnail || b64 });
-                                  }
-                                }}
-                              />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="sm:col-span-2 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <label className="text-2xs font-bold text-[var(--text-secondary)] uppercase flex items-center gap-1.5">
+                              <ImageIcon className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+                              <span>Bộ Sưu Tập File Ảnh Của Mục Này * {Array.isArray(editingMedia.images) && editingMedia.images.length > 0 && `(${editingMedia.images.length} ảnh)`}</span>
                             </label>
-                          )}
-                        </div>
-                      )}
+                          </div>
 
-                      <div>
-                        <label className="text-2xs font-bold text-[var(--text-secondary)] uppercase block mb-1">
-                          {editingMedia.type === 'video' ? 'Ảnh Bìa Video' : 'Ảnh Đại Diện'}
-                        </label>
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            value={editingMedia.thumbnail || ''}
-                            onChange={(e) => setEditingMedia({ ...editingMedia, thumbnail: e.target.value })}
-                            placeholder={editingMedia.type === 'video' ? 'Dán link ảnh thumbnail hoặc bấm Thả File...' : 'Tự động lấy ảnh gốc nếu để trống...'}
-                            className="ds-input flex-1 text-xs"
-                          />
-                          <label className="px-3 py-2 rounded-xl bg-[var(--bg-tertiary)] hover:bg-[var(--border-default)] border border-[var(--border-default)] text-xs font-semibold cursor-pointer shrink-0 flex items-center gap-1 shadow-xs">
-                            <Upload className="w-3.5 h-3.5 text-cyan-500" />
-                            <span>Thả file</span>
+                          {/* Dropzone thả / chọn nhiều ảnh */}
+                          <label
+                            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                            onDrop={async (e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                                await handleMediaFilesSelected(e.dataTransfer.files);
+                              }
+                            }}
+                            className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-[var(--border-default)] hover:border-cyan-500 rounded-2xl bg-[var(--bg-tertiary)]/50 hover:bg-cyan-500/5 cursor-pointer transition-all text-center group"
+                          >
+                            <Upload className="w-6 h-6 text-cyan-500 mb-1.5 group-hover:scale-110 transition-transform" />
+                            <span className="text-xs font-bold text-[var(--text-primary)]">
+                              Kéo thả một hoặc nhiều file ảnh vào đây hoặc bấm để chọn
+                            </span>
+                            <span className="text-3xs text-[var(--text-muted)] mt-0.5">
+                              Hỗ trợ chọn cùng lúc nhiều ảnh (JPG, PNG, WebP) - Tự động hiển thị slider lướt chuyển tiếp
+                            </span>
                             <input
                               type="file"
                               accept="image/*"
+                              multiple
                               className="hidden"
                               onChange={async (e) => {
-                                if (e.target.files && e.target.files[0]) {
-                                  const b64 = await readAndCompressImage(e.target.files[0]);
-                                  if (b64) setEditingMedia({ ...editingMedia, thumbnail: b64 });
+                                if (e.target.files && e.target.files.length > 0) {
+                                  await handleMediaFilesSelected(e.target.files);
                                 }
                               }}
                             />
                           </label>
+
+                          {/* Preview Grid ảnh đã nạp */}
+                          {Array.isArray(editingMedia.images) && editingMedia.images.length > 0 && (
+                            <div className="space-y-2 pt-1">
+                              <div className="flex items-center justify-between">
+                                <span className="text-3xs font-semibold text-[var(--text-muted)] uppercase">
+                                  Danh sách ảnh đã tải lên ({editingMedia.images.length}):
+                                </span>
+                                <span className="text-3xs text-cyan-600 dark:text-cyan-400">
+                                  ★ Bấm "Làm đại diện" để đổi ảnh bìa
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2.5 max-h-56 overflow-y-auto p-1.5 rounded-xl bg-[var(--bg-tertiary)]/40 border border-[var(--border-default)]">
+                                {editingMedia.images.map((img, idx) => {
+                                  const isThumb = editingMedia.thumbnail === img || (!editingMedia.thumbnail && idx === 0);
+                                  return (
+                                    <div
+                                      key={idx}
+                                      className={`group relative rounded-xl overflow-hidden border-2 aspect-video bg-black/40 transition-all ${isThumb ? 'border-cyan-500 ring-2 ring-cyan-500/30' : 'border-[var(--border-default)] hover:border-cyan-500/50'
+                                        }`}
+                                    >
+                                      <img src={img} alt="" className="w-full h-full object-cover" />
+
+                                      <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded bg-black/75 text-white text-[10px] font-mono leading-none backdrop-blur-xs">
+                                        #{idx + 1}
+                                      </span>
+
+                                      {isThumb && (
+                                        <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-cyan-600 text-white text-[9px] font-bold shadow flex items-center gap-0.5">
+                                          ★ Đại diện
+                                        </span>
+                                      )}
+
+                                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-1">
+                                        {!isThumb && (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleSetMediaThumbnail(img)}
+                                            className="px-2 py-1 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-[10px] font-bold shadow transition-colors"
+                                            title="Đặt làm ảnh đại diện"
+                                          >
+                                            ★ Đại diện
+                                          </button>
+                                        )}
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRemoveMediaImage(idx)}
+                                          className="p-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs shadow transition-colors"
+                                          title="Xóa ảnh này"
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
+                      )}
 
                       <div>
                         <label className="text-2xs font-bold text-[var(--text-secondary)] uppercase block mb-1">
@@ -2626,6 +2729,7 @@ export const HomePage = ({ onOpenLogin }) => {
                       type: 'image',
                       mediaUrl: '',
                       thumbnail: '',
+                      images: [],
                       category: 'Ảnh Sự Kiện',
                       date: new Date().toLocaleDateString('vi-VN'),
                       description: ''
@@ -2658,7 +2762,12 @@ export const HomePage = ({ onOpenLogin }) => {
                             {med.type === 'video' ? '🎬 Video' : '📸 Hình Ảnh'} • {med.category}
                           </span>
                           <h5 className="text-xs font-bold text-[var(--text-primary)] truncate">{med.title}</h5>
-                          <span className="text-2xs text-[var(--text-secondary)]">{med.date}</span>
+                          <span className="text-2xs text-[var(--text-secondary)]">
+                            {med.date}
+                            {med.type === 'image' && Array.isArray(med.images) && med.images.length > 1 && (
+                              <span className="text-cyan-600 dark:text-cyan-400 font-medium"> • 📷 {med.images.length} ảnh</span>
+                            )}
+                          </span>
                         </div>
                       </div>
 
@@ -2667,6 +2776,7 @@ export const HomePage = ({ onOpenLogin }) => {
                           type="button"
                           onClick={() => setEditingMedia({
                             ...med,
+                            images: Array.isArray(med.images) && med.images.length > 0 ? med.images : (med.mediaUrl ? [med.mediaUrl] : []),
                             date: med.date || new Date().toLocaleDateString('vi-VN')
                           })}
                           className="p-2 rounded-lg bg-[var(--bg-tertiary)] hover:bg-[var(--border-default)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-default)]"

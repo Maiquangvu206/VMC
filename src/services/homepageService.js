@@ -113,6 +113,11 @@ export const DEFAULT_HOMEPAGE_MEDIA = [
     type: 'image',
     mediaUrl: 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&q=80&w=1200',
     thumbnail: 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&q=80&w=600',
+    images: [
+      'https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&q=80&w=1200',
+      'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&q=80&w=1200',
+      'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=1200'
+    ],
     date: '05/09/2026',
     category: 'Ảnh Sự Kiện',
     description: 'Khoảnh khắc chào đón các tân học sinh K65 bước vào ngôi trường THPT Vĩnh Bảo giàu truyền thống.'
@@ -123,6 +128,11 @@ export const DEFAULT_HOMEPAGE_MEDIA = [
     type: 'image',
     mediaUrl: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=1200',
     thumbnail: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=600',
+    images: [
+      'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=1200',
+      'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80&w=1200',
+      'https://images.unsplash.com/photo-1533727937480-da3a97967e15?auto=format&fit=crop&q=80&w=1200'
+    ],
     date: '20/09/2026',
     category: 'Kỷ Niệm Nội Bộ',
     description: 'Đêm gala kết nối đầy ấm cúng và bùng nổ nhiệt huyết của các thành viên gia đình VMC.'
@@ -135,7 +145,7 @@ export const DEFAULT_HOMEPAGE_MEDIA = [
     thumbnail: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&q=80&w=800',
     date: '15/05/2026',
     category: 'Sản Xuất Media',
-    description: 'Phim ngắn tri ân tuổi học trò do chính ekip học sinh VMC viết kịch bản, quay phim và hậu kỳ.'
+    description: 'Phim ngắn tri ấn tuổi học trò do chính ekip học sinh VMC viết kịch bản, quay phim và hậu kỳ.'
   },
   {
     id: 'med-5',
@@ -143,6 +153,10 @@ export const DEFAULT_HOMEPAGE_MEDIA = [
     type: 'image',
     mediaUrl: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&q=80&w=1200',
     thumbnail: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&q=80&w=600',
+    images: [
+      'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&q=80&w=1200',
+      'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&q=80&w=1200'
+    ],
     date: '20/11/2025',
     category: 'Ảnh Sự Kiện',
     description: 'Bộ ảnh bắt trọn từng khoảnh khắc biểu diễn thăng hoa của học sinh các khối lớp.'
@@ -274,6 +288,48 @@ export const DEFAULT_HOMEPAGE_ORG = [
   }
 ];
 
+// Helper tải ảnh lên máy chủ lưu thành file tĩnh tại /storage/homepage_media
+export const uploadImageToServer = async (fileOrBase64) => {
+  try {
+    if (typeof fileOrBase64 === 'string') {
+      if (fileOrBase64.startsWith('http') || fileOrBase64.startsWith('/')) {
+        return fileOrBase64;
+      }
+      const res = await fetch('/api/homepage/upload-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
+        },
+        body: JSON.stringify({ base64: fileOrBase64 })
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.url) return json.url;
+      }
+    } else if (fileOrBase64 instanceof File || fileOrBase64 instanceof Blob) {
+      const formData = new FormData();
+      formData.append('file', fileOrBase64);
+      const res = await fetch('/api/homepage/upload-image', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
+        },
+        body: formData
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.url) return json.url;
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ Upload image to server failed, keeping original:', err);
+  }
+  return typeof fileOrBase64 === 'string' ? fileOrBase64 : null;
+};
+
 // Helper lưu dữ liệu vào MySQL System_Settings và cập nhật cache
 export const saveHomepageDataAPI = async (key, data) => {
   try {
@@ -285,20 +341,33 @@ export const saveHomepageDataAPI = async (key, data) => {
     setCachedData(key, data, CACHE_TTL.HOMEPAGE);
 
     // Gửi lưu trực tiếp vào CSDL MySQL
-    await fetch('/api/admin/system-settings', {
+    const res = await fetch('/api/admin/system-settings', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         'ngrok-skip-browser-warning': 'true'
       },
       body: JSON.stringify({ key, value: valStr })
     });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error(`⚠️ Save ${key} failed (Status ${res.status}):`, errText);
+      return false;
+    }
+
+    const json = await res.json();
+    if (!json.success) {
+      console.error(`⚠️ Save ${key} returned error:`, json.error);
+      return false;
+    }
     
     // Invalidate system_settings cache để lần tải sau cập nhật mới nhất
     invalidateCache('system_settings');
     return true;
   } catch (error) {
-    console.warn(`⚠️ Save ${key} error:`, error.message);
+    console.error(`⚠️ Save ${key} error:`, error.message);
     return false;
   }
 };
@@ -310,7 +379,7 @@ export const loadHomepageDataAPI = async (key, fallbackData) => {
     
     // 1. Lấy từ Cache tức thì (0ms)
     const cached = getCachedData(`homepage_${shortKey}`) || getCachedData(key);
-    let result = cached !== null ? cached : fallbackData;
+    let result = (Array.isArray(cached) ? cached.length > 0 : cached !== null) ? cached : fallbackData;
 
     // 2. Fetch từ CSDL MySQL để cập nhật dữ liệu mới nhất
     const res = await fetch('/api/admin/system-settings', {
@@ -319,9 +388,11 @@ export const loadHomepageDataAPI = async (key, fallbackData) => {
     const json = await res.json();
     if (json.success && json.data && json.data[key]) {
       const serverData = JSON.parse(json.data[key]);
-      setCachedData(`homepage_${shortKey}`, serverData, CACHE_TTL.HOMEPAGE);
-      setCachedData(key, serverData, CACHE_TTL.HOMEPAGE);
-      return serverData;
+      if (!Array.isArray(serverData) || serverData.length > 0) {
+        setCachedData(`homepage_${shortKey}`, serverData, CACHE_TTL.HOMEPAGE);
+        setCachedData(key, serverData, CACHE_TTL.HOMEPAGE);
+        return serverData;
+      }
     }
 
     return result;
@@ -329,7 +400,7 @@ export const loadHomepageDataAPI = async (key, fallbackData) => {
     console.warn(`⚠️ Load ${key} failed, using cached/default:`, e.message);
     const shortKey = key.replace('VMC_HOMEPAGE_', '').toLowerCase();
     const cached = getCachedData(`homepage_${shortKey}`) || getCachedData(key);
-    return cached !== null ? cached : fallbackData;
+    return (Array.isArray(cached) ? cached.length > 0 : cached !== null) ? cached : fallbackData;
   }
 };
 
@@ -342,15 +413,25 @@ export const fetchAllHomepageData = async () => {
     const cachedMedia = getCachedData('homepage_media');
     const cachedOrg = getCachedData('homepage_org');
 
-    if (cachedInfo && cachedArticles && cachedMedia) {
+    if (cachedInfo && Array.isArray(cachedArticles) && cachedArticles.length > 0 && Array.isArray(cachedMedia) && cachedMedia.length > 0) {
       // Background revalidate
       fetch('/api/admin/system-settings', { headers: { 'ngrok-skip-browser-warning': 'true' } })
         .then(r => r.json())
         .then(json => {
           if (json.success && json.data) {
             if (json.data.VMC_HOMEPAGE_INFO) setCachedData('homepage_info', JSON.parse(json.data.VMC_HOMEPAGE_INFO), CACHE_TTL.HOMEPAGE);
-            if (json.data.VMC_HOMEPAGE_ARTICLES) setCachedData('homepage_articles', JSON.parse(json.data.VMC_HOMEPAGE_ARTICLES), CACHE_TTL.HOMEPAGE);
-            if (json.data.VMC_HOMEPAGE_MEDIA) setCachedData('homepage_media', JSON.parse(json.data.VMC_HOMEPAGE_MEDIA), CACHE_TTL.HOMEPAGE);
+            if (json.data.VMC_HOMEPAGE_ARTICLES) {
+              const parsed = JSON.parse(json.data.VMC_HOMEPAGE_ARTICLES);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                setCachedData('homepage_articles', parsed, CACHE_TTL.HOMEPAGE);
+              }
+            }
+            if (json.data.VMC_HOMEPAGE_MEDIA) {
+              const parsed = JSON.parse(json.data.VMC_HOMEPAGE_MEDIA);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                setCachedData('homepage_media', parsed, CACHE_TTL.HOMEPAGE);
+              }
+            }
             if (json.data.VMC_HOMEPAGE_ORG) setCachedData('homepage_org', JSON.parse(json.data.VMC_HOMEPAGE_ORG), CACHE_TTL.HOMEPAGE);
           }
         }).catch(() => {});
@@ -370,8 +451,23 @@ export const fetchAllHomepageData = async () => {
     const json = await res.json();
     if (json.success && json.data) {
       const info = json.data.VMC_HOMEPAGE_INFO ? JSON.parse(json.data.VMC_HOMEPAGE_INFO) : DEFAULT_HOMEPAGE_INFO;
-      const articles = json.data.VMC_HOMEPAGE_ARTICLES ? JSON.parse(json.data.VMC_HOMEPAGE_ARTICLES) : DEFAULT_HOMEPAGE_ARTICLES;
-      const media = json.data.VMC_HOMEPAGE_MEDIA ? JSON.parse(json.data.VMC_HOMEPAGE_MEDIA) : DEFAULT_HOMEPAGE_MEDIA;
+      
+      let articles = DEFAULT_HOMEPAGE_ARTICLES;
+      if (json.data.VMC_HOMEPAGE_ARTICLES) {
+        try {
+          const parsed = JSON.parse(json.data.VMC_HOMEPAGE_ARTICLES);
+          if (Array.isArray(parsed) && parsed.length > 0) articles = parsed;
+        } catch {}
+      }
+
+      let media = DEFAULT_HOMEPAGE_MEDIA;
+      if (json.data.VMC_HOMEPAGE_MEDIA) {
+        try {
+          const parsed = JSON.parse(json.data.VMC_HOMEPAGE_MEDIA);
+          if (Array.isArray(parsed) && parsed.length > 0) media = parsed;
+        } catch {}
+      }
+
       const org = json.data.VMC_HOMEPAGE_ORG ? JSON.parse(json.data.VMC_HOMEPAGE_ORG) : DEFAULT_HOMEPAGE_ORG;
 
       setCachedData('homepage_info', info, CACHE_TTL.HOMEPAGE);
@@ -385,10 +481,13 @@ export const fetchAllHomepageData = async () => {
     console.warn('⚠️ fetchAllHomepageData error:', err.message);
   }
 
+  const fallbackArticles = getCachedData('homepage_articles');
+  const fallbackMedia = getCachedData('homepage_media');
+
   return {
     info: getCachedData('homepage_info') || DEFAULT_HOMEPAGE_INFO,
-    articles: getCachedData('homepage_articles') || DEFAULT_HOMEPAGE_ARTICLES,
-    media: getCachedData('homepage_media') || DEFAULT_HOMEPAGE_MEDIA,
+    articles: (Array.isArray(fallbackArticles) && fallbackArticles.length > 0) ? fallbackArticles : DEFAULT_HOMEPAGE_ARTICLES,
+    media: (Array.isArray(fallbackMedia) && fallbackMedia.length > 0) ? fallbackMedia : DEFAULT_HOMEPAGE_MEDIA,
     org: getCachedData('homepage_org') || DEFAULT_HOMEPAGE_ORG
   };
 };

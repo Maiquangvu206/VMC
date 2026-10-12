@@ -75,25 +75,70 @@ class SystemSettingController extends Controller
     }
 
     /**
+     * POST /api/homepage/upload-image
+     * Hỗ trợ lưu ảnh tải lên thành file tĩnh tại public/storage/homepage_media để tối ưu tốc độ & không nặng CSDL
+     */
+    public function uploadImage(Request $request)
+    {
+        try {
+            // 1. Dạng multipart file
+            if ($request->hasFile('file') || $request->hasFile('image')) {
+                $file = $request->file('file') ?: $request->file('image');
+                $ext = $file->getClientOriginalExtension() ?: 'jpg';
+                $filename = 'media-' . time() . '-' . rand(1000, 9999) . '.' . $ext;
+                $path = $file->storeAs('homepage_media', $filename, 'public');
+                $url = '/storage/' . $path;
+                return response()->json(['success' => true, 'url' => $url]);
+            }
+
+            // 2. Dạng base64 string
+            $b64 = $request->input('base64') ?: $request->input('image');
+            if ($b64 && str_starts_with($b64, 'data:image/')) {
+                $parts = explode(',', $b64, 2);
+                if (count($parts) === 2) {
+                    $header = $parts[0];
+                    $data = base64_decode($parts[1]);
+                    $ext = 'jpg';
+                    if (str_contains($header, 'png')) $ext = 'png';
+                    elseif (str_contains($header, 'webp')) $ext = 'webp';
+
+                    $filename = 'media-' . time() . '-' . rand(1000, 9999) . '.' . $ext;
+                    $saveDir = storage_path('app/public/homepage_media');
+                    if (!file_exists($saveDir)) {
+                        mkdir($saveDir, 0755, true);
+                    }
+                    file_put_contents($saveDir . '/' . $filename, $data);
+                    $url = '/storage/homepage_media/' . $filename;
+                    return response()->json(['success' => true, 'url' => $url]);
+                }
+            }
+
+            return response()->json(['success' => false, 'error' => 'No valid file or image data provided'], 400);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
      * Đảm bảo CSDL MySQL lưu trữ 100% dữ liệu gốc của CLB và Trang chủ
      */
     private function ensureSchemaAndDefaults()
     {
         try {
-            // Nâng cấp cột setting_value thành LONGTEXT nếu cần
             static $checked = false;
             if ($checked) return;
             $checked = true;
 
-            $existingKeys = SystemSetting::pluck('setting_key')->toArray();
-
             $defaults = $this->getDefaultSettings();
             foreach ($defaults as $k => $v) {
-                if (!in_array($k, $existingKeys)) {
-                    SystemSetting::create([
-                        'setting_key' => $k,
-                        'setting_value' => is_string($v) ? $v : json_encode($v, JSON_UNESCAPED_UNICODE)
-                    ]);
+                $setting = SystemSetting::where('setting_key', $k)->first();
+                $isEmptyVal = !$setting || empty($setting->setting_value) || in_array(trim((string)$setting->setting_value), ['[]', '{}', 'null', '""']);
+                if ($isEmptyVal) {
+                    if (!$setting) {
+                        $setting = new SystemSetting(['setting_key' => $k]);
+                    }
+                    $setting->setting_value = is_string($v) ? $v : json_encode($v, JSON_UNESCAPED_UNICODE);
+                    $setting->save();
                 }
             }
         } catch (\Throwable $e) {
@@ -243,13 +288,57 @@ class SystemSettingController extends Controller
                     'type' => 'image',
                     'mediaUrl' => 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&q=80&w=1200',
                     'thumbnail' => 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&q=80&w=600',
+                    'images' => [
+                        'https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&q=80&w=1200',
+                        'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&q=80&w=1200',
+                        'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=1200'
+                    ],
                     'date' => '05/09/2026',
-                    'category' => 'Sự Kiện',
-                    'description' => 'Toàn cảnh ngày hội tựu trường rực rỡ cờ hoa dưới mái trường THPT Vĩnh Bảo qua lăng kính Ban Sản Xuất.'
+                    'category' => 'Ảnh Sự Kiện',
+                    'description' => 'Khoảnh khắc chào đón các tân học sinh K65 bước vào ngôi trường THPT Vĩnh Bảo giàu truyền thống.'
                 ],
                 [
                     'id' => 'med-3',
-                    'title' => 'Hậu Trường Sản Xuất Bản Tin VMC News Tháng 10',
+                    'title' => 'Gala Chào Đón Thế Hệ Thành Viên Mới - Gen 7 VMC',
+                    'type' => 'image',
+                    'mediaUrl' => 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=1200',
+                    'thumbnail' => 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=600',
+                    'images' => [
+                        'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=1200',
+                        'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80&w=1200',
+                        'https://images.unsplash.com/photo-1533727937480-da3a97967e15?auto=format&fit=crop&q=80&w=1200'
+                    ],
+                    'date' => '20/09/2026',
+                    'category' => 'Kỷ Niệm Nội Bộ',
+                    'description' => 'Đêm gala kết nối đầy ấm cúng và bùng nổ nhiệt huyết của các thành viên gia đình VMC.'
+                ],
+                [
+                    'id' => 'med-4',
+                    'title' => 'Phim Ngắn Học Đường: "Nắng Sân Trường Năm Ấy"',
+                    'type' => 'video',
+                    'mediaUrl' => 'https://www.youtube.com/watch?v=ScMzIvxBSi4',
+                    'thumbnail' => 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&q=80&w=800',
+                    'date' => '15/05/2026',
+                    'category' => 'Sản Xuất Media',
+                    'description' => 'Phim ngắn tri ân tuổi học trò do chính ekip học sinh VMC viết kịch bản, quay phim và hậu kỳ.'
+                ],
+                [
+                    'id' => 'med-5',
+                    'title' => 'Hội Diễn Văn Nghệ Chào Mừng Ngày Nhà Giáo Việt Nam 20/11',
+                    'type' => 'image',
+                    'mediaUrl' => 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&q=80&w=1200',
+                    'thumbnail' => 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&q=80&w=600',
+                    'images' => [
+                        'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&q=80&w=1200',
+                        'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&q=80&w=1200'
+                    ],
+                    'date' => '20/11/2025',
+                    'category' => 'Ảnh Sự Kiện',
+                    'description' => 'Bộ ảnh bắt trọn từng khoảnh khắc biểu diễn thăng hoa của học sinh các khối lớp.'
+                ],
+                [
+                    'id' => 'med-6',
+                    'title' => 'Hậu Trường Ekip Sản Xuất Tác Nghiệp Sự Kiện',
                     'type' => 'image',
                     'mediaUrl' => 'https://images.unsplash.com/photo-1533727937480-da3a97967e15?auto=format&fit=crop&q=80&w=1200',
                     'thumbnail' => 'https://images.unsplash.com/photo-1533727937480-da3a97967e15?auto=format&fit=crop&q=80&w=600',

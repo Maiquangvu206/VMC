@@ -140,3 +140,4 @@ Route::get('/recruitment/scores/submitted', [RecruitmentController::class, 'subm
 Route::get('/admin/system-settings', [SystemSettingController::class, 'index']);
 Route::post('/admin/system-settings', [SystemSettingController::class, 'updateSetting']);
 Route::put('/admin/recruitment-season/toggle', [SystemSettingController::class, 'toggleSeason']);
+Route::post('/homepage/upload-image', [SystemSettingController::class, 'uploadImage']);
