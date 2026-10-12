@@ -7,7 +7,7 @@
     "dev": "vite",
     "dev:laravel": "php artisan serve --port=8000",
     "dev:all": "start /B php artisan serve --port=8000 && npm run dev",
-    "build": "vite build && powershell -Command \"Copy-Item -Path 'dist\\assets\\*' -Destination 'public\\assets' -Recurse -Force; Copy-Item -Path 'dist\\index.html' -Destination 'public\\index.html' -Force\"",
+    "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
     "artisan": "php artisan",
