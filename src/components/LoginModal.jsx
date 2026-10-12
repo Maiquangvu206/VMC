@@ -4,7 +4,7 @@ import { Lock, User, AlertCircle, ArrowRight, Eye, EyeOff, Globe, Mail, Key, Arr
 import { forgotPasswordAPI } from '../services/api';
 
 export const LoginModal = ({ onExploreHome }) => {
-  const { login, theme, toggleTheme } = useClub();
+  const { login, theme, toggleTheme, setActiveTab } = useClub();
 
   // Mode: 'login' | 'forgot'
   const [viewMode, setViewMode] = useState('login');
@@ -36,6 +36,7 @@ export const LoginModal = ({ onExploreHome }) => {
       setErrorMessage(result?.message || 'Mã Thành Viên hoặc Mật khẩu không chính xác!');
     } else {
       setErrorMessage('');
+      setActiveTab('dashboard');
     }
   };
 

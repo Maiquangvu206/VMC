@@ -66,16 +66,16 @@ const AppContent = () => {
   }
 
   if (!isAuthenticated) {
-    if (activeTab === 'home') {
-      return (
-        <div className="main-layout bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-300 font-body selection:bg-blue-600 selection:text-white overflow-x-hidden">
-          <ToastContainer toasts={toasts} removeToast={removeToast} />
-          <HomePage onOpenLogin={() => setActiveTab('dashboard')} />
-          <Footer />
-        </div>
-      );
+    if (activeTab === 'login') {
+      return <LoginModal onExploreHome={() => setActiveTab('home')} />;
     }
-    return <LoginModal onExploreHome={() => setActiveTab('home')} />;
+    return (
+      <div className="main-layout bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-300 font-body selection:bg-blue-600 selection:text-white overflow-x-hidden">
+        <ToastContainer toasts={toasts} removeToast={removeToast} />
+        <HomePage onOpenLogin={() => setActiveTab('login')} />
+        <Footer />
+      </div>
+    );
   }
 
   const ActivePage = pageComponents[activeTab];

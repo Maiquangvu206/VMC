@@ -99,6 +99,8 @@ export const useAuth = (db, setDb) => {
     sessionStorage.removeItem('VMC_SESSION_ID');
     sessionStorage.removeItem('VMC_CURRENT_USER');
     sessionStorage.removeItem('VMC_IS_AUTH');
+    sessionStorage.removeItem('VMC_ACTIVE_TAB');
+    try { localStorage.removeItem('VMC_ACTIVE_TAB'); } catch (e) {}
     setIsAuthenticated(false);
     setCurrentUser(null);
 

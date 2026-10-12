@@ -522,7 +522,7 @@ export const HomePage = ({ onOpenLogin }) => {
 
               <button
                 type="button"
-                onClick={onOpenLogin || (() => setActiveTab('dashboard'))}
+                onClick={onOpenLogin || (() => setActiveTab('login'))}
                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold tracking-wide shadow-lg shadow-cyan-500/20 active:scale-95 transition-all cursor-pointer"
               >
                 <Lock className="w-3.5 h-3.5" />
@@ -602,7 +602,7 @@ export const HomePage = ({ onOpenLogin }) => {
             {!isAuthenticated && (
               <button
                 type="button"
-                onClick={onOpenLogin || (() => setActiveTab('dashboard'))}
+                onClick={onOpenLogin || (() => setActiveTab('login'))}
                 className="flex items-center gap-2 px-5 py-3 rounded-xl bg-[var(--bg-card)] hover:bg-[var(--bg-hover)] border border-cyan-500/40 text-cyan-600 dark:text-cyan-400 font-bold text-sm shadow-sm active:scale-95 transition-all"
               >
                 <Lock className="w-4 h-4" />

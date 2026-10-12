@@ -44,7 +44,10 @@ export const ClubProvider = ({ children }) => {
 
   const [activeTab, setActiveTabState] = useState(() => {
     try {
-      return localStorage.getItem('VMC_ACTIVE_TAB') || 'home';
+      localStorage.removeItem('VMC_ACTIVE_TAB');
+    } catch (e) { }
+    try {
+      return sessionStorage.getItem('VMC_ACTIVE_TAB') || 'home';
     } catch (e) {
       return 'home';
     }
@@ -53,7 +56,7 @@ export const ClubProvider = ({ children }) => {
   const setActiveTab = (tabId) => {
     setActiveTabState(tabId);
     try {
-      localStorage.setItem('VMC_ACTIVE_TAB', tabId);
+      sessionStorage.setItem('VMC_ACTIVE_TAB', tabId);
     } catch (e) { }
   };
 
