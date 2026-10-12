@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class HomepageArticle extends Model
 {
-    protected $table = 'Homepage_Articles';
+    protected $table = 'homepage_articles';
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';

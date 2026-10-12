@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 1. Homepage_Articles
-        if (!Schema::hasTable('Homepage_Articles')) {
-            Schema::create('Homepage_Articles', function (Blueprint $table) {
+        // 1. homepage_articles
+        if (!Schema::hasTable('homepage_articles') && !Schema::hasTable('Homepage_Articles')) {
+            Schema::create('homepage_articles', function (Blueprint $table) {
                 $table->string('id', 100)->primary();
                 $table->string('title', 255);
                 $table->string('category', 100)->default('Hoạt động nổi bật');
@@ -34,9 +34,9 @@ return new class extends Migration
             });
         }
 
-        // 2. Homepage_Media
-        if (!Schema::hasTable('Homepage_Media')) {
-            Schema::create('Homepage_Media', function (Blueprint $table) {
+        // 2. homepage_media
+        if (!Schema::hasTable('homepage_media') && !Schema::hasTable('Homepage_Media')) {
+            Schema::create('homepage_media', function (Blueprint $table) {
                 $table->string('id', 100)->primary();
                 $table->string('title', 255);
                 $table->enum('type', ['image', 'video'])->default('image');
@@ -59,7 +59,9 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('homepage_media');
         Schema::dropIfExists('Homepage_Media');
+        Schema::dropIfExists('homepage_articles');
         Schema::dropIfExists('Homepage_Articles');
     }
 };

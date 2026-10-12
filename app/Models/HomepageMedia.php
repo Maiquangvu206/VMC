@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class HomepageMedia extends Model
 {
-    protected $table = 'Homepage_Media';
+    protected $table = 'homepage_media';
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';
