@@ -35,7 +35,8 @@ import {
   Sun,
   Moon,
   Info,
-  Upload
+  Upload,
+  Loader2
 } from 'lucide-react';
 import {
   DEFAULT_HOMEPAGE_INFO,
@@ -562,9 +563,10 @@ export const HomePage = ({ onOpenLogin }) => {
 
   // States dữ liệu - Nạp ngay từ Cache tức thì (0ms latency khi reload trang)
   const [info, setInfo] = useState(() => getCachedData('homepage_info') || DEFAULT_HOMEPAGE_INFO);
-  const [articles, setArticles] = useState(() => getCachedData('homepage_articles') || DEFAULT_HOMEPAGE_ARTICLES);
-  const [mediaList, setMediaList] = useState(() => getCachedData('homepage_media') || DEFAULT_HOMEPAGE_MEDIA);
+  const [articles, setArticles] = useState(() => getCachedData('homepage_articles') || []);
+  const [mediaList, setMediaList] = useState(() => getCachedData('homepage_media') || []);
   const [loading, setLoading] = useState(() => !getCachedData('homepage_info'));
+  const [isSaving, setIsSaving] = useState(false);
 
   // Cơ cấu tổ chức: Tự động đổ dữ liệu từ CSDL thành viên (không sửa thủ công)
   const orgData = useMemo(() => {
@@ -626,57 +628,67 @@ export const HomePage = ({ onOpenLogin }) => {
 
   // Handler cập nhật Article
   const handleSaveArticle = async (articleData) => {
-    let imagesArr = [];
-    if (Array.isArray(articleData.images)) {
-      imagesArr = articleData.images.filter(Boolean);
-    } else if (typeof articleData.images === 'string') {
-      imagesArr = articleData.images.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
-    }
-
-    // Tự động upload ảnh bìa nếu là base64
-    let finalCoverImage = articleData.coverImage || '';
-    if (finalCoverImage && finalCoverImage.startsWith('data:image')) {
-      const serverUrl = await uploadImageToServer(finalCoverImage);
-      if (serverUrl) finalCoverImage = serverUrl;
-    }
-
-    // Tự động upload từng ảnh trong album nếu là base64
-    const finalImages = await Promise.all(imagesArr.map(async (img) => {
-      if (typeof img === 'string' && img.startsWith('data:image')) {
-        const url = await uploadImageToServer(img);
-        return url || img;
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      let imagesArr = [];
+      if (Array.isArray(articleData.images)) {
+        imagesArr = articleData.images.filter(Boolean);
+      } else if (typeof articleData.images === 'string') {
+        imagesArr = articleData.images.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
       }
-      return img;
-    }));
 
-    const cleanArticle = {
-      ...articleData,
-      id: articleData.id || ('art-' + Date.now()),
-      title: (articleData.title || '').trim() || 'Bài viết mới',
-      date: articleData.date || new Date().toLocaleDateString('vi-VN'),
-      videoUrl: (articleData.videoUrl || '').trim(),
-      coverImage: finalCoverImage,
-      images: finalImages
-    };
+      // Tự động upload ảnh bìa lên server nếu là base64
+      let finalCoverImage = articleData.coverImage || '';
+      if (finalCoverImage && finalCoverImage.startsWith('data:image')) {
+        const serverUrl = await uploadImageToServer(finalCoverImage);
+        if (serverUrl) finalCoverImage = serverUrl;
+      }
 
-    let updated;
-    if (articles.some(a => a.id === cleanArticle.id)) {
-      updated = articles.map(a => a.id === cleanArticle.id ? cleanArticle : a);
-    } else {
-      updated = [cleanArticle, ...articles];
-    }
-    setArticles(updated);
-    setEditingArticle(null);
-    setIsManageModalOpen(false);
+      // Tự động upload từng ảnh trong album lên server nếu là base64
+      const finalImages = await Promise.all(imagesArr.map(async (img) => {
+        if (typeof img === 'string' && img.startsWith('data:image')) {
+          const url = await uploadImageToServer(img);
+          return url || img;
+        }
+        return img;
+      }));
 
-    // 1. Lưu trực tiếp vào CSDL quan hệ
-    const saveOk = await saveArticleAPI(cleanArticle);
-    // 2. Đồng bộ sang cache và System_Settings
-    await saveHomepageDataAPI('VMC_HOMEPAGE_ARTICLES', updated);
-    if (saveOk) {
-      if (addToast) addToast('Đã lưu bài viết thành công lên CSDL máy chủ!', 'success');
-    } else {
-      if (addToast) addToast('⚠️ Lỗi: Không thể lưu bài viết lên máy chủ CSDL!', 'error');
+      const cleanArticle = {
+        ...articleData,
+        id: articleData.id || ('art-' + Date.now()),
+        title: (articleData.title || '').trim() || 'Bài viết mới',
+        date: articleData.date || new Date().toLocaleDateString('vi-VN'),
+        videoUrl: (articleData.videoUrl || '').trim(),
+        coverImage: finalCoverImage,
+        images: finalImages
+      };
+
+      // 1. Lưu trực tiếp vào bảng CSDL quan hệ Homepage_Articles
+      const saveOk = await saveArticleAPI(cleanArticle);
+
+      let updated;
+      if (articles.some(a => a.id === cleanArticle.id)) {
+        updated = articles.map(a => a.id === cleanArticle.id ? cleanArticle : a);
+      } else {
+        updated = [cleanArticle, ...articles];
+      }
+      setArticles(updated);
+      setEditingArticle(null);
+      setIsManageModalOpen(false);
+
+      // 2. Đồng bộ sang cache và System_Settings
+      await saveHomepageDataAPI('VMC_HOMEPAGE_ARTICLES', updated);
+      if (saveOk) {
+        if (addToast) addToast('Đã lưu bài viết thành công lên CSDL máy chủ!', 'success');
+      } else {
+        if (addToast) addToast('⚠️ Lỗi: Không thể lưu bài viết lên máy chủ CSDL!', 'error');
+      }
+    } catch (err) {
+      console.error('⚠️ handleSaveArticle error:', err);
+      if (addToast) addToast('⚠️ Có lỗi xảy ra khi lưu bài viết lên CSDL!', 'error');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -700,59 +712,75 @@ export const HomePage = ({ onOpenLogin }) => {
 
   // Handler cập nhật Media (Hỗ trợ đẩy nhiều file ảnh vào 1 mục)
   const handleSaveMedia = async (mediaData) => {
-    let imagesArr = [];
-    if (Array.isArray(mediaData.images)) {
-      imagesArr = mediaData.images.filter(Boolean);
-    } else if (typeof mediaData.images === 'string') {
-      imagesArr = mediaData.images.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
-    } else if (mediaData.type === 'image' && mediaData.mediaUrl) {
-      imagesArr = [mediaData.mediaUrl];
-    }
-
-    // Tự động upload từng ảnh trong album nếu là base64
-    const finalImages = await Promise.all(imagesArr.map(async (img) => {
-      if (typeof img === 'string' && img.startsWith('data:image')) {
-        const url = await uploadImageToServer(img);
-        return url || img;
+    if (isSaving) return;
+    setIsSaving(true);
+    try {
+      let imagesArr = [];
+      if (Array.isArray(mediaData.images)) {
+        imagesArr = mediaData.images.filter(Boolean);
+      } else if (typeof mediaData.images === 'string') {
+        imagesArr = mediaData.images.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
+      } else if (mediaData.type === 'image' && mediaData.mediaUrl) {
+        imagesArr = [mediaData.mediaUrl];
       }
-      return img;
-    }));
 
-    const firstImage = finalImages.length > 0 ? finalImages[0] : '';
-    let finalMediaUrl = mediaData.mediaUrl || '';
-    if (finalMediaUrl && finalMediaUrl.startsWith('data:image')) {
-      const url = await uploadImageToServer(finalMediaUrl);
-      if (url) finalMediaUrl = url;
-    }
+      // Tự động upload từng ảnh trong album lên server nếu là base64
+      const finalImages = await Promise.all(imagesArr.map(async (img) => {
+        if (typeof img === 'string' && img.startsWith('data:image')) {
+          const url = await uploadImageToServer(img);
+          return url || img;
+        }
+        return img;
+      }));
 
-    const cleanMedia = {
-      ...mediaData,
-      id: mediaData.id || ('med-' + Date.now()),
-      title: (mediaData.title || '').trim() || 'Tư liệu mới',
-      date: mediaData.date || new Date().toLocaleDateString('vi-VN'),
-      images: finalImages,
-      mediaUrl: mediaData.type === 'image' ? (firstImage || finalMediaUrl || '') : (finalMediaUrl || ''),
-      thumbnail: mediaData.thumbnail || firstImage || finalMediaUrl || ''
-    };
+      const firstImage = finalImages.length > 0 ? finalImages[0] : '';
+      let finalMediaUrl = mediaData.mediaUrl || '';
+      if (finalMediaUrl && finalMediaUrl.startsWith('data:image')) {
+        const url = await uploadImageToServer(finalMediaUrl);
+        if (url) finalMediaUrl = url;
+      }
 
-    let updated;
-    if (mediaList.some(m => m.id === cleanMedia.id)) {
-      updated = mediaList.map(m => m.id === cleanMedia.id ? cleanMedia : m);
-    } else {
-      updated = [cleanMedia, ...mediaList];
-    }
-    setMediaList(updated);
-    setEditingMedia(null);
-    setIsManageModalOpen(false);
+      let finalThumbnail = mediaData.thumbnail || firstImage || finalMediaUrl || '';
+      if (finalThumbnail && finalThumbnail.startsWith('data:image')) {
+        const url = await uploadImageToServer(finalThumbnail);
+        if (url) finalThumbnail = url;
+      }
 
-    // 1. Lưu trực tiếp vào CSDL quan hệ
-    const saveOk = await saveMediaAPI(cleanMedia);
-    // 2. Đồng bộ sang cache và System_Settings
-    await saveHomepageDataAPI('VMC_HOMEPAGE_MEDIA', updated);
-    if (saveOk) {
-      if (addToast) addToast('Đã lưu ảnh/video thành công lên CSDL máy chủ!', 'success');
-    } else {
-      if (addToast) addToast('⚠️ Lỗi: Không thể lưu ảnh/video lên máy chủ CSDL!', 'error');
+      const cleanMedia = {
+        ...mediaData,
+        id: mediaData.id || ('med-' + Date.now()),
+        title: (mediaData.title || '').trim() || 'Tư liệu mới',
+        date: mediaData.date || new Date().toLocaleDateString('vi-VN'),
+        images: finalImages,
+        mediaUrl: mediaData.type === 'image' ? (firstImage || finalMediaUrl || '') : (finalMediaUrl || ''),
+        thumbnail: finalThumbnail
+      };
+
+      // 1. Lưu trực tiếp vào bảng CSDL quan hệ Homepage_Media
+      const saveOk = await saveMediaAPI(cleanMedia);
+
+      let updated;
+      if (mediaList.some(m => m.id === cleanMedia.id)) {
+        updated = mediaList.map(m => m.id === cleanMedia.id ? cleanMedia : m);
+      } else {
+        updated = [cleanMedia, ...mediaList];
+      }
+      setMediaList(updated);
+      setEditingMedia(null);
+      setIsManageModalOpen(false);
+
+      // 2. Đồng bộ sang cache và System_Settings
+      await saveHomepageDataAPI('VMC_HOMEPAGE_MEDIA', updated);
+      if (saveOk) {
+        if (addToast) addToast('Đã lưu ảnh/video thành công lên CSDL máy chủ!', 'success');
+      } else {
+        if (addToast) addToast('⚠️ Lỗi: Không thể lưu ảnh/video lên máy chủ CSDL!', 'error');
+      }
+    } catch (err) {
+      console.error('⚠️ handleSaveMedia error:', err);
+      if (addToast) addToast('⚠️ Có lỗi xảy ra khi lưu media lên CSDL!', 'error');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1630,8 +1658,37 @@ export const HomePage = ({ onOpenLogin }) => {
           </div>
 
           {filteredMedia.length === 0 && (
-            <div className="text-center py-12 text-[var(--text-muted)] text-xs">
-              Chưa có nội dung media nào trong mục này.
+            <div className="text-center py-16 px-4 rounded-3xl border-2 border-dashed border-[var(--border-default)] bg-[var(--bg-secondary)]/50 backdrop-blur-xs">
+              <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-600 dark:text-cyan-400 mx-auto mb-4 flex items-center justify-center">
+                <ImageIcon className="w-7 h-7" />
+              </div>
+              <h4 className="text-base font-bold text-[var(--text-primary)] mb-1.5">Kho tư liệu đang trống</h4>
+              <p className="text-xs text-[var(--text-secondary)] max-w-md mx-auto mb-5 leading-relaxed">
+                Chưa có hình ảnh hoặc video nào trong thư viện media.
+              </p>
+              {canManage && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingMedia({
+                      title: '',
+                      type: 'image',
+                      category: 'Ảnh Sự Kiện',
+                      date: new Date().toLocaleDateString('vi-VN'),
+                      mediaUrl: '',
+                      thumbnail: '',
+                      images: [],
+                      description: ''
+                    });
+                    setManageTab('media');
+                    setIsManageModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs shadow-md transition-all active:scale-95"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Đăng Ảnh / Video Đầu Tiên</span>
+                </button>
+              )}
             </div>
           )}
 
@@ -1785,6 +1842,42 @@ export const HomePage = ({ onOpenLogin }) => {
               </article>
             ))}
           </div>
+
+          {articles.length === 0 && (
+            <div className="text-center py-16 px-4 rounded-3xl border-2 border-dashed border-[var(--border-default)] bg-[var(--bg-secondary)]/50 backdrop-blur-xs">
+              <div className="w-14 h-14 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-600 dark:text-purple-400 mx-auto mb-4 flex items-center justify-center">
+                <FileText className="w-7 h-7" />
+              </div>
+              <h4 className="text-base font-bold text-[var(--text-primary)] mb-1.5">Chưa có bài viết nào</h4>
+              <p className="text-xs text-[var(--text-secondary)] max-w-md mx-auto mb-5 leading-relaxed">
+                Nội dung tiêu điểm và hoạt động nổi bật của CLB sẽ xuất hiện tại đây sau khi ban quản trị đăng bài.
+              </p>
+              {canManage && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingArticle({
+                      title: '',
+                      category: 'Giới Thiệu',
+                      author: currentUser?.name || 'Ban Biên Tập VMC',
+                      date: new Date().toLocaleDateString('vi-VN'),
+                      videoUrl: '',
+                      coverImage: '',
+                      images: [],
+                      summary: '',
+                      content: ''
+                    });
+                    setManageTab('articles');
+                    setIsManageModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-md transition-all active:scale-95"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Đăng Bài Viết Đầu Tiên</span>
+                </button>
+              )}
+            </div>
+          )}
 
         </div>
       </section>
@@ -2480,9 +2573,11 @@ export const HomePage = ({ onOpenLogin }) => {
                       </button>
                       <button
                         type="submit"
-                        className="px-5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold shadow-md transition-all active:scale-95"
+                        disabled={isSaving}
+                        className="px-5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white text-xs font-bold shadow-md transition-all active:scale-95 flex items-center gap-1.5"
                       >
-                        Lưu Bài Viết
+                        {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                        <span>{isSaving ? 'Đang Lưu Lên CSDL...' : 'Lưu Bài Viết'}</span>
                       </button>
                     </div>
                   </form>
@@ -2816,9 +2911,11 @@ export const HomePage = ({ onOpenLogin }) => {
                       </button>
                       <button
                         type="submit"
-                        className="px-5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold shadow-md transition-all active:scale-95"
+                        disabled={isSaving}
+                        className="px-5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white text-xs font-bold shadow-md transition-all active:scale-95 flex items-center gap-1.5"
                       >
-                        Lưu Phương Tiện
+                        {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                        <span>{isSaving ? 'Đang Lưu Lên CSDL...' : 'Lưu Phương Tiện'}</span>
                       </button>
                     </div>
                   </form>

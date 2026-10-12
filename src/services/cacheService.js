@@ -185,10 +185,30 @@ export const warmupStaticDataCache = async () => {
               setCachedData('system_settings', res.data, CACHE_TTL.SYSTEM_SETTINGS);
               // Nạp các nhánh con
               if (res.data.VMC_HOMEPAGE_INFO) setCachedData('homepage_info', JSON.parse(res.data.VMC_HOMEPAGE_INFO), CACHE_TTL.HOMEPAGE);
-              if (res.data.VMC_HOMEPAGE_ARTICLES) setCachedData('homepage_articles', JSON.parse(res.data.VMC_HOMEPAGE_ARTICLES), CACHE_TTL.HOMEPAGE);
-              if (res.data.VMC_HOMEPAGE_MEDIA) setCachedData('homepage_media', JSON.parse(res.data.VMC_HOMEPAGE_MEDIA), CACHE_TTL.HOMEPAGE);
               if (res.data.VMC_HOMEPAGE_ORG) setCachedData('homepage_org', JSON.parse(res.data.VMC_HOMEPAGE_ORG), CACHE_TTL.HOMEPAGE);
               if (res.data.VMC_CLUB_INFO) setCachedData('club_info', JSON.parse(res.data.VMC_CLUB_INFO), CACHE_TTL.SYSTEM_SETTINGS);
+            }
+          })
+          .catch(() => {})
+      );
+
+      promises.push(
+        fetch('/api/homepage/articles', { headers: { 'ngrok-skip-browser-warning': 'true' } })
+          .then(r => r.json())
+          .then(res => {
+            if (res.success && Array.isArray(res.data)) {
+              setCachedData('homepage_articles', res.data, CACHE_TTL.HOMEPAGE);
+            }
+          })
+          .catch(() => {})
+      );
+
+      promises.push(
+        fetch('/api/homepage/media', { headers: { 'ngrok-skip-browser-warning': 'true' } })
+          .then(r => r.json())
+          .then(res => {
+            if (res.success && Array.isArray(res.data)) {
+              setCachedData('homepage_media', res.data, CACHE_TTL.HOMEPAGE);
             }
           })
           .catch(() => {})

@@ -22,18 +22,7 @@ class HomepageController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->get();
 
-            // Nếu bảng chưa có bản ghi, lấy fallback từ System_Settings
-            if ($articles->isEmpty()) {
-                $setting = SystemSetting::where('setting_key', 'VMC_HOMEPAGE_ARTICLES')->first();
-                if ($setting && !empty($setting->setting_value) && $setting->setting_value !== '[]') {
-                    $decoded = json_decode($setting->setting_value, true);
-                    if (!empty($decoded) && is_array($decoded)) {
-                        return response()->json(['success' => true, 'data' => $decoded]);
-                    }
-                }
-            }
-
-            // Map thuộc tính chuẩn camelCase cho giao diện React
+            // Map thuộc tính chuẩn camelCase cho giao diện React (không tự ý gen dữ liệu mẫu)
             $formatted = $articles->map(function ($art) {
                 return [
                     'id' => (string)$art->id,
@@ -61,22 +50,42 @@ class HomepageController extends Controller
 
     /**
      * POST /api/homepage/articles
-     * Thêm mới hoặc cập nhật 1 bài viết trong bảng chuyên biệt
+     * Thêm mới hoặc cập nhật 1 bài viết trong bảng chuyên biệt Homepage_Articles
      */
     public function storeArticle(Request $request)
     {
         try {
-            $id = $request->input('id') ?: ('art-' . time() . '-' . rand(100, 999));
-            $title = $request->input('title', 'Bài viết mới');
-            $category = $request->input('category', 'Hoạt động nổi bật');
-            $author = $request->input('author', 'Ban Biên Tập VMC');
-            $summary = $request->input('summary', '');
-            $content = $request->input('content', '');
-            $coverImage = $request->input('coverImage') ?: $request->input('cover_image', '');
-            $videoUrl = $request->input('videoUrl') ?: $request->input('video_url', null);
-            $images = $request->input('images', []);
-            $date = $request->input('date') ?: date('d/m/Y');
-            $isPinned = filter_var($request->input('isPinned', $request->input('is_pinned', false)), FILTER_VALIDATE_BOOLEAN);
+            $data = $request->json()->all();
+            if (empty($data)) {
+                $data = $request->all();
+            }
+            if (empty($data)) {
+                $raw = $request->getContent();
+                if (!empty($raw)) {
+                    $raw = preg_replace('/^\xEF\xBB\xBF/', '', $raw);
+                    $data = json_decode($raw, true) ?: [];
+                }
+            }
+
+            $id = !empty($data['id']) ? trim((string)$data['id']) : ('art-' . time() . '-' . rand(100, 999));
+            $title = !empty($data['title']) ? trim((string)$data['title']) : 'Bài viết mới';
+            $category = !empty($data['category']) ? trim((string)$data['category']) : 'Hoạt động nổi bật';
+            $author = !empty($data['author']) ? trim((string)$data['author']) : 'Ban Biên Tập VMC';
+            $summary = isset($data['summary']) ? (string)$data['summary'] : '';
+            $content = isset($data['content']) ? (string)$data['content'] : '';
+            $coverImage = isset($data['coverImage']) ? (string)$data['coverImage'] : (isset($data['cover_image']) ? (string)$data['cover_image'] : '');
+            $videoUrl = !empty($data['videoUrl']) ? (string)$data['videoUrl'] : (!empty($data['video_url']) ? (string)$data['video_url'] : null);
+            
+            $images = $data['images'] ?? [];
+            if (is_string($images)) {
+                $images = json_decode($images, true) ?: [];
+            }
+            if (!is_array($images)) {
+                $images = [];
+            }
+
+            $date = !empty($data['date']) ? trim((string)$data['date']) : date('d/m/Y');
+            $isPinned = !empty($data['isPinned']) || !empty($data['is_pinned']);
 
             $article = HomepageArticle::updateOrCreate(
                 ['id' => $id],
@@ -88,7 +97,7 @@ class HomepageController extends Controller
                     'content' => $content,
                     'cover_image' => $coverImage,
                     'video_url' => $videoUrl,
-                    'images' => is_array($images) ? $images : (json_decode($images, true) ?: []),
+                    'images' => $images,
                     'date' => $date,
                     'is_pinned' => $isPinned,
                 ]
@@ -97,7 +106,24 @@ class HomepageController extends Controller
             // Đồng bộ sang System_Settings để duy trì tương thích ngược
             $this->syncArticlesToSettings();
 
-            return response()->json(['success' => true, 'data' => $article]);
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => (string)$article->id,
+                    'title' => (string)$article->title,
+                    'category' => (string)$article->category,
+                    'author' => (string)$article->author,
+                    'summary' => (string)$article->summary,
+                    'content' => (string)$article->content,
+                    'coverImage' => (string)$article->cover_image,
+                    'videoUrl' => (string)$article->video_url,
+                    'images' => is_array($article->images) ? $article->images : (json_decode($article->images, true) ?: []),
+                    'date' => (string)$article->date,
+                    'isPinned' => (bool)$article->is_pinned,
+                    'createdAt' => (string)$article->created_at,
+                    'updatedAt' => (string)$article->updated_at,
+                ]
+            ]);
         } catch (\Throwable $e) {
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
@@ -119,23 +145,12 @@ class HomepageController extends Controller
 
     /**
      * GET /api/homepage/media
-     * Lấy kho tư liệu đa phương tiện từ bảng chuyên biệt Homepage_Media
+     * Lấy kho tư liệu đa phương tiện từ bảng chuyên biệt Homepage_Media (không tự ý gen dữ liệu mẫu)
      */
     public function indexMedia()
     {
         try {
             $mediaList = HomepageMedia::orderBy('created_at', 'desc')->get();
-
-            // Nếu bảng chưa có, lấy từ System_Settings
-            if ($mediaList->isEmpty()) {
-                $setting = SystemSetting::where('setting_key', 'VMC_HOMEPAGE_MEDIA')->first();
-                if ($setting && !empty($setting->setting_value) && $setting->setting_value !== '[]') {
-                    $decoded = json_decode($setting->setting_value, true);
-                    if (!empty($decoded) && is_array($decoded)) {
-                        return response()->json(['success' => true, 'data' => $decoded]);
-                    }
-                }
-            }
 
             $formatted = $mediaList->map(function ($item) {
                 return [
@@ -161,19 +176,40 @@ class HomepageController extends Controller
 
     /**
      * POST /api/homepage/media
+     * Thêm mới hoặc cập nhật 1 mục media trong bảng chuyên biệt Homepage_Media
      */
     public function storeMedia(Request $request)
     {
         try {
-            $id = $request->input('id') ?: ('med-' . time() . '-' . rand(100, 999));
-            $title = $request->input('title', 'Tư liệu mới');
-            $type = $request->input('type', 'image');
-            $category = $request->input('category', 'Toàn CLB');
-            $mediaUrl = $request->input('mediaUrl') ?: $request->input('media_url', '');
-            $thumbnail = $request->input('thumbnail', '');
-            $images = $request->input('images', []);
-            $description = $request->input('description', '');
-            $date = $request->input('date') ?: date('d/m/Y');
+            $data = $request->json()->all();
+            if (empty($data)) {
+                $data = $request->all();
+            }
+            if (empty($data)) {
+                $raw = $request->getContent();
+                if (!empty($raw)) {
+                    $raw = preg_replace('/^\xEF\xBB\xBF/', '', $raw);
+                    $data = json_decode($raw, true) ?: [];
+                }
+            }
+
+            $id = !empty($data['id']) ? trim((string)$data['id']) : ('med-' . time() . '-' . rand(100, 999));
+            $title = !empty($data['title']) ? trim((string)$data['title']) : 'Tư liệu mới';
+            $type = (!empty($data['type']) && in_array($data['type'], ['image', 'video'])) ? $data['type'] : 'image';
+            $category = !empty($data['category']) ? trim((string)$data['category']) : 'Toàn CLB';
+            $mediaUrl = isset($data['mediaUrl']) ? (string)$data['mediaUrl'] : (isset($data['media_url']) ? (string)$data['media_url'] : '');
+            $thumbnail = isset($data['thumbnail']) ? (string)$data['thumbnail'] : '';
+            
+            $images = $data['images'] ?? [];
+            if (is_string($images)) {
+                $images = json_decode($images, true) ?: [];
+            }
+            if (!is_array($images)) {
+                $images = [];
+            }
+
+            $description = isset($data['description']) ? (string)$data['description'] : '';
+            $date = !empty($data['date']) ? trim((string)$data['date']) : date('d/m/Y');
 
             $item = HomepageMedia::updateOrCreate(
                 ['id' => $id],
@@ -183,7 +219,7 @@ class HomepageController extends Controller
                     'category' => $category,
                     'media_url' => $mediaUrl,
                     'thumbnail' => $thumbnail,
-                    'images' => is_array($images) ? $images : (json_decode($images, true) ?: []),
+                    'images' => $images,
                     'description' => $description,
                     'date' => $date,
                 ]
@@ -191,7 +227,22 @@ class HomepageController extends Controller
 
             $this->syncMediaToSettings();
 
-            return response()->json(['success' => true, 'data' => $item]);
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => (string)$item->id,
+                    'title' => (string)$item->title,
+                    'type' => (string)$item->type,
+                    'category' => (string)$item->category,
+                    'mediaUrl' => (string)$item->media_url,
+                    'thumbnail' => (string)$item->thumbnail,
+                    'images' => is_array($item->images) ? $item->images : (json_decode($item->images, true) ?: []),
+                    'description' => (string)$item->description,
+                    'date' => (string)$item->date,
+                    'createdAt' => (string)$item->created_at,
+                    'updatedAt' => (string)$item->updated_at,
+                ]
+            ]);
         } catch (\Throwable $e) {
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }

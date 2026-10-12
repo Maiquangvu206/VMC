@@ -33,145 +33,9 @@ export const DEFAULT_HOMEPAGE_INFO = {
   ]
 };
 
-export const DEFAULT_HOMEPAGE_ARTICLES = [
-  {
-    id: 'art-1',
-    title: 'Hành Trình 6 Năm Trưởng Thành & Đổi Mới Của CLB Truyền Thông THPT Vĩnh Bảo (2020 - 2026)',
-    category: 'Giới Thiệu',
-    date: '10/10/2026',
-    author: 'Ban Chủ Nhiệm VMC',
-    coverImage: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&q=80&w=1000',
-    images: [
-      'https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&q=80&w=1000',
-      'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=1000',
-      'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80&w=1000'
-    ],
-    summary: 'Nhìn lại chặng đường từ những ngày đầu thành lập đến khi trở thành kênh truyền thông tin cậy hàng đầu của học sinh trường THPT Vĩnh Bảo.',
-    content: `Được thành lập từ năm 2020 dưới sự chỉ đạo của Đoàn TNCS Hồ Chí Minh trường THPT Vĩnh Bảo, CLB Truyền Thông VMC ban đầu chỉ là một nhóm nhỏ các bạn học sinh đam mê nhiếp ảnh và viết lách. Trải qua hơn 6 năm phát triển cùng các thế hệ từ Gen 1 đến Gen 7, VMC đã khẳng định vị thế là "mạch nguồn thông tin" quan trọng trong toàn trường.
-
-Hiện nay, CLB sở hữu cơ cấu tổ chức chuyên nghiệp gồm Ban Chủ Nhiệm, Ban Nội Dung - Phát Thanh, Ban Sản Xuất (Ảnh & Video), Ban Đối Ngoại - Nhân Sự và Ban Cố Vấn. Mỗi sự kiện lớn nhỏ của trường THPT Vĩnh Bảo từ Khai giảng, Bế giảng, Tri ân & Trưởng thành, Ngày Nhà giáo Việt Nam 20/11 đến các hội thao, giải bóng đá đều có dấu chân của các bạn phóng viên trẻ VMC.
-
-Không chỉ ghi lại những khoảnh khắc đẹp, VMC còn là cái nôi ươm mầm kỹ năng mềm, nơi các bạn học sinh rèn luyện tư duy truyền thông, kỹ năng làm việc nhóm, quản lý dự án và tự tin bước vào cánh cửa đại học.`
-  },
-  {
-    id: 'art-2',
-    title: 'Phát Thanh Học Đường - Thanh Âm Thân Thương Nơi Giờ Ra Chơi Sân Trường',
-    category: 'Chuyên Mục',
-    date: '05/10/2026',
-    author: 'Ban Nội Dung - Phát Thanh',
-    coverImage: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&q=80&w=1000',
-    images: [
-      'https://images.unsplash.com/photo-1478737270239-2f02b77fc618?auto=format&fit=crop&q=80&w=1000',
-      'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&q=80&w=1000'
-    ],
-    summary: 'Chương trình phát thanh học đường VMC News là điểm hẹn quen thuộc mỗi sáng thứ Hai và giờ ra chơi với những giai điệu và thông tin bổ ích.',
-    content: `Cứ mỗi 15 phút chuyển tiết hoặc giờ ra chơi, thanh âm quen thuộc từ hệ thống loa phát thanh học đường lại vang lên khắp các dãy hành lang lớp học trường THPT Vĩnh Bảo. Đó là thành quả của những buổi biên tập kịch bản tỉ mỉ từ Ban Nội Dung - Phát Thanh VMC.
-
-Chương trình bao gồm các chuyên mục đa dạng:
-1. Bản tin VMC News: Cập nhật hoạt động Đoàn trường, lịch thi cử, phong trào thi đua.
-2. Góc Âm Nhạc & Quà Tặng Âm Nhạc: Gửi gắm những lời chúc, những giai điệu tuổi học trò ấm áp.
-3. Chuyên đề Kỹ Năng & Góc Sống Xanh: Chia sẻ mẹo ôn thi, lối sống lành mạnh, kỹ năng ứng xử học đường.
-
-Phát thanh học đường đã và đang trở thành một nét văn hóa đặc trưng, gắn kết tình bạn, tình thầy trò dưới mái trường Vĩnh Bảo thân yêu.`
-  },
-  {
-    id: 'art-3',
-    title: 'Bản Lĩnh Đằng Sau Ống Kính: Hậu Trường Những Mùa Sản Xuất Media Cực Chất',
-    category: 'Hậu Trường',
-    date: '28/09/2026',
-    author: 'Ban Sản Xuất VMC',
-    videoUrl: 'https://www.youtube.com/watch?v=ScMzIvxBSi4',
-    coverImage: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80&w=1000',
-    images: [
-      'https://images.unsplash.com/photo-1533727937480-da3a97967e15?auto=format&fit=crop&q=80&w=1000',
-      'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&q=80&w=1000',
-      'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&q=80&w=1000'
-    ],
-    summary: 'Để có được những thước phim highlight triệu view và những bộ ảnh sắc nét, các kỹ thuật viên VMC đã trải qua những buổi làm việc nghiêm túc.',
-    content: `Để có những bức ảnh lung linh bắt trọn nụ cười rạng rỡ của thầy cô, hay những video highlight sắc nét chỉ vài giờ sau khi sự kiện kết thúc, đằng sau đó là sự cống hiến âm thầm của đội ngũ Ban Sản Xuất VMC.
-
-Các thành viên thường có mặt tại sân trường từ 6 giờ sáng để setup chân máy, kiểm tra thẻ nhớ, cân chỉnh âm thanh ánh sáng. Khi sự kiện kết thúc, trong khi mọi người ra về thì đội ngũ kỹ thuật lại tiếp tục ngồi lại phòng truyền thống để import dữ liệu, lọc ảnh và dựng video xuyên trưa.
-
-Chính niềm đam mê với nghệ thuật thị giác và tinh thần trách nhiệm đã biến những vất vả thành niềm tự hào khi sản phẩm được đón nhận nồng nhiệt trên Fanpage CLB.`
-  }
-];
-
-export const DEFAULT_HOMEPAGE_MEDIA = [
-  {
-    id: 'med-1',
-    title: 'Trailer Giới Thiệu CLB Truyền Thông THPT Vĩnh Bảo',
-    type: 'video',
-    mediaUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Hoặc link video drive/youtube
-    thumbnail: 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?auto=format&fit=crop&q=80&w=800',
-    date: '01/10/2026',
-    category: 'Video Spotlight',
-    description: 'Video giới thiệu tổng quan các hoạt động và các ban chuyên môn của CLB Truyền Thông VMC.'
-  },
-  {
-    id: 'med-2',
-    title: 'Lễ Khai Giảng Năm Học Mới - Rực Rỡ Sắc Cờ Hoa',
-    type: 'image',
-    mediaUrl: 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&q=80&w=1200',
-    thumbnail: 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&q=80&w=600',
-    images: [
-      'https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&q=80&w=1200',
-      'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&q=80&w=1200',
-      'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=1200'
-    ],
-    date: '05/09/2026',
-    category: 'Ảnh Sự Kiện',
-    description: 'Khoảnh khắc chào đón các tân học sinh K65 bước vào ngôi trường THPT Vĩnh Bảo giàu truyền thống.'
-  },
-  {
-    id: 'med-3',
-    title: 'Gala Chào Đón Thế Hệ Thành Viên Mới - Gen 7 VMC',
-    type: 'image',
-    mediaUrl: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=1200',
-    thumbnail: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=600',
-    images: [
-      'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&q=80&w=1200',
-      'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&q=80&w=1200',
-      'https://images.unsplash.com/photo-1533727937480-da3a97967e15?auto=format&fit=crop&q=80&w=1200'
-    ],
-    date: '20/09/2026',
-    category: 'Kỷ Niệm Nội Bộ',
-    description: 'Đêm gala kết nối đầy ấm cúng và bùng nổ nhiệt huyết của các thành viên gia đình VMC.'
-  },
-  {
-    id: 'med-4',
-    title: 'Phim Ngắn Học Đường: "Nắng Sân Trường Năm Ấy"',
-    type: 'video',
-    mediaUrl: 'https://www.youtube.com/watch?v=ScMzIvxBSi4',
-    thumbnail: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&q=80&w=800',
-    date: '15/05/2026',
-    category: 'Sản Xuất Media',
-    description: 'Phim ngắn tri ấn tuổi học trò do chính ekip học sinh VMC viết kịch bản, quay phim và hậu kỳ.'
-  },
-  {
-    id: 'med-5',
-    title: 'Hội Diễn Văn Nghệ Chào Mừng Ngày Nhà Giáo Việt Nam 20/11',
-    type: 'image',
-    mediaUrl: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&q=80&w=1200',
-    thumbnail: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&q=80&w=600',
-    images: [
-      'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&q=80&w=1200',
-      'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&q=80&w=1200'
-    ],
-    date: '20/11/2025',
-    category: 'Ảnh Sự Kiện',
-    description: 'Bộ ảnh bắt trọn từng khoảnh khắc biểu diễn thăng hoa của học sinh các khối lớp.'
-  },
-  {
-    id: 'med-6',
-    title: 'Hậu Trường Ekip Sản Xuất Tác Nghiệp Sự Kiện',
-    type: 'image',
-    mediaUrl: 'https://images.unsplash.com/photo-1533727937480-da3a97967e15?auto=format&fit=crop&q=80&w=1200',
-    thumbnail: 'https://images.unsplash.com/photo-1533727937480-da3a97967e15?auto=format&fit=crop&q=80&w=600',
-    date: '12/10/2026',
-    category: 'Hậu Trường',
-    description: 'Những góc máy chân thực, say mê của đội ngũ kỹ thuật viên VMC trong lúc làm việc.'
-  }
-];
+// Tuyệt đối không tự ý gen dữ liệu bài viết hoặc media mẫu - Dữ liệu hoàn toàn do người dùng quản lý
+export const DEFAULT_HOMEPAGE_ARTICLES = [];
+export const DEFAULT_HOMEPAGE_MEDIA = [];
 
 export const DEFAULT_HOMEPAGE_ORG = [
   {
@@ -342,7 +206,13 @@ export const saveArticleAPI = async (article) => {
       },
       body: JSON.stringify(article)
     });
-    return res.ok;
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error('⚠️ saveArticleAPI failed:', res.status, errText);
+      return false;
+    }
+    const json = await res.json();
+    return Boolean(json.success);
   } catch (err) {
     console.warn('⚠️ saveArticleAPI error:', err);
     return false;
@@ -378,7 +248,13 @@ export const saveMediaAPI = async (mediaItem) => {
       },
       body: JSON.stringify(mediaItem)
     });
-    return res.ok;
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error('⚠️ saveMediaAPI failed:', res.status, errText);
+      return false;
+    }
+    const json = await res.json();
+    return Boolean(json.success);
   } catch (err) {
     console.warn('⚠️ saveMediaAPI error:', err);
     return false;
@@ -515,7 +391,7 @@ export const fetchAllHomepageData = async () => {
 
     const settingsData = (settingsRes.status === 'fulfilled' && settingsRes.value?.success) ? settingsRes.value.data : {};
 
-    // Xử lý Articles: ưu tiên từ bảng Homepage_Articles nếu API thành công (kể cả mảng rỗng do xóa hết)
+    // Xử lý Articles: ưu tiên từ bảng Homepage_Articles nếu API thành công (kể cả mảng rỗng do chưa đăng hoặc đã xóa)
     let articles = null;
     if (articlesRes.status === 'fulfilled' && articlesRes.value?.success && Array.isArray(articlesRes.value.data)) {
       articles = articlesRes.value.data;
@@ -527,10 +403,10 @@ export const fetchAllHomepageData = async () => {
     }
     if (articles === null) {
       const cached = getCachedData('homepage_articles');
-      articles = Array.isArray(cached) ? cached : DEFAULT_HOMEPAGE_ARTICLES;
+      articles = Array.isArray(cached) ? cached : [];
     }
 
-    // Xử lý Media: ưu tiên từ bảng Homepage_Media nếu API thành công (kể cả mảng rỗng do xóa hết)
+    // Xử lý Media: ưu tiên từ bảng Homepage_Media nếu API thành công (kể cả mảng rỗng)
     let media = null;
     if (mediaRes.status === 'fulfilled' && mediaRes.value?.success && Array.isArray(mediaRes.value.data)) {
       media = mediaRes.value.data;
@@ -542,7 +418,7 @@ export const fetchAllHomepageData = async () => {
     }
     if (media === null) {
       const cached = getCachedData('homepage_media');
-      media = Array.isArray(cached) ? cached : DEFAULT_HOMEPAGE_MEDIA;
+      media = Array.isArray(cached) ? cached : [];
     }
 
     // Xử lý Info & Org
@@ -578,8 +454,8 @@ export const fetchAllHomepageData = async () => {
 
   return {
     info: getCachedData('homepage_info') || DEFAULT_HOMEPAGE_INFO,
-    articles: Array.isArray(fallbackArticles) ? fallbackArticles : DEFAULT_HOMEPAGE_ARTICLES,
-    media: Array.isArray(fallbackMedia) ? fallbackMedia : DEFAULT_HOMEPAGE_MEDIA,
+    articles: Array.isArray(fallbackArticles) ? fallbackArticles : [],
+    media: Array.isArray(fallbackMedia) ? fallbackMedia : [],
     org: getCachedData('homepage_org') || DEFAULT_HOMEPAGE_ORG
   };
 };
