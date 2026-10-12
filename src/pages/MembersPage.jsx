@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { MEMBERS } from '../data/mockData';
+import { useClub } from '../context/ClubContext';
 import { Users, Award, ExternalLink, Sparkles } from 'lucide-react';
+import { RoleTitleDisplay } from '../utils/roleHelper';
 
 export const MembersPage = () => {
+  const { members = [] } = useClub();
   const [selectedDept, setSelectedDept] = useState('all');
 
-  const filteredMembers = MEMBERS.filter(m => {
-    return selectedDept === 'all' || m.dept === selectedDept;
+  const filteredMembers = members.filter(m => {
+    const dept = (m.deptName || m.department || '').toLowerCase();
+    return selectedDept === 'all' || dept.includes(selectedDept);
   });
 
   return (
@@ -51,8 +54,9 @@ export const MembersPage = () => {
           >
             <div className="relative w-28 h-28 mx-auto rounded-full p-1 bg-gradient-to-r from-purple-600 to-pink-600">
               <img
-                src={m.avatar}
+                src={m.avatar || m.avatar_url || '/vmc-logo.jpg'}
                 alt={m.name}
+                onError={(e) => { e.currentTarget.src = '/vmc-logo.jpg'; }}
                 className="w-full h-full object-cover rounded-full"
               />
                 <span className="absolute bottom-0 right-0 p-1.5 rounded-full bg-[var(--bg-primary)] border border-purple-500 text-amber-400" title="Điểm đóng góp">
@@ -64,7 +68,7 @@ export const MembersPage = () => {
               <h3 className="font-heading font-bold text-lg text-white group-hover:text-purple-300 transition-colors">
                 {m.name}
               </h3>
-              <p className="text-xs text-purple-400 font-semibold">{m.role}</p>
+              <RoleTitleDisplay roleTitle={m.role} className="text-xs text-purple-400 font-semibold" />
             </div>
 
             <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed italic">
@@ -72,7 +76,17 @@ export const MembersPage = () => {
             </p>
 
             <div className="pt-3 border-t border-[var(--border-default)] flex items-center justify-between text-xs text-slate-400">
-              <span>Điểm thi đua: <strong className="text-white font-mono">{m.points} PTS</strong></span>
+              {!(
+                m.deptName?.toLowerCase().includes('cố vấn') ||
+                m.department?.toLowerCase().includes('cố vấn') ||
+                m.roleTitle?.toLowerCase().includes('cố vấn') ||
+                m.role?.toLowerCase().includes('cố vấn') ||
+                m.role?.toLowerCase().includes('cựu')
+              ) ? (
+                <span>Điểm thi đua: <strong className="text-white font-mono">{m.points || 0} PTS</strong></span>
+              ) : (
+                <span className="text-purple-300 font-medium">Ban Cố Vấn</span>
+              )}
               <button
                 onClick={() => alert(`Xem Portfolio cá nhân của ${m.name}`)}
                 className="hover:text-purple-400 flex items-center gap-1 font-semibold"

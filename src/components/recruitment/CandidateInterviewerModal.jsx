@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, Save } from 'lucide-react';
+import { splitRoleTitles } from '../../utils/roleHelper';
 
 export const CandidateInterviewerModal = ({ 
   show, 
@@ -66,8 +67,13 @@ export const CandidateInterviewerModal = ({
                           </span>
                         )}
                       </div>
-                      <div className="text-[10px] text-slate-400 truncate">
-                        {m.roleTitle || 'Thành Viên'} • {m.deptName || m.department || 'Ban Chuyên Môn'}
+                      <div className="text-[10px] text-slate-400">
+                        <div>{m.deptName || m.department || 'Ban Chuyên Môn'}</div>
+                        <div className="text-blue-400 font-medium space-y-0.5 mt-0.5">
+                          {splitRoleTitles(m.roleTitle || 'Thành Viên').map((r, i) => (
+                            <div key={i}>{r}</div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>

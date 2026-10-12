@@ -17,7 +17,10 @@ export const InternalEquipment = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newEq, setNewEq] = useState({ name: '', category: 'CAMERA', code: '', condition: 'Tốt' });
 
-  const isAdmin = currentUser?.roleTitle?.toLowerCase().includes('trưởng') || currentUser?.role === 'admin' || currentUser?.memberCode === 'ADMIN';
+  const isAdmin = currentUser?.roleTitle?.toLowerCase().includes('trưởng') ||
+    currentUser?.roleTitle?.toLowerCase().includes('phó') ||
+    currentUser?.role === 'admin' ||
+    currentUser?.memberCode === 'ADMIN';
 
   const handleBorrowSubmit = (e) => {
     e.preventDefault();

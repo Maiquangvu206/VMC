@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 
 import { uploadSubmissionImage } from '../../services/driveService';
+import { MemberDetailModal } from '../members/MemberDetailModal';
 
 export const BirthdayManagement = () => {
   const {
@@ -32,8 +33,16 @@ export const BirthdayManagement = () => {
     currentUser,
     isHRHead,
     isAdmin,
-    showToast
+    showToast,
+    isAdvisor: isAdvisorFromContext
   } = useClub();
+
+  const isAdvisor = isAdvisorFromContext || Boolean(
+    currentUser?.deptName?.toLowerCase().includes('cố vấn') ||
+    currentUser?.department?.toLowerCase().includes('cố vấn') ||
+    currentUser?.roleTitle?.toLowerCase().includes('cố vấn') ||
+    currentUser?.roleTitle?.toLowerCase().includes('cựu')
+  );
 
   const [assignForm, setAssignForm] = useState({
     month: new Date().getMonth() + 2 > 12 ? 1 : new Date().getMonth() + 2,
@@ -52,6 +61,16 @@ export const BirthdayManagement = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedFilePreview, setSelectedFilePreview] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [selectedBirthdayMember, setSelectedBirthdayMember] = useState(null);
+
+  const handleOpenMemberDetail = (targetMember) => {
+    if (!targetMember) return;
+    const fullMember = (members || []).find(
+      mem => String(mem.id) === String(targetMember.id) || 
+             (targetMember.memberCode && String(mem.memberCode) === String(targetMember.memberCode))
+    ) || targetMember;
+    setSelectedBirthdayMember(fullMember);
+  };
 
   // --- Monthly Email Config State ---
   const upcomingBirthdays = React.useMemo(() => {
@@ -287,7 +306,7 @@ export const BirthdayManagement = () => {
         <div>
           <h3 className="font-heading text-lg font-bold text-white flex flex-col items-center justify-center text-center gap-2">
             <Gift className="text-pink-400" />
-            <span>Phân Công & Quản Lý Dữ Liệu Sinh Nhật</span>
+            <span>{isAdvisor ? 'Bảng Sinh Nhật Thành Viên' : 'Phân Công & Quản Lý Dữ Liệu Sinh Nhật'}</span>
           </h3>
         </div>
       </div>
@@ -314,12 +333,14 @@ export const BirthdayManagement = () => {
               return (
                 <div
                   key={m.id}
-                  className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 transition-all ${isToday
+                  onClick={() => handleOpenMemberDetail(m)}
+                  className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 transition-all cursor-pointer hover:border-pink-500/60 hover:scale-[1.01] ${isToday
                     ? 'bg-pink-500/20 border-pink-500/50 shadow-md shadow-pink-500/10'
                     : isTomorrow
                       ? 'bg-purple-500/15 border-purple-500/40'
-                      : 'bg-[#0f172a] border-[#1f2937]'
+                      : 'bg-[var(--bg-card)] border-[var(--border-default)]'
                     }`}
+                  title="Bấm để xem chi tiết thông tin thành viên"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <img
@@ -328,9 +349,9 @@ export const BirthdayManagement = () => {
                       className="w-10 h-10 rounded-lg object-cover border border-pink-500/30 shrink-0"
                     />
                     <div className="min-w-0">
-                      <div className="font-bold text-xs text-slate-100 truncate">{m.name}</div>
-                      <div className="text-[10px] text-slate-400 truncate">{m.deptName || m.department || 'Ban Chuyên Môn'}</div>
-                      <div className="text-[10px] text-pink-300 font-mono">
+                      <div className="font-bold text-xs text-[var(--text-primary)] truncate">{m.name}</div>
+                      <div className="text-[10px] text-[var(--text-muted)] truncate">{m.deptName || m.department || 'Ban Chuyên Môn'}</div>
+                      <div className="text-[10px] text-pink-400 font-mono">
                         Sinh ngày: <strong>{m.formattedBday}</strong> {m.isCurrentMonth ? '(Tháng này)' : '(Tháng tới)'}
                       </div>
                     </div>
@@ -358,8 +379,11 @@ export const BirthdayManagement = () => {
         )}
       </div>
 
-      {/* Form Phân Công (HR Head / Leader) */}
-      {isHRHead && (
+      {/* Các chức năng phân công & nộp ảnh sinh nhật: Ẩn hoàn toàn với Ban Cố Vấn */}
+      {!isAdvisor && (
+        <>
+          {/* Form Phân Công (HR Head / Leader) */}
+          {isHRHead && (
         <form onSubmit={handleAssign} className="ds-card p-5 border border-pink-500/30 space-y-4">
           <h4 className="font-heading text-sm font-bold text-white mb-2 flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-pink-400" />
@@ -449,8 +473,19 @@ export const BirthdayManagement = () => {
                     </span>
                   )}
                 </div>
-                <div className="text-xs text-slate-400 mt-1">
-                  Người phụ trách: <strong className="text-pink-300 font-semibold">{assignee?.name || 'Thành viên VMC'}</strong>
+                <div className="text-xs text-[var(--text-muted)] mt-1">
+                  Người phụ trách: {assignee ? (
+                    <button
+                      type="button"
+                      onClick={() => handleOpenMemberDetail(assignee)}
+                      className="text-pink-400 font-semibold hover:underline cursor-pointer inline-block ml-1"
+                      title="Bấm để xem chi tiết thông tin thành viên"
+                    >
+                      {assignee.name}
+                    </button>
+                  ) : (
+                    <strong className="text-pink-400 font-semibold">Thành viên VMC</strong>
+                  )}
                 </div>
               </div>
 
@@ -522,12 +557,20 @@ export const BirthdayManagement = () => {
                     const submittedLink = submissions[m.id];
                     return (
                       <div key={m.id} className="ds-card p-3 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className="w-8 h-8 rounded-full bg-pink-500/20 text-pink-400 flex items-center justify-center font-bold shrink-0 border border-pink-500/30">
-                            {(m.name || 'V').charAt(0)}
+                        <div 
+                          className="flex items-center gap-2.5 min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => handleOpenMemberDetail(m)}
+                          title="Bấm để xem chi tiết thông tin thành viên"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-pink-500/20 text-pink-400 flex items-center justify-center font-bold shrink-0 border border-pink-500/30 overflow-hidden">
+                            {m.avatar ? (
+                              <img src={m.avatar} alt={m.name} className="w-full h-full object-cover" />
+                            ) : (
+                              (m.name || 'V').charAt(0)
+                            )}
                           </div>
                           <div className="min-w-0">
-                            <div className="font-bold text-white truncate">{m.name}</div>
+                            <div className="font-bold text-[var(--text-primary)] truncate hover:text-pink-400 transition-colors">{m.name}</div>
                             <div className="text-[10px] text-pink-400 font-mono">
                               🎂 {m.dob} • {m.deptName || m.department || 'Ban Chuyên Môn'}
                             </div>
@@ -831,6 +874,16 @@ export const BirthdayManagement = () => {
           </div>
         </div>
       )}
+
+        </>
+      )}
+
+      {/* Member Details Modal */}
+      <MemberDetailModal
+        show={Boolean(selectedBirthdayMember)}
+        member={selectedBirthdayMember}
+        onClose={() => setSelectedBirthdayMember(null)}
+      />
 
     </div>
   );

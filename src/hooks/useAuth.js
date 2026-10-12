@@ -56,9 +56,20 @@ export const useAuth = (db, setDb) => {
           return { success: false, message: 'Tài khoản này đã bị tạm khóa bởi Ban Chủ Nhiệm!' };
         }
 
-setCurrentUser(user);
-         setIsAuthenticated(true);
-         return { success: true };
+        const freshSessionId = 'sess-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now();
+        setCurrentSessionId(freshSessionId);
+        try {
+          sessionStorage.setItem('VMC_SESSION_ID', freshSessionId);
+        } catch (e) {}
+
+        setCurrentUser(user);
+        setIsAuthenticated(true);
+        // Mặc định khi đăng nhập sẽ ở giao diện sáng
+        try {
+          localStorage.setItem('VMC_THEME', 'light');
+          document.documentElement.setAttribute('data-theme', 'light');
+        } catch (e) {}
+        return { success: true };
       }
 
       if (apiRes && !apiRes.success && apiRes.message?.includes('tạm khóa')) {

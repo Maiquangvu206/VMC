@@ -1,46 +1,60 @@
 import React from 'react';
-import { X, User, Mail, Hash, GraduationCap, Briefcase, Phone, Calendar, MapPin, Globe, Save, ShieldCheck } from 'lucide-react';
+import { X, User, Mail, Hash, GraduationCap, Briefcase, Phone, Calendar, MapPin, Globe, Save, ShieldCheck, RefreshCw } from 'lucide-react';
 
-export const EditMemberModal = ({ show, onClose, member, formData, setFormData, onSubmit, loading }) => {
+export const EditMemberModal = ({ show, onClose, member, formData, setFormData, onSubmit, loading, canManageAccount, onResetPassword }) => {
   if (!show || !member) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up overflow-y-auto">
-      <div className="ds-card p-4 sm:p-6 w-full max-w-2xl shadow-2xl text-white flex flex-col my-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 dark:bg-slate-950/80 backdrop-blur-md animate-slide-up overflow-y-auto">
+      <div className="ds-card p-4 sm:p-6 w-full max-w-2xl shadow-2xl text-[var(--text-primary)] bg-[var(--bg-card)] border border-[var(--border-default)] flex flex-col my-auto">
         <div className="flex justify-between items-center pb-3 border-b border-[var(--border-default)] shrink-0">
           <div>
-            <h3 className="font-heading text-lg font-bold text-white">Chỉnh Sửa Thông Tin Thành Viên</h3>
+            <h3 className="font-heading text-lg font-bold text-[var(--text-primary)]">Chỉnh Sửa Thông Tin Thành Viên</h3>
           </div>
-          <button onClick={onClose} className="ds-btn ds-btn-ghost p-1">
+          <button onClick={onClose} className="ds-btn ds-btn-ghost p-1 text-[var(--text-muted)] hover:text-[var(--text-primary)]">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto py-4 space-y-3">
+          {/* Thông tin nhận diện thành viên (Chỉ xem - Ảnh đại diện do chính chủ tài khoản cập nhật tại Trang Hồ Sơ) */}
+          <div className="p-5 rounded-xl bg-[var(--bg-tertiary)] border border-[var(--border-default)] flex flex-col items-center justify-center gap-3">
+            <div className="w-24 h-24 rounded-full overflow-hidden bg-slate-800 border-4 border-cyan-500/40 shadow-md">
+              <img
+                src={formData.avatar || formData.avatar_url || '/vmc-logo.jpg'}
+                alt="Avatar"
+                onError={(e) => { e.currentTarget.src = '/vmc-logo.jpg'; }}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="ds-field-label text-slate-400">Mã thành viên</label>
+              <label className="ds-field-label text-[var(--text-secondary)] font-medium">Mã thành viên</label>
               <div className="relative flex items-center w-full">
-                <Hash className="absolute left-4 w-4 h-4 text-cyan-400 shrink-0 pointer-events-none z-10" />
+                <Hash className="absolute left-4 w-4 h-4 text-cyan-600 dark:text-cyan-400 shrink-0 pointer-events-none z-10" />
                 <input
                   type="text"
                   readOnly
                   disabled
                   value={formData.memberCode || formData.member_code || formData.username || ''}
-                  className="ds-input w-full font-mono font-bold text-cyan-400 bg-slate-900/80 border-slate-700/80 cursor-not-allowed opacity-90" style={{ paddingLeft: '2.75rem' }}
+                  className="ds-input w-full font-mono font-bold text-cyan-600 dark:text-cyan-400 bg-[var(--bg-tertiary)] border-[var(--border-default)] cursor-not-allowed opacity-90"
+                  style={{ paddingLeft: '2.75rem' }}
                   title="Mã thành viên cố định, không được phép sửa đổi"
                 />
               </div>
             </div>
             <div>
-              <label className="ds-field-label">Họ và tên</label>
+              <label className="ds-field-label text-[var(--text-secondary)] font-medium">Họ và tên</label>
               <div className="relative flex items-center w-full">
-                <User className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
+                <User className="absolute left-4 w-4 h-4 text-[var(--text-muted)] shrink-0 pointer-events-none z-10" />
                 <input
                   type="text"
-                  value={formData.name}
+                  value={formData.name || ''}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="ds-input w-full" style={{ paddingLeft: '2.75rem' }}
+                  className="ds-input w-full"
+                  style={{ paddingLeft: '2.75rem' }}
                 />
               </div>
             </div>
@@ -48,26 +62,28 @@ export const EditMemberModal = ({ show, onClose, member, formData, setFormData, 
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="ds-field-label">Email</label>
+              <label className="ds-field-label text-[var(--text-secondary)] font-medium">Email</label>
               <div className="relative flex items-center w-full">
-                <Mail className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
+                <Mail className="absolute left-4 w-4 h-4 text-[var(--text-muted)] shrink-0 pointer-events-none z-10" />
                 <input
                   type="email"
-                  value={formData.email}
+                  value={formData.email || ''}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="ds-input w-full" style={{ paddingLeft: '2.75rem' }}
+                  className="ds-input w-full"
+                  style={{ paddingLeft: '2.75rem' }}
                 />
               </div>
             </div>
             <div>
-              <label className="ds-field-label">Lớp</label>
+              <label className="ds-field-label text-[var(--text-secondary)] font-medium">Lớp</label>
               <div className="relative flex items-center w-full">
-                <GraduationCap className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
+                <GraduationCap className="absolute left-4 w-4 h-4 text-[var(--text-muted)] shrink-0 pointer-events-none z-10" />
                 <input
                   type="text"
-                  value={formData.class}
+                  value={formData.class || ''}
                   onChange={(e) => setFormData({ ...formData, class: e.target.value })}
-                  className="ds-input w-full" style={{ paddingLeft: '2.75rem' }}
+                  className="ds-input w-full"
+                  style={{ paddingLeft: '2.75rem' }}
                 />
               </div>
             </div>
@@ -75,9 +91,9 @@ export const EditMemberModal = ({ show, onClose, member, formData, setFormData, 
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="ds-field-label">Ban *</label>
+              <label className="ds-field-label text-[var(--text-secondary)] font-medium">Ban *</label>
               <div className="relative flex items-center w-full">
-                <Briefcase className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
+                <Briefcase className="absolute left-4 w-4 h-4 text-[var(--text-muted)] shrink-0 pointer-events-none z-10" />
                 <select
                   value={formData.deptName || ''}
                   onChange={(e) => setFormData({ ...formData, deptName: e.target.value })}
@@ -94,9 +110,9 @@ export const EditMemberModal = ({ show, onClose, member, formData, setFormData, 
               </div>
             </div>
             <div>
-              <label className="ds-field-label">Chức vụ / Chức danh *</label>
+              <label className="ds-field-label text-[var(--text-secondary)] font-medium">Chức vụ / Chức danh *</label>
               <div className="relative flex items-center w-full">
-                <ShieldCheck className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
+                <ShieldCheck className="absolute left-4 w-4 h-4 text-[var(--text-muted)] shrink-0 pointer-events-none z-10" />
                 <select
                   value={formData.roleTitle || 'Thành viên'}
                   onChange={(e) => setFormData({ ...formData, roleTitle: e.target.value })}
@@ -116,74 +132,93 @@ export const EditMemberModal = ({ show, onClose, member, formData, setFormData, 
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="ds-field-label">Số điện thoại</label>
+              <label className="ds-field-label text-[var(--text-secondary)] font-medium">Số điện thoại</label>
               <div className="relative flex items-center w-full">
-                <Phone className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
+                <Phone className="absolute left-4 w-4 h-4 text-[var(--text-muted)] shrink-0 pointer-events-none z-10" />
                 <input
                   type="text"
-                  value={formData.phone}
+                  value={formData.phone || ''}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="ds-input w-full" style={{ paddingLeft: '2.75rem' }}
+                  className="ds-input w-full"
+                  style={{ paddingLeft: '2.75rem' }}
                 />
               </div>
             </div>
             <div>
-              <label className="ds-field-label">Ngày sinh</label>
+              <label className="ds-field-label text-[var(--text-secondary)] font-medium">Ngày sinh</label>
               <div className="relative flex items-center w-full">
-                <Calendar className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
+                <Calendar className="absolute left-4 w-4 h-4 text-[var(--text-muted)] shrink-0 pointer-events-none z-10" />
                 <input
                   type="text"
-                  value={formData.dob}
+                  value={formData.dob || ''}
                   onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
-                  className="ds-input w-full" style={{ paddingLeft: '2.75rem' }}
+                  className="ds-input w-full"
+                  style={{ paddingLeft: '2.75rem' }}
                 />
               </div>
             </div>
           </div>
 
           <div>
-            <label className="ds-field-label">Địa chỉ</label>
+            <label className="ds-field-label text-[var(--text-secondary)] font-medium">Địa chỉ</label>
             <div className="relative flex items-center w-full">
-              <MapPin className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
+              <MapPin className="absolute left-4 w-4 h-4 text-[var(--text-muted)] shrink-0 pointer-events-none z-10" />
               <input
                 type="text"
-                value={formData.address}
+                value={formData.address || ''}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                className="ds-input w-full" style={{ paddingLeft: '2.75rem' }}
+                className="ds-input w-full"
+                style={{ paddingLeft: '2.75rem' }}
               />
             </div>
           </div>
 
           <div>
-            <label className="ds-field-label">Facebook</label>
+            <label className="ds-field-label text-[var(--text-secondary)] font-medium">Facebook</label>
             <div className="relative flex items-center w-full">
-              <Globe className="absolute left-4 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
+              <Globe className="absolute left-4 w-4 h-4 text-[var(--text-muted)] shrink-0 pointer-events-none z-10" />
               <input
                 type="text"
-                value={formData.facebook}
+                value={formData.facebook || ''}
                 onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
-                className="ds-input w-full" style={{ paddingLeft: '2.75rem' }}
+                className="ds-input w-full"
+                style={{ paddingLeft: '2.75rem' }}
               />
             </div>
           </div>
         </div>
 
-        <div className="pt-3 border-t border-[var(--border-default)] flex justify-end gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={onClose}
-            className="ds-btn ds-btn-secondary ds-btn-xs"
-          >
-            Hủy
-          </button>
-          <button
-            onClick={onSubmit}
-            disabled={loading}
-            className="ds-btn ds-btn-primary ds-btn-xs"
-          >
-            <Save className="w-3.5 h-3.5" />
-            {loading ? 'Đang lưu...' : 'Lưu Thay Đổi'}
-          </button>
+        <div className="pt-3 border-t border-[var(--border-default)] flex flex-wrap items-center justify-between gap-2 shrink-0">
+          <div>
+            {canManageAccount && onResetPassword && (
+              <button
+                type="button"
+                onClick={onResetPassword}
+                className="ds-btn ds-btn-xs bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 transition-all flex items-center gap-1.5"
+                title="Đặt lại mật khẩu ngẫu nhiên cho thành viên và gửi email thông báo"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span>Reset Mật Khẩu</span>
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="ds-btn ds-btn-secondary ds-btn-xs"
+            >
+              Hủy
+            </button>
+            <button
+              onClick={onSubmit}
+              disabled={loading}
+              className="ds-btn ds-btn-primary ds-btn-xs"
+            >
+              <Save className="w-3.5 h-3.5" />
+              {loading ? 'Đang lưu...' : 'Lưu Thay Đổi'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

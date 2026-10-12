@@ -85,6 +85,7 @@ body {
 }
 
 [data-theme='light'] {
+  color-scheme: light;
   --bg-primary: #f8fafc;
   --bg-secondary: #ffffff;
   --bg-tertiary: #f1f5f9;
@@ -95,7 +96,7 @@ body {
   --bg-glass: rgba(255, 255, 255, 0.95);
 
   --text-primary: #0f172a;
-  --text-secondary: #475569;
+  --text-secondary: #334155;
   --text-muted: #64748b;
   --text-dim: #94a3b8;
   --text-highlight: #2563eb;
@@ -105,9 +106,241 @@ body {
   --border-focus: #3b82f6;
   --border-subtle: #f1f5f9;
 
-  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
   --shadow-elevated: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
 }
+
+/* ========== LIGHT THEME AUTOMATIC READABILITY & STYLING OVERRIDES ========== */
+[data-theme='light'] body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* 1. Text contrast & colors in light mode */
+[data-theme='light'] .text-slate-100:not([class*="bg-blue"]):not([class*="bg-rose"]):not([class*="bg-emerald"]):not([class*="bg-amber"]):not([class*="bg-purple"]):not([class*="bg-indigo"]):not(.ds-btn-primary):not(.ds-btn-danger):not(.ds-btn-success),
+[data-theme='light'] .text-slate-200:not([class*="bg-blue"]):not([class*="bg-rose"]):not([class*="bg-emerald"]):not([class*="bg-amber"]):not([class*="bg-purple"]):not([class*="bg-indigo"]):not(.ds-btn-primary):not(.ds-btn-danger):not(.ds-btn-success),
+[data-theme='light'] .text-white:not([class*="bg-blue"]):not([class*="bg-rose"]):not([class*="bg-emerald"]):not([class*="bg-amber"]):not([class*="bg-purple"]):not([class*="bg-indigo"]):not(.ds-btn-primary):not(.ds-btn-danger):not(.ds-btn-success):not(.pointer-events-none) {
+  color: #0f172a !important;
+}
+
+[data-theme='light'] .text-slate-300:not([class*="bg-blue"]):not([class*="bg-rose"]):not([class*="bg-emerald"]):not([class*="bg-amber"]):not([class*="bg-purple"]):not(.ds-badge),
+[data-theme='light'] .text-slate-400:not(.ds-badge),
+[data-theme='light'] .text-gray-400:not(.ds-badge) {
+  color: #334155 !important;
+}
+
+[data-theme='light'] .text-slate-500,
+[data-theme='light'] .text-gray-500 {
+  color: #64748b !important;
+}
+
+/* Colored highlight text on light background */
+[data-theme='light'] .text-cyan-400,
+[data-theme='light'] .text-cyan-300 {
+  color: #0284c7 !important;
+}
+[data-theme='light'] .text-blue-400 {
+  color: #2563eb !important;
+}
+[data-theme='light'] .text-amber-400,
+[data-theme='light'] .text-amber-300 {
+  color: #b45309 !important;
+}
+[data-theme='light'] .text-emerald-400,
+[data-theme='light'] .text-emerald-300 {
+  color: #047857 !important;
+}
+[data-theme='light'] .text-rose-400,
+[data-theme='light'] .text-rose-300 {
+  color: #e11d48 !important;
+}
+[data-theme='light'] .text-purple-400,
+[data-theme='light'] .text-purple-300 {
+  color: #7c3aed !important;
+}
+
+/* 2. Background overrides for dark containers in light mode */
+[data-theme='light'] [class*="bg-[#0b0f19]"],
+[data-theme='light'] [class*="bg-[#111827]"],
+[data-theme='light'] [class*="bg-[#10172a]"],
+[data-theme='light'] [class*="bg-[#0f172a]"],
+[data-theme='light'] .bg-slate-900:not(.ds-badge):not(.fixed):not(.ds-btn),
+[data-theme='light'] .bg-slate-950:not(.ds-badge):not(.fixed):not(.ds-btn) {
+  background-color: var(--bg-secondary) !important;
+}
+
+[data-theme='light'] .bg-slate-800:not(.ds-badge):not(.ds-btn),
+[data-theme='light'] [class*="bg-slate-900/"]:not(.fixed),
+[data-theme='light'] [class*="bg-slate-800/"]:not(.fixed),
+[data-theme='light'] [class*="bg-slate-950/40"]:not(.fixed),
+[data-theme='light'] [class*="bg-slate-950/50"]:not(.fixed),
+[data-theme='light'] [class*="bg-slate-950/60"]:not(.fixed),
+[data-theme='light'] [class*="bg-slate-950/70"]:not(.fixed) {
+  background-color: var(--bg-tertiary) !important;
+}
+
+/* Modal backdrop dim overlay */
+[data-theme='light'] .fixed[class*="bg-slate-950/"],
+[data-theme='light'] .fixed[class*="bg-black/"] {
+  background-color: rgba(15, 23, 42, 0.6) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+/* Hover background states in light mode */
+[data-theme='light'] [class*="hover:bg-slate-800"]:hover,
+[data-theme='light'] [class*="hover:bg-slate-700"]:hover {
+  background-color: #e2e8f0 !important;
+}
+[data-theme='light'] [class*="hover:bg-[#1f2937]"]:hover {
+  background-color: #f1f5f9 !important;
+}
+
+/* 3. Border overrides in light mode */
+[data-theme='light'] [class*="border-[#1f2937]"],
+[data-theme='light'] [class*="border-[#374151]"],
+[data-theme='light'] [class*="border-gray-800"],
+[data-theme='light'] [class*="border-gray-700"],
+[data-theme='light'] [class*="border-slate-800"],
+[data-theme='light'] [class*="border-slate-700"] {
+  border-color: var(--border-default) !important;
+}
+
+/* 4. Inputs, Selects and Textareas in Light Mode */
+[data-theme='light'] .ds-input,
+[data-theme='light'] input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+[data-theme='light'] select,
+[data-theme='light'] textarea {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+[data-theme='light'] .ds-input::placeholder,
+[data-theme='light'] input::placeholder,
+[data-theme='light'] textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+[data-theme='light'] select option {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+[data-theme='light'] input:disabled,
+[data-theme='light'] .ds-input:disabled {
+  background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+  color: #475569 !important;
+}
+
+/* 5. Cards & Panels in Light Mode */
+[data-theme='light'] .ds-card,
+[data-theme='light'] .ds-card-glass {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-default) !important;
+  box-shadow: var(--shadow-card) !important;
+}
+
+/* 6. Dropdown and Popover Menus in Light Mode */
+[data-theme='light'] .user-dropdown-menu,
+[data-theme='light'] .member-popover-menu,
+[data-theme='light'] [class*="dropdown-menu"] {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme='light'] .member-popover-toggle {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+[data-theme='light'] .member-popover-toggle:hover {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* 7. Badges & Status Pills in Light Mode */
+[data-theme='light'] .ds-badge-blue,
+[data-theme='light'] [class*="bg-blue-500/10"],
+[data-theme='light'] [class*="bg-blue-500/20"],
+[data-theme='light'] [class*="bg-blue-950/"] {
+  background-color: #eff6ff !important;
+  border-color: #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+
+[data-theme='light'] .ds-badge-cyan,
+[data-theme='light'] [class*="bg-cyan-500/10"],
+[data-theme='light'] [class*="bg-cyan-500/20"],
+[data-theme='light'] [class*="bg-cyan-950/"] {
+  background-color: #ecfeff !important;
+  border-color: #a5f3fc !important;
+  color: #0e7490 !important;
+}
+
+[data-theme='light'] .ds-badge-amber,
+[data-theme='light'] [class*="bg-amber-500/10"],
+[data-theme='light'] [class*="bg-amber-500/20"],
+[data-theme='light'] [class*="bg-amber-950/"] {
+  background-color: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #b45309 !important;
+}
+
+[data-theme='light'] .ds-badge-emerald,
+[data-theme='light'] [class*="bg-emerald-500/10"],
+[data-theme='light'] [class*="bg-emerald-500/20"],
+[data-theme='light'] [class*="bg-emerald-950/"] {
+  background-color: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+  color: #047857 !important;
+}
+
+[data-theme='light'] .ds-badge-purple,
+[data-theme='light'] [class*="bg-purple-500/10"],
+[data-theme='light'] [class*="bg-purple-500/20"],
+[data-theme='light'] [class*="bg-purple-950/"] {
+  background-color: #f5f3ff !important;
+  border-color: #ddd6fe !important;
+  color: #6d28d9 !important;
+}
+
+[data-theme='light'] .ds-badge-rose,
+[data-theme='light'] [class*="bg-rose-500/10"],
+[data-theme='light'] [class*="bg-rose-500/20"],
+[data-theme='light'] [class*="bg-rose-950/"] {
+  background-color: #fff1f2 !important;
+  border-color: #fecdd3 !important;
+  color: #be123c !important;
+}
+
+/* 8. Tables in Light Mode */
+[data-theme='light'] .ds-table-wrap {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+[data-theme='light'] .ds-table th {
+  background-color: #f1f5f9 !important;
+  color: #334155 !important;
+  border-color: #e2e8f0 !important;
+}
+[data-theme='light'] .ds-table td {
+  color: #0f172a !important;
+  border-color: #f1f5f9 !important;
+}
+[data-theme='light'] .ds-table tr:hover td {
+  background-color: #f8fafc !important;
+}
+
+/* 9. Scrollbars in Light Mode */
+[data-theme='light'] ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+[data-theme='light'] ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
@@ -386,11 +619,11 @@ select option {
 /* ========== BEAUTIFUL GLOBAL TEXTAREA STYLING ========== */
 textarea {
   width: 100% !important;
-  background-color: #0f172a !important;
-  border: 1px solid #1f2937 !important;
+  background-color: var(--bg-input) !important;
+  border: 1px solid var(--border-default) !important;
   border-radius: 0.75rem !important; /* rounded-xl */
   padding: 0.75rem !important;
-  color: #f9fafb !important;
+  color: var(--text-primary) !important;
   font-size: 0.825rem !important; /* text-xs */
   line-height: 1.625 !important;
   resize: vertical !important;
@@ -404,5 +637,6 @@ textarea:focus {
 }
 
 textarea::placeholder {
-  color: #6b7280 !important;
+  color: var(--text-muted) !important;
 }
+

@@ -1,10 +1,9 @@
 import React from 'react';
 import { useClub } from '../context/ClubContext';
 import { Sparkles, ArrowRight, ShieldCheck, Play, Award, Users } from 'lucide-react';
-import { CLUB_INFO } from '../data/mockData';
 
 export const Hero = () => {
-  const { setActiveTab } = useClub();
+  const { setActiveTab, clubInfo } = useClub();
 
   return (
     <section className="relative pt-8 pb-16 overflow-hidden">
@@ -28,7 +27,7 @@ export const Hero = () => {
 
         {/* Subtitle */}
         <p className="text-slate-400 text-sm sm:text-base font-normal leading-relaxed max-w-2xl mx-auto">
-          {CLUB_INFO.description}
+          {clubInfo?.slogan || clubInfo?.description || 'Hệ Thống Quản Trị Nội Bộ - CLB Truyền Thông THPT Vĩnh Bảo'}
         </p>
 
         {/* Buttons CTA */}

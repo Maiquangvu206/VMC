@@ -1,5 +1,9 @@
 import React, { useEffect } from 'react';
-import { X, User, Mail, Hash, GraduationCap, Briefcase, Phone, Calendar, MapPin, Globe, ShieldCheck, RefreshCw, Award } from 'lucide-react';
+import { X, User, Mail, Hash, GraduationCap, Briefcase, Phone, Calendar, MapPin, Globe, ShieldCheck, RefreshCw, Award, Key, Send } from 'lucide-react';
+
+export const generateRandomPassword = () => {
+  return 'Vmc@' + Math.floor(100000 + Math.random() * 900000);
+};
 
 export const generateRandomVmcUsername = (existingMembers = []) => {
   const existingCodes = new Set(
@@ -23,9 +27,18 @@ export const NewAccountModal = ({ show, onClose, formData, setFormData, onSubmit
     setFormData(prev => ({ ...prev, username: generateRandomVmcUsername(existingMembers) }));
   };
 
+  const handleGenerateNewPassword = () => {
+    setFormData(prev => ({ ...prev, password: generateRandomPassword() }));
+  };
+
   useEffect(() => {
-    if (show && (!formData.username || !formData.username.startsWith('VMC-'))) {
-      handleGenerateNewUsername();
+    if (show) {
+      if (!formData.username || !formData.username.startsWith('VMC-')) {
+        handleGenerateNewUsername();
+      }
+      if (!formData.password) {
+        handleGenerateNewPassword();
+      }
     }
   }, [show]);
 
@@ -60,34 +73,45 @@ export const NewAccountModal = ({ show, onClose, formData, setFormData, onSubmit
             <div className="space-y-4 bg-[#0f172a]/60 p-4 sm:p-5 rounded-xl border border-[#1f2937]">
               <div className="flex items-center gap-2 pb-2.5 border-b border-[#1f2937]/80">
                 <User className="w-4 h-4 text-cyan-400" />
-                <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400">1. Thông Tin Cá Nhân</h4>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-cyan-400">1. Thông Tin Cá Nhân & Tài Khoản</h4>
               </div>
 
-              {/* Username (VMC-XXXX) */}
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-semibold text-slate-300">Mã Thành Viên</label>
-                  <button
-                    type="button"
-                    onClick={handleGenerateNewUsername}
-                    className="text-[11px] text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-mono transition-colors cursor-pointer"
-                    title="Đổi mã ngẫu nhiên mới"
-                  >
-                    <RefreshCw className="w-3 h-3" /> Đổi mã khác
-                  </button>
+              {/* Username (VMC-XXXX) & Mật khẩu khởi tạo */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-semibold text-slate-300">Mã Thành Viên</label>
+                  </div>
+                  <div className="relative flex items-center">
+                    <Hash className="absolute left-3.5 w-4 h-4 text-cyan-400 shrink-0 pointer-events-none z-10" />
+                    <input
+                      type="text"
+                      required
+                      readOnly
+                      disabled
+                      value={formData.username || ''}
+                      className="ds-input w-full font-mono font-bold text-cyan-300 tracking-wider !pl-10 text-xs bg-slate-900/90 border-slate-700/80 cursor-not-allowed opacity-90"
+                      placeholder="VD: VMC-8294"
+                      title="Mã thành viên được hệ thống tự động tạo cố định (dạng VMC-XXXX)"
+                    />
+                  </div>
                 </div>
-                <div className="relative flex items-center">
-                  <Hash className="absolute left-3.5 w-4 h-4 text-cyan-400 shrink-0 pointer-events-none z-10" />
-                  <input
-                    type="text"
-                    required
-                    readOnly
-                    disabled
-                    value={formData.username || ''}
-                    className="ds-input w-full font-mono font-bold text-cyan-300 tracking-wider !pl-10 text-sm bg-slate-900/90 border-slate-700/80 cursor-not-allowed opacity-90"
-                    placeholder="VD: VMC-8294"
-                    title="Mã thành viên được hệ thống tự động tạo cố định (dạng VMC-XXXX), không được phép sửa đổi trực tiếp"
-                  />
+
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-semibold text-slate-300">Mật Khẩu</label>
+                  </div>
+                  <div className="relative flex items-center">
+                    <Key className="absolute left-3.5 w-4 h-4 text-amber-400 shrink-0 pointer-events-none z-10" />
+                    <input
+                      type="text"
+                      readOnly
+                      value={formData.password || ''}
+                      className="ds-input w-full font-mono font-bold text-amber-300 tracking-wider !pl-10 text-xs bg-slate-900/90 border-slate-700/80 cursor-default"
+                      placeholder="VD: Vmc@123456"
+                      title="Mật khẩu ngẫu nhiên sẽ gửi tới email thành viên"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -102,7 +126,7 @@ export const NewAccountModal = ({ show, onClose, formData, setFormData, onSubmit
                     value={formData.name || ''}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="ds-input w-full !pl-10 text-sm"
-                    placeholder="Họ tên đầy đủ"
+                    placeholder="Họ tên đầy đủ của thành viên"
                   />
                 </div>
               </div>
@@ -110,15 +134,17 @@ export const NewAccountModal = ({ show, onClose, formData, setFormData, onSubmit
               {/* Email & SĐT */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-semibold text-slate-300 mb-1.5 block">Email</label>
+                  <label className="text-xs font-semibold text-slate-300 mb-1.5 block">Email<span className="text-rose-500">*</span></label>
                   <div className="relative flex items-center">
-                    <Mail className="absolute left-3.5 w-4 h-4 text-slate-400 shrink-0 pointer-events-none z-10" />
+                    <Mail className="absolute left-3.5 w-4 h-4 text-cyan-400 shrink-0 pointer-events-none z-10" />
                     <input
                       type="email"
+                      required
                       value={formData.email || ''}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       className="ds-input w-full !pl-10 text-xs"
                       placeholder="email@example.com"
+                      title="Bắt buộc nhập email để hệ thống gửi mật khẩu ngẫu nhiên tới thành viên"
                     />
                   </div>
                 </div>
@@ -261,7 +287,6 @@ export const NewAccountModal = ({ show, onClose, formData, setFormData, onSubmit
                       <option value="Trưởng Ban">Trưởng Ban</option>
                       <option value="Phó Ban">Phó Ban</option>
                       <option value="Thành viên">Thành viên</option>
-                      <option value="Kỹ thuật">Kỹ thuật</option>
                       <option value="Cố Vấn">Cố Vấn</option>
                     </select>
                   </div>
@@ -280,9 +305,19 @@ export const NewAccountModal = ({ show, onClose, formData, setFormData, onSubmit
                 <button
                   type="submit"
                   disabled={loading}
-                  className="ds-btn ds-btn-primary py-2 px-5 text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-blue-600/30"
+                  className="ds-btn ds-btn-primary py-2 px-5 text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-blue-600/30 disabled:opacity-50"
                 >
-                  {loading ? 'Đang tạo...' : 'Xác Nhận Tạo Tài Khoản'}
+                  {loading ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Đang gửi mail...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      <span>Cấp Tài Khoản Mới</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -293,3 +328,5 @@ export const NewAccountModal = ({ show, onClose, formData, setFormData, onSubmit
     </div>
   );
 };
+
+

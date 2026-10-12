@@ -21,8 +21,8 @@ const POINT_RULES = [
 ];
 
 export const PointManagement = () => {
-  const { members, updateMemberPoints, isHRHead } = useClub();
-  
+  const { members, updateMemberPoints, isHRMember } = useClub();
+
   const [form, setForm] = useState({ memberId: '', ruleId: '' });
 
   const handleSubmit = (e) => {
@@ -36,7 +36,7 @@ export const PointManagement = () => {
     }
   };
 
-  if (!isHRHead) return null;
+  if (!isHRMember) return null;
 
   return (
     <div className="ds-card p-6">
@@ -45,8 +45,7 @@ export const PointManagement = () => {
           <Award className="text-indigo-400 w-5 h-5" />
         </div>
         <div>
-          <h3 className="text-lg font-bold text-white">Quản Lý Điểm Số (ĐN-NS)</h3>
-          <p className="text-xs text-slate-400">Cộng/Trừ điểm chuyên cần, kỷ luật. Ban ĐN-NS sẽ bị nhân đôi điểm phạt.</p>
+          <h3 className="text-lg font-bold text-white">Quản Lý Điểm Số</h3>
         </div>
       </div>
 
@@ -54,21 +53,39 @@ export const PointManagement = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="ds-field-label">Chọn Thành Viên</label>
-            <select required className="ds-input w-full" value={form.memberId} onChange={e => setForm({...form, memberId: e.target.value})}>
+            <select required className="ds-input w-full" value={form.memberId} onChange={e => setForm({ ...form, memberId: e.target.value })}>
               <option value="">-- Chọn thành viên --</option>
               {members.filter(m => {
                 const roleTitle = (m.roleTitle || m.role_title || '').toLowerCase();
                 const deptName = (m.deptName || m.department || '').toLowerCase();
                 const code = (m.memberCode || m.member_code || '').toUpperCase();
-                return !roleTitle.includes('super admin') && !roleTitle.includes('cố vấn') && !deptName.includes('cố vấn') && code !== 'ADMIN';
-              }).map(m => (
-                <option key={m.id} value={m.id}>{m.name} ({m.deptName}) - Hiện có: {m.points || 0}đ</option>
-              ))}
+                const normRole = roleTitle.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                const normDept = deptName.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+                return (
+                  code !== 'ADMIN' &&
+                  !normRole.includes('super admin') &&
+                  !normRole.includes('co van') &&
+                  !normRole.includes('cuu') &&
+                  !normDept.includes('co van') &&
+                  !deptName.includes('cố vấn') &&
+                  !deptName.includes('c? v?n') &&
+                  !roleTitle.includes('cố vấn') &&
+                  !roleTitle.includes('cựu') &&
+                  m.status !== 'Suspended'
+                );
+              }).map(m => {
+                const dName = m.deptName || m.department || 'Ban Chuyên Môn';
+                const rTitle = m.roleTitle || m.role_title || 'Thành viên';
+                return (
+                  <option key={m.id} value={m.id}>{m.name} ({dName}) - Hiện có: {m.points || 0}đ</option>
+                );
+              })}
             </select>
           </div>
           <div>
             <label className="ds-field-label">Nội dung tính điểm</label>
-            <select required className="ds-input w-full" value={form.ruleId} onChange={e => setForm({...form, ruleId: e.target.value})}>
+            <select required className="ds-input w-full" value={form.ruleId} onChange={e => setForm({ ...form, ruleId: e.target.value })}>
               <option value="">-- Chọn nội dung --</option>
               <optgroup label="CỘNG ĐIỂM">
                 {POINT_RULES.filter(r => r.points > 0).map(r => (
@@ -89,11 +106,6 @@ export const PointManagement = () => {
           </button>
         </div>
       </form>
-      
-      <div className="mt-4 ds-card p-4 border border-amber-500/30 bg-amber-500/10 text-xs text-amber-200/80">
-        <strong className="text-amber-400 block mb-1">Quy định Nhân đôi Phạt:</strong>
-        Thành viên thuộc Ban Đối Ngoại - Nhân Sự (khi bị trừ điểm) sẽ tự động bị x2 hệ số phạt để làm gương cho các ban khác.
-      </div>
     </div>
   );
 };

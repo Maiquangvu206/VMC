@@ -90,7 +90,7 @@ export const InternalAdminSessions = () => {
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="font-heading font-black text-lg sm:text-xl text-white tracking-tight truncate">Quản Lý Phiên Làm Việc</h1>
+                <h1 className="font-heading font-black text-lg sm:text-xl text-[var(--text-primary)] tracking-tight truncate">Quản Lý Phiên Làm Việc</h1>
               </div>
             </div>
           </div>
@@ -113,40 +113,40 @@ export const InternalAdminSessions = () => {
 
       {/* Analytics Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
-        <div className="ds-card p-5 border border-emerald-500/30 rounded-xl space-y-1">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
+        <div className="ds-card p-5 border border-emerald-500/30 rounded-xl space-y-1 bg-[var(--bg-card)]">
+          <div className="flex items-center justify-between text-[var(--text-secondary)] text-xs">
             <span className="font-semibold">Đang Hoạt Động</span>
-            <Wifi className="w-4 h-4 text-emerald-400 animate-pulse shrink-0" />
+            <Wifi className="w-4 h-4 text-emerald-500 dark:text-emerald-400 animate-pulse shrink-0" />
           </div>
-          <div className="text-2xl font-black text-emerald-400 font-mono">{activeSessions.length}</div>
+          <div className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono">{activeSessions.length}</div>
         </div>
 
-        <div className="ds-card p-5 border border-slate-700 rounded-xl space-y-1">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
+        <div className="ds-card p-5 border border-[var(--border-default)] rounded-xl space-y-1 bg-[var(--bg-card)]">
+          <div className="flex items-center justify-between text-[var(--text-secondary)] text-xs">
             <span className="font-semibold">Kết Thúc Phiên</span>
-            <Clock className="w-4 h-4 text-slate-400 shrink-0" />
+            <Clock className="w-4 h-4 text-[var(--text-muted)] shrink-0" />
           </div>
-          <div className="text-2xl font-black text-slate-300 font-mono">{endedSessions.length}</div>
+          <div className="text-2xl font-black text-[var(--text-primary)] font-mono">{endedSessions.length}</div>
         </div>
 
-        <div className="ds-card p-5 border border-rose-500/30 rounded-xl space-y-1">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
+        <div className="ds-card p-5 border border-rose-500/30 rounded-xl space-y-1 bg-[var(--bg-card)]">
+          <div className="flex items-center justify-between text-[var(--text-secondary)] text-xs">
             <span className="font-semibold">Bị Hủy</span>
-            <XCircle className="w-4 h-4 text-rose-400 shrink-0" />
+            <XCircle className="w-4 h-4 text-rose-500 dark:text-rose-400 shrink-0" />
           </div>
-          <div className="text-2xl font-black text-rose-400 font-mono">{revokedSessions.length}</div>
+          <div className="text-2xl font-black text-rose-600 dark:text-rose-400 font-mono">{revokedSessions.length}</div>
         </div>
 
-        <div className="ds-card p-5 border border-purple-500/30 rounded-xl space-y-1">
-          <div className="flex items-center justify-between text-slate-400 text-xs">
+        <div className="ds-card p-5 border border-purple-500/30 rounded-xl space-y-1 bg-[var(--bg-card)]">
+          <div className="flex items-center justify-between text-[var(--text-secondary)] text-xs">
             <span className="font-semibold">Thiết Bị</span>
-            <Monitor className="w-4 h-4 text-purple-400 shrink-0" />
+            <Monitor className="w-4 h-4 text-purple-500 dark:text-purple-400 shrink-0" />
           </div>
-          <div className="text-base font-bold text-white flex items-center gap-3 pt-0.5">
-            <span className="flex items-center gap-1 text-xs text-purple-300 font-mono">
+          <div className="text-base font-bold text-[var(--text-primary)] flex items-center gap-3 pt-0.5">
+            <span className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-300 font-mono">
               <Monitor className="w-3.5 h-3.5 shrink-0" /> {desktopCount} PC
             </span>
-            <span className="flex items-center gap-1 text-xs text-pink-300 font-mono">
+            <span className="flex items-center gap-1 text-xs text-pink-600 dark:text-pink-300 font-mono">
               <Smartphone className="w-3.5 h-3.5 shrink-0" /> {mobileCount} Mobile
             </span>
           </div>
@@ -154,38 +154,47 @@ export const InternalAdminSessions = () => {
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-[#10172a] p-4 rounded-xl border border-gray-800 shadow-md w-full">
+      <div className="flex flex-col sm:flex-row gap-4 items-center justify-between bg-[var(--bg-card)] p-4 rounded-xl border border-[var(--border-default)] shadow-xs w-full">
         <div className="relative flex items-center w-full sm:flex-1 min-w-0">
-          <Search className="absolute left-3.5 w-4 h-4 text-slate-400 shrink-0 pointer-events-none" />
+          <Search className="absolute left-3.5 w-4 h-4 text-[var(--text-muted)] shrink-0 pointer-events-none" />
           <input
             type="text"
             placeholder="Tìm theo tên, mã TV, địa chỉ IP..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="ds-input pl-10 w-full bg-slate-900/80 border-slate-700/80 text-sm"
+            className="ds-input pl-10 w-full text-sm"
           />
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto justify-start sm:justify-end overflow-x-auto shrink-0 pb-1 sm:pb-0">
-          <span className="text-xs text-slate-400 font-semibold shrink-0">Lọc:</span>
+          <span className="text-xs text-[var(--text-secondary)] font-semibold shrink-0">Lọc:</span>
           <button
             onClick={() => setStatusFilter('all')}
-            className={`ds-btn ds-btn-xs shrink-0 ${statusFilter === 'all' ? 'bg-cyan-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-700'
-              }`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
+              statusFilter === 'all'
+                ? 'bg-cyan-600 text-white shadow-sm'
+                : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-default)] hover:border-[var(--border-hover)]'
+            }`}
           >
             Tất Cả ({sessions.length})
           </button>
           <button
             onClick={() => setStatusFilter('active')}
-            className={`ds-btn ds-btn-xs shrink-0 ${statusFilter === 'active' ? 'bg-emerald-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-700'
-              }`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
+              statusFilter === 'active'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-default)] hover:border-[var(--border-hover)]'
+            }`}
           >
             🟢 Đang Hoạt Động ({activeSessions.length})
           </button>
           <button
             onClick={() => setStatusFilter('ended')}
-            className={`ds-btn ds-btn-xs shrink-0 ${statusFilter === 'ended' ? 'bg-slate-700 text-white' : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-700'
-              }`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 ${
+              statusFilter === 'ended'
+                ? 'bg-slate-700 dark:bg-slate-600 text-white shadow-sm'
+                : 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-default)] hover:border-[var(--border-hover)]'
+            }`}
           >
             ⏸️ Kết Thúc Phiên ({endedSessions.length})
           </button>
@@ -193,21 +202,21 @@ export const InternalAdminSessions = () => {
       </div>
 
       {/* Sessions Table - Clean No-Scroll Stacked Layout */}
-      <div className="ds-card rounded-xl border border-gray-800 shadow-xl w-full bg-[#10172a] p-4">
+      <div className="rounded-xl border border-[var(--border-default)] shadow-xs w-full bg-[var(--bg-card)] p-4">
         <div className="w-full overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-900/90 text-xs text-slate-400 border-b border-gray-800">
+              <tr className="bg-[var(--bg-tertiary)] text-xs text-[var(--text-secondary)] border-b border-[var(--border-default)]">
                 <th className="py-3 px-3 font-semibold">Thành Viên</th>
                 <th className="py-3 px-3 font-semibold">Thiết Bị & IP</th>
                 <th className="py-3 px-3 font-semibold hidden sm:table-cell">Đăng Nhập & Hoạt Động</th>
                 <th className="py-3 px-3 text-right font-semibold">Trạng Thái & Thao Tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 text-xs">
+            <tbody className="divide-y divide-[var(--border-default)]/60 text-xs">
               {filteredSessions.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="text-center py-8 text-slate-500 italic">
+                  <td colSpan="4" className="text-center py-8 text-[var(--text-muted)] italic">
                     Không tìm thấy phiên làm việc nào phù hợp.
                   </td>
                 </tr>
@@ -232,16 +241,16 @@ export const InternalAdminSessions = () => {
                   const isRecent = lastActiveDate && ((now - lastActiveDate) / (1000 * 60)) <= 5;
 
                   return (
-                    <tr key={s.id} className={`hover:bg-slate-900/50 transition-colors ${isCurrent ? 'bg-cyan-500/10' : ''}`}>
+                    <tr key={s.id} className={`hover:bg-[var(--bg-tertiary)]/60 transition-colors ${isCurrent ? 'bg-cyan-500/10' : ''}`}>
                       {/* Column 1: Member Info (4 Dòng riêng biệt) */}
                       <td className="py-3 px-3">
                         <div className="flex items-start gap-2.5 min-w-0">
-                          <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold font-heading shrink-0 border border-blue-500/30 mt-0.5">
+                          <div className="w-8 h-8 rounded-full bg-blue-500/20 text-blue-500 dark:text-blue-400 flex items-center justify-center font-bold font-heading shrink-0 border border-blue-500/30 mt-0.5">
                             {displayName.charAt(0).toUpperCase()}
                           </div>
                           <div className="min-w-0">
                             {/* Dòng 1: Tên thành viên + Badge Bạn */}
-                            <div className="font-bold text-white flex items-center gap-1.5 truncate">
+                            <div className="font-bold text-[var(--text-primary)] flex items-center gap-1.5 truncate">
                               <span className="truncate">{displayName}</span>
                               {isCurrent && (
                                 <span className="ds-badge ds-badge-cyan text-[9px] font-mono font-bold px-1.5 py-0.2 rounded border border-cyan-500/30 shrink-0">
@@ -250,15 +259,15 @@ export const InternalAdminSessions = () => {
                               )}
                             </div>
                             {/* Dòng 2: Mã thành viên font mono xanh cyan */}
-                            <div className="text-[10px] text-cyan-400 font-mono font-bold truncate mt-0.5">
+                            <div className="text-[10px] text-cyan-600 dark:text-cyan-400 font-mono font-bold truncate mt-0.5">
                               {displayCode}
                             </div>
                             {/* Dòng 3: Chức vụ */}
-                            <div className="text-[10px] text-slate-300 font-medium truncate mt-0.5">
+                            <div className="text-[10px] text-[var(--text-secondary)] font-medium truncate mt-0.5">
                               {displayRole}
                             </div>
                             {/* Dòng 4: Ban phụ trách màu tím */}
-                            <div className="text-[10px] text-purple-300 font-bold truncate mt-0.5">
+                            <div className="text-[10px] text-purple-600 dark:text-purple-300 font-bold truncate mt-0.5">
                               {displayDept}
                             </div>
                           </div>
@@ -269,17 +278,17 @@ export const InternalAdminSessions = () => {
                       <td className="py-3 px-3">
                         <div className="flex items-center gap-2 min-w-0 group cursor-pointer">
                           {isMobile ? (
-                            <Smartphone className="w-4 h-4 text-pink-400 shrink-0" />
+                            <Smartphone className="w-4 h-4 text-pink-500 dark:text-pink-400 shrink-0" />
                           ) : (
-                            <Monitor className="w-4 h-4 text-purple-400 shrink-0" />
+                            <Monitor className="w-4 h-4 text-purple-500 dark:text-purple-400 shrink-0" />
                           )}
                           <div className="min-w-0">
-                            <div className="font-semibold text-slate-200 text-xs truncate">
+                            <div className="font-semibold text-[var(--text-primary)] text-xs truncate">
                               {s.device_type || 'Desktop / PC'}
                             </div>
                             <div className="text-[10px] font-mono transition-colors">
-                              <span className="group-hover:hidden text-slate-500 italic">IP: xem thêm</span>
-                              <span className="hidden group-hover:inline text-cyan-400 font-bold">{s.ip_address || '127.0.0.1'}</span>
+                              <span className="group-hover:hidden text-[var(--text-muted)] italic">IP: xem thêm</span>
+                              <span className="hidden group-hover:inline text-cyan-600 dark:text-cyan-400 font-bold">{s.ip_address || '127.0.0.1'}</span>
                             </div>
                           </div>
                         </div>
@@ -288,13 +297,13 @@ export const InternalAdminSessions = () => {
                       {/* Column 3: Login & Last Active (Xuống dòng) */}
                       <td className="py-3 px-3 hidden sm:table-cell">
                         <div className="space-y-0.5 font-mono text-[11px]">
-                          <div className="text-slate-300 flex items-center gap-1">
-                            <span className="text-slate-500 text-[10px]">Vào:</span>
+                          <div className="text-[var(--text-secondary)] flex items-center gap-1">
+                            <span className="text-[var(--text-muted)] text-[10px]">Vào:</span>
                             <span>{s.login_time ? new Date(s.login_time).toLocaleString('vi-VN') : 'Mới đây'}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <span className="text-slate-500 text-[10px]">Hoạt động:</span>
-                            <span className={isRecent ? 'text-emerald-400 font-bold' : 'text-slate-400'}>
+                            <span className="text-[var(--text-muted)] text-[10px]">Hoạt động:</span>
+                            <span className={isRecent ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-[var(--text-secondary)]'}>
                               {s.last_active ? new Date(s.last_active).toLocaleTimeString('vi-VN') : 'N/A'}
                             </span>
                           </div>

@@ -17,6 +17,25 @@ export const loginMemberAPI = async (memberCode, password) => {
   }
 };
 
+// Forgot Password API (Kiểm tra Mã TV và Email, tự sinh mật khẩu mới và gửi mail)
+export const forgotPasswordAPI = async (memberCode, email) => {
+  try {
+    const response = await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true'
+      },
+      body: JSON.stringify({ memberCode, email })
+    });
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.warn('⚠️ Forgot Password API error:', error.message);
+    return { success: false, message: 'Lỗi kết nối máy chủ! Vui lòng thử lại sau.' };
+  }
+};
+
 // Service frontend kết nối API CSDL SQL
 export const fetchMembersFromDatabaseAPI = async () => {
   try {
@@ -31,7 +50,8 @@ export const fetchMembersFromDatabaseAPI = async () => {
     if (result.success && Array.isArray(result.data)) {
       return result.data.map(item => ({
         id: item.id,
-        avatar: item.avatar || item.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
+        avatar: item.avatar || item.avatar_url || null,
+        avatar_url: item.avatar || item.avatar_url || null,
         name: item.name || item.full_name,
         username: item.username,
         password: item.password,

@@ -23,21 +23,16 @@ export const InternalRecruitment = () => {
     members, showToast
   } = useClub();
 
-  // Prevent rendering if user data is not loaded
-  if (!currentUser) {
-    return (
-      <div className="page-wrap flex items-center justify-center">
-        <div className="text-slate-400">Đang tải dữ liệu...</div>
-      </div>
-    );
-  }
+
 
   const currentUserRoleTitle = String(currentUser?.roleTitle || '').toLowerCase();
   const currentUserDeptName = String(currentUser?.deptName || currentUser?.department || '').toLowerCase();
 
   const isDeptHead = Boolean(
     currentUserRoleTitle.includes('trưởng ban') ||
+    currentUserRoleTitle.includes('phó ban') ||
     currentUserRoleTitle.includes('chủ nhiệm') ||
+    currentUserRoleTitle.includes('phó chủ nhiệm') ||
     currentUserRoleTitle.includes('cố vấn') ||
     currentUserRoleTitle.includes('advisor')
   );
@@ -1070,6 +1065,15 @@ export const InternalRecruitment = () => {
       return 0;
     });
   }, [selectedSeasonForInterviewers, currentSeason, members]);
+
+  // Prevent rendering if user data is not loaded
+  if (!currentUser) {
+    return (
+      <div className="page-wrap flex items-center justify-center min-h-[400px]">
+        <div className="text-slate-400">Đang tải dữ liệu...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-[1720px] mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8 pb-20">

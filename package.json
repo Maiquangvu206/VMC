@@ -1,29 +1,22 @@
 {
   "name": "vmc",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:server": "node --env-file=server/.env server/index.js",
-    "dev:all": "start /B npm run dev:server && npm run dev",
-    "build": "vite build",
-    "deploy": "npm run build && git add . && git commit -m \"auto deploy update\" && git push origin main",
+    "dev:laravel": "php artisan serve --port=8000",
+    "dev:all": "start /B php artisan serve --port=8000 && npm run dev",
+    "build": "vite build && powershell -Command \"Copy-Item -Path 'dist\\assets\\*' -Destination 'public\\assets' -Recurse -Force; Copy-Item -Path 'dist\\index.html' -Destination 'public\\index.html' -Force\"",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "artisan": "php artisan",
+    "migrate": "php artisan migrate"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
-    "bcryptjs": "^3.0.3",
     "canvas-confetti": "^1.9.4",
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "googleapis": "^173.0.0",
     "lucide-react": "^1.27.0",
-    "multer": "^2.2.0",
-    "mysql2": "^3.23.1",
-    "nodemailer": "^9.0.3",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },

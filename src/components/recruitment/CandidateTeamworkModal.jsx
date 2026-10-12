@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, Save } from 'lucide-react';
+import { RoleTitleDisplay } from '../../utils/roleHelper';
 
 export const CandidateTeamworkModal = ({ 
   show, 
@@ -52,7 +53,7 @@ export const CandidateTeamworkModal = ({
                          </span>
                        )}
                      </div>
-                     <div className="text-xs text-slate-400">{m.roleTitle}</div>
+                     <RoleTitleDisplay roleTitle={m.roleTitle} className="text-xs text-slate-400 font-normal" />
                    </div>
                  </div>
                  <label className="relative inline-flex items-center cursor-pointer">

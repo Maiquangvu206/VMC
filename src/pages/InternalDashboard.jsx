@@ -1,6 +1,6 @@
 import React from 'react';
 import { useClub } from '../context/ClubContext';
-import { CLUB_INFO } from '../data/mockData';
+import { splitRoleTitles } from '../utils/roleHelper';
 import {
   CheckSquare,
   FileText,
@@ -39,17 +39,26 @@ export const InternalDashboard = () => {
     addAnnouncement,
     deleteAnnouncement,
     isAdmin,
+    isAdvisor: isAdvisorFromContext,
     setActiveTab,
     setMembersFilterDept,
     setIsNewTaskModalOpen,
     setIsNewDraftModalOpen,
     setIsBorrowModalOpen,
-    setIsNewAccountModalOpen
+    setIsNewAccountModalOpen,
+    clubInfo
   } = useClub();
 
   if (!currentUser) {
     return <Loading />;
   }
+
+  const isAdvisor = isAdvisorFromContext || Boolean(
+    currentUser?.deptName?.toLowerCase().includes('cố vấn') ||
+    currentUser?.department?.toLowerCase().includes('cố vấn') ||
+    currentUser?.roleTitle?.toLowerCase().includes('cố vấn') ||
+    currentUser?.roleTitle?.toLowerCase().includes('cựu')
+  );
 
   const [isAnnModalOpen, setIsAnnModalOpen] = React.useState(false);
   const [annTitle, setAnnTitle] = React.useState('');
@@ -166,12 +175,12 @@ export const InternalDashboard = () => {
 
   const safeUser = {
     name: currentUser?.name || 'Thành Viên VMC',
-    avatar: currentUser?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
+    avatar: currentUser?.avatar || currentUser?.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400',
     roleTitle: currentUser?.roleTitle || 'Thành Viên VMC',
     memberCode: currentUser?.memberCode || 'VMC-MEMBER',
-    class: currentUser?.class || '12A1',
-    deptName: currentUser?.deptName || 'Ban Chủ Nhiệm',
-    points: currentUser?.points ?? 100,
+    class: isAdvisor ? '' : (currentUser?.class || ''),
+    deptName: currentUser?.deptName || (isAdvisor ? 'Ban Cố Vấn' : 'Ban Chuyên Môn'),
+    points: currentUser?.points ?? 0,
     role: currentUser?.role || 'member'
   };
 
@@ -206,7 +215,12 @@ export const InternalDashboard = () => {
 
           <div className="flex items-center gap-4">
             <div className="relative w-16 h-16 rounded-2xl overflow-hidden p-0.5 bg-blue-500 shrink-0 shadow-lg shadow-blue-500/20">
-              <img src={safeUser.avatar} alt={safeUser.name} className="w-full h-full object-cover rounded-xl" />
+              <img
+                src={safeUser.avatar}
+                alt={safeUser.name}
+                onError={(e) => { e.currentTarget.src = '/vmc-logo.jpg'; }}
+                className="w-full h-full object-cover rounded-xl"
+              />
             </div>
 
             <div className="space-y-1">
@@ -214,40 +228,55 @@ export const InternalDashboard = () => {
                 <h1 className="font-heading text-2xl sm:text-3xl font-extrabold text-slate-100">
                   Xin chào, {safeUser.name}!
                 </h1>
-                <span className="ds-badge ds-badge-blue font-semibold flex items-center gap-1.5">
-                  <ShieldCheck className="w-3.5 h-3.5" /> {safeUser.roleTitle}
-                </span>
+                <div className="flex flex-col gap-1 items-start">
+                  {splitRoleTitles(safeUser.roleTitle).map((role, idx) => (
+                    <span key={idx} className="ds-badge ds-badge-blue font-semibold flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5" /> {role}
+                    </span>
+                  ))}
+                </div>
               </div>
               <p className="text-sm text-slate-400">
-                Thuộc: <strong className="text-blue-400">{safeUser.deptName}</strong> • Lớp <strong className="text-slate-100">{safeUser.class}</strong> • Điểm thi đua: <strong className="text-amber-400 font-mono">{safeUser.points} PTS</strong>
+                Thuộc: <strong className="text-blue-400">{safeUser.deptName}</strong>
+                {!isAdvisor && (
+                  <>
+                    {safeUser.class && safeUser.class !== 'N/A' && (
+                      <> • Lớp <strong className="text-slate-100">{safeUser.class}</strong></>
+                    )}
+                    {' • Điểm thi đua: '}
+                    <strong className="text-amber-400 font-mono">{safeUser.points ?? 0} PTS</strong>
+                  </>
+                )}
               </p>
             </div>
           </div>
 
           {/* Quick Actions */}
-          <div className="flex flex-wrap gap-3 shrink-0">
-            <button
-              onClick={() => {
-                setActiveTab('tasks');
-                setIsNewTaskModalOpen(true);
-              }}
-              className="ds-btn ds-btn-primary"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Giao Việc Mới</span>
-            </button>
+          {!isAdvisor && (
+            <div className="flex flex-wrap gap-3 shrink-0">
+              <button
+                onClick={() => {
+                  setActiveTab('tasks');
+                  setIsNewTaskModalOpen(true);
+                }}
+                className="ds-btn ds-btn-primary"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Giao Việc Mới</span>
+              </button>
 
-            <button
-              onClick={() => {
-                setActiveTab('drafts');
-                setIsNewDraftModalOpen(true);
-              }}
-              className="ds-btn ds-btn-secondary"
-            >
-              <FileText className="w-4 h-4 text-blue-400" />
-              <span>Soạn Kịch Bản</span>
-            </button>
-          </div>
+              <button
+                onClick={() => {
+                  setActiveTab('drafts');
+                  setIsNewDraftModalOpen(true);
+                }}
+                className="ds-btn ds-btn-secondary"
+              >
+                <FileText className="w-4 h-4 text-blue-400" />
+                <span>Soạn Kịch Bản</span>
+              </button>
+            </div>
+          )}
 
         </div>
 
@@ -279,7 +308,7 @@ export const InternalDashboard = () => {
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-          {CLUB_INFO.departments.map(dept => {
+          {(clubInfo?.departments || []).map(dept => {
             const Icon = deptIcons[dept.id] || Users;
             return (
               <div
@@ -317,151 +346,62 @@ export const InternalDashboard = () => {
         </div>
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-
-        {/* Left: Tasks & Drafts */}
-        <div className="lg:col-span-2 space-y-8">
-
-          {/* Active Tasks */}
-          <div className="ds-card p-3 sm:p-4 lg:p-6 space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
-                  <CheckSquare className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="font-heading font-bold text-lg text-slate-100">Nhiệm Vụ Đang Phân Công</h3>
-                </div>
-              </div>
-              <button
-                onClick={() => setActiveTab('tasks')}
-                className="ds-btn ds-btn-secondary ds-btn-sm"
-              >
-                <span>Xem tất cả ({tasks.length})</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+      {/* Announcements Section */}
+      <div className="ds-card p-4 sm:p-6 lg:p-8 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[var(--border-default)]">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
+              <Bell className="w-6 h-6" />
             </div>
-
-            <div className="space-y-4">
-              {tasks.slice(0, 3).map(task => (
-                <div
-                  key={task.id}
-                  className="ds-card p-5 space-y-3 transition-all"
-                >
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="ds-badge ds-badge-blue font-semibold">{task.department?.toUpperCase?.()}</span>
-                    <span className="text-slate-400 font-mono">Hạn: {task.deadline}</span>
-                  </div>
-                  <h3 className="font-heading font-bold text-base text-slate-100">{task.title}</h3>
-                  <p className="text-sm text-slate-400">Phụ trách: <span className="text-slate-200 font-medium">{task.assignee}</span></p>
-                </div>
-              ))}
+            <div>
+              <h3 className="font-heading font-bold text-xl text-slate-100">Bảng Tin & Thông Báo CLB</h3>
+              <p className="text-xs text-slate-400 mt-0.5">Thông báo chính thức từ Ban Chủ Nhiệm và các Ban Chuyên Môn</p>
             </div>
           </div>
-
-          {/* Pending Drafts */}
-          <div className="ds-card p-3 sm:p-4 lg:p-6 space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
-                  <FileText className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="font-heading font-bold text-lg text-slate-100">Kịch Bản & Bài Đăng Chờ Duyệt</h3>
-                </div>
-              </div>
-              <button
-                onClick={() => setActiveTab('drafts')}
-                className="ds-btn ds-btn-secondary ds-btn-sm"
-              >
-                <span>Quản Lý Kịch Bản</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {drafts.map(draft => (
-                <div
-                  key={draft.id}
-                  className="ds-card p-5 space-y-3"
-                >
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-400 font-mono">Tác giả: {draft.author}</span>
-                    <span className={`ds-badge ${draft.status === 'approved' ? 'ds-badge-emerald' : 'ds-badge-amber'}`}>
-                      {draft.status === 'approved' ? 'Đã Duyệt' : 'Chờ Duyệt'}
-                    </span>
-                  </div>
-                  <h3 className="font-heading font-bold text-base text-slate-100">{draft.title}</h3>
-                  <p className="text-sm text-slate-400 line-clamp-2 italic ds-card p-4 border border-[var(--border-default)]">
-                    "{draft.content}"
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-
+          {canManageAnnouncements && (
+            <button
+              onClick={() => setIsAnnModalOpen(true)}
+              className="ds-btn ds-btn-primary ds-btn-sm self-start sm:self-auto"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Đăng Thông Báo Mới</span>
+            </button>
+          )}
         </div>
 
-        {/* Right Column: Notices */}
-        <div className="space-y-8">
-
-          {/* Announcements */}
-          <div className="ds-card p-3 sm:p-4 lg:p-6 space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
-                  <Bell className="w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="font-heading font-bold text-lg text-slate-100">Thông Báo</h3>
-                </div>
-              </div>
-              {canManageAnnouncements && (
-                <button
-                  onClick={() => setIsAnnModalOpen(true)}
-                  className="ds-btn ds-btn-primary ds-btn-xs"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Đăng Thông Báo</span>
-                </button>
-              )}
+        <div className="space-y-4">
+          {(!announcements || announcements.length === 0) ? (
+            <div className="text-center py-12 text-slate-400 text-sm italic">
+              Chưa có thông báo nào từ Ban Chủ Nhiệm.
             </div>
-
-            <div className="space-y-4 max-h-[32rem] overflow-y-auto pr-2 scrollbar-thin">
-              {(!announcements || announcements.length === 0) ? (
-                <div className="text-center py-8 text-slate-400 text-sm italic">
-                  Chưa có thông báo nào từ Ban Chủ Nhiệm.
-                </div>
-              ) : (
-                announcements.map(ann => (
-                  <div key={ann.id} className="ds-card p-4 space-y-2 text-sm relative group hover:border-slate-600 transition-all">
-                    <div className="flex justify-between items-center">
-                      <span className="text-blue-400 font-mono text-xs">{ann.date || 'Hôm nay'}</span>
-                      <div className="flex items-center gap-2">
-                        <span className={`ds-badge ${ann.isPinned ? 'ds-badge-rose' : 'ds-badge-purple'}`}>
-                          {ann.priority || (ann.isPinned ? 'Ghim đầu' : 'Thông báo')}
-                        </span>
-                        {canManageAnnouncements && (
-                          <button
-                            onClick={() => deleteAnnouncement(ann.id)}
-                            className="ds-btn ds-btn-ghost ds-btn-xs text-rose-400"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        )}
-                      </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {announcements.map(ann => (
+                <div key={ann.id} className={`ds-card p-5 space-y-3 relative group hover:border-slate-500 transition-all ${ann.isPinned ? 'border-amber-500/30 bg-amber-500/5' : ''}`}>
+                  <div className="flex justify-between items-center">
+                    <span className="text-blue-400 font-mono text-xs font-semibold">{ann.date || 'Hôm nay'}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`ds-badge ${ann.isPinned ? 'ds-badge-rose' : 'ds-badge-purple'}`}>
+                        {ann.priority || (ann.isPinned ? '📌 Ghim đầu' : 'Thông báo')}
+                      </span>
+                      {canManageAnnouncements && (
+                        <button
+                          onClick={() => deleteAnnouncement(ann.id)}
+                          className="p-1 rounded-md text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                          title="Xóa thông báo"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
-                    <h4 className="font-bold text-slate-100 leading-snug">{ann.title}</h4>
-                    <p className="text-slate-400 leading-relaxed text-xs whitespace-pre-line">{ann.content}</p>
                   </div>
-                ))
-              )}
+                  <h4 className="font-bold text-base text-slate-100 leading-snug">{ann.title}</h4>
+                  <p className="text-slate-300 leading-relaxed text-sm whitespace-pre-line">{ann.content}</p>
+                </div>
+              ))}
             </div>
-          </div>
-
+          )}
         </div>
-
       </div>
 
       {/* Announcement Modal */}

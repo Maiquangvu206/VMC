@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useClub } from '../context/ClubContext';
+import { splitRoleTitles, RoleTitleDisplay } from '../utils/roleHelper';
 import {
   User,
   ShieldCheck,
@@ -55,7 +56,7 @@ const safeCurrentUser = (currentUser) => {
 };
 
 export const InternalProfile = () => {
-  const { currentUser, isHRMember, logout, updateSelfProfile, addMemberMilestone, showToast } = useClub();
+  const { currentUser, isAdmin, isSuperAdmin, logout, updateSelfProfile, addMemberMilestone, showToast } = useClub();
 
   if (!currentUser) {
     return <Loading />;
@@ -94,7 +95,7 @@ export const InternalProfile = () => {
       showToast('Vui lòng chọn file ảnh từ máy tính!', 'warning');
       return;
     }
-    await updateSelfProfile({ ...selfData, avatar: avatarPreview });
+    await updateSelfProfile({ ...selfData, avatar: avatarPreview, avatar_url: avatarPreview });
     setIsAvatarModalOpen(false);
   };
 
@@ -127,10 +128,17 @@ export const InternalProfile = () => {
     setTimeout(() => setSavedSuccess(false), 4000);
   };
 
+  const isAdvisorUser = Boolean(
+    cu?.deptName?.toLowerCase().includes('cố vấn') ||
+    cu?.department?.toLowerCase().includes('cố vấn') ||
+    cu?.roleTitle?.toLowerCase().includes('cố vấn') ||
+    cu?.roleTitle?.toLowerCase().includes('cựu')
+  );
+
   const techOnlyFields = [
     { label: "Mã Thành Viên", value: cu.memberCode, icon: Hash, isMono: true, color: "text-cyan-400 font-bold" },
     { label: "Họ và Tên", value: cu.name, icon: User, isMono: false, color: "text-white font-extrabold" },
-    { label: "Lớp Học", value: cu.class, icon: GraduationCap, isMono: false, color: "text-slate-200 font-medium" },
+    ...(!isAdvisorUser && cu.class ? [{ label: "Lớp Học", value: cu.class, icon: GraduationCap, isMono: false, color: "text-slate-200 font-medium" }] : []),
     { label: "Ban Chuyên Môn", value: cu.deptName, icon: Briefcase, isMono: false, color: "text-indigo-400 font-semibold" },
     { label: "Chức Vụ Trong CLB", value: cu.roleTitle, icon: ShieldCheck, isMono: false, color: "text-amber-400 font-bold" }
   ];
@@ -171,8 +179,9 @@ export const InternalProfile = () => {
             >
               <div className="w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-cyan-500 to-blue-600 shadow-md shrink-0 relative overflow-hidden">
                 <img
-                  src={cu.avatar}
+                  src={cu.avatar || cu.avatar_url || '/vmc-logo.jpg'}
                   alt={cu.name}
+                  onError={(e) => { e.currentTarget.src = '/vmc-logo.jpg'; }}
                   className="w-full h-full object-cover rounded-full group-hover:opacity-75 transition-opacity"
                 />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white rounded-full">
@@ -189,9 +198,13 @@ export const InternalProfile = () => {
             {/* Profile Identity Details */}
             <div className="flex flex-col items-center gap-2 w-full min-w-0">
               <h2 className="text-xl font-bold text-white tracking-tight truncate w-full" title={cu.name}>{cu.name}</h2>
-              <span className="ds-badge ds-badge-cyan flex items-center gap-1.5 text-[11px] truncate max-w-full" title={cu.roleTitle}>
-                {cu.roleTitle}
-              </span>
+              <div className="flex flex-col items-center gap-1 max-w-full">
+                {splitRoleTitles(cu.roleTitle).map((role, idx) => (
+                  <span key={idx} className="ds-badge ds-badge-cyan flex items-center gap-1.5 text-[11px] text-center" title={role}>
+                    {role}
+                  </span>
+                ))}
+              </div>
             </div>
 
             {/* Member Code Block */}
@@ -241,8 +254,16 @@ export const InternalProfile = () => {
                       <Icon className="w-4 h-4 text-cyan-400 shrink-0" />
                       {field.label}
                     </span>
-                    <div className={`text-sm sm:text-base font-bold text-slate-100 truncate ${field.isMono ? 'font-mono' : ''} ${field.color}`}>
-                      {field.value}
+                    <div className={`text-sm sm:text-base font-bold text-slate-100 ${field.isMono ? 'font-mono' : ''} ${field.color}`}>
+                      {typeof field.value === 'string' && (field.value.includes('/') || field.value.includes('\n')) ? (
+                        <div className="space-y-0.5">
+                          {splitRoleTitles(field.value).map((v, i) => (
+                            <div key={i} className="leading-snug">{v}</div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="truncate">{field.value}</div>
+                      )}
                     </div>
                   </div>
                 );
@@ -375,8 +396,8 @@ export const InternalProfile = () => {
                 </div>
               </div>
 
-              {/* Action Button */}
-              {isHRMember && (
+              {/* Action Button: Chỉ Admin mới được điều chỉnh / thêm cột mốc */}
+              {(isAdmin || isSuperAdmin) && (
                 <button
                   onClick={() => setIsMilestoneModalOpen(true)}
                   className="ds-btn ds-btn-primary shrink-0"
@@ -514,8 +535,9 @@ export const InternalProfile = () => {
               <div className="flex flex-col items-center gap-2">
                 <div className="w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-cyan-500 to-blue-600 shadow-md overflow-hidden">
                   <img
-                    src={avatarPreview || cu.avatar}
+                    src={avatarPreview || cu.avatar || cu.avatar_url || '/vmc-logo.jpg'}
                     alt="Avatar Preview"
+                    onError={(e) => { e.currentTarget.src = '/vmc-logo.jpg'; }}
                     className="w-full h-full object-cover rounded-full"
                   />
                 </div>
@@ -563,8 +585,8 @@ export const InternalProfile = () => {
         </div>
       )}
 
-      {/* Modal: Thêm Cột Mốc Lịch Sử Chức Vụ (Ban ĐN-NS / Admin) */}
-      {isMilestoneModalOpen && (
+      {/* Modal: Thêm Cột Mốc Lịch Sử Chức Vụ (Chỉ Admin) */}
+      {isMilestoneModalOpen && (isAdmin || isSuperAdmin) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[var(--bg-primary)]/80 backdrop-blur-md">
           <div className="relative w-full max-w-md ds-card ds-card-elevated border border-cyan-500/40 p-6 sm:p-8 shadow-2xl space-y-5 text-white animate-slide-up rounded-xl">
 
@@ -583,6 +605,10 @@ export const InternalProfile = () => {
 
             <form onSubmit={(e) => {
               e.preventDefault();
+              if (!isAdmin && !isSuperAdmin) {
+                showToast('Chỉ Quản Trị Viên (Admin) mới có quyền thêm cột mốc chức vụ!', 'error');
+                return;
+              }
               if (!newMilestone.title.trim()) {
                 showToast('Vui lòng nhập nội dung cột mốc chức vụ!', 'warning');
                 return;

@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ClubProvider, useClub } from './context/ClubContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { LoginModal } from './components/LoginModal';
 import { AttendanceModal } from './components/AttendanceModal';
+import { MandatoryChangePasswordModal } from './components/MandatoryChangePasswordModal';
 import { ToastContainer } from './components/Toast';
 import ErrorBoundary from './components/ErrorBoundary';
 import { InternalDashboard } from './pages/InternalDashboard';
@@ -17,6 +18,7 @@ import { InternalProfile } from './pages/InternalProfile';
 import { InternalHRDashboard } from './pages/InternalHRDashboard';
 import { InternalAdminSessions } from './pages/InternalAdminSessions';
 import { InternalRecruitment } from './pages/InternalRecruitment';
+import { HomePage } from './pages/HomePage';
 
 const Loading = () => (
   <div className="min-h-screen w-full flex items-center justify-center bg-[var(--bg-primary)] text-slate-200 font-sans">
@@ -25,6 +27,7 @@ const Loading = () => (
 );
 
 const pageComponents = {
+  home: HomePage,
   dashboard: InternalDashboard,
   tasks: InternalTasks,
   equipment: InternalEquipment,
@@ -39,20 +42,46 @@ const pageComponents = {
 };
 
 const AppContent = () => {
-  const { activeTab, isAuthenticated, isLoading, toasts, removeToast } = useClub();
+  const {
+    activeTab,
+    setActiveTab,
+    isAuthenticated,
+    isLoading,
+    toasts,
+    removeToast,
+    isRecruitmentSeasonActive,
+    isSuperAdmin,
+    isAdmin,
+    isHRHead
+  } = useClub();
+
+  useEffect(() => {
+    if (!isRecruitmentSeasonActive && activeTab === 'recruitment' && !isSuperAdmin && !isAdmin && !isHRHead) {
+      setActiveTab('dashboard');
+    }
+  }, [isRecruitmentSeasonActive, activeTab, isSuperAdmin, isAdmin, isHRHead, setActiveTab]);
 
   if (isLoading) {
     return <Loading />;
   }
 
   if (!isAuthenticated) {
-    return <LoginModal />;
+    if (activeTab === 'home') {
+      return (
+        <div className="main-layout bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-300 font-body selection:bg-blue-600 selection:text-white overflow-x-hidden">
+          <ToastContainer toasts={toasts} removeToast={removeToast} />
+          <HomePage onOpenLogin={() => setActiveTab('dashboard')} />
+          <Footer />
+        </div>
+      );
+    }
+    return <LoginModal onExploreHome={() => setActiveTab('home')} />;
   }
 
   const ActivePage = pageComponents[activeTab];
 
   return (
-    <div className="main-layout bg-[var(--bg-primary)] text-slate-100 transition-colors duration-300 font-body selection:bg-blue-600 selection:text-white overflow-x-hidden">
+    <div className="main-layout bg-[var(--bg-primary)] text-[var(--text-primary)] transition-colors duration-300 font-body selection:bg-blue-600 selection:text-white overflow-x-hidden">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
       <Navbar />
       <div className="flex-1 pt-6 pb-20">
@@ -63,6 +92,7 @@ const AppContent = () => {
         </main>
       </div>
       <AttendanceModal />
+      <MandatoryChangePasswordModal />
       <Footer />
     </div>
   );

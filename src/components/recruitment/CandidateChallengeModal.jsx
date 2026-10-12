@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Zap, Trophy } from 'lucide-react';
+import { splitRoleTitles } from '../../utils/roleHelper';
 
 export const CandidateChallengeModal = ({ 
   show, 
@@ -147,8 +148,13 @@ export const CandidateChallengeModal = ({
                     />
                     <div className="min-w-0">
                       <div className="font-bold text-white text-xs truncate">{m.name}</div>
-                      <div className="text-[10px] text-slate-400 truncate">
-                        {m.roleTitle || 'Thành viên'} • {m.deptName || m.department || 'Ban Chuyên Môn'}
+                      <div className="text-[10px] text-slate-400">
+                        <div>{m.deptName || m.department || 'Ban Chuyên Môn'}</div>
+                        <div className="text-blue-400 font-medium space-y-0.5 mt-0.5">
+                          {splitRoleTitles(m.roleTitle || 'Thành viên').map((r, i) => (
+                            <div key={i}>{r}</div>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>

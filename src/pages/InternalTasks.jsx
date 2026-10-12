@@ -10,8 +10,13 @@ import {
   CheckCircle,
   ArrowRight,
   Filter,
-  X
+  X,
+  Printer
 } from 'lucide-react';
+import { RoleTitleDisplay } from '../utils/roleHelper';
+import { WATERMARK_CSS, WATERMARK_HTML } from '../utils/watermark';
+import { getAvailableSigners, findSigner, renderSignerFooterHtml } from '../utils/reportSigner';
+import { SignerSelect } from '../components/hr/SignerSelect';
 
 export const InternalTasks = () => {
   const {
@@ -23,6 +28,10 @@ export const InternalTasks = () => {
     isNewTaskModalOpen,
     setIsNewTaskModalOpen,
     currentUser,
+    isAdvisor: isAdvisorFromContext,
+    isHRMember,
+    isHRHead,
+    isAdmin,
     showToast
   } = useClub();
 
@@ -36,6 +45,30 @@ export const InternalTasks = () => {
     priority: 'Medium'
   });
 
+  const isAdvisor = isAdvisorFromContext || Boolean(
+    currentUser?.deptName?.toLowerCase().includes('cố vấn') ||
+    currentUser?.department?.toLowerCase().includes('cố vấn') ||
+    currentUser?.roleTitle?.toLowerCase().includes('cố vấn') ||
+    currentUser?.roleTitle?.toLowerCase().includes('cựu')
+  );
+  const currentUserDeptName = String(currentUser?.deptName || currentUser?.department || '').toLowerCase();
+  const canExportHR = !isAdvisor && Boolean(
+    isHRMember ||
+    isHRHead ||
+    isAdmin ||
+    currentUser?.memberCode === 'ADMIN' ||
+    currentUser?.role === 'admin' ||
+    currentUserDeptName.includes('đối ngoại') ||
+    currentUserDeptName.includes('nhân sự') ||
+    currentUserDeptName.includes('đn-ns') ||
+    currentUserDeptName.includes('dn-ns')
+  );
+
+  // Danh sách người ký duyệt khả dụng (Trưởng ban, Phó ban, Chủ nhiệm, Phó chủ nhiệm)
+  const signerOptions = useMemo(() => getAvailableSigners(members), [members]);
+  const [selectedSignerId, setSelectedSignerId] = useState('');
+  const chosenSigner = useMemo(() => findSigner(signerOptions, selectedSignerId), [signerOptions, selectedSignerId]);
+
   const isOverdue = (deadline) => {
     if (!deadline) return false;
     const now = new Date();
@@ -43,6 +76,183 @@ export const InternalTasks = () => {
     const dl = new Date(deadline);
     dl.setHours(0, 0, 0, 0);
     return dl < now;
+  };
+
+  const handlePrintMemberDeadline = (mem, memberTasks) => {
+    const printWindow = window.open('', '_blank', 'width=1100,height=850');
+    if (!printWindow) {
+      alert('Vui lòng cho phép mở popup trình duyệt để xem và in báo cáo!');
+      return;
+    }
+
+    const todayStr = new Date().toLocaleDateString('vi-VN');
+    const tasksList = memberTasks || [];
+
+    const tableRows = tasksList.length === 0 ? `
+      <tr>
+        <td colspan="6" style="text-align: center; padding: 18px; color: #64748b; font-style: italic;">
+          Thành viên chưa có deadline / nhiệm vụ nào được giao.
+        </td>
+      </tr>
+    ` : tasksList.map((t, index) => {
+      const overdue = isOverdue(t.deadline, t.status);
+      const statusText = t.status === 'done'
+        ? '<span style="color: #166534; font-weight: bold;">✓ Đã hoàn thành</span>'
+        : overdue
+          ? '<span style="color: #991b1b; font-weight: bold;">⚠️ Quá hạn</span>'
+          : t.status === 'doing'
+            ? '<span style="color: #1e40af; font-weight: bold;">⏳ Đang thực hiện</span>'
+            : '<span style="color: #854d0e; font-weight: bold;">📋 Chờ thực hiện</span>';
+
+      return `
+        <tr>
+          <td style="text-align: center; padding: 7px 10px;">${index + 1}</td>
+          <td style="padding: 7px 10px; font-weight: 600;">${t.title || 'Nhiệm vụ'}</td>
+          <td style="text-align: center; padding: 7px 10px; font-family: monospace;">${t.deadline || '-'}</td>
+          <td style="text-align: center; padding: 7px 10px;">${statusText}</td>
+          <td style="text-align: center; padding: 7px 10px;">${getPriorityInfo(t.priority).label}</td>
+          <td style="padding: 7px 10px; font-size: 10pt; color: #475569;">${t.desc || '-'}</td>
+        </tr>
+      `;
+    }).join('');
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Báo Cáo Deadline - ${mem.name} - VMC</title>
+          <meta charset="utf-8" />
+          <style>
+            @page {
+              size: A4 landscape;
+              margin: 15mm 20mm;
+            }
+            body { 
+              font-family: "Times New Roman", Times, serif; 
+              padding: 20px; 
+              color: #000000; 
+              line-height: 1.4;
+            }
+            .letterhead {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              margin-bottom: 25px;
+            }
+            .letterhead-left {
+              text-align: center;
+            }
+            .letterhead-right {
+              text-align: center;
+            }
+            .title-bold {
+              margin: 0;
+              font-size: 13.5pt;
+              font-weight: bold;
+              text-transform: uppercase;
+              letter-spacing: 0.3px;
+            }
+            .letterhead-left p + p {
+              margin-top: 5px;
+            }
+            .doc-title {
+              text-align: center;
+              margin: 25px 0 20px 0;
+            }
+            .doc-title h2 {
+              margin: 0;
+              font-size: 16pt;
+              font-weight: bold;
+              text-transform: uppercase;
+              color: #000000;
+              letter-spacing: 0.5px;
+            }
+            .doc-title p {
+              margin: 6px 0 0 0;
+              font-size: 11pt;
+              color: #374151;
+            }
+            table { 
+              width: 100%; 
+              border-collapse: collapse; 
+              margin-top: 15px; 
+              font-size: 10.5pt; 
+            }
+            th, td {
+              border: 1px solid #64748b;
+              padding: 7px 10px;
+            }
+            th { 
+              background-color: #f1f5f9; 
+              font-weight: bold; 
+              text-align: left; 
+            }
+            tbody tr:nth-child(even) { 
+              background-color: #f8fafc; 
+            }
+            .footer { 
+              margin-top: 40px; 
+              display: flex; 
+              justify-content: space-between; 
+              font-size: 11.5pt; 
+              text-align: center; 
+              page-break-inside: avoid; 
+            }
+            .sign-box { 
+              width: 280px; 
+            }
+            @media print {
+              body { padding: 0; }
+            }
+            ${WATERMARK_CSS}
+          </style>
+        </head>
+        <body>
+          ${WATERMARK_HTML}
+          <div class="letterhead">
+            <div class="letterhead-left">
+              <p class="title-bold">ĐOÀN TNCS HỒ CHÍ MINH THPT VĨNH BẢO</p>
+              <p class="title-bold">CLB TRUYỀN THÔNG THPT VĨNH BẢO</p>
+            </div>
+            <div class="letterhead-right">
+              <p class="title-bold"><u>ĐOÀN TNCS HỒ CHÍ MINH</u></p>
+            </div>
+          </div>
+
+          <div class="doc-title">
+            <h2>BÁO CÁO THEO DÕI DEADLINE VÀ NHIỆM VỤ THÀNH VIÊN</h2>
+            <p><strong>Họ và tên:</strong> ${mem.name} &nbsp;•&nbsp; <strong>Mã TV:</strong> ${mem.memberCode || mem.member_code || '-'} &nbsp;•&nbsp; <strong>Ban:</strong> ${mem.deptName || mem.department || '-'}</p>
+            <p style="font-style: italic; font-size: 10.5pt; color: #4b5563;">Ngày xuất báo cáo: ${todayStr} • Tổng số nhiệm vụ được giao: ${tasksList.length}</p>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 45px; text-align: center;">STT</th>
+                <th>Tên Nhiệm Vụ</th>
+                <th style="width: 110px; text-align: center;">Hạn Chót</th>
+                <th style="width: 120px; text-align: center;">Trạng Thái</th>
+                <th style="width: 80px; text-align: center;">Ưu Tiên</th>
+                <th style="width: 280px;">Ghi Chú</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+
+          ${renderSignerFooterHtml(chosenSigner, todayStr, currentUser?.name, 'NGƯỜI LẬP BÁO CÁO')}
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
   };
 
   const getTaskAssignee = (task) => {
@@ -153,70 +363,6 @@ export const InternalTasks = () => {
           <Plus className="w-4 h-4" />
           <span>Giao Công Việc Mới</span>
         </button>
-      </div>
-
-      {/* Member Deadline Tracker (Only shows members with deadlines) */}
-      <div className="ds-card p-5 border border-blue-500/30 space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="font-heading text-sm font-bold text-white flex items-center gap-2">
-            <User className="w-4 h-4 text-blue-400" />
-            <span>Theo Dõi Deadline Theo Thành Viên</span>
-          </h3>
-          <span className="text-xs text-blue-400 font-mono">
-            {membersWithDeadlines.length} thành viên đang có công việc
-          </span>
-        </div>
-
-        {membersWithDeadlines.length === 0 ? (
-          <p className="text-xs text-slate-400 italic">Hiện tại chưa có thành viên nào được phân công deadline.</p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {membersWithDeadlines.map(item => {
-              const pendingCount = item.tasks.filter(t => t.status !== 'done').length;
-              const overdueCount = item.tasks.filter(t => t.status !== 'done' && isOverdue(t.deadline)).length;
-
-              return (
-                <button
-                  key={item.member.id || item.member.name}
-                  onClick={() => setSelectedMemberDeadline(item)}
-                  className={`p-3 rounded-xl border flex items-center justify-between gap-3 text-left transition-all hover:border-blue-500/50 ${overdueCount > 0
-                    ? 'bg-rose-500/10 border-rose-500/30'
-                    : pendingCount > 0
-                      ? 'bg-blue-500/10 border-blue-500/30'
-                      : 'bg-emerald-500/10 border-emerald-500/30'
-                    }`}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <img
-                      src={item.member.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400'}
-                      alt={item.member.name}
-                      className="w-10 h-10 rounded-lg object-cover border border-slate-700 shrink-0"
-                    />
-                    <div className="min-w-0">
-                      <div className="font-bold text-xs text-slate-100 truncate">{item.member.name}</div>
-                      <div className="text-[10px] text-slate-400 truncate">{item.member.deptName || item.member.department || 'Ban Chuyên Môn'}</div>
-                    </div>
-                  </div>
-
-                  <div className="shrink-0 text-right space-y-0.5">
-                    <span className="ds-badge ds-badge-blue text-[10px] block">
-                      {item.tasks.length} deadline
-                    </span>
-                    {overdueCount > 0 ? (
-                      <span className="ds-badge ds-badge-rose text-[9px] block">
-                        ⚠️ Trễ {overdueCount} việc
-                      </span>
-                    ) : (
-                      <span className="text-[9.5px] text-slate-400 block font-mono">
-                        Hoàn thành
-                      </span>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
       </div>
 
       {/* Filter Tabs matching 4 exact departments */}
@@ -533,15 +679,17 @@ export const InternalTasks = () => {
               <div className="flex items-center justify-between border-b border-[#1f2937] pb-4">
                 <div className="flex items-center gap-3">
                   <img
-                    src={selectedMemberDeadline.member.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400'}
+                    src={selectedMemberDeadline.member.avatar || selectedMemberDeadline.member.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400'}
                     alt={selectedMemberDeadline.member.name}
+                    onError={(e) => { e.currentTarget.src = '/vmc-logo.jpg'; }}
                     className="w-12 h-12 rounded-xl object-cover border border-blue-500/30 shrink-0"
                   />
                   <div>
                     <h3 className="font-heading font-bold text-lg text-slate-100">{selectedMemberDeadline.member.name}</h3>
-                    <div className="text-xs text-blue-400 font-medium">
-                      {selectedMemberDeadline.member.roleTitle} • {selectedMemberDeadline.member.deptName || selectedMemberDeadline.member.department}
+                    <div className="text-xs text-slate-400 font-medium">
+                      {selectedMemberDeadline.member.deptName || selectedMemberDeadline.member.department}
                     </div>
+                    <RoleTitleDisplay roleTitle={selectedMemberDeadline.member.roleTitle} className="text-xs text-blue-400 font-medium mt-0.5" />
                   </div>
                 </div>
 
@@ -620,7 +768,26 @@ export const InternalTasks = () => {
                 })}
               </div>
 
-              <div className="pt-4 border-t border-[#1f2937] flex justify-end">
+              <div className="pt-4 border-t border-[#1f2937] flex items-center justify-between gap-3">
+                {canExportHR ? (
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <SignerSelect
+                      signers={signerOptions}
+                      selectedSignerId={chosenSigner?.id}
+                      onChange={setSelectedSignerId}
+                      compact
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handlePrintMemberDeadline(selectedMemberDeadline.member, selectedMemberDeadline.tasks)}
+                      className="ds-btn ds-btn-secondary text-xs flex items-center gap-1.5 hover:border-blue-500/50"
+                      title="In danh sách deadline của thành viên này"
+                    >
+                      <Printer className="w-3.5 h-3.5 text-blue-400" />
+                      <span>In Báo Cáo Deadline</span>
+                    </button>
+                  </div>
+                ) : <div />}
                 <button
                   onClick={() => setSelectedMemberDeadline(null)}
                   className="ds-btn ds-btn-primary text-xs"
