@@ -45,7 +45,11 @@ import {
   saveHomepageDataAPI,
   loadHomepageDataAPI,
   fetchAllHomepageData,
-  uploadImageToServer
+  uploadImageToServer,
+  saveArticleAPI,
+  deleteArticleAPI,
+  saveMediaAPI,
+  deleteMediaAPI
 } from '../services/homepageService';
 import { getCachedData } from '../services/cacheService';
 
@@ -592,30 +596,11 @@ export const HomePage = ({ onOpenLogin }) => {
 
         if (isMounted) {
           if (loadedInfo) setInfo(loadedInfo);
-          const rawArticles = Array.isArray(loadedArticles) ? loadedArticles : DEFAULT_HOMEPAGE_ARTICLES;
-          const mergedArticles = rawArticles.map(art => {
-            const defaultArt = DEFAULT_HOMEPAGE_ARTICLES.find(d => d.id === art.id);
-            return {
-              ...art,
-              videoUrl: art.videoUrl || defaultArt?.videoUrl || '',
-              images: (Array.isArray(art.images) && art.images.length > 0)
-                ? art.images
-                : (defaultArt?.images || [])
-            };
-          });
-          setArticles(mergedArticles);
+          if (Array.isArray(loadedArticles)) {
+            setArticles(loadedArticles);
+          }
           if (Array.isArray(loadedMedia)) {
-            const mergedMedia = loadedMedia.map(m => {
-              const defaultMed = DEFAULT_HOMEPAGE_MEDIA.find(d => d.id === m.id);
-              const loadedImgs = Array.isArray(m.images) && m.images.length > 0
-                ? m.images
-                : (defaultMed?.images || (m.mediaUrl && m.type === 'image' ? [m.mediaUrl] : []));
-              return {
-                ...m,
-                images: loadedImgs
-              };
-            });
-            setMediaList(mergedMedia);
+            setMediaList(loadedMedia);
           }
         }
       } catch (err) {
@@ -648,28 +633,47 @@ export const HomePage = ({ onOpenLogin }) => {
       imagesArr = articleData.images.split(/[\n,]/).map(s => s.trim()).filter(Boolean);
     }
 
+    // Tự động upload ảnh bìa nếu là base64
+    let finalCoverImage = articleData.coverImage || '';
+    if (finalCoverImage && finalCoverImage.startsWith('data:image')) {
+      const serverUrl = await uploadImageToServer(finalCoverImage);
+      if (serverUrl) finalCoverImage = serverUrl;
+    }
+
+    // Tự động upload từng ảnh trong album nếu là base64
+    const finalImages = await Promise.all(imagesArr.map(async (img) => {
+      if (typeof img === 'string' && img.startsWith('data:image')) {
+        const url = await uploadImageToServer(img);
+        return url || img;
+      }
+      return img;
+    }));
+
     const cleanArticle = {
       ...articleData,
+      id: articleData.id || ('art-' + Date.now()),
+      title: (articleData.title || '').trim() || 'Bài viết mới',
+      date: articleData.date || new Date().toLocaleDateString('vi-VN'),
       videoUrl: (articleData.videoUrl || '').trim(),
-      images: imagesArr
+      coverImage: finalCoverImage,
+      images: finalImages
     };
 
     let updated;
-    if (cleanArticle.id) {
+    if (articles.some(a => a.id === cleanArticle.id)) {
       updated = articles.map(a => a.id === cleanArticle.id ? cleanArticle : a);
     } else {
-      const newArticle = {
-        ...cleanArticle,
-        id: 'art-' + Date.now(),
-        date: cleanArticle.date || new Date().toLocaleDateString('vi-VN')
-      };
-      updated = [newArticle, ...articles];
+      updated = [cleanArticle, ...articles];
     }
     setArticles(updated);
     setEditingArticle(null);
     setIsManageModalOpen(false);
-    const ok = await saveHomepageDataAPI('VMC_HOMEPAGE_ARTICLES', updated);
-    if (ok) {
+
+    // 1. Lưu trực tiếp vào CSDL quan hệ
+    const saveOk = await saveArticleAPI(cleanArticle);
+    // 2. Đồng bộ sang cache và System_Settings
+    await saveHomepageDataAPI('VMC_HOMEPAGE_ARTICLES', updated);
+    if (saveOk) {
       if (addToast) addToast('Đã lưu bài viết thành công lên CSDL máy chủ!', 'success');
     } else {
       if (addToast) addToast('⚠️ Lỗi: Không thể lưu bài viết lên máy chủ CSDL!', 'error');
@@ -680,8 +684,18 @@ export const HomePage = ({ onOpenLogin }) => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa bài viết này?')) return;
     const updated = articles.filter(a => a.id !== id);
     setArticles(updated);
+    if (editingArticle?.id === id) setEditingArticle(null);
+    if (selectedArticle?.id === id) setSelectedArticle(null);
+
+    // 1. Xóa trực tiếp khỏi bảng CSDL quan hệ
+    const delOk = await deleteArticleAPI(id);
+    // 2. Cập nhật cache và System_Settings
     await saveHomepageDataAPI('VMC_HOMEPAGE_ARTICLES', updated);
-    if (addToast) addToast('Đã xóa bài viết thành công!', 'info');
+    if (delOk) {
+      if (addToast) addToast('Đã xóa bài viết thành công khỏi CSDL!', 'info');
+    } else {
+      if (addToast) addToast('⚠️ Lỗi: Không thể xóa bài viết trên máy chủ CSDL!', 'error');
+    }
   };
 
   // Handler cập nhật Media (Hỗ trợ đẩy nhiều file ảnh vào 1 mục)
@@ -695,30 +709,47 @@ export const HomePage = ({ onOpenLogin }) => {
       imagesArr = [mediaData.mediaUrl];
     }
 
-    const firstImage = imagesArr.length > 0 ? imagesArr[0] : '';
+    // Tự động upload từng ảnh trong album nếu là base64
+    const finalImages = await Promise.all(imagesArr.map(async (img) => {
+      if (typeof img === 'string' && img.startsWith('data:image')) {
+        const url = await uploadImageToServer(img);
+        return url || img;
+      }
+      return img;
+    }));
+
+    const firstImage = finalImages.length > 0 ? finalImages[0] : '';
+    let finalMediaUrl = mediaData.mediaUrl || '';
+    if (finalMediaUrl && finalMediaUrl.startsWith('data:image')) {
+      const url = await uploadImageToServer(finalMediaUrl);
+      if (url) finalMediaUrl = url;
+    }
+
     const cleanMedia = {
       ...mediaData,
-      images: imagesArr,
-      mediaUrl: mediaData.type === 'image' ? (firstImage || mediaData.mediaUrl || '') : (mediaData.mediaUrl || ''),
-      thumbnail: mediaData.thumbnail || firstImage || mediaData.mediaUrl || ''
+      id: mediaData.id || ('med-' + Date.now()),
+      title: (mediaData.title || '').trim() || 'Tư liệu mới',
+      date: mediaData.date || new Date().toLocaleDateString('vi-VN'),
+      images: finalImages,
+      mediaUrl: mediaData.type === 'image' ? (firstImage || finalMediaUrl || '') : (finalMediaUrl || ''),
+      thumbnail: mediaData.thumbnail || firstImage || finalMediaUrl || ''
     };
 
     let updated;
-    if (cleanMedia.id) {
+    if (mediaList.some(m => m.id === cleanMedia.id)) {
       updated = mediaList.map(m => m.id === cleanMedia.id ? cleanMedia : m);
     } else {
-      const newMedia = {
-        ...cleanMedia,
-        id: 'med-' + Date.now(),
-        date: cleanMedia.date || new Date().toLocaleDateString('vi-VN')
-      };
-      updated = [newMedia, ...mediaList];
+      updated = [cleanMedia, ...mediaList];
     }
     setMediaList(updated);
     setEditingMedia(null);
     setIsManageModalOpen(false);
-    const ok = await saveHomepageDataAPI('VMC_HOMEPAGE_MEDIA', updated);
-    if (ok) {
+
+    // 1. Lưu trực tiếp vào CSDL quan hệ
+    const saveOk = await saveMediaAPI(cleanMedia);
+    // 2. Đồng bộ sang cache và System_Settings
+    await saveHomepageDataAPI('VMC_HOMEPAGE_MEDIA', updated);
+    if (saveOk) {
       if (addToast) addToast('Đã lưu ảnh/video thành công lên CSDL máy chủ!', 'success');
     } else {
       if (addToast) addToast('⚠️ Lỗi: Không thể lưu ảnh/video lên máy chủ CSDL!', 'error');
@@ -729,8 +760,18 @@ export const HomePage = ({ onOpenLogin }) => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa ảnh/video này khỏi thư viện?')) return;
     const updated = mediaList.filter(m => m.id !== id);
     setMediaList(updated);
+    if (editingMedia?.id === id) setEditingMedia(null);
+    if (selectedMedia?.id === id) setSelectedMedia(null);
+
+    // 1. Xóa trực tiếp khỏi bảng CSDL quan hệ
+    const delOk = await deleteMediaAPI(id);
+    // 2. Cập nhật cache và System_Settings
     await saveHomepageDataAPI('VMC_HOMEPAGE_MEDIA', updated);
-    if (addToast) addToast('Đã xóa media thành công!', 'info');
+    if (delOk) {
+      if (addToast) addToast('Đã xóa media thành công khỏi CSDL!', 'info');
+    } else {
+      if (addToast) addToast('⚠️ Lỗi: Không thể xóa media trên máy chủ CSDL!', 'error');
+    }
   };
 
   // Quản lý tải lên nhiều file ảnh cho 1 mục Media (Hỗ trợ kéo thả / chọn nhiều ảnh & upload tĩnh lên server)
@@ -1541,9 +1582,39 @@ export const HomePage = ({ onOpenLogin }) => {
                       <Calendar className="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
                       {item.date}
                     </span>
-                    <span className="text-cyan-600 dark:text-cyan-400/80 font-medium group-hover:text-cyan-500">
-                      Xem chi tiết →
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {canManage && (
+                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingMedia(item);
+                              setManageTab('media');
+                              setIsManageModalOpen(true);
+                            }}
+                            className="p-1 rounded bg-[var(--bg-tertiary)] hover:bg-cyan-500/10 text-[var(--text-secondary)] hover:text-cyan-600 border border-[var(--border-default)] transition-colors"
+                            title="Chỉnh sửa tư liệu"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteMedia(item.id);
+                            }}
+                            className="p-1 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 transition-colors"
+                            title="Xóa tư liệu"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
+                      <span className="text-cyan-600 dark:text-cyan-400/80 font-medium group-hover:text-cyan-500">
+                        Xem chi tiết →
+                      </span>
+                    </div>
                   </div>
                   <h4 className="text-sm font-bold text-[var(--text-primary)] group-hover:text-cyan-600 dark:group-hover:text-cyan-300 transition-colors line-clamp-1">
                     {item.title}
@@ -1676,9 +1747,39 @@ export const HomePage = ({ onOpenLogin }) => {
                     </p>
                   </div>
 
-                  <div className="pt-4 mt-4 border-t border-[var(--border-default)] flex items-center justify-between text-xs font-semibold text-purple-600 dark:text-purple-400 group-hover:text-purple-700 dark:group-hover:text-purple-300">
-                    <span>Đọc toàn bộ bài viết</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  <div className="pt-4 mt-4 border-t border-[var(--border-default)] flex items-center justify-between text-xs font-semibold text-purple-600 dark:text-purple-400">
+                    <div className="flex items-center gap-1.5 group-hover:text-purple-700 dark:group-hover:text-purple-300">
+                      <span>Đọc toàn bộ bài viết</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                    {canManage && (
+                      <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingArticle({ ...art, images: Array.isArray(art.images) ? art.images : [] });
+                            setManageTab('articles');
+                            setIsManageModalOpen(true);
+                          }}
+                          className="p-1.5 rounded-lg bg-[var(--bg-tertiary)] hover:bg-purple-600/10 text-[var(--text-secondary)] hover:text-purple-600 border border-[var(--border-default)] transition-colors"
+                          title="Chỉnh sửa bài viết"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteArticle(art.id);
+                          }}
+                          className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 border border-rose-500/20 transition-colors"
+                          title="Xóa bài viết"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </article>

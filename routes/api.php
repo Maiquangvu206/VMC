@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\AttendanceRecordController;
 use App\Http\Controllers\Api\RecruitmentController;
 use App\Http\Controllers\Api\SystemSettingController;
 use App\Http\Controllers\Api\EmailController;
+use App\Http\Controllers\Api\HomepageController;
 
 /*
 |--------------------------------------------------------------------------
@@ -141,3 +142,13 @@ Route::get('/admin/system-settings', [SystemSettingController::class, 'index']);
 Route::post('/admin/system-settings', [SystemSettingController::class, 'updateSetting']);
 Route::put('/admin/recruitment-season/toggle', [SystemSettingController::class, 'toggleSeason']);
 Route::post('/homepage/upload-image', [SystemSettingController::class, 'uploadImage']);
+
+// Homepage Articles & Media (Dedicated Relational Tables)
+Route::get('/homepage/articles', [HomepageController::class, 'indexArticles']);
+Route::post('/homepage/articles', [HomepageController::class, 'storeArticle']);
+Route::delete('/homepage/articles/{id}', [HomepageController::class, 'destroyArticle']);
+
+Route::get('/homepage/media', [HomepageController::class, 'indexMedia']);
+Route::post('/homepage/media', [HomepageController::class, 'storeMedia']);
+Route::delete('/homepage/media/{id}', [HomepageController::class, 'destroyMedia']);
+

@@ -32,6 +32,7 @@ jobs:
       - name: Setup Laravel Backend
         run: |
           composer install --no-interaction --prefer-dist --optimize-autoloader || true
+          php artisan migrate --force || true
           php artisan config:clear || true
           php artisan route:clear || true
 

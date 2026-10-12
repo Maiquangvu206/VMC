@@ -330,17 +330,89 @@ export const uploadImageToServer = async (fileOrBase64) => {
   return typeof fileOrBase64 === 'string' ? fileOrBase64 : null;
 };
 
-// Helper lưu dữ liệu vào MySQL System_Settings và cập nhật cache
+// Helper lưu 1 bài viết trực tiếp vào bảng Homepage_Articles
+export const saveArticleAPI = async (article) => {
+  try {
+    const res = await fetch('/api/homepage/articles', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'ngrok-skip-browser-warning': 'true'
+      },
+      body: JSON.stringify(article)
+    });
+    return res.ok;
+  } catch (err) {
+    console.warn('⚠️ saveArticleAPI error:', err);
+    return false;
+  }
+};
+
+// Helper xóa 1 bài viết khỏi bảng Homepage_Articles
+export const deleteArticleAPI = async (id) => {
+  try {
+    const res = await fetch(`/api/homepage/articles/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: {
+        'Accept': 'application/json',
+        'ngrok-skip-browser-warning': 'true'
+      }
+    });
+    return res.ok;
+  } catch (err) {
+    console.warn('⚠️ deleteArticleAPI error:', err);
+    return false;
+  }
+};
+
+// Helper lưu 1 mục media vào bảng Homepage_Media
+export const saveMediaAPI = async (mediaItem) => {
+  try {
+    const res = await fetch('/api/homepage/media', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'ngrok-skip-browser-warning': 'true'
+      },
+      body: JSON.stringify(mediaItem)
+    });
+    return res.ok;
+  } catch (err) {
+    console.warn('⚠️ saveMediaAPI error:', err);
+    return false;
+  }
+};
+
+// Helper xóa 1 mục media khỏi bảng Homepage_Media
+export const deleteMediaAPI = async (id) => {
+  try {
+    const res = await fetch(`/api/homepage/media/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: {
+        'Accept': 'application/json',
+        'ngrok-skip-browser-warning': 'true'
+      }
+    });
+    return res.ok;
+  } catch (err) {
+    console.warn('⚠️ deleteMediaAPI error:', err);
+    return false;
+  }
+};
+
+// Helper lưu dữ liệu vào CSDL (Bảng chuyên biệt + System_Settings tương thích ngược)
 export const saveHomepageDataAPI = async (key, data) => {
   try {
     const valStr = JSON.stringify(data);
     const shortKey = key.replace('VMC_HOMEPAGE_', '').toLowerCase();
     
-    // Lưu vào cache client tức thì
+    // Lưu vào cache client tức thì (0ms)
     setCachedData(`homepage_${shortKey}`, data, CACHE_TTL.HOMEPAGE);
     setCachedData(key, data, CACHE_TTL.HOMEPAGE);
 
-    // Gửi lưu trực tiếp vào CSDL MySQL
+    // Gửi lưu trực tiếp vào CSDL MySQL System_Settings
     const res = await fetch('/api/admin/system-settings', {
       method: 'POST',
       headers: {
@@ -381,14 +453,41 @@ export const loadHomepageDataAPI = async (key, fallbackData) => {
     const cached = getCachedData(`homepage_${shortKey}`) || getCachedData(key);
     let result = (Array.isArray(cached) ? cached.length > 0 : cached !== null) ? cached : fallbackData;
 
-    // 2. Fetch từ CSDL MySQL để cập nhật dữ liệu mới nhất
+    // 2. Ưu tiên endpoint chuyên biệt
+    if (key === 'VMC_HOMEPAGE_ARTICLES') {
+      try {
+        const resArt = await fetch('/api/homepage/articles', { headers: { 'ngrok-skip-browser-warning': 'true' } });
+        if (resArt.ok) {
+          const jsonArt = await resArt.json();
+          if (jsonArt.success && Array.isArray(jsonArt.data)) {
+            setCachedData('homepage_articles', jsonArt.data, CACHE_TTL.HOMEPAGE);
+            setCachedData(key, jsonArt.data, CACHE_TTL.HOMEPAGE);
+            return jsonArt.data;
+          }
+        }
+      } catch {}
+    } else if (key === 'VMC_HOMEPAGE_MEDIA') {
+      try {
+        const resMed = await fetch('/api/homepage/media', { headers: { 'ngrok-skip-browser-warning': 'true' } });
+        if (resMed.ok) {
+          const jsonMed = await resMed.json();
+          if (jsonMed.success && Array.isArray(jsonMed.data)) {
+            setCachedData('homepage_media', jsonMed.data, CACHE_TTL.HOMEPAGE);
+            setCachedData(key, jsonMed.data, CACHE_TTL.HOMEPAGE);
+            return jsonMed.data;
+          }
+        }
+      } catch {}
+    }
+
+    // 3. Fallback: Fetch từ System_Settings
     const res = await fetch('/api/admin/system-settings', {
       headers: { 'ngrok-skip-browser-warning': 'true' }
     });
     const json = await res.json();
     if (json.success && json.data && json.data[key]) {
       const serverData = JSON.parse(json.data[key]);
-      if (!Array.isArray(serverData) || serverData.length > 0) {
+      if (Array.isArray(serverData) || serverData !== null) {
         setCachedData(`homepage_${shortKey}`, serverData, CACHE_TTL.HOMEPAGE);
         setCachedData(key, serverData, CACHE_TTL.HOMEPAGE);
         return serverData;
@@ -404,79 +503,72 @@ export const loadHomepageDataAPI = async (key, fallbackData) => {
   }
 };
 
-// Helper nạp đồng thời toàn bộ dữ liệu Trang chủ trong 1 request duy nhất
+// Helper nạp đồng thời toàn bộ dữ liệu Trang chủ từ bảng chuyên biệt và cấu hình
 export const fetchAllHomepageData = async () => {
   try {
-    // 1. Kiểm tra cache có sẵn chưa
-    const cachedInfo = getCachedData('homepage_info');
-    const cachedArticles = getCachedData('homepage_articles');
-    const cachedMedia = getCachedData('homepage_media');
-    const cachedOrg = getCachedData('homepage_org');
+    // Luôn fetch trực tiếp từ CSDL Backend để đảm bảo dữ liệu mới nhất 100%
+    const [articlesRes, mediaRes, settingsRes] = await Promise.allSettled([
+      fetch('/api/homepage/articles', { headers: { 'ngrok-skip-browser-warning': 'true' } }).then(r => r.json()),
+      fetch('/api/homepage/media', { headers: { 'ngrok-skip-browser-warning': 'true' } }).then(r => r.json()),
+      fetch('/api/admin/system-settings', { headers: { 'ngrok-skip-browser-warning': 'true' } }).then(r => r.json())
+    ]);
 
-    if (cachedInfo && Array.isArray(cachedArticles) && cachedArticles.length > 0 && Array.isArray(cachedMedia) && cachedMedia.length > 0) {
-      // Background revalidate
-      fetch('/api/admin/system-settings', { headers: { 'ngrok-skip-browser-warning': 'true' } })
-        .then(r => r.json())
-        .then(json => {
-          if (json.success && json.data) {
-            if (json.data.VMC_HOMEPAGE_INFO) setCachedData('homepage_info', JSON.parse(json.data.VMC_HOMEPAGE_INFO), CACHE_TTL.HOMEPAGE);
-            if (json.data.VMC_HOMEPAGE_ARTICLES) {
-              const parsed = JSON.parse(json.data.VMC_HOMEPAGE_ARTICLES);
-              if (Array.isArray(parsed) && parsed.length > 0) {
-                setCachedData('homepage_articles', parsed, CACHE_TTL.HOMEPAGE);
-              }
-            }
-            if (json.data.VMC_HOMEPAGE_MEDIA) {
-              const parsed = JSON.parse(json.data.VMC_HOMEPAGE_MEDIA);
-              if (Array.isArray(parsed) && parsed.length > 0) {
-                setCachedData('homepage_media', parsed, CACHE_TTL.HOMEPAGE);
-              }
-            }
-            if (json.data.VMC_HOMEPAGE_ORG) setCachedData('homepage_org', JSON.parse(json.data.VMC_HOMEPAGE_ORG), CACHE_TTL.HOMEPAGE);
-          }
-        }).catch(() => {});
+    const settingsData = (settingsRes.status === 'fulfilled' && settingsRes.value?.success) ? settingsRes.value.data : {};
 
-      return {
-        info: cachedInfo,
-        articles: cachedArticles,
-        media: cachedMedia,
-        org: cachedOrg || DEFAULT_HOMEPAGE_ORG
-      };
+    // Xử lý Articles: ưu tiên từ bảng Homepage_Articles nếu API thành công (kể cả mảng rỗng do xóa hết)
+    let articles = null;
+    if (articlesRes.status === 'fulfilled' && articlesRes.value?.success && Array.isArray(articlesRes.value.data)) {
+      articles = articlesRes.value.data;
+    } else if (settingsData?.VMC_HOMEPAGE_ARTICLES !== undefined && settingsData?.VMC_HOMEPAGE_ARTICLES !== null) {
+      try {
+        const parsed = JSON.parse(settingsData.VMC_HOMEPAGE_ARTICLES);
+        if (Array.isArray(parsed)) articles = parsed;
+      } catch {}
+    }
+    if (articles === null) {
+      const cached = getCachedData('homepage_articles');
+      articles = Array.isArray(cached) ? cached : DEFAULT_HOMEPAGE_ARTICLES;
     }
 
-    // 2. Fetch từ CSDL MySQL
-    const res = await fetch('/api/admin/system-settings', {
-      headers: { 'ngrok-skip-browser-warning': 'true' }
-    });
-    const json = await res.json();
-    if (json.success && json.data) {
-      const info = json.data.VMC_HOMEPAGE_INFO ? JSON.parse(json.data.VMC_HOMEPAGE_INFO) : DEFAULT_HOMEPAGE_INFO;
-      
-      let articles = DEFAULT_HOMEPAGE_ARTICLES;
-      if (json.data.VMC_HOMEPAGE_ARTICLES) {
-        try {
-          const parsed = JSON.parse(json.data.VMC_HOMEPAGE_ARTICLES);
-          if (Array.isArray(parsed) && parsed.length > 0) articles = parsed;
-        } catch {}
-      }
-
-      let media = DEFAULT_HOMEPAGE_MEDIA;
-      if (json.data.VMC_HOMEPAGE_MEDIA) {
-        try {
-          const parsed = JSON.parse(json.data.VMC_HOMEPAGE_MEDIA);
-          if (Array.isArray(parsed) && parsed.length > 0) media = parsed;
-        } catch {}
-      }
-
-      const org = json.data.VMC_HOMEPAGE_ORG ? JSON.parse(json.data.VMC_HOMEPAGE_ORG) : DEFAULT_HOMEPAGE_ORG;
-
-      setCachedData('homepage_info', info, CACHE_TTL.HOMEPAGE);
-      setCachedData('homepage_articles', articles, CACHE_TTL.HOMEPAGE);
-      setCachedData('homepage_media', media, CACHE_TTL.HOMEPAGE);
-      setCachedData('homepage_org', org, CACHE_TTL.HOMEPAGE);
-
-      return { info, articles, media, org };
+    // Xử lý Media: ưu tiên từ bảng Homepage_Media nếu API thành công (kể cả mảng rỗng do xóa hết)
+    let media = null;
+    if (mediaRes.status === 'fulfilled' && mediaRes.value?.success && Array.isArray(mediaRes.value.data)) {
+      media = mediaRes.value.data;
+    } else if (settingsData?.VMC_HOMEPAGE_MEDIA !== undefined && settingsData?.VMC_HOMEPAGE_MEDIA !== null) {
+      try {
+        const parsed = JSON.parse(settingsData.VMC_HOMEPAGE_MEDIA);
+        if (Array.isArray(parsed)) media = parsed;
+      } catch {}
     }
+    if (media === null) {
+      const cached = getCachedData('homepage_media');
+      media = Array.isArray(cached) ? cached : DEFAULT_HOMEPAGE_MEDIA;
+    }
+
+    // Xử lý Info & Org
+    let info = null;
+    if (settingsData?.VMC_HOMEPAGE_INFO) {
+      try { info = JSON.parse(settingsData.VMC_HOMEPAGE_INFO); } catch {}
+    }
+    if (info === null) {
+      info = getCachedData('homepage_info') || DEFAULT_HOMEPAGE_INFO;
+    }
+
+    let org = null;
+    if (settingsData?.VMC_HOMEPAGE_ORG) {
+      try { org = JSON.parse(settingsData.VMC_HOMEPAGE_ORG); } catch {}
+    }
+    if (org === null) {
+      org = getCachedData('homepage_org') || DEFAULT_HOMEPAGE_ORG;
+    }
+
+    // Cập nhật Cache client tức thì
+    setCachedData('homepage_info', info, CACHE_TTL.HOMEPAGE);
+    setCachedData('homepage_articles', articles, CACHE_TTL.HOMEPAGE);
+    setCachedData('homepage_media', media, CACHE_TTL.HOMEPAGE);
+    setCachedData('homepage_org', org, CACHE_TTL.HOMEPAGE);
+
+    return { info, articles, media, org };
   } catch (err) {
     console.warn('⚠️ fetchAllHomepageData error:', err.message);
   }
@@ -486,8 +578,9 @@ export const fetchAllHomepageData = async () => {
 
   return {
     info: getCachedData('homepage_info') || DEFAULT_HOMEPAGE_INFO,
-    articles: (Array.isArray(fallbackArticles) && fallbackArticles.length > 0) ? fallbackArticles : DEFAULT_HOMEPAGE_ARTICLES,
-    media: (Array.isArray(fallbackMedia) && fallbackMedia.length > 0) ? fallbackMedia : DEFAULT_HOMEPAGE_MEDIA,
+    articles: Array.isArray(fallbackArticles) ? fallbackArticles : DEFAULT_HOMEPAGE_ARTICLES,
+    media: Array.isArray(fallbackMedia) ? fallbackMedia : DEFAULT_HOMEPAGE_MEDIA,
     org: getCachedData('homepage_org') || DEFAULT_HOMEPAGE_ORG
   };
 };
+

@@ -132,8 +132,8 @@ class SystemSettingController extends Controller
             $defaults = $this->getDefaultSettings();
             foreach ($defaults as $k => $v) {
                 $setting = SystemSetting::where('setting_key', $k)->first();
-                $isEmptyVal = !$setting || empty($setting->setting_value) || in_array(trim((string)$setting->setting_value), ['[]', '{}', 'null', '""']);
-                if ($isEmptyVal) {
+                $isMissing = !$setting || $setting->setting_value === null;
+                if ($isMissing) {
                     if (!$setting) {
                         $setting = new SystemSetting(['setting_key' => $k]);
                     }
