@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class MonthlyBirthdayConfig extends Model
 {
-    protected $table = 'monthly_birthday_config';
+    protected $table = 'Monthly_Birthday_Config';
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';

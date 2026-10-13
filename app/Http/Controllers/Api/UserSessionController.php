@@ -14,30 +14,52 @@ class UserSessionController extends Controller
     {
         try {
             // Auto timeout inactive sessions without heartbeat in the last 10 minutes
-            DB::table('user_sessions')
+            DB::table('User_Sessions')
                 ->where('is_active', 1)
                 ->where('last_active', '<', DB::raw('NOW() - INTERVAL 10 MINUTE'))
                 ->update(['is_active' => 0, 'logout_reason' => 'timeout']);
 
-            $sessions = DB::table('user_sessions as s')
-                ->leftJoin('members as m', function ($join) {
-                    $join->on('s.member_id', '=', 'm.id')
-                        ->orOn('s.username', '=', 'm.username')
-                        ->orOn('s.member_id', '=', 'm.member_code');
-                })
-                ->select(
-                    's.*',
-                    DB::raw("COALESCE(NULLIF(m.full_name, ''), s.name) as real_name"),
-                    DB::raw("COALESCE(NULLIF(m.role_title, ''), s.role_title) as real_role_title")
-                )
-                ->orderBy('s.login_time', 'desc')
-                ->orderBy('s.last_active', 'desc')
+            $sessions = DB::table('User_Sessions')
+                ->orderBy('login_time', 'desc')
+                ->orderBy('last_active', 'desc')
                 ->get();
 
-            $data = $sessions->map(function ($s) {
+            $members = DB::table('Members')
+                ->select('id', 'username', 'member_code', 'full_name', 'role_title')
+                ->get();
+
+            $memberMap = [];
+            foreach ($members as $m) {
+                $info = [
+                    'full_name' => (string) $m->full_name,
+                    'role_title' => (string) $m->role_title,
+                ];
+                if ($m->id !== null) {
+                    $memberMap[(string) $m->id] = $info;
+                }
+                if (!empty($m->username)) {
+                    $memberMap[strtolower((string) $m->username)] = $info;
+                }
+                if (!empty($m->member_code)) {
+                    $memberMap[strtoupper((string) $m->member_code)] = $info;
+                }
+            }
+
+            $data = $sessions->map(function ($s) use ($memberMap) {
+                $mid = (string) $s->member_id;
+                $uName = strtolower((string) $s->username);
+                $mem = $memberMap[$mid] 
+                    ?? ($memberMap[strtoupper($mid)] 
+                    ?? ($memberMap[$uName] ?? null));
+
+                $realName = ($mem && !empty($mem['full_name'])) ? $mem['full_name'] : $s->name;
+                $realRole = ($mem && !empty($mem['role_title'])) ? $mem['role_title'] : ($s->role_title ?: 'Thành Viên VMC');
+
                 return (array) $s + [
-                    'name' => $s->real_name ?: $s->name,
-                    'role_title' => $s->real_role_title ?: ($s->role_title ?: 'Thành Viên VMC'),
+                    'real_name' => $realName,
+                    'real_role_title' => $realRole,
+                    'name' => $realName,
+                    'role_title' => $realRole,
                 ];
             });
 
@@ -81,7 +103,7 @@ class UserSessionController extends Controller
             $isMobile = preg_match('/mobile|android|iphone|ipad|ipod/i', $userAgent ?: '');
             $deviceType = $isMobile ? 'Mobile Phone' : 'Desktop / PC';
 
-            DB::table('user_sessions')->upsert([
+            DB::table('User_Sessions')->upsert([
                 'id' => $sId,
                 'member_id' => (string) $memberId,
                 'username' => $username ?: '',
@@ -108,8 +130,8 @@ class UserSessionController extends Controller
             $sessionId = $request->input('sessionId');
             if (!$sessionId) return response()->json(['success' => true, 'isActive' => true]);
 
-            $session = DB::table('user_sessions as s')
-                ->leftJoin('members as m', function ($join) {
+            $session = DB::table('User_Sessions as s')
+                ->leftJoin('Members as m', function ($join) {
                     $join->on('s.member_id', '=', 'm.id')
                         ->orOn('s.username', '=', 'm.username')
                         ->orOn('s.member_id', '=', 'm.member_code');
@@ -121,7 +143,7 @@ class UserSessionController extends Controller
             if ($session) {
                 // If member account itself is suspended
                 if (strtolower((string) $session->status) === 'suspended' || $session->logout_reason === 'suspended') {
-                    DB::table('user_sessions')->where('id', $sessionId)->update([
+                    DB::table('User_Sessions')->where('id', $sessionId)->update([
                         'is_active' => 0,
                         'logout_reason' => 'suspended'
                     ]);
@@ -143,7 +165,7 @@ class UserSessionController extends Controller
 
                 // If session was inactive due to timeout or previous idle state, reactivate it seamlessly
                 if ((int) $session->is_active === 0) {
-                    DB::table('user_sessions')->where('id', $sessionId)->update([
+                    DB::table('User_Sessions')->where('id', $sessionId)->update([
                         'is_active' => 1,
                         'logout_reason' => null,
                         'last_active' => now()
@@ -155,7 +177,7 @@ class UserSessionController extends Controller
                 return response()->json(['success' => true, 'isActive' => true]);
             }
 
-            DB::table('user_sessions')->where('id', $sessionId)->update(['last_active' => now()]);
+            DB::table('User_Sessions')->where('id', $sessionId)->update(['last_active' => now()]);
             return response()->json(['success' => true, 'isActive' => true]);
         } catch (\Throwable $e) {
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
@@ -165,7 +187,7 @@ class UserSessionController extends Controller
     public function destroy($id)
     {
         try {
-            DB::table('user_sessions')->where('id', $id)->update([
+            DB::table('User_Sessions')->where('id', $id)->update([
                 'is_active' => 0,
                 'logout_reason' => 'revoked'
             ]);
@@ -183,14 +205,14 @@ class UserSessionController extends Controller
             $username = $request->input('username');
 
             if ($sessionId) {
-                DB::table('user_sessions')->where('id', $sessionId)->update([
+                DB::table('User_Sessions')->where('id', $sessionId)->update([
                     'is_active' => 0,
                     'logout_reason' => 'logout',
                     'last_active' => now()
                 ]);
             }
             if ($memberId || $username) {
-                DB::table('user_sessions')
+                DB::table('User_Sessions')
                     ->where('is_active', 1)
                     ->where(function ($q) use ($memberId, $username) {
                         $q->where('member_id', (string) $memberId)
@@ -214,7 +236,7 @@ class UserSessionController extends Controller
     {
         try {
             $currentSessionId = $request->input('currentSessionId', '');
-            DB::table('user_sessions')
+            DB::table('User_Sessions')
                 ->where('id', '!=', $currentSessionId)
                 ->update(['is_active' => 0, 'logout_reason' => 'revoked']);
 

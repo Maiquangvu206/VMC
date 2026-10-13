@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Meeting extends Model
 {
-    protected $table = 'meetings';
+    protected $table = 'Meetings';
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';

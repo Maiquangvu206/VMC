@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class MeetingAttendance extends Model
 {
-    protected $table = 'meeting_attendance';
+    protected $table = 'Meeting_Attendance';
     public $incrementing = false;
     public $timestamps = false;
 

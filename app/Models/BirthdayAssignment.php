@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class BirthdayAssignment extends Model
 {
-    protected $table = 'birthday_assignments';
+    protected $table = 'Birthday_Assignments';
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';

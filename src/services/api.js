@@ -1,10 +1,25 @@
+// Helper gọi fetch có timeout 15s để chống treo kết nối khi máy chủ phản hồi chậm
+const fetchWithTimeout = async (url, options = {}, timeoutMs = 15000) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(timeoutId);
+    return res;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    throw err;
+  }
+};
+
 // Secure Server Login API
 export const loginMemberAPI = async (memberCode, password) => {
   try {
-    const response = await fetch('/api/auth/login', {
+    const response = await fetchWithTimeout('/api/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         'ngrok-skip-browser-warning': 'true'
       },
       body: JSON.stringify({ memberCode, password })
@@ -20,10 +35,11 @@ export const loginMemberAPI = async (memberCode, password) => {
 // Forgot Password API (Kiểm tra Mã TV và Email, tự sinh mật khẩu mới và gửi mail)
 export const forgotPasswordAPI = async (memberCode, email) => {
   try {
-    const response = await fetch('/api/auth/forgot-password', {
+    const response = await fetchWithTimeout('/api/auth/forgot-password', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         'ngrok-skip-browser-warning': 'true'
       },
       body: JSON.stringify({ memberCode, email })
@@ -39,8 +55,8 @@ export const forgotPasswordAPI = async (memberCode, email) => {
 // Service frontend kết nối API CSDL SQL
 export const fetchMembersFromDatabaseAPI = async () => {
   try {
-    const response = await fetch('/api/members', {
-      headers: { 'ngrok-skip-browser-warning': 'true' }
+    const response = await fetchWithTimeout('/api/members', {
+      headers: { 'Accept': 'application/json', 'ngrok-skip-browser-warning': 'true' }
     });
 
     if (!response.ok) {
@@ -82,10 +98,11 @@ export const fetchMembersFromDatabaseAPI = async () => {
 // Secure Create Member API
 export const createMemberAPI = async (newAcc) => {
   try {
-    const response = await fetch('/api/members/create', {
+    const response = await fetchWithTimeout('/api/members/create', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         'ngrok-skip-browser-warning': 'true'
       },
       body: JSON.stringify({
@@ -147,10 +164,11 @@ export const updateMemberAPI = async (memberId, updatedFields) => {
     if (ifl !== undefined) { payload.is_first_login = ifl; payload.isFirstLogin = ifl; }
     if (updatedFields.milestones !== undefined) payload.milestones = updatedFields.milestones;
 
-    const response = await fetch(`/api/members/${memberId}`, {
+    const response = await fetchWithTimeout(`/api/members/${memberId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         'ngrok-skip-browser-warning': 'true'
       },
       body: JSON.stringify(payload)
@@ -165,9 +183,10 @@ export const updateMemberAPI = async (memberId, updatedFields) => {
 // Secure Delete Member API
 export const deleteMemberAPI = async (memberId) => {
   try {
-    const response = await fetch(`/api/members/${memberId}`, {
+    const response = await fetchWithTimeout(`/api/members/${memberId}`, {
       method: 'DELETE',
       headers: {
+        'Accept': 'application/json',
         'ngrok-skip-browser-warning': 'true'
       }
     });

@@ -21,7 +21,7 @@ class SendTaskDeadlineReminders extends Command
 
         $this->info("⏰ [VMC Task Reminder] Quét hạn chót nhiệm vụ (Hôm nay: {$todayStr}, Ngày mai: {$tomorrowStr})...");
 
-        $tasks = DB::table('tasks')
+        $tasks = DB::table('Tasks')
             ->where('status', '!=', 'done')
             ->whereNotNull('deadline')
             ->where(function ($q) use ($todayStr, $tomorrowStr) {
@@ -36,7 +36,7 @@ class SendTaskDeadlineReminders extends Command
             $isDueToday = ($taskDeadlineStr === $todayStr);
             $type = $isDueToday ? 'today' : 'tomorrow';
 
-            $alreadySent = DB::table('task_deadline_mail_logs')
+            $alreadySent = DB::table('Task_Deadline_Mail_Logs')
                 ->where('task_id', (string) $t->id)
                 ->where('sent_date', $todayStr)
                 ->exists();
@@ -93,7 +93,7 @@ class SendTaskDeadlineReminders extends Command
 
             $sent = MailService::send($assignee->email, $mailSubject, $html);
             if ($sent) {
-                DB::table('task_deadline_mail_logs')->insertOrIgnore([
+                DB::table('Task_Deadline_Mail_Logs')->insertOrIgnore([
                     'task_id' => (string) $t->id,
                     'sent_date' => $todayStr,
                     'type' => $type,

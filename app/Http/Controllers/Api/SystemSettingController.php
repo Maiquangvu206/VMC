@@ -155,13 +155,13 @@ class SystemSettingController extends Controller
                 $staleMedia->save();
             }
 
-            // Tự động chuẩn hóa tên bảng cho môi trường Ubuntu Linux (MySQL phân biệt hoa thường)
+            // Tự động chuẩn hóa tên bảng dạng viết hoa chữ đầu cho máy chủ Ubuntu Linux
             try {
-                if (Schema::hasTable('Homepage_Articles') && !Schema::hasTable('homepage_articles')) {
-                    Schema::rename('Homepage_Articles', 'homepage_articles');
+                if (Schema::hasTable('homepage_articles') && !Schema::hasTable('Homepage_Articles')) {
+                    Schema::rename('homepage_articles', 'Homepage_Articles');
                 }
-                if (Schema::hasTable('Homepage_Media') && !Schema::hasTable('homepage_media')) {
-                    Schema::rename('Homepage_Media', 'homepage_media');
+                if (Schema::hasTable('homepage_media') && !Schema::hasTable('Homepage_Media')) {
+                    Schema::rename('homepage_media', 'Homepage_Media');
                 }
             } catch (\Throwable $e) {}
         } catch (\Throwable $e) {

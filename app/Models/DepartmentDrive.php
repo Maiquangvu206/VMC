@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class DepartmentDrive extends Model
 {
-    protected $table = 'department_drives';
+    protected $table = 'Department_Drives';
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';

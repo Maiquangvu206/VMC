@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Equipment extends Model
 {
-    protected $table = 'equipment';
+    protected $table = 'Equipment';
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class BirthdayMailLog extends Model
 {
-    protected $table = 'birthday_mail_logs';
+    protected $table = 'Birthday_Mail_Logs';
     public $timestamps = false;
 
     protected $fillable = [

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class FanpageDraft extends Model
 {
-    protected $table = 'fanpage_drafts';
+    protected $table = 'Fanpage_Drafts';
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';

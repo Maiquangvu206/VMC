@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class HomepageArticle extends Model
 {
-    protected $table = 'homepage_articles';
+    protected $table = 'Homepage_Articles';
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';
@@ -23,15 +23,15 @@ class HomepageArticle extends Model
         }
 
         try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('homepage_articles')) {
-                return $resolved = 'homepage_articles';
-            }
             if (\Illuminate\Support\Facades\Schema::hasTable('Homepage_Articles')) {
                 return $resolved = 'Homepage_Articles';
             }
+            if (\Illuminate\Support\Facades\Schema::hasTable('homepage_articles')) {
+                return $resolved = 'homepage_articles';
+            }
         } catch (\Throwable $e) {}
 
-        return $resolved = 'homepage_articles';
+        return $resolved = 'Homepage_Articles';
     }
 
     protected $fillable = [

@@ -308,12 +308,12 @@ const ImageSlider = ({
           {fitMode === 'contain' ? (
             <>
               <Expand className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-              <span className="hidden sm:inline text-force-white font-bold" style={{ color: '#ffffff' }}>Trọn vẹn</span>
+              <span className="hidden sm:inline text-force-white font-bold" style={{ color: '#ffffff' }}>Zoom in</span>
             </>
           ) : (
             <>
               <Shrink className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-              <span className="hidden sm:inline text-force-white font-bold" style={{ color: '#ffffff' }}>Lấp đầy</span>
+              <span className="hidden sm:inline text-force-white font-bold" style={{ color: '#ffffff' }}>Zoom out</span>
             </>
           )}
         </button>

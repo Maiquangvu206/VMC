@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Finance extends Model
 {
-    protected $table = 'finances';
+    protected $table = 'Finances';
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class SystemSetting extends Model
 {
-    protected $table = 'system_settings';
+    protected $table = 'System_Settings';
     protected $primaryKey = 'setting_key';
     public $incrementing = false;
     protected $keyType = 'string';

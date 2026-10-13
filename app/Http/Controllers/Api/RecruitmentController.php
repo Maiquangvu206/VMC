@@ -451,7 +451,7 @@ class RecruitmentController extends Controller
                 $avgScore = $scoresCount > 0 ? round($totalSum / $scoresCount, 2) : 0;
                 $evalId = 'eval-' . $targetId . '-' . $interviewerId . '-' . $rType;
 
-                DB::table('recruitment_evaluations')->upsert([
+                DB::table('Recruitment_Evaluations')->upsert([
                     'id' => $evalId,
                     'season_id' => $seasonId,
                     'candidate_id' => $targetId,
@@ -509,7 +509,7 @@ class RecruitmentController extends Controller
             // Auto-backfill scores into Recruitment_Evaluations with MySQL 8.4 ONLY_FULL_GROUP_BY compliance
             try {
                 DB::statement("
-                    INSERT INTO `recruitment_evaluations` (`id`, `candidate_id`, `interview_code`, `season_id`, `interviewer_id`, `round_type`, `total_score`, `avg_score`, `comments`)
+                    INSERT INTO `Recruitment_Evaluations` (`id`, `candidate_id`, `interview_code`, `season_id`, `interviewer_id`, `round_type`, `total_score`, `avg_score`, `comments`)
                     SELECT 
                       CONCAT('eval-', `s`.`candidate_id`, '-', COALESCE(`s`.`interviewer_id`, '0'), '-', COALESCE(ANY_VALUE(`cr`.`round_type`), 'don')) AS `id`,
                       `s`.`candidate_id`,
@@ -520,12 +520,12 @@ class RecruitmentController extends Controller
                       ROUND(COALESCE(SUM(`s`.`score`), 0), 2) AS `total_score`,
                       ROUND(COALESCE(SUM(`s`.`score`) / NULLIF(COUNT(`s`.`score`), 0), AVG(`s`.`score`), 0), 2) AS `avg_score`,
                       MAX(`s`.`comments`) AS `comments`
-                    FROM `recruitment_scores` `s`
-                    LEFT JOIN `recruitment_criteria` `cr` ON `s`.`criteria_id` = `cr`.`id`
-                    LEFT JOIN `recruitment_candidates` `c` ON (`s`.`candidate_id` = `c`.`id` OR `s`.`candidate_id` = `c`.`interview_code`)
+                    FROM `Recruitment_Scores` `s`
+                    LEFT JOIN `Recruitment_Criteria` `cr` ON `s`.`criteria_id` = `cr`.`id`
+                    LEFT JOIN `Recruitment_Candidates` `c` ON (`s`.`candidate_id` = `c`.`id` OR `s`.`candidate_id` = `c`.`interview_code`)
                     WHERE (`s`.`season_id` = ? OR `s`.`season_id` IS NULL OR `s`.`season_id` = ''
-                       OR `s`.`candidate_id` IN (SELECT `id` FROM `recruitment_candidates` WHERE `season_id` = ?)
-                       OR `s`.`candidate_id` IN (SELECT `interview_code` FROM `recruitment_candidates` WHERE `season_id` = ?))
+                       OR `s`.`candidate_id` IN (SELECT `id` FROM `Recruitment_Candidates` WHERE `season_id` = ?)
+                       OR `s`.`candidate_id` IN (SELECT `interview_code` FROM `Recruitment_Candidates` WHERE `season_id` = ?))
                     GROUP BY `s`.`candidate_id`, `s`.`interviewer_id`, COALESCE(NULLIF(`cr`.`round_type`, ''), 'don')
                     ON DUPLICATE KEY UPDATE 
                       `total_score` = VALUES(`total_score`),
@@ -536,13 +536,13 @@ class RecruitmentController extends Controller
             } catch (\Throwable $e) {}
 
             // Fetch detailed scores joined with criteria and members
-            $detailedScoresRows = DB::table('recruitment_scores as s')
-                ->leftJoin('members as u', function ($j) {
+            $detailedScoresRows = DB::table('Recruitment_Scores as s')
+                ->leftJoin('Members as u', function ($j) {
                     $j->on('s.interviewer_id', '=', 'u.id')
                       ->orOn('s.interviewer_id', '=', 'u.member_code')
                       ->orOn('s.interviewer_id', '=', 'u.username');
                 })
-                ->leftJoin('recruitment_criteria as cr', 's.criteria_id', '=', 'cr.id')
+                ->leftJoin('Recruitment_Criteria as cr', 's.criteria_id', '=', 'cr.id')
                 ->select(
                     's.candidate_id', 's.interviewer_id', 's.criteria_id', 's.score', 's.comments', 's.created_at',
                     DB::raw("COALESCE(u.full_name, s.interviewer_id) as interviewer_name"),
@@ -558,13 +558,13 @@ class RecruitmentController extends Controller
                 })
                 ->get();
 
-            $commentsRows = DB::table('recruitment_scores as s')
-                ->leftJoin('members as u', function ($j) {
+            $commentsRows = DB::table('Recruitment_Scores as s')
+                ->leftJoin('Members as u', function ($j) {
                     $j->on('s.interviewer_id', '=', 'u.id')
                       ->orOn('s.interviewer_id', '=', 'u.member_code')
                       ->orOn('s.interviewer_id', '=', 'u.username');
                 })
-                ->leftJoin('recruitment_criteria as cr', 's.criteria_id', '=', 'cr.id')
+                ->leftJoin('Recruitment_Criteria as cr', 's.criteria_id', '=', 'cr.id')
                 ->select(
                     's.candidate_id', 's.interviewer_id', 's.comments',
                     DB::raw("COALESCE(u.full_name, s.interviewer_id) as interviewer_name"),
@@ -806,8 +806,8 @@ class RecruitmentController extends Controller
             $interviewerId = $request->query('interviewer_id');
             $roundType = $request->query('round_type');
 
-            $query = DB::table('recruitment_scores as s')
-                ->leftJoin('recruitment_criteria as cr', 's.criteria_id', '=', 'cr.id')
+            $query = DB::table('Recruitment_Scores as s')
+                ->leftJoin('Recruitment_Criteria as cr', 's.criteria_id', '=', 'cr.id')
                 ->where('s.interviewer_id', $interviewerId)
                 ->where(function ($q) use ($seasonId) {
                     $q->where('s.season_id', $seasonId)

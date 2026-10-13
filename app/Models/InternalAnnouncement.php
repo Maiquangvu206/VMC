@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class InternalAnnouncement extends Model
 {
-    protected $table = 'internal_announcements';
+    protected $table = 'Internal_Announcements';
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';

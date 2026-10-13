@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class HomepageMedia extends Model
 {
-    protected $table = 'homepage_media';
+    protected $table = 'Homepage_Media';
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';
@@ -23,15 +23,15 @@ class HomepageMedia extends Model
         }
 
         try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('homepage_media')) {
-                return $resolved = 'homepage_media';
-            }
             if (\Illuminate\Support\Facades\Schema::hasTable('Homepage_Media')) {
                 return $resolved = 'Homepage_Media';
             }
+            if (\Illuminate\Support\Facades\Schema::hasTable('homepage_media')) {
+                return $resolved = 'homepage_media';
+            }
         } catch (\Throwable $e) {}
 
-        return $resolved = 'homepage_media';
+        return $resolved = 'Homepage_Media';
     }
 
     protected $fillable = [

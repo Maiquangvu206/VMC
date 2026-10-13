@@ -14,23 +14,36 @@ class TaskController extends Controller
     public function index()
     {
         try {
-            $tasks = DB::table('tasks as t')
-                ->select(
-                    't.*',
-                    DB::raw('(SELECT m2.full_name FROM `members` m2 WHERE CAST(m2.id AS CHAR) = CAST(t.assignee_id AS CHAR) LIMIT 1) as assignee_name_by_id'),
-                    DB::raw('(SELECT m3.full_name FROM `members` m3 WHERE UPPER(m3.member_code) = UPPER(t.assignee_id) LIMIT 1) as assignee_name_by_code')
-                )
-                ->orderBy('t.created_at', 'desc')
+            $tasks = DB::table('Tasks')
+                ->orderBy('created_at', 'desc')
                 ->get();
 
-            $data = $tasks->map(function ($t) {
+            $members = DB::table('Members')
+                ->select('id', 'member_code', 'full_name')
+                ->get();
+
+            $memberMap = [];
+            foreach ($members as $m) {
+                if ($m->id !== null) {
+                    $memberMap[(string) $m->id] = (string) $m->full_name;
+                }
+                if (!empty($m->member_code)) {
+                    $memberMap[strtoupper((string) $m->member_code)] = (string) $m->full_name;
+                }
+            }
+
+            $data = $tasks->map(function ($t) use ($memberMap) {
+                $rawAssignee = trim((string) $t->assignee_id);
+                $assigneeName = $memberMap[$rawAssignee]
+                    ?? ($memberMap[strtoupper($rawAssignee)] ?? 'Chưa phân công');
+
                 return [
                     'id' => $t->id,
                     'title' => $t->title,
                     'description' => $t->description,
                     'department' => $t->department ?: 'hr_external',
                     'assigneeId' => $t->assignee_id,
-                    'assignee' => $t->assignee_name_by_id ?: ($t->assignee_name_by_code ?: 'Chưa phân công'),
+                    'assignee' => $assigneeName,
                     'createdById' => $t->created_by,
                     'deadline' => $t->deadline ? substr($t->deadline, 0, 10) : null,
                     'status' => $t->status ?: 'todo',

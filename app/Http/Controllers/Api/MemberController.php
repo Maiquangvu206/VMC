@@ -18,14 +18,28 @@ class MemberController extends Controller
     public function index()
     {
         try {
-            $members = Member::whereRaw("LOWER(username) != 'admin'")
-                ->whereRaw("UPPER(member_code) != 'ADMIN'")
+            $members = Member::where('username', '!=', 'admin')
+                ->where('member_code', '!=', 'ADMIN')
                 ->orderBy('id', 'asc')
                 ->get();
 
             $allMilestones = MemberMilestone::orderBy('created_at', 'asc')->get();
 
-            $data = $members->map(function ($m) use ($allMilestones) {
+            $milestonesGrouped = [];
+            foreach ($allMilestones as $ms) {
+                $item = [
+                    'id' => $ms->id,
+                    'date' => $ms->date,
+                    'title' => $ms->title,
+                    'badgeText' => $ms->badge_text,
+                    'badgeStyle' => $ms->badge_style,
+                ];
+                $mid = (string) $ms->member_id;
+                $milestonesGrouped[$mid][] = $item;
+                $milestonesGrouped[strtoupper($mid)][] = $item;
+            }
+
+            $data = $members->map(function ($m) use ($milestonesGrouped) {
                 $parsed = [];
                 if (!empty($m->milestones)) {
                     $parsed = is_string($m->milestones) 
@@ -34,18 +48,9 @@ class MemberController extends Controller
                 }
                 if (!is_array($parsed)) $parsed = [];
 
-                $msFromTable = $allMilestones->filter(function ($ms) use ($m) {
-                    return (string) $ms->member_id === (string) $m->id 
-                        || strtoupper((string) $ms->member_id) === strtoupper((string) $m->member_code);
-                })->map(function ($ms) {
-                    return [
-                        'id' => $ms->id,
-                        'date' => $ms->date,
-                        'title' => $ms->title,
-                        'badgeText' => $ms->badge_text,
-                        'badgeStyle' => $ms->badge_style,
-                    ];
-                })->values()->toArray();
+                $mid = (string) $m->id;
+                $mCode = strtoupper((string) $m->member_code);
+                $msFromTable = $milestonesGrouped[$mid] ?? ($milestonesGrouped[$mCode] ?? []);
 
                 $combined = array_merge($msFromTable, $parsed);
                 // Unique by id or title+date
@@ -319,15 +324,15 @@ class MemberController extends Controller
             $mCode = (string) $member->member_code;
             $mUser = (string) $member->username;
 
-            DB::table('member_milestones')->where('member_id', $mId)->orWhere('member_id', $mCode)->delete();
-            DB::table('birthday_assignments')->where('member_id', $mId)->orWhere('member_id', $mCode)->delete();
-            DB::table('birthday_mail_logs')->where('member_id', $mId)->orWhere('member_id', $mCode)->delete();
-            DB::table('meeting_attendance')->where('member_id', $mId)->orWhere('member_id', $mCode)->delete();
-            DB::table('user_sessions')->where('member_id', $mId)->orWhere('member_id', $mCode)->orWhere('username', $mUser)->delete();
-            if (DB::getSchemaBuilder()->hasTable('user_logins')) {
-                DB::table('user_logins')->where('member_id', $mId)->orWhere('member_id', $mCode)->orWhere('username', $mUser)->delete();
+            DB::table('Member_Milestones')->where('member_id', $mId)->orWhere('member_id', $mCode)->delete();
+            DB::table('Birthday_Assignments')->where('member_id', $mId)->orWhere('member_id', $mCode)->delete();
+            DB::table('Birthday_Mail_Logs')->where('member_id', $mId)->orWhere('member_id', $mCode)->delete();
+            DB::table('Meeting_Attendance')->where('member_id', $mId)->orWhere('member_id', $mCode)->delete();
+            DB::table('User_Sessions')->where('member_id', $mId)->orWhere('member_id', $mCode)->orWhere('username', $mUser)->delete();
+            if (DB::getSchemaBuilder()->hasTable('User_Logins')) {
+                DB::table('User_Logins')->where('member_id', $mId)->orWhere('member_id', $mCode)->orWhere('username', $mUser)->delete();
             }
-            DB::table('tasks')->where('assignee_id', $mId)->orWhere('created_by', $mId)->delete();
+            DB::table('Tasks')->where('assignee_id', $mId)->orWhere('created_by', $mId)->delete();
 
             $member->delete();
 

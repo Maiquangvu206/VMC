@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class TaskDeadlineMailLog extends Model
 {
-    protected $table = 'task_deadline_mail_logs';
+    protected $table = 'Task_Deadline_Mail_Logs';
     public $timestamps = false;
 
     protected $fillable = [

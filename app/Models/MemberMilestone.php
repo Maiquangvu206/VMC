@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class MemberMilestone extends Model
 {
-    protected $table = 'member_milestones';
+    protected $table = 'Member_Milestones';
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';

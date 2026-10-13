@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class RecruitmentCandidate extends Model
 {
-    protected $table = 'recruitment_candidates';
+    protected $table = 'Recruitment_Candidates';
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';
