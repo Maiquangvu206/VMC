@@ -129,6 +129,7 @@ class HomepageController extends Controller
                 ]
             ]);
         } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('storeArticle error: ' . $e->getMessage());
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
@@ -143,6 +144,7 @@ class HomepageController extends Controller
             $this->syncArticlesToSettings();
             return response()->json(['success' => true]);
         } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('destroyArticle error: ' . $e->getMessage());
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
@@ -253,6 +255,7 @@ class HomepageController extends Controller
                 ]
             ]);
         } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('storeMedia error: ' . $e->getMessage());
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
@@ -267,6 +270,7 @@ class HomepageController extends Controller
             $this->syncMediaToSettings();
             return response()->json(['success' => true]);
         } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('destroyMedia error: ' . $e->getMessage());
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }

@@ -1348,29 +1348,31 @@ export const InternalHRDashboard = () => {
                     <div key={m.id} className="ds-card p-5 space-y-4">
                       <div className="flex items-center justify-between border-b border-[var(--border-default)] pb-3">
                         <div
-                          className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+                          className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity min-w-0 flex-1 mr-2"
                           onClick={() => {
                             const fullMember = (members || []).find(mem => String(mem.id) === String(m.id) || (m.memberCode && String(mem.memberCode) === String(m.memberCode))) || m;
                             setSelectedMember(fullMember);
                           }}
                           title="Bấm để xem chi tiết thông tin thành viên"
                         >
+                          <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-gradient-to-tr from-blue-600 to-indigo-600 border border-blue-500/30 flex items-center justify-center font-bold text-white text-base shadow-sm">
                             {(m.avatar || m.avatar_url) ? (
                               <img
                                 src={m.avatar || m.avatar_url}
                                 alt={m.name}
-                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                onError={(e) => { e.currentTarget.src = '/vmc-logo.jpg'; }}
                                 className="w-full h-full object-cover"
                               />
                             ) : (
-                              m.name?.substring(0, 1) || 'V'
+                              <span>{m.name?.substring(0, 1) || 'V'}</span>
                             )}
-                          <div>
-                            <div className="font-bold text-slate-100 hover:text-blue-400 transition-colors">{m.name}</div>
-                            <div className="text-xs text-slate-400">{m.deptName || m.department} • {m.memberCode}</div>
+                          </div>
+                          <div className="min-w-0 flex-1 overflow-hidden">
+                            <div className="font-bold text-slate-100 hover:text-blue-400 transition-colors truncate">{m.name}</div>
+                            <div className="text-xs text-slate-400 truncate">{m.deptName || m.department} • {m.memberCode}</div>
                           </div>
                         </div>
-                        <div className="text-right flex items-center gap-2">
+                        <div className="text-right flex items-center gap-2 shrink-0">
                           <span className="text-xs font-semibold px-2 py-1 rounded bg-blue-500/20 text-blue-300">
                             {completedTasks.length}/{mTasks.length} Hoàn thành
                           </span>
