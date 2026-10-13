@@ -66,8 +66,12 @@ export const fetchMembersFromDatabaseAPI = async () => {
     if (result.success && Array.isArray(result.data)) {
       return result.data.map(item => ({
         id: item.id,
-        avatar: item.avatar || item.avatar_url || null,
-        avatar_url: item.avatar || item.avatar_url || null,
+        avatar: (item.avatar && item.avatar !== 'NULL' && item.avatar !== 'null')
+          ? item.avatar
+          : ((item.avatar_url && item.avatar_url !== 'NULL' && item.avatar_url !== 'null') ? item.avatar_url : null),
+        avatar_url: (item.avatar_url && item.avatar_url !== 'NULL' && item.avatar_url !== 'null')
+          ? item.avatar_url
+          : ((item.avatar && item.avatar !== 'NULL' && item.avatar !== 'null') ? item.avatar : null),
         name: item.name || item.full_name,
         username: item.username,
         password: item.password,

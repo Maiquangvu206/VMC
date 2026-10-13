@@ -343,11 +343,23 @@ export const BirthdayManagement = () => {
                   title="Bấm để xem chi tiết thông tin thành viên"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <img
-                      src={m.avatar}
-                      alt={m.name}
-                      className="w-10 h-10 rounded-lg object-cover border border-pink-500/30 shrink-0"
-                    />
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500/20 to-purple-500/20 text-pink-300 flex items-center justify-center font-bold text-sm shrink-0 border border-pink-500/30 overflow-hidden shadow-inner select-none">
+                      {m.avatar && m.avatar !== 'NULL' && m.avatar !== 'null' ? (
+                        <img
+                          src={m.avatar}
+                          alt={m.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const fallback = e.currentTarget.nextElementSibling;
+                            if (fallback) fallback.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <span className={m.avatar && m.avatar !== 'NULL' && m.avatar !== 'null' ? 'hidden' : 'flex items-center justify-center w-full h-full'}>
+                        {(m.name || 'V').trim().split(' ').slice(-1)[0]?.charAt(0).toUpperCase() || 'V'}
+                      </span>
+                    </div>
                     <div className="min-w-0">
                       <div className="font-bold text-xs text-[var(--text-primary)] truncate">{m.name}</div>
                       <div className="text-[10px] text-[var(--text-muted)] truncate">{m.deptName || m.department || 'Ban Chuyên Môn'}</div>
@@ -562,12 +574,22 @@ export const BirthdayManagement = () => {
                           onClick={() => handleOpenMemberDetail(m)}
                           title="Bấm để xem chi tiết thông tin thành viên"
                         >
-                          <div className="w-8 h-8 rounded-full bg-pink-500/20 text-pink-400 flex items-center justify-center font-bold shrink-0 border border-pink-500/30 overflow-hidden">
-                            {m.avatar ? (
-                              <img src={m.avatar} alt={m.name} className="w-full h-full object-cover" />
-                            ) : (
-                              (m.name || 'V').charAt(0)
-                            )}
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500/20 to-purple-500/20 text-pink-400 flex items-center justify-center font-bold text-xs shrink-0 border border-pink-500/30 overflow-hidden shadow-inner select-none">
+                            {m.avatar && m.avatar !== 'NULL' && m.avatar !== 'null' ? (
+                              <img
+                                src={m.avatar}
+                                alt={m.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  const fallback = e.currentTarget.nextElementSibling;
+                                  if (fallback) fallback.style.display = 'flex';
+                                }}
+                              />
+                            ) : null}
+                            <span className={m.avatar && m.avatar !== 'NULL' && m.avatar !== 'null' ? 'hidden' : 'flex items-center justify-center w-full h-full'}>
+                              {(m.name || 'V').trim().split(' ').slice(-1)[0]?.charAt(0).toUpperCase() || 'V'}
+                            </span>
                           </div>
                           <div className="min-w-0">
                             <div className="font-bold text-[var(--text-primary)] truncate hover:text-pink-400 transition-colors">{m.name}</div>

@@ -186,7 +186,23 @@ export const AttendanceModal = () => {
                         : 'border-[var(--border-default)] text-slate-400 hover:text-white'
                         }`}
                     >
-                      <img src={m.avatar} alt={m.name} className="w-7 h-7 rounded-full object-cover shrink-0" />
+                      <div className="w-7 h-7 rounded-full bg-blue-500/20 text-blue-300 flex items-center justify-center font-bold text-[10px] shrink-0 border border-blue-500/30 overflow-hidden shadow-inner select-none">
+                        {m.avatar && m.avatar !== 'NULL' && m.avatar !== 'null' ? (
+                          <img
+                            src={m.avatar}
+                            alt={m.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              const fallback = e.currentTarget.nextElementSibling;
+                              if (fallback) fallback.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <span className={m.avatar && m.avatar !== 'NULL' && m.avatar !== 'null' ? 'hidden' : 'flex items-center justify-center w-full h-full'}>
+                          {(m.name || 'V').trim().split(' ').slice(-1)[0]?.charAt(0).toUpperCase() || 'V'}
+                        </span>
+                      </div>
                       <div className="truncate flex-1">
                         <div className="truncate text-xs">{m.name}</div>
                         <div className="text-[10px] text-slate-400 truncate">{m.deptName}</div>

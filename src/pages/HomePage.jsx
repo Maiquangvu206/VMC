@@ -73,7 +73,7 @@ const getVideoEmbedInfo = (url, autoplay = true) => {
     return {
       platform: 'youtube',
       videoId,
-      embedUrl: `https://www.youtube.com/embed/${videoId}?autoplay=${autoplay ? 1 : 0}&mute=0&rel=0&playsinline=1&enablejsapi=1${originParam}`
+      embedUrl: `https://www.youtube.com/embed/${videoId}?autoplay=${autoplay ? 1 : 0}&mute=1&rel=0&playsinline=1&enablejsapi=1${originParam}`
     };
   }
 
@@ -83,7 +83,7 @@ const getVideoEmbedInfo = (url, autoplay = true) => {
     const autoParam = autoplay ? 'true' : 'false';
     return {
       platform: 'facebook',
-      embedUrl: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(trimmed)}&show_text=false&autoplay=${autoParam}&mute=false`
+      embedUrl: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(trimmed)}&show_text=false&autoplay=${autoParam}`
     };
   }
 
@@ -391,7 +391,7 @@ const ImageSlider = ({
 
 // Trình phát video chuyên dụng trong Modal: Tự phát kèm âm thanh, tự phục hồi khi trình duyệt chặn tiếng và cung cấp nút điều khiển âm thanh nổi
 const ModalVideoPlayer = ({ url, title = 'Video', className = '' }) => {
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const [unmutedFeedback, setUnmutedFeedback] = useState(false);
   const iframeRef = useRef(null);
   const videoRef = useRef(null);
@@ -545,7 +545,7 @@ const ModalVideoPlayer = ({ url, title = 'Video', className = '' }) => {
             src={videoInfo.embedUrl}
             title={title}
             className="w-full h-full rounded-2xl border-0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allow="autoplay *; clipboard-write; encrypted-media; picture-in-picture; web-share; fullscreen"
             allowFullScreen
             scrolling="no"
             onLoad={() => {
@@ -570,35 +570,6 @@ const ModalVideoPlayer = ({ url, title = 'Video', className = '' }) => {
           }}
         />
       )}
-
-      {/* Nút điều khiển âm thanh nổi cao cấp (Floating Audio Controller) */}
-      <div className="absolute top-3 left-3 z-30 pointer-events-auto">
-        <button
-          type="button"
-          onClick={handleToggleSound}
-          title={isMuted ? "Bấm để bật âm thanh" : "Bấm để tắt tiếng"}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full backdrop-blur-md border text-xs font-bold transition-all duration-300 shadow-xl active:scale-95 cursor-pointer ${isMuted
-              ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-300 animate-pulse ring-2 ring-amber-400/40'
-              : unmutedFeedback
-                ? 'bg-emerald-600/95 hover:bg-emerald-500 text-white border-emerald-300 ring-2 ring-emerald-400/40'
-                : 'bg-slate-950/80 hover:bg-slate-900 text-white border-white/20'
-            }`}
-        >
-          {isMuted ? (
-            <>
-              <VolumeX className="w-4 h-4 text-slate-950 shrink-0" />
-              <span className="font-bold tracking-tight">Bật âm thanh</span>
-            </>
-          ) : (
-            <>
-              <Volume2 className={`w-4 h-4 shrink-0 ${unmutedFeedback ? 'text-white' : 'text-cyan-400'}`} />
-              <span className="font-semibold tracking-tight">
-                {unmutedFeedback ? 'Đã bật âm thanh' : 'Âm thanh bật'}
-              </span>
-            </>
-          )}
-        </button>
-      </div>
     </div>
   );
 };

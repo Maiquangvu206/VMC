@@ -12,8 +12,16 @@ export const InternalDrafts = () => {
     isNewDraftModalOpen,
     setIsNewDraftModalOpen,
     currentUser,
-    showToast
+    showToast,
+    isAdvisor: isAdvisorFromContext
   } = useClub();
+
+  const isAdvisor = isAdvisorFromContext || Boolean(
+    currentUser?.roleTitle?.toLowerCase().includes('cố vấn') ||
+    currentUser?.roleTitle?.toLowerCase().includes('advisor') ||
+    currentUser?.deptName?.toLowerCase().includes('cố vấn') ||
+    currentUser?.department?.toLowerCase().includes('cố vấn')
+  );
 
   const canApproveDraft = !isAdvisor && Boolean(
     currentUser?.role === 'admin' ||
