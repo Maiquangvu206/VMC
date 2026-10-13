@@ -163,11 +163,6 @@ class SystemSettingController extends Controller
                 $staleMedia->setting_value = '[]';
                 $staleMedia->save();
             }
-
-            // Tự động khởi tạo bảng chuyên biệt nếu server chưa có
-            try {
-                (new HomepageController())->ensureHomepageTablesExist();
-            } catch (\Throwable $e) {}
         } catch (\Throwable $e) {
             // Log without failing
         }

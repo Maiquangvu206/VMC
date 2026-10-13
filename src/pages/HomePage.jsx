@@ -406,7 +406,7 @@ const ModalVideoPlayer = ({ url, title = 'Video', className = '' }) => {
           '*'
         );
       }
-    } catch {}
+    } catch { }
   }, []);
 
   // Tự động bật âm thanh và đặt âm lượng tối đa 100% cho YouTube
@@ -434,7 +434,7 @@ const ModalVideoPlayer = ({ url, title = 'Video', className = '' }) => {
       if (iframeRef.current?.contentWindow) {
         iframeRef.current.contentWindow.postMessage(JSON.stringify({ event: 'listening' }), '*');
       }
-    } catch {}
+    } catch { }
 
     // Gửi lệnh unMute liên tiếp theo các mốc thời gian để đón đầu quá trình khởi tạo player
     const timers = [
@@ -451,7 +451,7 @@ const ModalVideoPlayer = ({ url, title = 'Video', className = '' }) => {
         if (data?.event === 'onReady' || data?.info?.playerState !== undefined) {
           unmuteYouTube();
         }
-      } catch {}
+      } catch { }
     };
 
     window.addEventListener('message', handleMessage);
@@ -479,7 +479,7 @@ const ModalVideoPlayer = ({ url, title = 'Video', className = '' }) => {
         try {
           v.muted = true;
           await v.play();
-        } catch {}
+        } catch { }
         setIsMuted(true);
       }
     };
@@ -498,7 +498,7 @@ const ModalVideoPlayer = ({ url, title = 'Video', className = '' }) => {
         videoRef.current.play().then(() => {
           setIsMuted(false);
           setUnmutedFeedback(true);
-        }).catch(() => {});
+        }).catch(() => { });
       }
     };
 
@@ -577,13 +577,12 @@ const ModalVideoPlayer = ({ url, title = 'Video', className = '' }) => {
           type="button"
           onClick={handleToggleSound}
           title={isMuted ? "Bấm để bật âm thanh" : "Bấm để tắt tiếng"}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full backdrop-blur-md border text-xs font-bold transition-all duration-300 shadow-xl active:scale-95 cursor-pointer ${
-            isMuted
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full backdrop-blur-md border text-xs font-bold transition-all duration-300 shadow-xl active:scale-95 cursor-pointer ${isMuted
               ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-300 animate-pulse ring-2 ring-amber-400/40'
               : unmutedFeedback
                 ? 'bg-emerald-600/95 hover:bg-emerald-500 text-white border-emerald-300 ring-2 ring-emerald-400/40'
                 : 'bg-slate-950/80 hover:bg-slate-900 text-white border-white/20'
-          }`}
+            }`}
         >
           {isMuted ? (
             <>
@@ -889,7 +888,7 @@ export const HomePage = ({ onOpenLogin }) => {
   );
 
   // Quyền quản lý/soạn bài: Chỉ Ban Chủ Nhiệm và các Trưởng, Phó ban (Ban Cố Vấn và thành viên thường KHÔNG có quyền)
-  const canManage = !isAdvisor && Boolean(isSuperAdmin || isAdmin || isBCN || isDeptLeader || canManageArticlesFromContext);
+  const canManage = !isAdvisor && Boolean(isSuperAdmin || isAdmin);
 
   // States dữ liệu - Nạp ngay từ Cache tức thì (0ms latency khi reload trang)
   const [info, setInfo] = useState(() => getCachedData('homepage_info') || DEFAULT_HOMEPAGE_INFO);
