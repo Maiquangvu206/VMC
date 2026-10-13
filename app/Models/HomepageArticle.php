@@ -12,6 +12,28 @@ class HomepageArticle extends Model
     protected $keyType = 'string';
     public $timestamps = true;
 
+    /**
+     * Tự động tương thích với cả 2 định dạng chữ hoa/thường trên Linux MySQL (Ubuntu 26.04)
+     */
+    public function getTable()
+    {
+        static $resolved = null;
+        if ($resolved !== null) {
+            return $resolved;
+        }
+
+        try {
+            if (\Illuminate\Support\Facades\Schema::hasTable('homepage_articles')) {
+                return $resolved = 'homepage_articles';
+            }
+            if (\Illuminate\Support\Facades\Schema::hasTable('Homepage_Articles')) {
+                return $resolved = 'Homepage_Articles';
+            }
+        } catch (\Throwable $e) {}
+
+        return $resolved = 'homepage_articles';
+    }
+
     protected $fillable = [
         'id',
         'title',

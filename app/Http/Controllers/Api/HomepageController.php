@@ -20,10 +20,13 @@ class HomepageController extends Controller
         try {
             $articles = HomepageArticle::orderBy('is_pinned', 'desc')
                 ->orderBy('created_at', 'desc')
-                ->get();
+                ->get()
+                ->reject(function ($art) {
+                    return in_array($art->id, ['art-1', 'art-2', 'art-3']) || str_contains($art->title, 'Hành Trình 6 Năm');
+                });
 
             // Map thuộc tính chuẩn camelCase cho giao diện React (không tự ý gen dữ liệu mẫu)
-            $formatted = $articles->map(function ($art) {
+            $formatted = $articles->values()->map(function ($art) {
                 return [
                     'id' => (string)$art->id,
                     'title' => (string)$art->title,
@@ -44,6 +47,7 @@ class HomepageController extends Controller
 
             return response()->json(['success' => true, 'data' => $formatted]);
         } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('indexArticles error: ' . $e->getMessage());
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
@@ -150,9 +154,13 @@ class HomepageController extends Controller
     public function indexMedia()
     {
         try {
-            $mediaList = HomepageMedia::orderBy('created_at', 'desc')->get();
+            $mediaList = HomepageMedia::orderBy('created_at', 'desc')
+                ->get()
+                ->reject(function ($item) {
+                    return in_array($item->id, ['med-1', 'med-2', 'med-3', 'med-4', 'med-5', 'med-6']);
+                });
 
-            $formatted = $mediaList->map(function ($item) {
+            $formatted = $mediaList->values()->map(function ($item) {
                 return [
                     'id' => (string)$item->id,
                     'title' => (string)$item->title,
@@ -170,6 +178,7 @@ class HomepageController extends Controller
 
             return response()->json(['success' => true, 'data' => $formatted]);
         } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('indexMedia error: ' . $e->getMessage());
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }

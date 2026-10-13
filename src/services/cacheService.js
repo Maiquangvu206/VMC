@@ -7,7 +7,7 @@
  */
 
 const CACHE_PREFIX = 'VMC_CACHE_';
-const CACHE_VERSION = 'v1.2';
+const CACHE_VERSION = 'v1.3';
 
 // Thời gian sống mặc định (TTL) cho từng loại dữ liệu ít biến động
 export const CACHE_TTL = {
@@ -33,7 +33,11 @@ export const getCachedData = (key) => {
     if (memoryCache.has(key)) {
       const memItem = memoryCache.get(key);
       if (memItem && memItem.version === CACHE_VERSION) {
-        return memItem.data;
+        let d = memItem.data;
+        if (Array.isArray(d)) {
+          d = d.filter(item => item && !['art-1', 'art-2', 'art-3', 'med-1', 'med-2', 'med-3', 'med-4', 'med-5', 'med-6'].includes(item.id) && !item.title?.includes('Hành Trình 6 Năm'));
+        }
+        return d;
       }
     }
 
@@ -47,9 +51,14 @@ export const getCachedData = (key) => {
       return null;
     }
 
+    let d = parsed.data;
+    if (Array.isArray(d)) {
+      d = d.filter(item => item && !['art-1', 'art-2', 'art-3', 'med-1', 'med-2', 'med-3', 'med-4', 'med-5', 'med-6'].includes(item.id) && !item.title?.includes('Hành Trình 6 Năm'));
+    }
+
     // Lưu ngược lại Memory Cache
-    memoryCache.set(key, parsed);
-    return parsed.data;
+    memoryCache.set(key, { ...parsed, data: d });
+    return d;
   } catch (e) {
     console.warn(`[CacheService] Lỗi đọc cache key "${key}":`, e);
     return null;

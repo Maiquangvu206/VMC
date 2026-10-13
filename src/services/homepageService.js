@@ -336,27 +336,31 @@ export const loadHomepageDataAPI = async (key, fallbackData) => {
         if (resArt.ok) {
           const jsonArt = await resArt.json();
           if (jsonArt.success && Array.isArray(jsonArt.data)) {
-            setCachedData('homepage_articles', jsonArt.data, CACHE_TTL.HOMEPAGE);
-            setCachedData(key, jsonArt.data, CACHE_TTL.HOMEPAGE);
-            return jsonArt.data;
+            const clean = jsonArt.data.filter(a => a && !['art-1', 'art-2', 'art-3'].includes(a.id) && !a.title?.includes('Hành Trình 6 Năm'));
+            setCachedData('homepage_articles', clean, CACHE_TTL.HOMEPAGE);
+            setCachedData(key, clean, CACHE_TTL.HOMEPAGE);
+            return clean;
           }
         }
       } catch {}
+      return [];
     } else if (key === 'VMC_HOMEPAGE_MEDIA') {
       try {
         const resMed = await fetch('/api/homepage/media', { headers: { 'ngrok-skip-browser-warning': 'true' } });
         if (resMed.ok) {
           const jsonMed = await resMed.json();
           if (jsonMed.success && Array.isArray(jsonMed.data)) {
-            setCachedData('homepage_media', jsonMed.data, CACHE_TTL.HOMEPAGE);
-            setCachedData(key, jsonMed.data, CACHE_TTL.HOMEPAGE);
-            return jsonMed.data;
+            const clean = jsonMed.data.filter(m => m && !['med-1', 'med-2', 'med-3', 'med-4', 'med-5', 'med-6'].includes(m.id));
+            setCachedData('homepage_media', clean, CACHE_TTL.HOMEPAGE);
+            setCachedData(key, clean, CACHE_TTL.HOMEPAGE);
+            return clean;
           }
         }
       } catch {}
+      return [];
     }
 
-    // 3. Fallback: Fetch từ System_Settings
+    // 3. Fallback: Fetch từ System_Settings (chỉ dùng cho config, không dùng cho bài viết và kho ảnh)
     const res = await fetch('/api/admin/system-settings', {
       headers: { 'ngrok-skip-browser-warning': 'true' }
     });
@@ -391,35 +395,21 @@ export const fetchAllHomepageData = async () => {
 
     const settingsData = (settingsRes.status === 'fulfilled' && settingsRes.value?.success) ? settingsRes.value.data : {};
 
-    // Xử lý Articles: ưu tiên từ bảng Homepage_Articles nếu API thành công (kể cả mảng rỗng do chưa đăng hoặc đã xóa)
-    let articles = null;
+    // Xử lý Articles: CHỈ lấy từ bảng CSDL quan hệ /api/homepage/articles (hoặc rỗng nếu chưa có bài nào)
+    let articles = [];
     if (articlesRes.status === 'fulfilled' && articlesRes.value?.success && Array.isArray(articlesRes.value.data)) {
       articles = articlesRes.value.data;
-    } else if (settingsData?.VMC_HOMEPAGE_ARTICLES !== undefined && settingsData?.VMC_HOMEPAGE_ARTICLES !== null) {
-      try {
-        const parsed = JSON.parse(settingsData.VMC_HOMEPAGE_ARTICLES);
-        if (Array.isArray(parsed)) articles = parsed;
-      } catch {}
     }
-    if (articles === null) {
-      const cached = getCachedData('homepage_articles');
-      articles = Array.isArray(cached) ? cached : [];
-    }
+    // Thanh trừng triệt để dữ liệu mẫu (mock data) cũ
+    articles = articles.filter(a => a && !['art-1', 'art-2', 'art-3'].includes(a.id) && !a.title?.includes('Hành Trình 6 Năm'));
 
-    // Xử lý Media: ưu tiên từ bảng Homepage_Media nếu API thành công (kể cả mảng rỗng)
-    let media = null;
+    // Xử lý Media: CHỈ lấy từ bảng CSDL quan hệ /api/homepage/media (hoặc rỗng nếu chưa có mục nào)
+    let media = [];
     if (mediaRes.status === 'fulfilled' && mediaRes.value?.success && Array.isArray(mediaRes.value.data)) {
       media = mediaRes.value.data;
-    } else if (settingsData?.VMC_HOMEPAGE_MEDIA !== undefined && settingsData?.VMC_HOMEPAGE_MEDIA !== null) {
-      try {
-        const parsed = JSON.parse(settingsData.VMC_HOMEPAGE_MEDIA);
-        if (Array.isArray(parsed)) media = parsed;
-      } catch {}
     }
-    if (media === null) {
-      const cached = getCachedData('homepage_media');
-      media = Array.isArray(cached) ? cached : [];
-    }
+    // Thanh trừng triệt để dữ liệu mẫu (mock data) cũ
+    media = media.filter(m => m && !['med-1', 'med-2', 'med-3', 'med-4', 'med-5', 'med-6'].includes(m.id));
 
     // Xử lý Info & Org
     let info = null;

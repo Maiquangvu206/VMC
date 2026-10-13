@@ -141,6 +141,29 @@ class SystemSettingController extends Controller
                     $setting->save();
                 }
             }
+
+            // Tự động thanh trừng triệt để dữ liệu mẫu (art-1, med-1) còn sót lại trong MySQL máy chủ production
+            $staleArticles = SystemSetting::where('setting_key', 'VMC_HOMEPAGE_ARTICLES')->first();
+            if ($staleArticles && (str_contains($staleArticles->setting_value, 'art-1') || str_contains($staleArticles->setting_value, 'Hành Trình 6 Năm'))) {
+                $staleArticles->setting_value = '[]';
+                $staleArticles->save();
+            }
+
+            $staleMedia = SystemSetting::where('setting_key', 'VMC_HOMEPAGE_MEDIA')->first();
+            if ($staleMedia && (str_contains($staleMedia->setting_value, 'med-1') || str_contains($staleMedia->setting_value, 'unsplash.com'))) {
+                $staleMedia->setting_value = '[]';
+                $staleMedia->save();
+            }
+
+            // Tự động chuẩn hóa tên bảng cho môi trường Ubuntu Linux (MySQL phân biệt hoa thường)
+            try {
+                if (Schema::hasTable('Homepage_Articles') && !Schema::hasTable('homepage_articles')) {
+                    Schema::rename('Homepage_Articles', 'homepage_articles');
+                }
+                if (Schema::hasTable('Homepage_Media') && !Schema::hasTable('homepage_media')) {
+                    Schema::rename('Homepage_Media', 'homepage_media');
+                }
+            } catch (\Throwable $e) {}
         } catch (\Throwable $e) {
             // Log without failing
         }

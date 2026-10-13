@@ -563,8 +563,8 @@ export const HomePage = ({ onOpenLogin }) => {
 
   // States dữ liệu - Nạp ngay từ Cache tức thì (0ms latency khi reload trang)
   const [info, setInfo] = useState(() => getCachedData('homepage_info') || DEFAULT_HOMEPAGE_INFO);
-  const [articles, setArticles] = useState(() => getCachedData('homepage_articles') || []);
-  const [mediaList, setMediaList] = useState(() => getCachedData('homepage_media') || []);
+  const [articles, setArticles] = useState(() => (getCachedData('homepage_articles') || []).filter(a => a && !['art-1', 'art-2', 'art-3'].includes(a.id) && !a.title?.includes('Hành Trình 6 Năm')));
+  const [mediaList, setMediaList] = useState(() => (getCachedData('homepage_media') || []).filter(m => m && !['med-1', 'med-2', 'med-3', 'med-4', 'med-5', 'med-6'].includes(m.id)));
   const [loading, setLoading] = useState(() => !getCachedData('homepage_info'));
   const [isSaving, setIsSaving] = useState(false);
 
