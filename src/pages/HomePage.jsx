@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useClub } from '../context/ClubContext';
 import {
   Sparkles,
@@ -38,7 +38,9 @@ import {
   Upload,
   Loader2,
   Expand,
-  Shrink
+  Shrink,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import {
   DEFAULT_HOMEPAGE_INFO,
@@ -66,10 +68,12 @@ const getVideoEmbedInfo = (url, autoplay = true) => {
     trimmed.match(/[?&]v=([\w-]{11})/i);
   if (ytMatch && ytMatch[1]) {
     const videoId = ytMatch[1];
-    const autoParam = autoplay ? 'autoplay=1&mute=0' : 'autoplay=0';
+    const origin = typeof window !== 'undefined' && window.location?.origin ? encodeURIComponent(window.location.origin) : '';
+    const originParam = origin ? `&origin=${origin}` : '';
     return {
       platform: 'youtube',
-      embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}?${autoParam}&rel=0&playsinline=1&enablejsapi=1`
+      videoId,
+      embedUrl: `https://www.youtube.com/embed/${videoId}?autoplay=${autoplay ? 1 : 0}&mute=0&rel=0&playsinline=1&enablejsapi=1${originParam}`
     };
   }
 
@@ -79,7 +83,7 @@ const getVideoEmbedInfo = (url, autoplay = true) => {
     const autoParam = autoplay ? 'true' : 'false';
     return {
       platform: 'facebook',
-      embedUrl: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(trimmed)}&show_text=false&autoplay=${autoParam}&mute=0`
+      embedUrl: `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(trimmed)}&show_text=false&autoplay=${autoParam}&mute=false`
     };
   }
 
@@ -381,6 +385,221 @@ const ImageSlider = ({
           ))}
         </div>
       )}
+    </div>
+  );
+};
+
+// Trình phát video chuyên dụng trong Modal: Tự phát kèm âm thanh, tự phục hồi khi trình duyệt chặn tiếng và cung cấp nút điều khiển âm thanh nổi
+const ModalVideoPlayer = ({ url, title = 'Video', className = '' }) => {
+  const [isMuted, setIsMuted] = useState(false);
+  const [unmutedFeedback, setUnmutedFeedback] = useState(false);
+  const iframeRef = useRef(null);
+  const videoRef = useRef(null);
+  const videoInfo = useMemo(() => getVideoEmbedInfo(url, true), [url]);
+
+  // Gửi lệnh điều khiển tới YouTube Iframe thông qua postMessage API
+  const sendYouTubeCommand = useCallback((func, args = []) => {
+    try {
+      if (iframeRef.current && iframeRef.current.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func, args }),
+          '*'
+        );
+      }
+    } catch {}
+  }, []);
+
+  // Tự động bật âm thanh và đặt âm lượng tối đa 100% cho YouTube
+  const unmuteYouTube = useCallback(() => {
+    sendYouTubeCommand('unMute');
+    sendYouTubeCommand('setVolume', [100]);
+    sendYouTubeCommand('playVideo');
+    setIsMuted(false);
+    setUnmutedFeedback(true);
+  }, [sendYouTubeCommand]);
+
+  // Tắt âm thanh cho YouTube
+  const muteYouTube = useCallback(() => {
+    sendYouTubeCommand('mute');
+    setIsMuted(true);
+    setUnmutedFeedback(false);
+  }, [sendYouTubeCommand]);
+
+  // Tự động kích hoạt âm thanh cho YouTube ngay khi player khởi tạo
+  useEffect(() => {
+    if (videoInfo?.platform !== 'youtube') return;
+
+    // Thiết lập handshake postMessage cho YouTube
+    try {
+      if (iframeRef.current?.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(JSON.stringify({ event: 'listening' }), '*');
+      }
+    } catch {}
+
+    // Gửi lệnh unMute liên tiếp theo các mốc thời gian để đón đầu quá trình khởi tạo player
+    const timers = [
+      setTimeout(() => unmuteYouTube(), 200),
+      setTimeout(() => unmuteYouTube(), 600),
+      setTimeout(() => unmuteYouTube(), 1200),
+      setTimeout(() => unmuteYouTube(), 2000)
+    ];
+
+    // Lắng nghe tín hiệu từ YouTube iframe
+    const handleMessage = (e) => {
+      try {
+        const data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+        if (data?.event === 'onReady' || data?.info?.playerState !== undefined) {
+          unmuteYouTube();
+        }
+      } catch {}
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => {
+      timers.forEach(t => clearTimeout(t));
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [videoInfo, unmuteYouTube]);
+
+  // Tự phát kèm âm thanh đối với HTML5 video trực tiếp
+  useEffect(() => {
+    if (videoInfo?.platform !== 'html5' || !videoRef.current) return;
+    const v = videoRef.current;
+
+    const playWithAudio = async () => {
+      try {
+        v.muted = false;
+        v.volume = 1;
+        await v.play();
+        setIsMuted(false);
+        setUnmutedFeedback(true);
+      } catch {
+        // Nếu trình duyệt chặn unmuted autoplay do chính sách bảo vệ,
+        // fallback sang muted autoplay để video vẫn chạy, đồng thời hiển thị nút Bật âm thanh
+        try {
+          v.muted = true;
+          await v.play();
+        } catch {}
+        setIsMuted(true);
+      }
+    };
+
+    playWithAudio();
+  }, [videoInfo]);
+
+  // Lắng nghe thao tác click đầu tiên trên màn hình để bật tiếng ngay lập tức nếu trình duyệt vừa chặn
+  useEffect(() => {
+    const handleUserGesture = () => {
+      if (videoInfo?.platform === 'youtube') {
+        unmuteYouTube();
+      } else if (videoInfo?.platform === 'html5' && videoRef.current && videoRef.current.muted) {
+        videoRef.current.muted = false;
+        videoRef.current.volume = 1;
+        videoRef.current.play().then(() => {
+          setIsMuted(false);
+          setUnmutedFeedback(true);
+        }).catch(() => {});
+      }
+    };
+
+    window.addEventListener('click', handleUserGesture, { once: true });
+    return () => window.removeEventListener('click', handleUserGesture);
+  }, [videoInfo, unmuteYouTube]);
+
+  // Toggle bật / tắt tiếng khi bấm vào nút
+  const handleToggleSound = (e) => {
+    if (e) e.stopPropagation();
+    if (videoInfo?.platform === 'youtube') {
+      if (isMuted) {
+        unmuteYouTube();
+      } else {
+        muteYouTube();
+      }
+    } else if (videoInfo?.platform === 'html5' && videoRef.current) {
+      const nextMuted = !videoRef.current.muted;
+      videoRef.current.muted = nextMuted;
+      videoRef.current.volume = 1;
+      setIsMuted(nextMuted);
+      if (!nextMuted) setUnmutedFeedback(true);
+    } else {
+      setIsMuted(prev => !prev);
+    }
+  };
+
+  // Tự ẩn thông báo "Đã bật âm thanh" sau 2.5s
+  useEffect(() => {
+    if (unmutedFeedback) {
+      const timer = setTimeout(() => setUnmutedFeedback(false), 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [unmutedFeedback]);
+
+  if (!videoInfo) return null;
+
+  return (
+    <div className={`relative w-full rounded-2xl overflow-hidden bg-black shadow-2xl group ${className}`}>
+      {videoInfo.platform === 'youtube' || videoInfo.platform === 'facebook' ? (
+        <div className="aspect-video w-full">
+          <iframe
+            ref={iframeRef}
+            src={videoInfo.embedUrl}
+            title={title}
+            className="w-full h-full rounded-2xl border-0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            scrolling="no"
+            onLoad={() => {
+              if (videoInfo.platform === 'youtube') {
+                unmuteYouTube();
+              }
+            }}
+          />
+        </div>
+      ) : (
+        <video
+          ref={videoRef}
+          src={videoInfo.embedUrl}
+          controls
+          autoPlay
+          playsInline
+          className="w-full max-h-[70vh] rounded-2xl object-contain mx-auto bg-black"
+          onVolumeChange={() => {
+            if (videoRef.current) {
+              setIsMuted(videoRef.current.muted);
+            }
+          }}
+        />
+      )}
+
+      {/* Nút điều khiển âm thanh nổi cao cấp (Floating Audio Controller) */}
+      <div className="absolute top-3 left-3 z-30 pointer-events-auto">
+        <button
+          type="button"
+          onClick={handleToggleSound}
+          title={isMuted ? "Bấm để bật âm thanh" : "Bấm để tắt tiếng"}
+          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full backdrop-blur-md border text-xs font-bold transition-all duration-300 shadow-xl active:scale-95 cursor-pointer ${
+            isMuted
+              ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 border-amber-300 animate-pulse ring-2 ring-amber-400/40'
+              : unmutedFeedback
+                ? 'bg-emerald-600/95 hover:bg-emerald-500 text-white border-emerald-300 ring-2 ring-emerald-400/40'
+                : 'bg-slate-950/80 hover:bg-slate-900 text-white border-white/20'
+          }`}
+        >
+          {isMuted ? (
+            <>
+              <VolumeX className="w-4 h-4 text-slate-950 shrink-0" />
+              <span className="font-bold tracking-tight">Bật âm thanh</span>
+            </>
+          ) : (
+            <>
+              <Volume2 className={`w-4 h-4 shrink-0 ${unmutedFeedback ? 'text-white' : 'text-cyan-400'}`} />
+              <span className="font-semibold tracking-tight">
+                {unmutedFeedback ? 'Đã bật âm thanh' : 'Âm thanh bật'}
+              </span>
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 };
@@ -2033,32 +2252,10 @@ export const HomePage = ({ onOpenLogin }) => {
               {(selectedArticle.videoUrl || allArticleImages.length > 0) && (
                 <div className="relative w-full rounded-2xl overflow-hidden mb-4 select-none">
                   {selectedArticle.videoUrl ? (
-                    (() => {
-                      const videoInfo = getVideoEmbedInfo(selectedArticle.videoUrl, true);
-                      if (videoInfo?.platform === 'youtube' || videoInfo?.platform === 'facebook') {
-                        return (
-                          <div className="aspect-video w-full rounded-2xl overflow-hidden bg-black shadow-xl">
-                            <iframe
-                              src={videoInfo.embedUrl}
-                              title={selectedArticle.title}
-                              className="w-full h-full border-0"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                              allowFullScreen
-                              scrolling="no"
-                            />
-                          </div>
-                        );
-                      }
-                      return (
-                        <video
-                          src={selectedArticle.videoUrl}
-                          controls
-                          autoPlay
-                          playsInline
-                          className="w-full max-h-[70vh] rounded-2xl object-contain mx-auto bg-black"
-                        />
-                      );
-                    })()
+                    <ModalVideoPlayer
+                      url={selectedArticle.videoUrl}
+                      title={selectedArticle.title}
+                    />
                   ) : allArticleImages.length > 0 ? (
                     <ImageSlider
                       images={allArticleImages}
@@ -2149,32 +2346,10 @@ export const HomePage = ({ onOpenLogin }) => {
             {/* Video Player tự phát hoặc Trình Chiếu Ảnh (ImageSlider chuyển tiếp như bài đăng) */}
             <div className="relative w-full rounded-2xl overflow-hidden bg-black mb-4 select-none">
               {selectedMedia.type === 'video' ? (
-                (() => {
-                  const videoInfo = getVideoEmbedInfo(selectedMedia.mediaUrl, true);
-                  if (videoInfo?.platform === 'youtube' || videoInfo?.platform === 'facebook') {
-                    return (
-                      <div className="aspect-video w-full">
-                        <iframe
-                          src={videoInfo.embedUrl}
-                          title={selectedMedia.title}
-                          className="w-full h-full rounded-2xl border-0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                          allowFullScreen
-                          scrolling="no"
-                        />
-                      </div>
-                    );
-                  }
-                  return (
-                    <video
-                      src={selectedMedia.mediaUrl}
-                      controls
-                      autoPlay
-                      playsInline
-                      className="w-full max-h-[70vh] rounded-2xl object-contain mx-auto"
-                    />
-                  );
-                })()
+                <ModalVideoPlayer
+                  url={selectedMedia.mediaUrl}
+                  title={selectedMedia.title}
+                />
               ) : (
                 (() => {
                   const mediaImages = (Array.isArray(selectedMedia.images) && selectedMedia.images.length > 0)
