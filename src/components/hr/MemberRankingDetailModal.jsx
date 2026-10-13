@@ -30,6 +30,28 @@ export const MemberRankingDetailModal = ({
 
   const [activeTab, setActiveTab] = useState('points'); // 'points' | 'deadlines'
 
+  // Bộ lọc theo tháng: Mặc định là tháng hiện tại (làm sạch dữ liệu tháng cũ)
+  const monthOptions = useMemo(() => {
+    const opts = [{ value: 'all', label: 'Tất cả các tháng' }];
+    const now = new Date();
+    const curY = now.getFullYear();
+    for (let y = curY; y >= curY - 1; y--) {
+      const maxM = (y === curY) ? now.getMonth() + 1 : 12;
+      for (let m = maxM; m >= 1; m--) {
+        opts.push({
+          value: `${m}-${y}`,
+          label: `Tháng ${String(m).padStart(2, '0')}/${y}`,
+          month: m,
+          year: y
+        });
+      }
+    }
+    return opts;
+  }, []);
+
+  const currentMonthValue = `${new Date().getMonth() + 1}-${new Date().getFullYear()}`;
+  const [selectedMonth, setSelectedMonth] = useState(currentMonthValue);
+
   // Danh sách nhiệm vụ / deadline được giao cho thành viên
   const memberTasks = useMemo(() => {
     if (!member || !Array.isArray(tasks)) return [];
@@ -61,6 +83,82 @@ export const MemberRankingDetailModal = ({
       return false;
     }
   };
+
+  // Helper kiểm tra log điểm có thuộc tháng đã chọn hay không
+  const isItemInMonth = (itemDate, itemTimestamp, targetMonth) => {
+    if (!targetMonth || targetMonth === 'all') return true;
+    const [targetM, targetY] = targetMonth.split('-').map(Number);
+
+    if (itemTimestamp && !isNaN(Number(itemTimestamp)) && Number(itemTimestamp) > 1000) {
+      const d = new Date(Number(itemTimestamp));
+      if (!isNaN(d.getTime())) {
+        return (d.getMonth() + 1) === targetM && d.getFullYear() === targetY;
+      }
+    }
+
+    if (typeof itemDate === 'string') {
+      const trimmed = itemDate.trim();
+      if (trimmed.includes('/')) {
+        const parts = trimmed.split('/');
+        if (parts.length === 3) {
+          const m = parseInt(parts[1], 10);
+          const y = parseInt(parts[2], 10);
+          return m === targetM && y === targetY;
+        }
+      }
+      if (trimmed.includes('-')) {
+        const parts = trimmed.split('-');
+        if (parts.length === 3) {
+          const y = parseInt(parts[0], 10);
+          const m = parseInt(parts[1], 10);
+          return m === targetM && y === targetY;
+        }
+      }
+    }
+    return true;
+  };
+
+  // Helper kiểm tra nhiệm vụ có thuộc tháng đã chọn hay không (làm sạch deadline tháng cũ)
+  const isTaskInMonth = (t, targetMonth) => {
+    if (!targetMonth || targetMonth === 'all') return true;
+    const [targetM, targetY] = targetMonth.split('-').map(Number);
+    const deadline = t.deadline || t.dueDate;
+    if (deadline) {
+      const dStr = String(deadline).trim();
+      if (dStr.includes('-')) {
+        const parts = dStr.split('-');
+        if (parts.length >= 2) {
+          const y = parseInt(parts[0], 10);
+          const m = parseInt(parts[1], 10);
+          return m === targetM && y === targetY;
+        }
+      }
+      if (dStr.includes('/')) {
+        const parts = dStr.split('/');
+        if (parts.length === 3) {
+          const m = parseInt(parts[1], 10);
+          const y = parseInt(parts[2], 10);
+          return m === targetM && y === targetY;
+        }
+      }
+    }
+    if (t.createdAt) {
+      const cStr = String(t.createdAt).trim();
+      if (cStr.includes('-')) {
+        const parts = cStr.split('-');
+        if (parts.length >= 2) {
+          const y = parseInt(parts[0], 10);
+          const m = parseInt(parts[1], 10);
+          return m === targetM && y === targetY;
+        }
+      }
+    }
+    return false;
+  };
+
+  const filteredMemberTasks = useMemo(() => {
+    return memberTasks.filter(t => isTaskInMonth(t, selectedMonth));
+  }, [memberTasks, selectedMonth]);
 
   // Lịch sử điểm thi đua (kết hợp từ localStorage và các hoạt động của thành viên)
   const pointHistory = useMemo(() => {
@@ -148,21 +246,31 @@ export const MemberRankingDetailModal = ({
       }
     });
 
-    // 5. Nếu chưa có log hoặc tổng điểm chưa khớp, thêm mục điểm ban đầu
-    if (logs.length === 0 && (member.points || 0) > 0) {
+    // 5. Nếu chưa có log cho tháng hiện tại, tạo mục điểm khởi tạo/reset thi đua định kỳ (50 điểm)
+    const curM = String(new Date().getMonth() + 1).padStart(2, '0');
+    const curY = new Date().getFullYear();
+    const currentMonthKey = `${new Date().getMonth() + 1}-${curY}`;
+    const hasCurrentMonthLog = logs.some(l => isItemInMonth(l.date, l.timestamp, currentMonthKey));
+    if (!hasCurrentMonthLog && (member.points || 0) > 0) {
       logs.push({
-        id: 'initial-points',
-        date: '01/09/2026',
+        id: `initial-points-${curM}-${curY}`,
+        date: `01/${curM}/${curY}`,
         time: '08:00',
-        title: 'Điểm khởi tạo thi đua định kỳ đầu kỳ hoạt động',
-        pointsDelta: member.points || 0,
+        title: `Điểm khởi tạo thi đua định kỳ tháng ${curM}/${curY}`,
+        pointsDelta: Number(member.points) || 50,
         category: 'Khởi tạo',
-        timestamp: 1
+        timestamp: new Date(`${curY}-${curM}-01T08:00:00`).getTime() || 1
       });
     }
 
     return logs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
   }, [member, memberTasks, meetings, birthdayAssignments]);
+
+  // Danh sách biến động điểm được lọc theo tháng đã chọn
+  const filteredPointHistory = useMemo(() => {
+    if (selectedMonth === 'all') return pointHistory;
+    return pointHistory.filter(item => isItemInMonth(item.date, item.timestamp, selectedMonth));
+  }, [pointHistory, selectedMonth]);
 
   // Tổng điểm thi đua thực tế của thành viên (không cộng điểm hoàn thành nhiệm vụ đúng hạn)
   const totalEarnedPoints = useMemo(() => {
@@ -181,13 +289,17 @@ export const MemberRankingDetailModal = ({
       return;
     }
 
-    const tableRows = memberTasks.length === 0 ? `
+    const monthLabel = selectedMonth === 'all'
+      ? 'TẤT CẢ CÁC THÁNG'
+      : `THÁNG ${selectedMonth.split('-')[0].padStart(2, '0')}/${selectedMonth.split('-')[1]}`;
+
+    const tableRows = filteredMemberTasks.length === 0 ? `
       <tr>
-        <td colspan="7" style="text-align: center; padding: 18px; color: #64748b; font-style: italic;">
-          Thành viên chưa có deadline / nhiệm vụ nào được giao.
+        <td colspan="6" style="text-align: center; padding: 18px; color: #64748b; font-style: italic;">
+          Không có deadline / nhiệm vụ nào trong ${selectedMonth === 'all' ? 'khoảng thời gian này' : `tháng ${selectedMonth.replace('-', '/')}`}.
         </td>
       </tr>
-    ` : memberTasks.map((t, index) => {
+    ` : filteredMemberTasks.map((t, index) => {
       const overdue = isOverdue(t.deadline, t.status);
       const statusText = t.status === 'done' || t.status === 'completed'
         ? '<span style="color: #166534; font-weight: bold;">✓ Đã hoàn thành</span>'
@@ -315,7 +427,7 @@ export const MemberRankingDetailModal = ({
           <div class="doc-title">
             <h2>BÁO CÁO THEO DÕI DEADLINE VÀ NHIỆM VỤ THÀNH VIÊN</h2>
             <p><strong>Họ và tên:</strong> ${member.name} &nbsp;•&nbsp; <strong>Ban:</strong> ${member.deptName || member.department || '-'}</p>
-            <p style="font-style: italic; font-size: 10.5pt; color: #4b5563;">Ngày xuất báo cáo: ${todayStr} • Tổng số nhiệm vụ được giao: ${memberTasks.length}</p>
+            <p style="font-style: italic; font-size: 10.5pt; color: #4b5563;">Kỳ theo dõi: ${monthLabel} • Ngày xuất báo cáo: ${todayStr} • Tổng số nhiệm vụ: ${filteredMemberTasks.length}</p>
           </div>
 
           <table>
@@ -356,13 +468,17 @@ export const MemberRankingDetailModal = ({
       return;
     }
 
-    const tableRows = pointHistory.length === 0 ? `
+    const monthLabel = selectedMonth === 'all'
+      ? 'TẤT CẢ CÁC THÁNG'
+      : `THÁNG ${selectedMonth.split('-')[0].padStart(2, '0')}/${selectedMonth.split('-')[1]}`;
+
+    const tableRows = filteredPointHistory.length === 0 ? `
       <tr>
-        <td colspan="6" style="text-align: center; padding: 18px; color: #64748b; font-style: italic;">
-          Chưa có biến động điểm thi đua nào được ghi nhận.
+        <td colspan="4" style="text-align: center; padding: 18px; color: #64748b; font-style: italic;">
+          Không có biến động điểm thi đua nào trong ${selectedMonth === 'all' ? 'khoảng thời gian này' : `tháng ${selectedMonth.replace('-', '/')}`}.
         </td>
       </tr>
-    ` : pointHistory.map((item, index) => {
+    ` : filteredPointHistory.map((item, index) => {
       const deltaText = item.pointsDelta > 0
         ? `<span style="color: #166534; font-weight: bold;">+${item.pointsDelta} </span>`
         : `<span style="color: #991b1b; font-weight: bold;">${item.pointsDelta} </span>`;
@@ -483,7 +599,7 @@ export const MemberRankingDetailModal = ({
           <div class="doc-title">
             <h2>BÁO CÁO CHI TIẾT LỊCH SỬ ĐIỂM THI ĐUA THÀNH VIÊN</h2>
             <p><strong>Họ và tên:</strong> ${member.name} &nbsp;•&nbsp; <strong>Ban:</strong> ${member.deptName || member.department || '-'} &nbsp;•&nbsp; <strong>Tổng điểm hiện tại:</strong> <span style="font-weight: bold; color: #b45309;">${totalEarnedPoints} </span></p>
-            <p style="font-style: italic; font-size: 10.5pt; color: #4b5563;">Ngày xuất báo cáo: ${todayStr} • Tổng số bản ghi biến động: ${pointHistory.length}</p>
+            <p style="font-style: italic; font-size: 10.5pt; color: #4b5563;">Kỳ theo dõi: ${monthLabel} • Ngày xuất báo cáo: ${todayStr} • Số bản ghi biến động: ${filteredPointHistory.length}</p>
           </div>
 
           <table>
@@ -514,13 +630,13 @@ export const MemberRankingDetailModal = ({
     printWindow.document.close();
   };
 
-  const completedCount = memberTasks.filter(t => t.status === 'done' || t.status === 'completed').length;
-  const inProgressCount = memberTasks.filter(t => t.status === 'doing' || t.status === 'in_progress').length;
-  const overdueCount = memberTasks.filter(t => isOverdue(t.deadline, t.status)).length;
+  const completedCount = filteredMemberTasks.filter(t => t.status === 'done' || t.status === 'completed').length;
+  const inProgressCount = filteredMemberTasks.filter(t => t.status === 'doing' || t.status === 'in_progress').length;
+  const overdueCount = filteredMemberTasks.filter(t => isOverdue(t.deadline, t.status)).length;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 dark:bg-slate-950/80 backdrop-blur-md animate-slide-up overflow-y-auto">
-      <div className="ds-card p-4 sm:p-6 w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden my-auto border border-[var(--border-default)]">
+      <div className="ds-card p-4 sm:p-6 w-full max-w-4xl lg:max-w-5xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden my-auto border border-[var(--border-default)]">
 
         {/* Modal Header */}
         <div className="flex items-start justify-between pb-4 border-b border-[var(--border-default)] gap-3 shrink-0">
@@ -568,61 +684,82 @@ export const MemberRankingDetailModal = ({
           </button>
         </div>
 
-        {/* Action Bar: Tabs & Export Buttons (Aligned into 1 single row) */}
-        <div className="flex items-center justify-between gap-3 py-3 border-b border-[var(--border-default)] shrink-0 overflow-x-auto no-scrollbar">
+        {/* Action Bar: Tabs & Month Filter & Export Buttons (Aligned strictly into 1 single row) */}
+        <div className="flex items-center justify-between gap-2 py-2.5 border-b border-[var(--border-default)] shrink-0 flex-nowrap overflow-x-auto no-scrollbar">
           {/* Tab buttons */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0 flex-nowrap">
             <button
               onClick={() => setActiveTab('deadlines')}
-              className={`ds-btn ds-btn-sm text-xs font-semibold flex items-center gap-1.5 shrink-0 ${activeTab === 'deadlines' ? 'ds-btn-primary' : 'ds-btn-secondary'
+              className={`ds-btn ds-btn-sm text-xs font-semibold flex items-center gap-1.5 shrink-0 whitespace-nowrap ${activeTab === 'deadlines' ? 'ds-btn-primary' : 'ds-btn-secondary'
                 }`}
             >
-              <Clock className="w-3.5 h-3.5" />
-              <span>Deadline Đã Giao ({memberTasks.length})</span>
+              <Clock className="w-3.5 h-3.5 shrink-0" />
+              <span>Deadline Đã Giao ({filteredMemberTasks.length})</span>
             </button>
             <button
               onClick={() => setActiveTab('points')}
-              className={`ds-btn ds-btn-sm text-xs font-semibold flex items-center gap-1.5 shrink-0 ${activeTab === 'points' ? 'ds-btn-primary' : 'ds-btn-secondary'
+              className={`ds-btn ds-btn-sm text-xs font-semibold flex items-center gap-1.5 shrink-0 whitespace-nowrap ${activeTab === 'points' ? 'ds-btn-primary' : 'ds-btn-secondary'
                 }`}
             >
-              <Award className="w-3.5 h-3.5" />
-              <span>Lịch Sử Điểm ({pointHistory.length})</span>
+              <Award className="w-3.5 h-3.5 shrink-0" />
+              <span>Lịch Sử Điểm ({filteredPointHistory.length})</span>
             </button>
           </div>
 
-          {/* Export Buttons: CHỈ HIỆN VỚI BAN ĐỐI NGOẠI - NHÂN SỰ */}
-          {canExport && (
-            <div className="flex items-center gap-2 shrink-0">
-              <SignerSelect
-                signers={signerOptions}
-                selectedSignerId={chosenSigner?.id}
-                onChange={setSelectedSignerId}
-                compact
-                className="shrink-0"
-              />
-              {activeTab === 'deadlines' ? (
-                <button
-                  type="button"
-                  onClick={handlePrintDeadlines}
-                  className="ds-btn ds-btn-primary ds-btn-sm text-xs font-semibold flex items-center gap-1.5 shrink-0 whitespace-nowrap"
-                  title="In hoặc xuất file PDF báo cáo deadline của thành viên này"
-                >
-                  <Printer className="w-3.5 h-3.5 text-white shrink-0" />
-                  <span>In Báo Cáo Deadline</span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handlePrintPoints}
-                  className="ds-btn ds-btn-primary ds-btn-sm text-xs font-semibold flex items-center gap-1.5 shrink-0 whitespace-nowrap"
-                  title="In hoặc xuất file PDF lịch sử điểm của thành viên này"
-                >
-                  <Printer className="w-3.5 h-3.5 text-white shrink-0" />
-                  <span>Xuất Lịch Sử Điểm</span>
-                </button>
-              )}
+          {/* Controls: Bộ lọc tháng & Ký duyệt & Nút xuất */}
+          <div className="flex items-center gap-2 shrink-0 flex-nowrap">
+            {/* Bộ lọc tháng */}
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900/80 py-1 px-2 rounded-lg border border-slate-300 dark:border-slate-700/80 shrink-0 shadow-sm">
+              <Calendar className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
+              <span className="text-xs text-slate-600 dark:text-slate-300 font-medium whitespace-nowrap hidden sm:inline">Tháng:</span>
+              <select
+                value={selectedMonth}
+                onChange={e => setSelectedMonth(e.target.value)}
+                className="bg-transparent text-slate-800 dark:text-slate-200 text-xs py-0.5 px-1 rounded border-0 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer max-w-[130px] truncate font-medium"
+                title="Chọn tháng lọc dữ liệu"
+              >
+                {monthOptions.map(opt => (
+                  <option key={opt.value} value={opt.value} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-200">
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
             </div>
-          )}
+
+            {/* Export Buttons: CHỈ HIỆN VỚI BAN ĐỐI NGOẠI - NHÂN SỰ */}
+            {canExport && (
+              <div className="flex items-center gap-2 shrink-0 flex-nowrap">
+                <SignerSelect
+                  signers={signerOptions}
+                  selectedSignerId={chosenSigner?.id}
+                  onChange={setSelectedSignerId}
+                  compact
+                  className="shrink-0"
+                />
+                {activeTab === 'deadlines' ? (
+                  <button
+                    type="button"
+                    onClick={handlePrintDeadlines}
+                    className="ds-btn ds-btn-primary ds-btn-sm text-xs font-semibold flex items-center gap-1.5 shrink-0 whitespace-nowrap"
+                    title="In hoặc xuất file PDF báo cáo deadline của thành viên này"
+                  >
+                    <Printer className="w-3.5 h-3.5 text-white shrink-0" />
+                    <span>In Báo Cáo Deadline</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handlePrintPoints}
+                    className="ds-btn ds-btn-primary ds-btn-sm text-xs font-semibold flex items-center gap-1.5 shrink-0 whitespace-nowrap"
+                    title="In hoặc xuất file PDF lịch sử điểm của thành viên này"
+                  >
+                    <Printer className="w-3.5 h-3.5 text-white shrink-0" />
+                    <span>Xuất Lịch Sử Điểm</span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Modal Body Content */}
@@ -633,7 +770,7 @@ export const MemberRankingDetailModal = ({
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
                 <div className="p-2.5 rounded-lg bg-slate-800/60 border border-slate-700/50">
                   <div className="text-slate-400 font-medium">Tổng nhiệm vụ</div>
-                  <div className="text-base font-bold text-slate-100 font-mono mt-0.5">{memberTasks.length}</div>
+                  <div className="text-base font-bold text-slate-100 font-mono mt-0.5">{filteredMemberTasks.length}</div>
                 </div>
                 <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
                   <div className="text-emerald-400 font-medium">Hoàn thành</div>
@@ -650,13 +787,13 @@ export const MemberRankingDetailModal = ({
               </div>
 
               {/* Task list */}
-              {memberTasks.length === 0 ? (
+              {filteredMemberTasks.length === 0 ? (
                 <div className="p-8 text-center text-slate-400 text-sm italic">
-                  Chưa có deadline / nhiệm vụ nào được giao cho thành viên này.
+                  Không có deadline / nhiệm vụ nào trong {selectedMonth === 'all' ? 'khoảng thời gian này' : `tháng ${selectedMonth.replace('-', '/')}`}.
                 </div>
               ) : (
                 <div className="space-y-2.5">
-                  {memberTasks.map((t, idx) => {
+                  {filteredMemberTasks.map((t, idx) => {
                     const overdue = isOverdue(t.deadline, t.status);
                     const isDone = t.status === 'done' || t.status === 'completed';
 
@@ -727,19 +864,19 @@ export const MemberRankingDetailModal = ({
                   <div className="text-xl font-bold font-mono text-amber-400 mt-0.5">{totalEarnedPoints} </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-slate-400 font-medium">Số lượt ghi nhận</div>
-                  <div className="text-base font-bold font-mono text-slate-200 mt-0.5">{pointHistory.length}</div>
+                  <div className="text-xs text-slate-400 font-medium">Số lượt ghi nhận {selectedMonth !== 'all' ? `(Tháng ${selectedMonth.replace('-', '/')})` : ''}</div>
+                  <div className="text-base font-bold font-mono text-slate-200 mt-0.5">{filteredPointHistory.length}</div>
                 </div>
               </div>
 
               {/* Point History List */}
-              {pointHistory.length === 0 ? (
+              {filteredPointHistory.length === 0 ? (
                 <div className="p-8 text-center text-slate-400 text-sm italic">
-                  Chưa có lịch sử biến động điểm nào được ghi nhận.
+                  Chưa có lịch sử biến động điểm nào trong {selectedMonth === 'all' ? 'khoảng thời gian này' : `tháng ${selectedMonth.replace('-', '/')}`}.
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {pointHistory.map((item, idx) => {
+                  {filteredPointHistory.map((item, idx) => {
                     const isPositive = (item.pointsDelta || 0) > 0;
                     return (
                       <div

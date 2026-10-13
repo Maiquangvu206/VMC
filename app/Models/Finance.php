@@ -22,6 +22,7 @@ class Finance extends Model
         'date',
         'logged_by',
         'status',
+        'approved_by',
         'created_at',
     ];
 

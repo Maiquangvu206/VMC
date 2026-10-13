@@ -71,11 +71,40 @@ export const ClubProvider = ({ children }) => {
   const [isRecruitmentSeasonActive, setIsRecruitmentSeasonActive] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Danh sách ID thành viên được cấp quyền duyệt thu chi
+  const [financeApproverIds, setFinanceApproverIdsState] = useState(() => {
+    try {
+      const stored = localStorage.getItem('vmc_finance_approver_ids');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) { }
+    return [];
+  });
+
+  const setFinanceApproverIds = (ids) => {
+    const list = Array.isArray(ids) ? ids : [];
+    setFinanceApproverIdsState(list);
+    try {
+      localStorage.setItem('vmc_finance_approver_ids', JSON.stringify(list));
+      fetch('/api/admin/system-settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
+        },
+        body: JSON.stringify({ key: 'finance_approver_ids', value: JSON.stringify(list) })
+      }).catch(e => console.warn('Sync finance approvers failed:', e));
+    } catch (e) { }
+    showToast('🛡️ Đã cập nhật phân quyền duyệt thu chi thành công!', 'success');
+  };
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
-  // Check recruitment season status on mount
+  // Check recruitment season status & finance approvers on mount
   useEffect(() => {
     let isMounted = true;
     const checkRecruitmentSeasonStatus = async () => {
@@ -83,6 +112,15 @@ export const ClubProvider = ({ children }) => {
         const resSettings = await fetch('/api/admin/system-settings', { headers: { 'ngrok-skip-browser-warning': 'true' } });
         const dataSettings = await resSettings.json();
         if (isMounted && dataSettings.success && dataSettings.data) {
+          if (dataSettings.data.finance_approver_ids) {
+            try {
+              const parsed = JSON.parse(dataSettings.data.finance_approver_ids);
+              if (Array.isArray(parsed)) {
+                setFinanceApproverIdsState(parsed);
+                localStorage.setItem('vmc_finance_approver_ids', JSON.stringify(parsed));
+              }
+            } catch (e) { }
+          }
           if (dataSettings.data.recruitment_season_active !== undefined && dataSettings.data.recruitment_season_active !== null) {
             setIsRecruitmentSeasonActive(dataSettings.data.recruitment_season_active === '1');
             return;
@@ -121,18 +159,20 @@ export const ClubProvider = ({ children }) => {
             const currentMonth = new Date().toISOString().slice(0, 7);
             let nextDb = { ...prev, members: mergedMembers };
 
-            if (prev.lastPointsAddedMonth && prev.lastPointsAddedMonth !== currentMonth) {
+            if (prev.lastPointsResetMonth && prev.lastPointsResetMonth !== currentMonth) {
               mergedMembers = mergedMembers.map(m => {
-                if (m.status !== 'Suspended') {
-                  const newPoints = (m.points || 0) + 50;
+                const roleTitle = (m.roleTitle || m.role_title || '').toLowerCase();
+                const isSuperAdmin = roleTitle.includes('super admin') || m.memberCode === 'ADMIN';
+                if (!isSuperAdmin && m.status !== 'Suspended') {
+                  const newPoints = 50; // Mỗi tháng tự động reset về 50 điểm chuẩn
                   updateMemberAPI(m.memberCode || m.member_code || m.id, { points: newPoints }).catch(e => console.log(e));
                   return { ...m, points: newPoints };
                 }
                 return m;
               });
-              nextDb = { ...nextDb, members: mergedMembers, lastPointsAddedMonth: currentMonth };
-            } else if (!prev.lastPointsAddedMonth) {
-              nextDb = { ...nextDb, lastPointsAddedMonth: currentMonth };
+              nextDb = { ...nextDb, members: mergedMembers, lastPointsResetMonth: currentMonth, lastPointsAddedMonth: currentMonth };
+            } else if (!prev.lastPointsResetMonth) {
+              nextDb = { ...nextDb, lastPointsResetMonth: currentMonth, lastPointsAddedMonth: currentMonth };
             }
 
             const now = Date.now();
@@ -937,7 +977,7 @@ setCurrentUser(acc);
       term: newAcc.term || newAcc.generation || newAcc.termName || 'Gen 8',
       isFirstLogin: true,
       avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=400",
-      points: 100,
+      points: 50,
       status: "Active",
       ...newAcc,
       memberCode: generatedCode,
@@ -1454,6 +1494,9 @@ setCurrentUser(acc);
 
   const addFinanceRecord = async (record) => {
     const finalLoggedBy = record.loggedBy || record.logged_by || currentUser?.name || 'Ban Đối Ngoại - Nhân Sự';
+    const isApproved = (record.status || 'approved') === 'approved';
+    const finalApprovedBy = isApproved ? (record.approvedBy || record.approved_by || currentUser?.name || 'Ban Quản Trị') : null;
+
     const payload = {
       type: record.type,
       amount: parseInt(record.amount, 10),
@@ -1462,7 +1505,8 @@ setCurrentUser(acc);
       record_date: record.date,
       logged_by: finalLoggedBy,
       recorded_by: finalLoggedBy,
-      status: record.status || 'approved'
+      status: record.status || 'approved',
+      approved_by: finalApprovedBy
     };
 
     // 1. Lưu lên MySQL qua API
@@ -1482,7 +1526,9 @@ setCurrentUser(acc);
         id: res?.data?.id || ('fin-' + Date.now()),
         date: record.date,
         loggedBy: finalLoggedBy,
-        status: record.status || 'approved'
+        status: record.status || 'approved',
+        approvedBy: finalApprovedBy,
+        approved_by: finalApprovedBy
       };
       updateDb(prev => ({
         ...prev,
@@ -1495,6 +1541,17 @@ setCurrentUser(acc);
   };
 
   const deleteFinanceRecord = async (recordId) => {
+    const isStrictAdmin = Boolean(
+      currentUser?.memberCode === 'ADMIN' ||
+      currentUser?.role === 'admin' ||
+      currentUser?.role === 'super_admin' ||
+      String(currentUser?.roleTitle || '').toLowerCase().includes('super admin')
+    );
+    if (!isStrictAdmin) {
+      showToast('⚠️ Không ai có quyền xóa giao dịch trừ Quản Trị Viên (Admin)!', 'error');
+      return;
+    }
+
     await deleteEntityAPI('finances', recordId);
     updateDb(prev => ({
       ...prev,
@@ -1507,20 +1564,43 @@ setCurrentUser(acc);
     showToast('🗑️ Đã xóa bản ghi thu chi khỏi CSDL!', 'info');
   };
 
-  const updateFinanceStatus = async (recordId, newStatus) => {
+  const updateFinanceStatus = async (recordId, newStatus, approverName) => {
+    // Đã duyệt rồi thì không được chuyển thành không duyệt nữa
+    const existing = (db.finances || []).find(f => f.id === recordId);
+    if (existing && existing.status === 'approved' && newStatus === 'rejected') {
+      showToast('⚠️ Khoản thu chi này đã duyệt rồi, không được hủy duyệt nữa!', 'warning');
+      return;
+    }
+
+    const finalApprover = approverName || currentUser?.name || 'Ban Quản Trị';
+    const isApproved = newStatus === 'approved';
+    const isRejected = newStatus === 'rejected';
+    const approvedVal = (isApproved || isRejected) ? finalApprover : null;
+
     updateDb(prev => ({
       ...prev,
-      finances: (prev.finances || []).map(f => f.id === recordId ? { ...f, status: newStatus } : f)
+      finances: (prev.finances || []).map(f => f.id === recordId ? {
+        ...f,
+        status: newStatus,
+        approved_by: approvedVal,
+        approvedBy: approvedVal
+      } : f)
     }));
-    await updateEntityAPI('finances', recordId, { status: newStatus });
+    await updateEntityAPI('finances', recordId, {
+      status: newStatus,
+      approved_by: approvedVal,
+      approvedBy: approvedVal
+    });
     const freshFinances = await fetchEntityAPI('finances');
     if (Array.isArray(freshFinances)) {
       updateDb(prev => ({ ...prev, finances: freshFinances }));
     }
-    if (newStatus === 'approved') {
-      showToast('✅ Đã duyệt dự trù kinh phí thành công!', 'success');
+    if (isApproved) {
+      showToast(`✅ Đã duyệt khoản thu chi bởi ${finalApprover}!`, 'success');
+    } else if (isRejected) {
+      showToast(`❌ Đã không duyệt khoản thu chi bởi ${finalApprover}!`, 'info');
     } else {
-      showToast('❌ Đã từ chối dự trù kinh phí!', 'info');
+      showToast('⏳ Đã chuyển trạng thái chờ duyệt!', 'info');
     }
   };
 
@@ -2067,6 +2147,15 @@ setCurrentUser(acc);
     showToast('Đã xóa thông báo thành công!', 'info');
   };
 
+  const canApproveFinance = useMemo(() => {
+    if (!currentUser) return false;
+    const currentId = String(currentUser.id || '');
+    const currentCode = String(currentUser.memberCode || currentUser.member_code || '').toUpperCase();
+    return (financeApproverIds || []).some(id =>
+      String(id) === currentId || (currentCode && String(id).toUpperCase() === currentCode)
+    );
+  }, [currentUser, financeApproverIds]);
+
   const contextValue = useMemo(() => ({
     theme,
     toggleTheme,
@@ -2080,6 +2169,9 @@ setCurrentUser(acc);
     addFinanceRecord,
     updateFinanceStatus,
     deleteFinanceRecord,
+    financeApproverIds,
+    setFinanceApproverIds,
+    canApproveFinance,
     currentUser,
     isAuthenticated,
     isLoading,
@@ -2277,6 +2369,9 @@ db,
     isSuperAdmin,
     isHRMember,
     isHRHead,
+    financeApproverIds,
+    setFinanceApproverIds,
+    canApproveFinance,
   ]);
 
   return (

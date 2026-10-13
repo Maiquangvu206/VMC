@@ -1,11 +1,12 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useClub } from '../context/ClubContext';
-import { Users, Calendar, Award, Clock, Search, CheckCircle2, Wallet, Plus, ArrowDownRight, ArrowUpRight, Gift, X, Printer, Check, Trash2 } from 'lucide-react';
+import { Users, Calendar, Award, Clock, Search, CheckCircle2, Wallet, Plus, ArrowDownRight, ArrowUpRight, Gift, X, Printer, Check, Trash2, ShieldCheck, UserCheck } from 'lucide-react';
 import { MeetingManagement } from '../components/hr/MeetingManagement';
 import { BirthdayManagement } from '../components/hr/BirthdayManagement';
 import { PointManagement } from '../components/hr/PointManagement';
 import { MemberDetailModal } from '../components/members/MemberDetailModal';
 import { MemberRankingDetailModal } from '../components/hr/MemberRankingDetailModal';
+import { FinanceApproverModal } from '../components/hr/FinanceApproverModal';
 import { RoleTitleDisplay } from '../utils/roleHelper';
 import { WATERMARK_CSS, WATERMARK_HTML } from '../utils/watermark';
 import { getAvailableSigners, findSigner, renderSignerFooterHtml } from '../utils/reportSigner';
@@ -20,6 +21,7 @@ const Loading = () => (
 export const InternalHRDashboard = () => {
   const {
     members, tasks, currentUser, isAdvisor: isAdvisorFromContext, isHRMember, isHRHead, isAdmin, finances, addFinanceRecord, updateFinanceStatus, deleteFinanceRecord,
+    financeApproverIds, setFinanceApproverIds, canApproveFinance,
     meetings, createMeeting, submitMeetingAttendance, submitMeetingMinutes, penalizeMember, updateMemberPoints,
     birthdayAssignments, assignBirthdayDuty, submitBirthdayImage, showToast
   } = useClub();
@@ -65,6 +67,14 @@ export const InternalHRDashboard = () => {
   const currentUserDeptName = String(currentUser?.deptName || currentUser?.department || '').toLowerCase();
   const currentUserRoleTitle = String(currentUser?.roleTitle || '').toLowerCase();
 
+  // Quản trị viên tối cao (Chỉ Admin mới có quyền xóa giao dịch thu chi và cấp quyền duyệt chi)
+  const isStrictAdmin = Boolean(
+    currentUser?.memberCode === 'ADMIN' ||
+    currentUser?.role === 'admin' ||
+    currentUser?.role === 'super_admin' ||
+    currentUserRoleTitle.includes('super admin')
+  );
+
   // Quyền xuất file (In / PDF): CHỈ DÀNH RIÊNG CHO BAN ĐỐI NGOẠI - NHÂN SỰ
   const canExportHR = !isAdvisor && Boolean(
     isHRMember ||
@@ -82,6 +92,29 @@ export const InternalHRDashboard = () => {
   const [selectedSignerId, setSelectedSignerId] = useState('');
   const chosenSigner = useMemo(() => findSigner(signerOptions, selectedSignerId), [signerOptions, selectedSignerId]);
   const hrHeadName = chosenSigner?.name || 'Đặng Nguyệt Minh';
+
+  // Modal phân quyền duyệt thu chi cho Admin
+  const [showFinanceApproverModal, setShowFinanceApproverModal] = useState(false);
+
+  // Danh sách người ký duyệt bản in Thu Chi: Người được chọn duyệt thu chi sẽ KHÔNG được ký duyệt bản in
+  const financeSignerOptions = useMemo(() => {
+    return (signerOptions || []).filter(s => {
+      const sId = String(s.id || '');
+      const sCode = String(s.memberCode || s.member_code || '').toUpperCase();
+      const isApprover = (financeApproverIds || []).some(appId => {
+        const aStr = String(appId).trim();
+        return aStr === sId || (sCode && aStr.toUpperCase() === sCode);
+      });
+      return !isApprover;
+    });
+  }, [signerOptions, financeApproverIds]);
+
+  const [selectedFinanceSignerId, setSelectedFinanceSignerId] = useState('');
+  const chosenFinanceSigner = useMemo(() => {
+    if (!financeSignerOptions || financeSignerOptions.length === 0) return null;
+    const found = financeSignerOptions.find(s => String(s.id) === String(selectedFinanceSignerId));
+    return found || financeSignerOptions[0];
+  }, [financeSignerOptions, selectedFinanceSignerId]);
 
   const isAllowedBirthdayDuty = !isAdvisor && Boolean(
     isHRMember ||
@@ -432,12 +465,15 @@ export const InternalHRDashboard = () => {
 
   const upcomingBirthdays = getUpcomingBirthdays();
 
-  // Deadlines (Tasks mapped to members)
+  const currentMonthStr = new Date().toISOString().slice(0, 7);
+  // Deadlines (Tasks mapped to members - chỉ hiển thị deadline tháng mới, làm sạch tháng cũ)
   const getMemberTasks = (m) => {
     if (!tasks || !Array.isArray(tasks)) return [];
     const id = m?.id;
     const memberCode = m?.memberCode || m?.member_code;
     return tasks.filter(t => {
+      // Làm sạch deadline tháng cũ
+      if (t.deadline && String(t.deadline).slice(0, 7) < currentMonthStr) return false;
       const assId = t.assigneeId || t.assignee_id;
       if (!assId) return t.assignee === 'Cả Ban';
       return String(assId) === String(id) || (memberCode && String(assId) === String(memberCode));
@@ -825,14 +861,8 @@ export const InternalHRDashboard = () => {
     if (!financeForm.amount || !financeForm.description) return;
 
     const finalDate = financeForm.date || new Date().toISOString().slice(0, 10);
-    const isAutoApproved = Boolean(
-      isAdmin ||
-      isHRHead ||
-      currentUser?.role === 'admin' ||
-      currentUser?.memberCode === 'ADMIN' ||
-      String(currentUser?.roleTitle || '').toLowerCase().includes('trưởng') ||
-      String(currentUser?.roleTitle || '').toLowerCase().includes('chủ nhiệm')
-    );
+    // Chỉ tự động duyệt nếu người tạo là người ĐÃ ĐƯỢC CẤP QUYỀN DUYỆT CHI
+    const isAutoApproved = Boolean(canApproveFinance);
 
     await addFinanceRecord({
       type: financeForm.type,
@@ -840,8 +870,9 @@ export const InternalHRDashboard = () => {
       description: financeForm.description,
       date: finalDate,
       record_date: finalDate,
-      loggedBy: currentUser?.name || 'Ban Đối Ngoại - Nhân Sự',
-      status: isAutoApproved ? 'approved' : 'pending'
+      loggedBy: currentUser?.name || 'Thành viên VMC',
+      status: isAutoApproved ? 'approved' : 'pending',
+      approvedBy: isAutoApproved ? (currentUser?.name || 'Ban Quản Trị') : null
     });
 
     setFinanceForm({
@@ -852,7 +883,7 @@ export const InternalHRDashboard = () => {
     });
 
     if (!isAutoApproved) {
-      alert('Đã gửi yêu cầu dự trù kinh phí tới Ban Quản Trị / Trưởng ban để duyệt!');
+      alert('Đã gửi yêu cầu dự trù kinh phí tới Người có quyền duyệt chi để xem xét phê duyệt!');
     }
   };
 
@@ -916,15 +947,32 @@ export const InternalHRDashboard = () => {
 
   const totalBalance = (finances || []).filter(f => f.status === 'approved').reduce((acc, curr) => curr.type === 'income' ? acc + curr.amount : acc - curr.amount, 0);
 
+  // Không duyệt / chờ duyệt vẫn hiển thị trong báo cáo nhưng KHÔNG ĐƯỢC TÍNH vào tổng thu, tổng chi và số dư
   const filteredIncome = useMemo(() => {
-    return filteredFinances.filter(f => f.type === 'income').reduce((sum, f) => sum + (f.amount || 0), 0);
+    return filteredFinances
+      .filter(f => f.status === 'approved' && f.type === 'income')
+      .reduce((sum, f) => sum + (f.amount || 0), 0);
   }, [filteredFinances]);
 
   const filteredExpense = useMemo(() => {
-    return filteredFinances.filter(f => f.type === 'expense').reduce((sum, f) => sum + (f.amount || 0), 0);
+    return filteredFinances
+      .filter(f => f.status === 'approved' && f.type === 'expense')
+      .reduce((sum, f) => sum + (f.amount || 0), 0);
   }, [filteredFinances]);
 
   const filteredBalance = filteredIncome - filteredExpense;
+
+  const financeStats = useMemo(() => {
+    let approved = 0;
+    let rejected = 0;
+    let pending = 0;
+    filteredFinances.forEach(f => {
+      if (f.status === 'approved') approved++;
+      else if (f.status === 'rejected') rejected++;
+      else pending++;
+    });
+    return { approved, rejected, pending, total: filteredFinances.length };
+  }, [filteredFinances]);
 
   const handlePrintFinance = () => {
     const printWindow = window.open('', '_blank', 'width=1100,height=850');
@@ -946,25 +994,55 @@ export const InternalHRDashboard = () => {
 
     const tableRows = filteredFinances.length === 0 ? `
       <tr>
-        <td colspan="7" style="text-align: center; padding: 18px; color: #64748b; font-style: italic;">
+        <td colspan="8" style="text-align: center; padding: 18px; color: #64748b; font-style: italic;">
           Không có bản ghi thu chi nào trong khoảng thời gian đã chọn.
         </td>
       </tr>
-    ` : filteredFinances.map((item, idx) => `
-      <tr>
-        <td style="text-align: center; padding: 7px 10px;">${idx + 1}</td>
-        <td style="text-align: center; font-family: monospace; padding: 7px 10px;">${item.date || item.record_date || '-'}</td>
-        <td style="padding: 7px 10px; font-weight: 600;">${item.description}</td>
-        <td style="text-align: center; padding: 7px 10px;">
-          ${item.type === 'income' ? '<span style="color: #15803d; font-weight: bold;">Thu Quỹ</span>' : '<span style="color: #b91c1c; font-weight: bold;">Chi Tiêu</span>'}
-        </td>
-        <td style="text-align: right; font-family: monospace; font-weight: bold; padding: 7px 10px; color: ${item.type === 'income' ? '#15803d' : '#b91c1c'};">
-          ${item.type === 'income' ? '+' : '-'}${item.amount?.toLocaleString('vi-VN')} VNĐ
-        </td>
-        <td style="padding: 7px 10px;">${item.loggedBy || item.recorded_by || 'VMC'}</td>
-        <td style="text-align: center; padding: 7px 10px;">${item.status === 'approved' ? '✓ Đã duyệt' : '⏳ Chờ duyệt'}</td>
-      </tr>
-    `).join('');
+    ` : filteredFinances.map((item, idx) => {
+      const requesterName = item.loggedBy || item.logged_by || item.recorded_by || 'Thành viên VMC';
+      const isApproved = item.status === 'approved';
+      const isRejected = item.status === 'rejected';
+
+      let approverName = '<span style="color: #d97706; font-style: italic;">Chưa duyệt</span>';
+      if (isApproved) {
+        approverName = item.approvedBy || item.approved_by || 'Ban Quản Trị';
+      } else if (isRejected) {
+        approverName = item.approvedBy || item.approved_by ? `${item.approvedBy || item.approved_by}` : '<span style="color: #b91c1c; font-style: italic;">Không duyệt</span>';
+      }
+
+      let statusBadge = '<span style="color: #d97706; font-weight: bold;">⏳ Chờ duyệt</span>';
+      if (isApproved) {
+        statusBadge = '<span style="color: #15803d; font-weight: bold;">✓ Đã duyệt</span>';
+      } else if (isRejected) {
+        statusBadge = '<span style="color: #b91c1c; font-weight: bold;">✕ Không duyệt</span>';
+      }
+
+      const amountText = `${item.type === 'income' ? '+' : '-'}${item.amount?.toLocaleString('vi-VN')} VNĐ`;
+      const amountCell = isRejected
+        ? `<div style="text-decoration: line-through; color: #94a3b8; font-weight: normal;">${amountText}</div>`
+        : amountText;
+
+      return `
+        <tr style="${isRejected ? 'background-color: #fff1f2;' : ''}">
+          <td style="text-align: center; padding: 7px 10px;">${idx + 1}</td>
+          <td style="text-align: center; font-family: monospace; padding: 7px 10px;">${item.date || item.record_date || '-'}</td>
+          <td style="padding: 7px 10px; font-weight: 600;">${item.description}</td>
+          <td style="text-align: center; padding: 7px 10px;">
+            ${item.type === 'income' ? '<span style="color: #15803d; font-weight: bold;">Thu Quỹ</span>' : '<span style="color: #b91c1c; font-weight: bold;">Chi Tiêu</span>'}
+          </td>
+          <td style="text-align: right; font-family: monospace; font-weight: bold; padding: 7px 10px; color: ${isRejected ? '#94a3b8' : (item.type === 'income' ? '#15803d' : '#b91c1c')};">
+            ${amountCell}
+          </td>
+          <td style="padding: 7px 10px; font-size: 10pt;">${requesterName}</td>
+          <td style="padding: 7px 10px; font-size: 10pt; font-weight: 500;">${approverName}</td>
+          <td style="text-align: center; padding: 7px 10px;">
+            ${statusBadge}
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    const finalSigner = chosenFinanceSigner || chosenSigner;
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -1081,13 +1159,14 @@ export const InternalHRDashboard = () => {
           <table>
             <thead>
               <tr>
-                <th style="width: 45px; text-align: center;">STT</th>
-                <th style="width: 100px; text-align: center;">Ngày</th>
+                <th style="width: 40px; text-align: center;">STT</th>
+                <th style="width: 95px; text-align: center;">Ngày</th>
                 <th>Nội Dung Thu / Chi</th>
-                <th style="width: 120px; text-align: center;">Phân Loại</th>
-                <th style="width: 130px; text-align: right;">Số Tiền</th>
-                <th style="width: 150px;">Người Ghi Nhận</th>
-                <th style="width: 100px; text-align: center;">Trạng Thái</th>
+                <th style="width: 100px; text-align: center;">Phân Loại</th>
+                <th style="width: 125px; text-align: right;">Số Tiền</th>
+                <th style="width: 135px;">Người Yêu Cầu</th>
+                <th style="width: 135px;">Người Duyệt</th>
+                <th style="width: 95px; text-align: center;">Trạng Thái</th>
               </tr>
             </thead>
             <tbody>
@@ -1097,24 +1176,24 @@ export const InternalHRDashboard = () => {
               <tr class="total-row">
                 <td colspan="4" style="text-align: right; padding: 8px 10px;">TỔNG THU:</td>
                 <td style="text-align: right; font-family: monospace; color: #15803d; padding: 8px 10px;">+${filteredIncome.toLocaleString('vi-VN')} VNĐ</td>
-                <td colspan="2"></td>
+                <td colspan="3"></td>
               </tr>
               <tr class="total-row">
                 <td colspan="4" style="text-align: right; padding: 8px 10px;">TỔNG CHI:</td>
                 <td style="text-align: right; font-family: monospace; color: #b91c1c; padding: 8px 10px;">-${filteredExpense.toLocaleString('vi-VN')} VNĐ</td>
-                <td colspan="2"></td>
+                <td colspan="3"></td>
               </tr>
               <tr class="total-row" style="background-color: #e2e8f0; font-size: 11.5pt;">
-                <td colspan="4" style="text-align: right; padding: 9px 10px; font-weight: bold;">TỒN QUỸ / CHÊNH LỆCH:</td>
+                <td colspan="4" style="text-align: right; padding: 9px 10px; font-weight: bold;">TỒN QUỸ THỰC TẾ:</td>
                 <td style="text-align: right; font-family: monospace; font-weight: bold; color: ${filteredBalance >= 0 ? '#15803d' : '#b91c1c'}; padding: 9px 10px;">
                   ${filteredBalance >= 0 ? '+' : ''}${filteredBalance.toLocaleString('vi-VN')} VNĐ
                 </td>
-                <td colspan="2"></td>
+                <td colspan="3"></td>
               </tr>
             </tfoot>
           </table>
 
-          ${renderSignerFooterHtml(chosenSigner, todayStr, currentUser?.name, 'NGƯỜI LẬP BẢNG')}
+          ${renderSignerFooterHtml(finalSigner, todayStr, currentUser?.name, 'NGƯỜI LẬP BẢNG')}
           <script>
             window.onload = function() {
               window.print();
@@ -1430,28 +1509,44 @@ export const InternalHRDashboard = () => {
               </div>
 
               {canExportHR && (
-                <div className="flex items-center gap-2 bg-[var(--bg-tertiary)] p-1.5 rounded-lg border border-[var(--border-default)]">
-                  <span className="text-xs text-[var(--text-secondary)] font-medium pl-1">Tháng:</span>
-                  <select
-                    value={financeMonthFilter}
-                    onChange={e => setFinanceMonthFilter(e.target.value)}
-                    className="bg-[var(--bg-card)] text-[var(--text-primary)] text-xs py-1 px-2 rounded border border-[var(--border-default)] focus:outline-none focus:border-blue-500 cursor-pointer"
-                  >
-                    {financeMonthOptions.map(opt => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
+                <div className="flex items-center gap-2 bg-[var(--bg-tertiary)] p-1.5 rounded-lg border border-[var(--border-default)] flex-wrap">
+                  {isStrictAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => setShowFinanceApproverModal(true)}
+                      className="ds-btn ds-btn-secondary ds-btn-xs text-xs font-semibold flex items-center gap-1.5 shrink-0"
+                      title="Phân quyền thành viên được phép duyệt chi (Dành riêng cho Admin)"
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                      <span>Cấp Quyền Duyệt Chi ({financeApproverIds?.length || 0})</span>
+                    </button>
+                  )}
 
+                  <div className="flex items-center gap-1 shrink-0">
+                    <span className="text-xs text-[var(--text-secondary)] font-medium pl-1">Tháng:</span>
+                    <select
+                      value={financeMonthFilter}
+                      onChange={e => setFinanceMonthFilter(e.target.value)}
+                      className="bg-[var(--bg-card)] text-[var(--text-primary)] text-xs py-1 px-2 rounded border border-[var(--border-default)] focus:outline-none focus:border-blue-500 cursor-pointer"
+                    >
+                      {financeMonthOptions.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Ký duyệt bản in: Loại trừ người được chọn duyệt thu chi */}
                   <SignerSelect
-                    signers={signerOptions}
-                    selectedSignerId={chosenSigner?.id}
-                    onChange={setSelectedSignerId}
+                    signers={financeSignerOptions}
+                    selectedSignerId={chosenFinanceSigner?.id}
+                    onChange={setSelectedFinanceSignerId}
+                    compact
                   />
 
                   <button
                     type="button"
                     onClick={handlePrintFinance}
-                    className="ds-btn ds-btn-primary ds-btn-xs text-xs font-semibold flex items-center gap-1.5"
+                    className="ds-btn ds-btn-primary ds-btn-xs text-xs font-semibold flex items-center gap-1.5 shrink-0"
                     title="In hoặc lưu file PDF báo cáo thu chi quỹ của tháng đã chọn"
                   >
                     <Printer className="w-3.5 h-3.5 shrink-0" />
@@ -1460,6 +1555,60 @@ export const InternalHRDashboard = () => {
                 </div>
               )}
             </div>
+
+            {/* THỐNG KÊ QUỸ THU CHI (CHỈ TÍNH CÁC KHOẢN ĐÃ DUYỆT) */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="p-3.5 bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-[var(--text-secondary)] font-medium">Tổng Thu</div>
+                  <div className="text-lg font-bold font-mono text-emerald-400 mt-0.5">
+                    +{filteredIncome.toLocaleString('vi-VN')} VNĐ
+                  </div>
+                </div>
+                <div className="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-400">
+                  <ArrowDownRight className="w-5 h-5" />
+                </div>
+              </div>
+
+              <div className="p-3.5 bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-[var(--text-secondary)] font-medium">Tổng Chi</div>
+                  <div className="text-lg font-bold font-mono text-rose-400 mt-0.5">
+                    -{filteredExpense.toLocaleString('vi-VN')} VNĐ
+                  </div>
+                </div>
+                <div className="p-2.5 rounded-lg bg-rose-500/10 text-rose-400">
+                  <ArrowUpRight className="w-5 h-5" />
+                </div>
+              </div>
+
+              <div className="p-3.5 bg-[var(--bg-card)] rounded-xl border border-[var(--border-default)] flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-[var(--text-secondary)] font-medium">Tồn Quỹ Thực Tế</div>
+                  <div className={`text-lg font-bold font-mono mt-0.5 ${filteredBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {filteredBalance >= 0 ? '+' : ''}{filteredBalance.toLocaleString('vi-VN')} VNĐ
+                  </div>
+                </div>
+                <div className="p-2.5 rounded-lg bg-blue-500/10 text-blue-400">
+                  <Wallet className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+
+            {(financeStats.rejected > 0 || financeStats.pending > 0) && (
+              <div className="text-xs px-3.5 py-2 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-default)] text-[var(--text-secondary)] flex items-center gap-2 flex-wrap">
+                <span className="font-semibold text-[var(--text-primary)]">📊 Trạng thái kiểm soát:</span>
+                <span className="text-emerald-400 font-medium">✓ Đã duyệt: {financeStats.approved}</span>
+                <span>•</span>
+                <span className="text-rose-400 font-medium">✕ Không duyệt: {financeStats.rejected}</span>
+                {financeStats.pending > 0 && (
+                  <>
+                    <span>•</span>
+                    <span className="text-amber-400 font-medium">⏳ Chờ duyệt: {financeStats.pending}</span>
+                  </>
+                )}
+              </div>
+            )}
 
             <form onSubmit={handleAddFinance} className="grid grid-cols-1 sm:grid-cols-5 gap-4 bg-[var(--bg-card)] p-4 rounded-xl border border-[var(--border-default)]">
               <div>
@@ -1522,60 +1671,129 @@ export const InternalHRDashboard = () => {
                 {filteredFinances.length === 0 ? (
                   <div className="p-6 text-center text-[var(--text-secondary)] text-sm">Không có bản ghi thu chi nào trong thời gian đã chọn.</div>
                 ) : (
-                  filteredFinances.map(item => (
-                    <div key={item.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm hover:bg-[var(--bg-tertiary)] transition-colors">
-                      <div className="flex items-center gap-3">
-                        {item.type === 'income' ? (
-                          <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 shrink-0"><ArrowDownRight className="w-4 h-4" /></div>
-                        ) : (
-                          <div className="p-2 rounded-lg bg-rose-500/20 text-rose-400 shrink-0"><ArrowUpRight className="w-4 h-4" /></div>
-                        )}
-                        <div>
-                          <div className="font-bold text-[var(--text-primary)]">{item.description}</div>
-                          <div className="text-xs text-[var(--text-secondary)]">
-                            {item.date || item.record_date} • Ghi bởi {item.loggedBy || item.logged_by || item.recorded_by || 'VMC'}
+                  filteredFinances.map(item => {
+                    const isApproved = item.status === 'approved';
+                    const isRejected = item.status === 'rejected';
+                    const isPending = !isApproved && !isRejected;
+
+                    return (
+                      <div
+                        key={item.id}
+                        className={`p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-sm transition-colors ${isRejected
+                          ? 'bg-rose-500/[0.04] hover:bg-rose-500/[0.08] border-l-4 border-l-rose-500/60'
+                          : isPending
+                            ? 'bg-amber-500/[0.04] hover:bg-amber-500/[0.08] border-l-4 border-l-amber-500/60'
+                            : 'hover:bg-[var(--bg-tertiary)]'
+                          }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          {item.type === 'income' ? (
+                            <div className={`p-2 rounded-lg shrink-0 ${isRejected ? 'bg-slate-500/20 text-slate-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                              <ArrowDownRight className="w-4 h-4" />
+                            </div>
+                          ) : (
+                            <div className={`p-2 rounded-lg shrink-0 ${isRejected ? 'bg-slate-500/20 text-slate-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                              <ArrowUpRight className="w-4 h-4" />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className={`font-bold truncate ${isRejected ? 'line-through text-[var(--text-secondary)]' : 'text-[var(--text-primary)]'}`}>
+                                {item.description}
+                              </span>
+                            </div>
+                            <div className="text-xs text-[var(--text-secondary)] flex items-center gap-1.5 sm:gap-2 flex-wrap mt-0.5">
+                              <span>{item.date || item.record_date}</span>
+                              <span>•</span>
+                              <span>Người yêu cầu: <strong className="text-[var(--text-primary)] font-medium">{item.loggedBy || item.logged_by || item.recorded_by || 'VMC'}</strong></span>
+                              <span>•</span>
+                              <span>
+                                {isRejected ? 'Người từ chối: ' : 'Người duyệt: '}
+                                <strong className={
+                                  isApproved
+                                    ? 'text-emerald-400 font-medium'
+                                    : isRejected
+                                      ? 'text-rose-400 font-medium'
+                                      : 'text-amber-400 font-normal italic'
+                                }>
+                                  {isApproved
+                                    ? (item.approvedBy || item.approved_by || 'Ban Quản Trị')
+                                    : isRejected
+                                      ? (item.approvedBy || item.approved_by || 'Người duyệt từ chối')
+                                      : 'Chưa duyệt'}
+                                </strong>
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
-                        <div className="text-right">
-                          <div className={`font-mono font-bold ${item.type === 'income' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                            {item.type === 'income' ? '+' : '-'}{Number(item.amount || 0).toLocaleString('vi-VN')} VNĐ
-                          </div>
-                          <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${item.status === 'approved' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
-                            {item.status === 'approved' ? 'Đã duyệt' : 'Chờ duyệt'}
-                          </span>
                         </div>
 
-                        {(isAdmin || isHRHead || currentUser?.role === 'admin' || currentUser?.memberCode === 'ADMIN') && (
-                          <div className="flex items-center gap-1.5 pl-2 border-l border-[var(--border-default)]">
-                            {item.status !== 'approved' && (
+                        <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
+                          <div className="text-right">
+                            <div className={`font-mono font-bold ${isRejected
+                              ? 'line-through text-slate-400 opacity-60 text-xs sm:text-sm'
+                              : item.type === 'income'
+                                ? 'text-emerald-400'
+                                : 'text-rose-400'
+                              }`}>
+                              {item.type === 'income' ? '+' : '-'}{Number(item.amount || 0).toLocaleString('vi-VN')} VNĐ
+                            </div>
+                            <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${isApproved
+                              ? 'bg-emerald-500/20 text-emerald-400'
+                              : isRejected
+                                ? 'bg-rose-500/20 text-rose-400'
+                                : 'bg-amber-500/20 text-amber-400'
+                              }`}>
+                              {isApproved ? '✓ Đã duyệt' : isRejected ? '✕ Không duyệt' : '⏳ Chờ duyệt'}
+                            </span>
+                          </div>
+
+                          {/* THAO TÁC DUYỆT CHI: CHỈ HIỂN THỊ KHI CHƯA DUYỆT (ĐÃ DUYỆT RỒI THÌ KHÔNG ĐƯỢC KHÔNG DUYỆT NỮA) */}
+                          {canApproveFinance && !isApproved && (
+                            <div className="flex items-center gap-1.5 pl-2 border-l border-[var(--border-default)]">
                               <button
                                 type="button"
-                                onClick={() => updateFinanceStatus(item.id, 'approved')}
-                                className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
-                                title="Duyệt khoản này"
+                                onClick={() => updateFinanceStatus(item.id, 'approved', currentUser?.name)}
+                                className="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/30 transition-colors flex items-center gap-1 text-xs font-semibold"
+                                title={`Duyệt khoản thu chi này (bởi ${currentUser?.name})`}
                               >
                                 <Check className="w-3.5 h-3.5" />
+                                <span>Duyệt</span>
                               </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (window.confirm('Bạn có chắc chắn muốn xóa bản ghi thu chi này khỏi CSDL?')) {
-                                  deleteFinanceRecord(item.id);
-                                }
-                              }}
-                              className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-colors"
-                              title="Xóa khoản thu chi"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        )}
+                              {!isRejected && (
+                                <button
+                                  type="button"
+                                  onClick={() => updateFinanceStatus(item.id, 'rejected', currentUser?.name)}
+                                  className="px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-400 hover:bg-rose-500/25 border border-rose-500/30 transition-colors flex items-center gap-1 text-xs font-semibold"
+                                  title={`Không duyệt khoản thu chi này (bởi ${currentUser?.name})`}
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                  <span>Không duyệt</span>
+                                </button>
+                              )}
+                            </div>
+                          )}
+
+                          {/* THAO TÁC XÓA: CHỈ ADMIN HỆ THỐNG MỚI CÓ QUYỀN XÓA GIAO DỊCH, KHÔNG AI KHÁC CÓ QUYỀN */}
+                          {isStrictAdmin && (
+                            <div className="pl-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (window.confirm('Bạn có chắc chắn muốn xóa vĩnh viễn giao dịch này khỏi CSDL? Thao tác này chỉ dành riêng cho Admin!')) {
+                                    deleteFinanceRecord(item.id);
+                                  }
+                                }}
+                                className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-colors"
+                                title="Xóa giao dịch (Chỉ Admin)"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
@@ -1602,6 +1820,15 @@ export const InternalHRDashboard = () => {
         show={Boolean(selectedMember)}
         member={selectedMember}
         onClose={() => setSelectedMember(null)}
+      />
+
+      {/* Finance Approver Permission Modal (Admin cấp quyền duyệt thu chi) */}
+      <FinanceApproverModal
+        show={showFinanceApproverModal}
+        onClose={() => setShowFinanceApproverModal(false)}
+        members={members}
+        financeApproverIds={financeApproverIds}
+        onSave={setFinanceApproverIds}
       />
     </div>
   );

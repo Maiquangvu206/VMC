@@ -305,7 +305,14 @@ export const InternalTasks = () => {
     return task.assignee || 'Chưa phân công';
   };
 
-  const filteredTasks = useMemo(() => tasks.filter(t => deptFilter === 'all' || t.department === deptFilter), [tasks, deptFilter]);
+  const currentMonthStr = new Date().toISOString().slice(0, 7);
+
+  const filteredTasks = useMemo(() => tasks.filter(t => {
+    if (deptFilter !== 'all' && t.department !== deptFilter) return false;
+    // Làm sạch dữ liệu hiển thị deadline tháng cũ, chỉ hiện tháng mới (tháng hiện tại trở đi)
+    if (t.deadline && String(t.deadline).slice(0, 7) < currentMonthStr) return false;
+    return true;
+  }), [tasks, deptFilter, currentMonthStr]);
 
   const todoTasks = useMemo(() => filteredTasks.filter(t => t.status === 'todo'), [filteredTasks]);
   const doingTasks = useMemo(() => filteredTasks.filter(t => t.status === 'doing'), [filteredTasks]);
@@ -314,6 +321,8 @@ export const InternalTasks = () => {
   const membersWithDeadlines = useMemo(() => {
     const map = new Map();
     tasks.forEach(task => {
+      // Làm sạch deadline tháng cũ
+      if (task.deadline && String(task.deadline).slice(0, 7) < currentMonthStr) return;
       const assigneeName = getTaskAssignee(task);
       if (!assigneeName || assigneeName === 'Chưa phân công' || assigneeName === 'Thành viên còn thiếu') return;
 
@@ -753,7 +762,7 @@ export const InternalTasks = () => {
               {/* Deadlines List */}
               <div className="space-y-3">
                 <h4 className="font-heading text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Danh Sách Tất Cả Deadline Đã Giao ({selectedMemberDeadline.tasks.length})
+                  Danh Sách Tất Cả Deadline ({selectedMemberDeadline.tasks.length})
                 </h4>
 
                 {selectedMemberDeadline.tasks.map(task => {
@@ -833,7 +842,7 @@ export const InternalTasks = () => {
                       title="In danh sách deadline của thành viên này"
                     >
                       <Printer className="w-3.5 h-3.5 text-blue-400" />
-                      <span>In Báo Cáo Deadline</span>
+                      <span>In Báo Cáo</span>
                     </button>
                   </div>
                 ) : <div />}

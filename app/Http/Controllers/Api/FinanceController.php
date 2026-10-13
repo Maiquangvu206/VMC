@@ -29,6 +29,8 @@ class FinanceController extends Controller
                     'loggedBy' => $by,
                     'logged_by' => $by,
                     'status' => $r->status ?: 'approved',
+                    'approved_by' => $r->approved_by ?: '',
+                    'approvedBy' => $r->approved_by ?: '',
                     'createdAt' => $r->created_at,
                 ];
             });
@@ -48,6 +50,7 @@ class FinanceController extends Controller
             $recDate = $request->input('record_date') ?: ($request->input('date') ?: date('Y-m-d'));
             $recBy = $request->input('recorded_by') ?: ($request->input('logged_by') ?: ($request->input('loggedBy') ?: 'Thành viên VMC'));
             $status = $request->input('status', 'approved');
+            $approvedBy = $request->input('approved_by') ?: ($request->input('approvedBy') ?: ($status === 'approved' ? $recBy : null));
 
             Finance::create([
                 'id' => $finId,
@@ -59,6 +62,7 @@ class FinanceController extends Controller
                 'date' => $recDate,
                 'logged_by' => $recBy,
                 'status' => $status,
+                'approved_by' => $approvedBy,
             ]);
 
             // If pending, send email notification to Admins / HR department
@@ -126,6 +130,12 @@ class FinanceController extends Controller
 
             $newStatus = $request->input('status');
             $fin->status = $newStatus;
+            $approverName = $request->input('approved_by') ?: ($request->input('approvedBy') ?: 'Quản Trị Viên VMC');
+            if ($newStatus === 'approved' || $newStatus === 'rejected') {
+                $fin->approved_by = $approverName;
+            } else if ($newStatus === 'pending') {
+                $fin->approved_by = null;
+            }
             $fin->save();
 
             // Send notification to requester
