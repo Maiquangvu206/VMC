@@ -271,7 +271,7 @@ export const InternalDashboard = () => {
                       <> • Lớp <strong className="text-slate-100">{safeUser.class}</strong></>
                     )}
                     {' • Điểm thi đua: '}
-                    <strong className="text-amber-400 font-mono">{safeUser.points ?? 0} PTS</strong>
+                    <strong className="text-amber-400 font-mono">{safeUser.points ?? 0}</strong>
                   </>
                 )}
               </p>

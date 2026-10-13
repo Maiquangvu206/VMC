@@ -117,10 +117,17 @@ body {
 }
 
 /* 1. Text contrast & colors in light mode */
-[data-theme='light'] .text-slate-100:not([class*="bg-blue"]):not([class*="bg-rose"]):not([class*="bg-emerald"]):not([class*="bg-amber"]):not([class*="bg-purple"]):not([class*="bg-indigo"]):not(.ds-btn-primary):not(.ds-btn-danger):not(.ds-btn-success),
-[data-theme='light'] .text-slate-200:not([class*="bg-blue"]):not([class*="bg-rose"]):not([class*="bg-emerald"]):not([class*="bg-amber"]):not([class*="bg-purple"]):not([class*="bg-indigo"]):not(.ds-btn-primary):not(.ds-btn-danger):not(.ds-btn-success),
-[data-theme='light'] .text-white:not([class*="bg-blue"]):not([class*="bg-rose"]):not([class*="bg-emerald"]):not([class*="bg-amber"]):not([class*="bg-purple"]):not([class*="bg-indigo"]):not(.ds-btn-primary):not(.ds-btn-danger):not(.ds-btn-success):not(.pointer-events-none) {
+[data-theme='light'] .text-slate-100:not([class*="bg-blue"]):not([class*="bg-rose"]):not([class*="bg-emerald"]):not([class*="bg-amber"]):not([class*="bg-purple"]):not([class*="bg-indigo"]):not([class*="bg-black"]):not([class*="bg-slate-950"]):not([class*="bg-slate-900"]):not(.ds-btn-primary):not(.ds-btn-danger):not(.ds-btn-success):not(.text-force-white),
+[data-theme='light'] .text-slate-200:not([class*="bg-blue"]):not([class*="bg-rose"]):not([class*="bg-emerald"]):not([class*="bg-amber"]):not([class*="bg-purple"]):not([class*="bg-indigo"]):not([class*="bg-black"]):not([class*="bg-slate-950"]):not([class*="bg-slate-900"]):not(.ds-btn-primary):not(.ds-btn-danger):not(.ds-btn-success):not(.text-force-white),
+[data-theme='light'] .text-white:not([class*="bg-blue"]):not([class*="bg-rose"]):not([class*="bg-emerald"]):not([class*="bg-amber"]):not([class*="bg-purple"]):not([class*="bg-indigo"]):not([class*="bg-black"]):not([class*="bg-slate-950"]):not([class*="bg-slate-900"]):not(.ds-btn-primary):not(.ds-btn-danger):not(.ds-btn-success):not(.pointer-events-none):not(.text-force-white) {
   color: #0f172a !important;
+}
+
+/* Luôn giữ màu chữ trắng nổi bật trên các huy hiệu / thanh công cụ overlay */
+.text-force-white,
+[data-theme='light'] .text-force-white,
+[data-theme='dark'] .text-force-white {
+  color: #ffffff !important;
 }
 
 [data-theme='light'] .text-slate-300:not([class*="bg-blue"]):not([class*="bg-rose"]):not([class*="bg-emerald"]):not([class*="bg-amber"]):not([class*="bg-purple"]):not(.ds-badge),

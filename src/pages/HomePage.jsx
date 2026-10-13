@@ -36,7 +36,9 @@ import {
   Moon,
   Info,
   Upload,
-  Loader2
+  Loader2,
+  Expand,
+  Shrink
 } from 'lucide-react';
 import {
   DEFAULT_HOMEPAGE_INFO,
@@ -160,16 +162,19 @@ const readAndCompressImage = (file, maxWidth = 1600, quality = 0.85) => {
 };
 
 // Component hiển thị trình duyệt ảnh (Slider / Carousel) hỗ trợ lướt sang (Swipe / Arrow / Thumbnails)
+// Tự động căn chỉnh kích thước hợp lý, hỗ trợ ambient blurred backdrop, không bị cắt hình
 const ImageSlider = ({
   images = [],
   initialIndex = 0,
   onImageClick,
-  aspectRatio = 'aspect-video',
+  aspectRatio,
   showThumbnails = true,
-  className = ''
+  className = '',
+  defaultFit = 'contain' // 'contain' (chuẩn trọn vẹn, không cắt hình) hoặc 'cover'
 }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [touchStart, setTouchStart] = useState(null);
+  const [fitMode, setFitMode] = useState(defaultFit);
 
   useEffect(() => {
     setCurrentIndex(initialIndex);
@@ -203,19 +208,54 @@ const ImageSlider = ({
     setTouchStart(null);
   };
 
+  // Chiều cao và tỉ lệ hiển thị cân đối, tự động tương thích từ màn hình điện thoại tới desktop
+  const frameHeightClass = aspectRatio || 'h-[48vh] sm:h-[62vh] max-h-[640px] min-h-[300px] w-full';
+
   if (images.length === 1) {
     return (
       <div
-        className={`relative group ${aspectRatio} w-full rounded-2xl overflow-hidden bg-[var(--bg-tertiary)] ${className} ${onImageClick ? 'cursor-pointer' : ''}`}
+        className={`relative group ${frameHeightClass} w-full rounded-2xl overflow-hidden bg-slate-950 flex items-center justify-center select-none shadow-md border border-[var(--border-default)] ${className} ${onImageClick ? 'cursor-pointer' : ''}`}
         onClick={() => onImageClick && onImageClick(images[0], 0)}
       >
+        {/* Nền mờ nghệ thuật (Ambient blurred backdrop) tạo cảm giác liền mạch, sang trọng */}
+        <div
+          className="absolute inset-0 bg-cover bg-center blur-2xl opacity-35 scale-110 pointer-events-none transition-all duration-500"
+          style={{ backgroundImage: `url(${images[0]})` }}
+        />
+        <div className="absolute inset-0 bg-black/40 pointer-events-none" />
+
+        {/* Ảnh chính: fitMode contain đảm bảo hiển thị trọn vẹn 100%, không bị cắt bất kỳ góc nào */}
         <img
           src={images[0]}
           alt=""
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className={`relative z-10 max-w-full max-h-full w-auto h-auto ${fitMode === 'contain' ? 'object-contain' : 'object-cover w-full h-full'} mx-auto drop-shadow-2xl transition-all duration-300 group-hover:scale-[1.01]`}
         />
+
+        {/* Nút chuyển chế độ Trọn vẹn vs Lấp đầy */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setFitMode((prev) => (prev === 'contain' ? 'cover' : 'contain'));
+          }}
+          className="absolute top-3 right-3 px-3 py-1.5 rounded-full bg-slate-950/85 hover:bg-slate-900 border border-white/25 text-force-white text-xs font-semibold backdrop-blur-md flex items-center gap-1.5 z-10 transition-colors shadow-lg active:scale-95 cursor-pointer"
+          title={fitMode === 'contain' ? 'Đang xem trọn vẹn (không cắt hình). Bấm để lấp đầy khung' : 'Đang lấp đầy khung. Bấm để xem trọn vẹn không bị cắt hình'}
+        >
+          {fitMode === 'contain' ? (
+            <>
+              <Expand className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span className="hidden sm:inline text-force-white font-bold" style={{ color: '#ffffff' }}>Zoom in</span>
+            </>
+          ) : (
+            <>
+              <Shrink className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span className="hidden sm:inline text-force-white font-bold" style={{ color: '#ffffff' }}>Zoom out</span>
+            </>
+          )}
+        </button>
+
         {onImageClick && (
-          <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-lg bg-black/70 border border-slate-700/60 text-slate-300 text-2xs flex items-center gap-1.5 backdrop-blur-md pointer-events-none group-hover:bg-cyan-500 group-hover:text-black font-medium transition-all">
+          <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-lg bg-black/70 border border-slate-700/60 text-slate-300 text-2xs flex items-center gap-1.5 backdrop-blur-md pointer-events-none group-hover:bg-cyan-500 group-hover:text-black font-medium transition-all z-10">
             <Eye className="w-3.5 h-3.5" />
             <span>Phóng to</span>
           </div>
@@ -228,36 +268,64 @@ const ImageSlider = ({
     <div className={`space-y-3 ${className}`}>
       {/* Khung ảnh chính */}
       <div
-        className={`relative group ${aspectRatio} w-full rounded-2xl overflow-hidden bg-slate-950 select-none shadow-md border border-[var(--border-default)]`}
+        className={`relative group ${frameHeightClass} w-full rounded-2xl overflow-hidden bg-slate-950 select-none shadow-md border border-[var(--border-default)] flex items-center justify-center`}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
+        {/* Nền mờ nghệ thuật (Ambient blurred backdrop) tạo cảm giác liền mạch, sang trọng */}
+        <div
+          className="absolute inset-0 bg-cover bg-center blur-2xl opacity-35 scale-110 pointer-events-none transition-all duration-500"
+          style={{ backgroundImage: `url(${images[currentIndex]})` }}
+        />
+        <div className="absolute inset-0 bg-black/40 pointer-events-none" />
+
+        {/* Ảnh chính: fitMode contain hiển thị trọn vẹn poster/ảnh, không bị cắt text hoặc hình */}
         <img
           src={images[currentIndex]}
           alt={`Ảnh ${currentIndex + 1}`}
           onClick={() => onImageClick && onImageClick(images[currentIndex], currentIndex)}
-          className={`w-full h-full object-cover transition-opacity duration-300 ${onImageClick ? 'cursor-pointer' : ''}`}
+          className={`relative z-10 max-w-full max-h-full w-auto h-auto ${fitMode === 'contain' ? 'object-contain' : 'object-cover w-full h-full'} mx-auto drop-shadow-2xl transition-all duration-300 ${onImageClick ? 'cursor-pointer' : ''}`}
         />
 
         {/* Counter Badge */}
-        <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-black/75 border border-white/20 text-white text-2xs font-semibold backdrop-blur-md flex items-center gap-1.5 z-10">
-          <Camera className="w-3.5 h-3.5 text-cyan-400" />
-          <span>{currentIndex + 1} / {images.length}</span>
+        <div className="absolute top-3 right-3 px-3 py-1.5 rounded-full bg-slate-950/85 border border-white/30 text-force-white text-xs font-bold backdrop-blur-md flex items-center gap-1.5 z-10 shadow-lg">
+          <Camera className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+          <span className="text-force-white font-bold tracking-wide" style={{ color: '#ffffff' }}>
+            {currentIndex + 1} / {images.length}
+          </span>
         </div>
 
-        {/* Nhãn hướng dẫn lướt */}
-        <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/65 text-slate-300 text-3xs backdrop-blur-md border border-white/10 flex items-center gap-1 z-10">
-          <span>👈 Lướt sang 👉</span>
-        </div>
+        {/* Nút chuyển chế độ Trọn vẹn vs Lấp đầy */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setFitMode((prev) => (prev === 'contain' ? 'cover' : 'contain'));
+          }}
+          className="absolute top-3 right-24 px-3 py-1.5 rounded-full bg-slate-950/85 hover:bg-slate-900 border border-white/30 text-force-white text-xs font-semibold backdrop-blur-md flex items-center gap-1.5 z-10 transition-colors shadow-lg active:scale-95 cursor-pointer"
+          title={fitMode === 'contain' ? 'Đang xem trọn vẹn (không cắt hình). Bấm để lấp đầy khung' : 'Đang lấp đầy khung. Bấm để xem trọn vẹn không bị cắt hình'}
+        >
+          {fitMode === 'contain' ? (
+            <>
+              <Expand className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span className="hidden sm:inline text-force-white font-bold" style={{ color: '#ffffff' }}>Trọn vẹn</span>
+            </>
+          ) : (
+            <>
+              <Shrink className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+              <span className="hidden sm:inline text-force-white font-bold" style={{ color: '#ffffff' }}>Lấp đầy</span>
+            </>
+          )}
+        </button>
 
         {/* Nút lùi ảnh */}
         <button
           type="button"
           onClick={handlePrev}
           aria-label="Ảnh trước"
-          className="absolute left-3 top-1/2 -translate-y-1/2 p-2 sm:p-2.5 rounded-full bg-black/60 hover:bg-cyan-600 text-white shadow-xl backdrop-blur-md transition-all active:scale-90 z-20"
+          className="absolute left-3 top-1/2 -translate-y-1/2 p-2 sm:p-2.5 rounded-full bg-slate-950/75 hover:bg-cyan-600 text-force-white border border-white/20 shadow-xl backdrop-blur-md transition-all active:scale-90 z-20 cursor-pointer"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft className="w-5 h-5" style={{ color: '#ffffff' }} />
         </button>
 
         {/* Nút chuyển ảnh tiếp theo */}
@@ -265,13 +333,13 @@ const ImageSlider = ({
           type="button"
           onClick={handleNext}
           aria-label="Ảnh tiếp theo"
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 sm:p-2.5 rounded-full bg-black/60 hover:bg-cyan-600 text-white shadow-xl backdrop-blur-md transition-all active:scale-90 z-20"
+          className="absolute right-3 top-1/2 -translate-y-1/2 p-2 sm:p-2.5 rounded-full bg-slate-950/75 hover:bg-cyan-600 text-force-white border border-white/20 shadow-xl backdrop-blur-md transition-all active:scale-90 z-20"
         >
-          <ChevronRight className="w-5 h-5" />
+          <ChevronRight className="w-5 h-5" style={{ color: '#ffffff' }} />
         </button>
 
         {/* Chấm tròn chỉ số (Dots) */}
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10">
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-10 px-3 py-1.5 rounded-full bg-slate-950/80 backdrop-blur-md border border-white/15 shadow-md">
           {images.map((_, i) => (
             <button
               key={i}
@@ -287,10 +355,10 @@ const ImageSlider = ({
         {onImageClick && (
           <div
             onClick={() => onImageClick(images[currentIndex], currentIndex)}
-            className="absolute bottom-3 right-3 px-2.5 py-1 rounded-lg bg-black/70 border border-slate-700/60 text-slate-300 text-2xs flex items-center gap-1.5 backdrop-blur-md cursor-pointer hover:bg-cyan-500 hover:text-black font-medium transition-all z-10"
+            className="absolute bottom-3 right-3 px-2.5 py-1 rounded-lg bg-slate-950/85 border border-white/25 text-force-white text-2xs flex items-center gap-1.5 backdrop-blur-md cursor-pointer hover:bg-cyan-500 hover:text-black font-medium transition-all z-10 shadow-md"
           >
-            <Eye className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Phóng to</span>
+            <Eye className="w-3.5 h-3.5" style={{ color: '#ffffff' }} />
+            <span className="hidden sm:inline text-force-white" style={{ color: '#ffffff' }}>Phóng to</span>
           </div>
         )}
       </div>
@@ -306,7 +374,7 @@ const ImageSlider = ({
               className={`relative shrink-0 w-16 h-11 sm:w-20 sm:h-14 rounded-lg overflow-hidden border-2 transition-all duration-200 ${i === currentIndex ? 'border-cyan-400 ring-2 ring-cyan-400/40 scale-105' : 'border-transparent opacity-60 hover:opacity-100'}`}
             >
               <img src={img} alt="" className="w-full h-full object-cover" />
-              <span className="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-black/85 text-white text-[9px] font-mono leading-none">
+              <span className="absolute bottom-0.5 right-0.5 px-1 py-0.2 rounded bg-black/85 text-force-white text-[9px] font-mono leading-none" style={{ color: '#ffffff' }}>
                 #{i + 1}
               </span>
             </button>
@@ -1945,240 +2013,139 @@ export const HomePage = ({ onOpenLogin }) => {
         </div>
       </section>
 
-      {/* 7. MODAL: XEM BÀI VIẾT CHI TIẾT */}
-      {selectedArticle && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-          <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-[var(--bg-card)] border border-[var(--border-default)] rounded-3xl p-6 sm:p-8 shadow-2xl">
-            {/* Nút Đóng */}
-            <button
-              type="button"
-              onClick={() => setSelectedArticle(null)}
-              className="absolute top-5 right-5 p-2 rounded-full bg-[var(--bg-tertiary)] hover:bg-[var(--border-default)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+      {/* 7. MODAL: XEM BÀI VIẾT CHI TIẾT (GIAO DIỆN ĐỒNG BỘ TƯƠNG TỰ KHO TƯ LIỆU) */}
+      {selectedArticle && (() => {
+        const allArticleImages = Array.from(new Set([
+          selectedArticle.coverImage,
+          ...(Array.isArray(selectedArticle.images) ? selectedArticle.images : [])
+        ].filter(Boolean)));
+
+        return (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/90 backdrop-blur-md animate-fade-in cursor-pointer"
+            onClick={() => setSelectedArticle(null)}
+          >
+            <div
+              className="relative w-full max-w-4xl max-h-[92vh] overflow-y-auto bg-[var(--bg-card)] border border-[var(--border-default)] rounded-3xl p-4 sm:p-6 shadow-2xl flex flex-col cursor-default"
+              onClick={(e) => e.stopPropagation()}
             >
-              <X className="w-5 h-5" />
-            </button>
-
-            {/* Header Bài Viết */}
-            <div className="mb-6">
-              <span className="px-3 py-1 rounded-full text-2xs font-bold uppercase tracking-wider bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30">
-                {selectedArticle.category}
-              </span>
-              <h2 className="text-xl sm:text-2xl font-extrabold text-[var(--text-primary)] mt-3 leading-snug">
-                {selectedArticle.title}
-              </h2>
-              <div className="flex flex-wrap items-center gap-4 text-xs text-[var(--text-secondary)] mt-3 pt-3 border-t border-[var(--border-default)]">
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-purple-500 dark:text-purple-400" />
-                  {selectedArticle.date}
-                </span>
-                <span>•</span>
-                <span>Tác giả: <strong className="text-[var(--text-primary)]">{selectedArticle.author}</strong></span>
-              </div>
-            </div>
-
-            {/* PHẦN MEDIA ĐẦU BÀI VIẾT:
-                1. NẾU LÀ VIDEO: TỰ ĐỘNG PHÁT NGAY KHI MỞ
-                2. NẾU CÓ NHIỀU ẢNH: SLIDER CAROUSEL LƯỚT SANG HIỆN ẢNH TIẾP THEO
-                3. NẾU 1 ẢNH: HIỂN THỊ ẢNH BÌA
-            */}
-            {selectedArticle.videoUrl ? (
-              <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-black mb-6 shadow-xl border border-[var(--border-default)]">
-                {(() => {
-                  const videoInfo = getVideoEmbedInfo(selectedArticle.videoUrl, true);
-                  if (videoInfo?.platform === 'youtube' || videoInfo?.platform === 'facebook') {
-                    return (
-                      <iframe
-                        src={videoInfo.embedUrl}
-                        title={selectedArticle.title}
-                        className="w-full h-full border-0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        allowFullScreen
-                        scrolling="no"
-                      />
-                    );
-                  }
-                  return (
-                    <video
-                      src={selectedArticle.videoUrl}
-                      controls
-                      autoPlay
-                      playsInline
-                      className="w-full h-full object-contain mx-auto"
-                    />
-                  );
-                })()}
-              </div>
-            ) : (() => {
-              const allImages = Array.from(new Set([
-                selectedArticle.coverImage,
-                ...(Array.isArray(selectedArticle.images) ? selectedArticle.images : [])
-              ].filter(Boolean)));
-
-              if (allImages.length > 1) {
-                return (
-                  <div className="mb-6">
+              {/* 1. KHUNG MEDIA (VIDEO HOẶC ẢNH / SLIDER) ĐƯỢC ĐẶT Ở TRÊN CÙNG */}
+              {(selectedArticle.videoUrl || allArticleImages.length > 0) && (
+                <div className="relative w-full rounded-2xl overflow-hidden mb-4 select-none">
+                  {selectedArticle.videoUrl ? (
+                    (() => {
+                      const videoInfo = getVideoEmbedInfo(selectedArticle.videoUrl, true);
+                      if (videoInfo?.platform === 'youtube' || videoInfo?.platform === 'facebook') {
+                        return (
+                          <div className="aspect-video w-full rounded-2xl overflow-hidden bg-black shadow-xl">
+                            <iframe
+                              src={videoInfo.embedUrl}
+                              title={selectedArticle.title}
+                              className="w-full h-full border-0"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                              allowFullScreen
+                              scrolling="no"
+                            />
+                          </div>
+                        );
+                      }
+                      return (
+                        <video
+                          src={selectedArticle.videoUrl}
+                          controls
+                          autoPlay
+                          playsInline
+                          className="w-full max-h-[70vh] rounded-2xl object-contain mx-auto bg-black"
+                        />
+                      );
+                    })()
+                  ) : allArticleImages.length > 0 ? (
                     <ImageSlider
-                      images={allImages}
+                      images={allArticleImages}
+                      showThumbnails={allArticleImages.length > 1}
                       onImageClick={(imgUrl, idx) => setSelectedMedia({
                         type: 'image',
                         mediaUrl: imgUrl,
-                        gallery: allImages,
+                        gallery: allArticleImages,
                         galleryIndex: idx,
                         title: selectedArticle.title,
                         category: selectedArticle.category,
                         description: selectedArticle.summary || selectedArticle.title
                       })}
-                      showThumbnails={true}
                     />
-                  </div>
-                );
-              }
+                  ) : null}
+                </div>
+              )}
 
-              if (selectedArticle.coverImage) {
-                return (
-                  <div className="relative group aspect-video w-full rounded-2xl overflow-hidden bg-[var(--bg-tertiary)] mb-6 cursor-pointer">
-                    <img
-                      src={selectedArticle.coverImage}
-                      alt={selectedArticle.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      onClick={() => setSelectedMedia({
-                        type: 'image',
-                        mediaUrl: selectedArticle.coverImage,
-                        gallery: [selectedArticle.coverImage],
-                        galleryIndex: 0,
-                        title: selectedArticle.title,
-                        category: selectedArticle.category,
-                        description: selectedArticle.summary || selectedArticle.title
-                      })}
-                    />
-                    <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-lg bg-black/70 border border-slate-700/60 text-slate-300 text-2xs flex items-center gap-1.5 backdrop-blur-md pointer-events-none group-hover:bg-cyan-500 group-hover:text-black font-medium transition-all">
-                      <Eye className="w-3.5 h-3.5" />
-                      <span>Bấm vào ảnh để phóng to</span>
-                    </div>
-                  </div>
-                );
-              }
-              return null;
-            })()}
-
-            {/* Tóm tắt */}
-            {selectedArticle.summary && (
-              <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-800 dark:text-purple-200 text-xs sm:text-sm font-medium italic leading-relaxed mb-6">
-                "{selectedArticle.summary}"
-              </div>
-            )}
-
-            {/* Nội dung bài viết */}
-            <div className="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed whitespace-pre-line space-y-4 font-sans">
-              {selectedArticle.content}
-            </div>
-
-            {/* Album / Bộ Sưu Tập Ảnh Trong Bài Viết */}
-            {Array.isArray(selectedArticle.images) && selectedArticle.images.length > 0 && (
-              <div className="mt-8 pt-6 border-t border-[var(--border-default)]">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-lg bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border border-cyan-500/25">
-                      <Camera className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
-                        <span>Bộ Sưu Tập Hình Ảnh</span>
-                        <span className="px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/25 text-2xs font-semibold">
-                          {selectedArticle.images.length} ảnh
-                        </span>
-                      </h4>
-                    </div>
-                  </div>
+              {/* 2. THÔNG TIN & NỘI DUNG CHI TIẾT NẰM Ở PHÍA DƯỚI ẢNH (TƯƠNG TỰ KHO TƯ LIỆU) */}
+              <div className="pt-2 border-t border-[var(--border-default)] space-y-3">
+                {/* Badge Category & Ngày & Tác giả */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="px-2.5 py-1 rounded-md text-2xs font-bold bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30">
+                    {selectedArticle.category || 'Hoạt động nổi bật'}
+                  </span>
+                  <span className="text-2xs text-[var(--text-muted)] flex items-center gap-1 font-medium">
+                    <Calendar className="w-3.5 h-3.5 text-purple-500" />
+                    {selectedArticle.date}
+                  </span>
+                  {selectedArticle.author && (
+                    <>
+                      <span className="text-2xs text-[var(--text-muted)]">•</span>
+                      <span className="text-2xs text-[var(--text-secondary)] font-medium">
+                        Tác giả: <strong className="text-[var(--text-primary)]">{selectedArticle.author}</strong>
+                      </span>
+                    </>
+                  )}
                 </div>
 
-                {selectedArticle.videoUrl ? (
-                  <ImageSlider
-                    images={selectedArticle.images}
-                    onImageClick={(imgUrl, idx) => setSelectedMedia({
-                      type: 'image',
-                      mediaUrl: imgUrl,
-                      gallery: selectedArticle.images,
-                      galleryIndex: idx,
-                      title: `${selectedArticle.title} (Ảnh ${idx + 1}/${selectedArticle.images.length})`,
-                      category: selectedArticle.category,
-                      description: `Hình ảnh trong bài viết: ${selectedArticle.title}`
-                    })}
-                    showThumbnails={true}
-                  />
-                ) : (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {selectedArticle.images.map((imgUrl, imgIdx) => (
-                      <div
-                        key={imgIdx}
-                        onClick={() => {
-                          const allImgs = Array.from(new Set([
-                            selectedArticle.coverImage,
-                            ...selectedArticle.images
-                          ].filter(Boolean)));
-                          const targetIdx = allImgs.indexOf(imgUrl);
-                          setSelectedMedia({
-                            type: 'image',
-                            mediaUrl: imgUrl,
-                            gallery: allImgs,
-                            galleryIndex: targetIdx >= 0 ? targetIdx : imgIdx,
-                            title: `${selectedArticle.title} (Ảnh ${imgIdx + 1}/${selectedArticle.images.length})`,
-                            category: selectedArticle.category,
-                            description: `Hình ảnh trong bài viết: ${selectedArticle.title}`
-                          });
-                        }}
-                        className="group relative aspect-video rounded-xl overflow-hidden bg-[var(--bg-tertiary)] border border-[var(--border-default)] hover:border-cyan-500/60 cursor-pointer transition-all duration-300 hover:-translate-y-1 shadow-xs hover:shadow-md"
-                      >
-                        <img
-                          src={imgUrl}
-                          alt={`Ảnh ${imgIdx + 1}`}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white text-xs font-semibold backdrop-blur-[2px]">
-                          <Eye className="w-4 h-4 text-cyan-400" />
-                          <span>Xem chi tiết</span>
-                        </div>
-                        <div className="absolute bottom-1.5 right-1.5 px-1.5 py-0.5 rounded bg-black/75 text-slate-300 text-3xs font-mono">
-                          #{imgIdx + 1}
-                        </div>
-                      </div>
-                    ))}
+                {/* Tiêu đề bài viết */}
+                <h2 className="text-lg sm:text-2xl font-extrabold text-[var(--text-primary)] leading-snug tracking-tight">
+                  {selectedArticle.title}
+                </h2>
+
+                {/* Tóm tắt bài viết (nếu có) */}
+                {selectedArticle.summary && (
+                  <div className="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-800 dark:text-purple-200 text-xs sm:text-sm font-medium italic leading-relaxed">
+                    "{selectedArticle.summary}"
+                  </div>
+                )}
+
+                {/* Nội dung chi tiết bài viết */}
+                {selectedArticle.content && (
+                  <div className="text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed whitespace-pre-line space-y-3 font-sans pt-1">
+                    {selectedArticle.content}
                   </div>
                 )}
               </div>
-            )}
 
-            {/* Footer bài viết */}
-            <div className="mt-8 pt-6 border-t border-[var(--border-default)] flex items-center justify-between">
-              <span className="text-2xs text-[var(--text-muted)]">
-                CLB Truyền Thông THPT Vĩnh Bảo (VMC)
-              </span>
-              <button
-                type="button"
-                onClick={() => setSelectedArticle(null)}
-                className="px-5 py-2 rounded-xl bg-[var(--bg-tertiary)] hover:bg-[var(--border-default)] text-xs font-bold text-[var(--text-primary)] border border-[var(--border-default)] transition-all"
-              >
-                Đóng bài viết
-              </button>
+              {/* 3. FOOTER BÀI VIẾT VỚI NÚT ĐÓNG */}
+              <div className="mt-6 pt-4 border-t border-[var(--border-default)] flex items-center justify-between">
+                <span className="text-2xs text-[var(--text-muted)] font-medium">
+                  CLB Truyền Thông THPT Vĩnh Bảo (VMC)
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedArticle(null)}
+                  className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs font-bold border border-slate-300 dark:border-slate-700 transition-all shadow-sm active:scale-95 cursor-pointer"
+                >
+                  Đóng bài viết
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* 8. MODAL: XEM MEDIA (ẢNH PHÓNG TO HOẶC VIDEO EMBED TỰ PHÁT) */}
       {selectedMedia && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-black/90 backdrop-blur-md animate-fade-in">
-          <div className="relative w-full max-w-4xl max-h-[92vh] overflow-y-auto bg-[var(--bg-card)] border border-[var(--border-default)] rounded-3xl p-4 sm:p-6 shadow-2xl flex flex-col">
-            {/* Nút đóng */}
-            <button
-              type="button"
-              onClick={() => setSelectedMedia(null)}
-              className="absolute top-4 right-4 z-30 p-2 rounded-full bg-black/60 hover:bg-black/90 text-white border border-white/20 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-black/90 backdrop-blur-md animate-fade-in cursor-pointer"
+          onClick={() => setSelectedMedia(null)}
+        >
+          <div
+            className="relative w-full max-w-4xl max-h-[92vh] overflow-y-auto bg-[var(--bg-card)] border border-[var(--border-default)] rounded-3xl p-4 sm:p-6 shadow-2xl flex flex-col cursor-default"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Video Player tự phát hoặc Trình Chiếu Ảnh (ImageSlider chuyển tiếp như bài đăng) */}
             <div className="relative w-full rounded-2xl overflow-hidden bg-black mb-4 select-none">
               {selectedMedia.type === 'video' ? (
@@ -2222,17 +2189,21 @@ export const HomePage = ({ onOpenLogin }) => {
                         images={mediaImages}
                         initialIndex={selectedMedia.galleryIndex || 0}
                         showThumbnails={true}
-                        aspectRatio="aspect-video"
                       />
                     );
                   }
 
                   return (
-                    <div className="relative flex items-center justify-center min-h-[300px] max-h-[70vh]">
+                    <div className="relative flex items-center justify-center min-h-[300px] h-[48vh] sm:h-[62vh] max-h-[640px] w-full rounded-2xl overflow-hidden bg-slate-950">
+                      <div
+                        className="absolute inset-0 bg-cover bg-center blur-2xl opacity-35 scale-110 pointer-events-none"
+                        style={{ backgroundImage: `url(${mediaImages[0] || selectedMedia.mediaUrl || selectedMedia.thumbnail})` }}
+                      />
+                      <div className="absolute inset-0 bg-black/40 pointer-events-none" />
                       <img
                         src={mediaImages[0] || selectedMedia.mediaUrl || selectedMedia.thumbnail}
                         alt={selectedMedia.title}
-                        className="w-full max-h-[70vh] rounded-2xl object-contain mx-auto transition-opacity duration-300"
+                        className="relative z-10 max-w-full max-h-full w-auto h-auto object-contain mx-auto drop-shadow-2xl transition-opacity duration-300"
                       />
                     </div>
                   );
@@ -2241,32 +2212,28 @@ export const HomePage = ({ onOpenLogin }) => {
             </div>
 
             {/* Media Info */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-[var(--border-default)]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-[var(--border-default)]">
               <div>
-                <span className="px-2 py-0.5 rounded text-2xs font-semibold bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/25">
+                <span className="px-2.5 py-1 rounded-md text-2xs font-bold bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30">
                   {selectedMedia.category || 'VMC Media'} • {selectedMedia.date || 'Gần đây'}
                 </span>
-                <h3 className="text-base font-bold text-[var(--text-primary)] mt-1">
+                <h3 className="text-base sm:text-lg font-extrabold text-[var(--text-primary)] mt-1.5 tracking-tight">
                   {selectedMedia.title}
                 </h3>
                 {selectedMedia.description && (
-                  <p className="text-xs text-[var(--text-secondary)] mt-1">
+                  <p className="text-xs sm:text-sm text-[var(--text-secondary)] mt-1 leading-relaxed">
                     {selectedMedia.description}
                   </p>
                 )}
               </div>
 
-              {selectedMedia.mediaUrl && (
-                <a
-                  href={selectedMedia.mediaUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--bg-tertiary)] hover:bg-[var(--border-default)] text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-default)] self-start sm:self-auto shrink-0 transition-all"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span>Mở liên kết gốc</span>
-                </a>
-              )}
+              <button
+                type="button"
+                onClick={() => setSelectedMedia(null)}
+                className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 text-xs font-bold border border-slate-300 dark:border-slate-700 transition-all self-start sm:self-auto shrink-0 shadow-sm active:scale-95 cursor-pointer"
+              >
+                Đóng để thoát
+              </button>
             </div>
           </div>
         </div>
@@ -2592,9 +2559,6 @@ export const HomePage = ({ onOpenLogin }) => {
                         <label className="text-2xs font-bold text-[var(--text-secondary)] uppercase">
                           Tóm Tắt Ngắn
                         </label>
-                        <span className="text-3xs text-[var(--text-muted)]">
-                          Hiển thị ở thẻ xem trước
-                        </span>
                       </div>
                       <textarea
                         rows={3}
@@ -2619,9 +2583,6 @@ export const HomePage = ({ onOpenLogin }) => {
                         <label className="text-2xs font-bold text-[var(--text-secondary)] uppercase">
                           Nội Dung Chi Tiết *
                         </label>
-                        <span className="text-3xs text-cyan-400 font-medium">
-                          ✦ Tự động dãn dài theo văn bản • Có thể kéo góc để phóng to
-                        </span>
                       </div>
                       <textarea
                         required

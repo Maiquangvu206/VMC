@@ -15,7 +15,7 @@ export const InternalDrafts = () => {
     showToast
   } = useClub();
 
-  const canApproveDraft = Boolean(
+  const canApproveDraft = !isAdvisor && Boolean(
     currentUser?.role === 'admin' ||
     currentUser?.role === 'lead' ||
     currentUser?.memberCode === 'ADMIN' ||
@@ -462,8 +462,8 @@ export const InternalDrafts = () => {
                       </label>
 
                       <div className={`font-mono font-bold text-xs px-2 py-0.5 rounded-md min-w-[50px] text-center ${score > 0 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' :
-                          score < 0 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
-                            'bg-slate-800 text-slate-400'
+                        score < 0 ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' :
+                          'bg-slate-800 text-slate-400'
                         }`}>
                         {score > 0 ? `+${score}đ` : `${score}đ`}
                       </div>
