@@ -83,13 +83,23 @@ class TaskController extends Controller
                 }
             }
 
+            $todayStr = date('Y-m-d');
             foreach ($taskItems as $taskInput) {
+                $deadline = $taskInput['deadline'] ?? null;
+                if ($deadline) {
+                    $deadlineDate = substr((string)$deadline, 0, 10);
+                    if ($deadlineDate < $todayStr) {
+                        return response()->json([
+                            'success' => false,
+                            'error' => 'Hạn hoàn thành không thể là ngày trong quá khứ (trước ngày ' . $todayStr . ').'
+                        ], 422);
+                    }
+                }
                 $taskId = $taskInput['id'] ?? ('task-' . time() . '-' . rand(100, 999));
                 $title = $taskInput['title'] ?? 'Nhiệm vụ mới';
                 $description = $taskInput['description'] ?? '';
                 $assId = $taskInput['assignee_id'] ?? ($taskInput['assigneeId'] ?? null);
                 $creatorId = $taskInput['created_by'] ?? ($taskInput['createdBy'] ?? $rootCreatorId);
-                $deadline = $taskInput['deadline'] ?? null;
                 $status = $taskInput['status'] ?? 'todo';
 
                 Task::create([

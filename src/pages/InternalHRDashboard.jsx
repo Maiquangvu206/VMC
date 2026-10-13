@@ -144,21 +144,8 @@ export const InternalHRDashboard = () => {
       const q = normalizeText(searchQuery);
       return !q || normalizeText(m.name).includes(q) || normalizeText(m.memberCode).includes(q);
     }).map(m => {
-      // Tính điểm tổng thực tế từ các nhiệm vụ/biên bản/điểm danh đã hoàn thành
-      const mTasks = (tasks || []).filter(t => {
-        const assId = t.assigneeId || t.assignee_id;
-        const assName = (t.assignee || '').trim().toLowerCase();
-        const mName = (m.name || m.full_name || '').trim().toLowerCase();
-        if (assId && (String(assId) === String(m.id) || (m.memberCode && String(assId) === String(m.memberCode)))) return true;
-        if (assName && mName && (assName === mName || mName.includes(assName) || assName.includes(mName))) return true;
-        return false;
-      });
-      const taskPoints = mTasks
-        .filter(t => t.status === 'done' || t.status === 'completed')
-        .reduce((sum, t) => sum + (Number(t.pointsReward) || 10), 0);
-
-      const effectivePoints = Math.max(Number(m.points) || 0, taskPoints);
-      return { ...m, points: effectivePoints };
+      // Điểm số thi đua của thành viên lấy từ hệ thống (hoàn thành đúng hạn/sớm hạn không cộng điểm)
+      return { ...m, points: Number(m.points) || 0 };
     }).sort((a, b) => (b.points || 0) - (a.points || 0));
 
     let currentRank = 1;

@@ -114,6 +114,8 @@ export const InternalTasks = () => {
     return dl < now;
   };
 
+  const todayDateStr = new Date().toISOString().split('T')[0];
+
   const handlePrintMemberDeadline = (mem, memberTasks) => {
     const printWindow = window.open('', '_blank', 'width=1100,height=850');
     if (!printWindow) {
@@ -346,6 +348,10 @@ export const InternalTasks = () => {
     }
     if (!formData.title || !formData.assignee || !formData.deadline) {
       showToast('Vui lòng điền đầy đủ thông tin nhiệm vụ!', 'warning');
+      return;
+    }
+    if (formData.deadline < todayDateStr) {
+      showToast('⚠️ Hạn hoàn thành không thể là ngày trong quá khứ!', 'warning');
       return;
     }
     addTask(formData);
@@ -639,6 +645,7 @@ export const InternalTasks = () => {
                     <input
                       type="date"
                       required
+                      min={todayDateStr}
                       value={formData.deadline}
                       onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
                       className="ds-input"

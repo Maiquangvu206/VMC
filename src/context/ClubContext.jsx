@@ -411,7 +411,7 @@ export const ClubProvider = ({ children }) => {
       desc: task.description || task.desc || localTask.desc || '',
       assigneeId: assId,
       assignee: assigneeName,
-      pointsReward: task.pointsReward ?? task.points_reward ?? localTask.pointsReward ?? 10,
+      pointsReward: 0,
       status: task.status || localTask.status || 'todo',
       deadline: task.deadline || localTask.deadline || ''
     };
@@ -438,7 +438,7 @@ export const ClubProvider = ({ children }) => {
       assigneeId: resolvedAssigneeId,
       deadline,
       status: taskData.status || 'todo',
-      pointsReward: taskData.pointsReward ?? taskData.points ?? 10,
+      pointsReward: 0,
       createdAt: taskData.createdAt || new Date().toISOString().slice(0, 10)
     };
 
@@ -1234,9 +1234,41 @@ setCurrentUser(acc);
     }));
     updateEntityAPI('tasks', taskId, { status: newStatus }).catch(e => console.log(e));
 
-    if ((newStatus === 'done' || newStatus === 'completed') && currentTask?.assigneeId) {
-      const reward = Number(currentTask.pointsReward) || 10;
-      updateMemberPoints(currentTask.assigneeId, reward, `Hoàn thành nhiệm vụ: ${currentTask.title}`);
+    if ((newStatus === 'done' || newStatus === 'completed') && currentTask) {
+      const todayDate = new Date().toISOString().split('T')[0];
+      const deadline = currentTask.deadline || currentTask.dueDate;
+      const deadlineDate = deadline ? String(deadline).slice(0, 10) : null;
+      const isLate = deadlineDate && deadlineDate < todayDate;
+
+      let penalizedIds = [];
+      try {
+        penalizedIds = JSON.parse(localStorage.getItem('vmc_penalized_tasks') || '[]');
+      } catch {
+        penalizedIds = [];
+      }
+      const alreadyPenalized = penalizedIds.includes(taskId);
+
+      let assId = currentTask.assigneeId || currentTask.assignee_id;
+      if (!assId && currentTask.assignee && currentTask.assignee !== 'Cả Ban') {
+        const matchMem = (db.members || []).find(m => m.name === currentTask.assignee);
+        if (matchMem) assId = matchMem.id;
+      }
+
+      if (isLate) {
+        if (!alreadyPenalized && assId) {
+          penalizedIds.push(taskId);
+          try {
+            localStorage.setItem('vmc_penalized_tasks', JSON.stringify(penalizedIds));
+          } catch (e) {}
+          updateMemberPoints(assId, -5, `Trễ hạn hoàn thành nhiệm vụ: ${currentTask.title}`);
+          showToast(`⚠️ Nhiệm vụ "${currentTask.title}" hoàn thành trễ hạn! Đã trừ 5 điểm thi đua.`, 'warning');
+        } else {
+          showToast(`⚠️ Đã hoàn thành nhiệm vụ "${currentTask.title}" (Trễ hạn).`, 'warning');
+        }
+      } else {
+        // Hoàn thành đúng hạn hoặc sớm hạn: TUYỆT ĐỐI KHÔNG CỘNG ĐIỂM
+        showToast(`✅ Đã hoàn thành đúng hạn nhiệm vụ: "${currentTask.title}"!`, 'success');
+      }
     }
   };
 
@@ -1689,6 +1721,59 @@ setCurrentUser(acc);
     const actionText = finalDelta > 0 ? 'CỘNG' : 'TRỪ';
     showToast(`✅ Đã ${actionText} ${Math.abs(finalDelta)} điểm của [${member.name}]. Lý do: ${reason}`, 'info');
   };
+
+  // Tự động kiểm tra và trừ điểm vi phạm các nhiệm vụ trễ hạn chưa hoàn thành
+  const checkAndPenalizeOverdueTasks = (tasksList, membersList) => {
+    if (!Array.isArray(tasksList) || tasksList.length === 0 || !Array.isArray(membersList) || membersList.length === 0) return;
+
+    const todayDate = new Date().toISOString().split('T')[0];
+    let penalizedIds = [];
+    try {
+      penalizedIds = JSON.parse(localStorage.getItem('vmc_penalized_tasks') || '[]');
+    } catch {
+      penalizedIds = [];
+    }
+    const penalizedSet = new Set(penalizedIds);
+    let hasNewPenalties = false;
+
+    tasksList.forEach(task => {
+      if (String(task.id).startsWith('virtual-')) return;
+      const deadline = task.deadline || task.dueDate;
+      if (!deadline) return;
+      const deadlineDate = String(deadline).slice(0, 10);
+      const isPastDue = deadlineDate < todayDate;
+      const isNotDone = task.status !== 'done' && task.status !== 'completed';
+
+      if (isPastDue && isNotDone && !penalizedSet.has(task.id)) {
+        let assId = task.assigneeId || task.assignee_id;
+        if (!assId && task.assignee && task.assignee !== 'Cả Ban') {
+          const mMatch = membersList.find(m => m.name === task.assignee);
+          if (mMatch) assId = mMatch.id;
+        }
+
+        if (assId) {
+          const assignee = membersList.find(m => String(m.id) === String(assId) || (m.memberCode && String(m.memberCode) === String(assId)));
+          if (assignee) {
+            penalizedSet.add(task.id);
+            hasNewPenalties = true;
+            updateMemberPoints(assignee.id, -5, `Trễ hạn nhiệm vụ: ${task.title}`);
+          }
+        }
+      }
+    });
+
+    if (hasNewPenalties) {
+      try {
+        localStorage.setItem('vmc_penalized_tasks', JSON.stringify(Array.from(penalizedSet)));
+      } catch (e) { console.warn(e); }
+    }
+  };
+
+  useEffect(() => {
+    if (db.tasks && db.tasks.length > 0 && db.members && db.members.length > 0) {
+      checkAndPenalizeOverdueTasks(db.tasks, db.members);
+    }
+  }, [db.tasks, db.members]);
 
   // -------------------------------------------------------------
   // NEW: BIRTHDAY MANAGEMENT FUNCTIONS

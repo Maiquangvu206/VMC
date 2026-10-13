@@ -89,18 +89,27 @@ export const MemberRankingDetailModal = ({
       console.warn('Failed to parse point logs:', e);
     }
 
-    // 2. Nhiệm vụ đã hoàn thành
+    // 2. Nhiệm vụ trễ hạn (Mặc định trừ 5 điểm nếu chưa có log ghi nhận)
+    const todayIsoStr = new Date().toISOString().split('T')[0];
     memberTasks.forEach(t => {
-      if (t.status === 'done' || t.status === 'completed') {
-        logs.push({
-          id: `task-point-${t.id}`,
-          date: t.deadline || new Date().toLocaleDateString('vi-VN'),
-          time: '18:00',
-          title: `Hoàn thành nhiệm vụ: ${t.title}`,
-          pointsDelta: t.pointsReward || 10,
-          category: 'Nhiệm vụ',
-          timestamp: new Date(t.deadline || 0).getTime() || Date.now() - 86400000
-        });
+      const deadline = t.deadline || t.dueDate;
+      const deadlineDate = deadline ? String(deadline).slice(0, 10) : '';
+      const isPastDue = deadlineDate && deadlineDate < todayIsoStr;
+      const isOverdueTask = isPastDue && (t.status !== 'done' && t.status !== 'completed');
+
+      if (isOverdueTask) {
+        const alreadyInLogs = logs.some(l => l.taskId === t.id || l.title?.includes(t.title) || l.reason?.includes(t.title));
+        if (!alreadyInLogs) {
+          logs.push({
+            id: `task-overdue-point-${t.id}`,
+            date: deadlineDate ? new Date(deadlineDate).toLocaleDateString('vi-VN') : new Date().toLocaleDateString('vi-VN'),
+            time: '23:59',
+            title: `Trễ hạn nhiệm vụ: ${t.title}`,
+            pointsDelta: -5,
+            category: 'Trừ điểm vi phạm',
+            timestamp: new Date(deadline || Date.now()).getTime()
+          });
+        }
       }
     });
 
@@ -155,21 +164,10 @@ export const MemberRankingDetailModal = ({
     return logs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
   }, [member, memberTasks, meetings, birthdayAssignments]);
 
-  // Tổng điểm tích lũy thực tế: Tính từ tổng các lượt ghi nhận điểm trong lịch sử (hoặc điểm trong DB nếu cao hơn)
+  // Tổng điểm thi đua thực tế của thành viên (không cộng điểm hoàn thành nhiệm vụ đúng hạn)
   const totalEarnedPoints = useMemo(() => {
-    if (pointHistory.length > 0) {
-      const sum = pointHistory.reduce((acc, item) => acc + (Number(item.pointsDelta) || 0), 0);
-      return Math.max(sum, Number(member?.points) || 0);
-    }
     return Number(member?.points) || 0;
-  }, [pointHistory, member]);
-
-  // Tự động đồng bộ điểm số thực tế vào CSDL SQL nếu điểm trong CSDL đang thấp hơn điểm tích lũy thực tế
-  useEffect(() => {
-    if (show && member && totalEarnedPoints > (Number(member.points) || 0)) {
-      updateMemberAPI(member.memberCode || member.id, { points: totalEarnedPoints }).catch(() => { });
-    }
-  }, [show, member, totalEarnedPoints]);
+  }, [member]);
 
   if (!show || !member) return null;
 
@@ -522,7 +520,7 @@ export const MemberRankingDetailModal = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 dark:bg-slate-950/80 backdrop-blur-md animate-slide-up overflow-y-auto">
-      <div className="ds-card p-4 sm:p-6 w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden my-auto border border-[var(--border-default)]">
+      <div className="ds-card p-4 sm:p-6 w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden my-auto border border-[var(--border-default)]">
 
         {/* Modal Header */}
         <div className="flex items-start justify-between pb-4 border-b border-[var(--border-default)] gap-3 shrink-0">
@@ -570,13 +568,13 @@ export const MemberRankingDetailModal = ({
           </button>
         </div>
 
-        {/* Action Bar: Tabs & Export Buttons */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3 border-b border-[var(--border-default)] shrink-0">
+        {/* Action Bar: Tabs & Export Buttons (Aligned into 1 single row) */}
+        <div className="flex items-center justify-between gap-3 py-3 border-b border-[var(--border-default)] shrink-0 overflow-x-auto no-scrollbar">
           {/* Tab buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => setActiveTab('deadlines')}
-              className={`ds-btn ds-btn-sm text-xs font-semibold flex items-center gap-1.5 ${activeTab === 'deadlines' ? 'ds-btn-primary' : 'ds-btn-secondary'
+              className={`ds-btn ds-btn-sm text-xs font-semibold flex items-center gap-1.5 shrink-0 ${activeTab === 'deadlines' ? 'ds-btn-primary' : 'ds-btn-secondary'
                 }`}
             >
               <Clock className="w-3.5 h-3.5" />
@@ -584,7 +582,7 @@ export const MemberRankingDetailModal = ({
             </button>
             <button
               onClick={() => setActiveTab('points')}
-              className={`ds-btn ds-btn-sm text-xs font-semibold flex items-center gap-1.5 ${activeTab === 'points' ? 'ds-btn-primary' : 'ds-btn-secondary'
+              className={`ds-btn ds-btn-sm text-xs font-semibold flex items-center gap-1.5 shrink-0 ${activeTab === 'points' ? 'ds-btn-primary' : 'ds-btn-secondary'
                 }`}
             >
               <Award className="w-3.5 h-3.5" />
@@ -594,18 +592,19 @@ export const MemberRankingDetailModal = ({
 
           {/* Export Buttons: CHỈ HIỆN VỚI BAN ĐỐI NGOẠI - NHÂN SỰ */}
           {canExport && (
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 shrink-0">
               <SignerSelect
                 signers={signerOptions}
                 selectedSignerId={chosenSigner?.id}
                 onChange={setSelectedSignerId}
                 compact
+                className="shrink-0"
               />
               {activeTab === 'deadlines' ? (
                 <button
                   type="button"
                   onClick={handlePrintDeadlines}
-                  className="ds-btn ds-btn-primary ds-btn-sm text-xs font-semibold flex items-center gap-1.5"
+                  className="ds-btn ds-btn-primary ds-btn-sm text-xs font-semibold flex items-center gap-1.5 shrink-0 whitespace-nowrap"
                   title="In hoặc xuất file PDF báo cáo deadline của thành viên này"
                 >
                   <Printer className="w-3.5 h-3.5 text-white shrink-0" />
@@ -615,7 +614,7 @@ export const MemberRankingDetailModal = ({
                 <button
                   type="button"
                   onClick={handlePrintPoints}
-                  className="ds-btn ds-btn-primary ds-btn-sm text-xs font-semibold flex items-center gap-1.5"
+                  className="ds-btn ds-btn-primary ds-btn-sm text-xs font-semibold flex items-center gap-1.5 shrink-0 whitespace-nowrap"
                   title="In hoặc xuất file PDF lịch sử điểm của thành viên này"
                 >
                   <Printer className="w-3.5 h-3.5 text-white shrink-0" />
