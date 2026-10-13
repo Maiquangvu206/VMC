@@ -155,19 +155,52 @@ export const DEFAULT_HOMEPAGE_ORG = [
 // Helper tải ảnh lên máy chủ lưu thành file tĩnh tại /storage/homepage_media
 export const uploadImageToServer = async (fileOrBase64) => {
   try {
+    if (!fileOrBase64) return null;
     if (typeof fileOrBase64 === 'string') {
       if (fileOrBase64.startsWith('http') || fileOrBase64.startsWith('/')) {
         return fileOrBase64;
       }
-      const res = await fetch('/api/homepage/upload-image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'ngrok-skip-browser-warning': 'true'
-        },
-        body: JSON.stringify({ base64: fileOrBase64 })
-      });
+
+      // Nếu là data URI, chuyển sang binary Blob và upload qua multipart FormData để tối ưu
+      let formData = null;
+      if (fileOrBase64.startsWith('data:image')) {
+        try {
+          const parts = fileOrBase64.split(',');
+          const mimeMatch = parts[0].match(/:(.*?);/);
+          const mime = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+          const bstr = atob(parts[1]);
+          let n = bstr.length;
+          const u8arr = new Uint8Array(n);
+          while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+          }
+          const blob = new Blob([u8arr], { type: mime });
+          formData = new FormData();
+          formData.append('file', blob, `upload-${Date.now()}.${mime.split('/')[1] || 'jpg'}`);
+        } catch {
+          formData = null;
+        }
+      }
+
+      const res = formData
+        ? await fetch('/api/homepage/upload-image', {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json',
+              'ngrok-skip-browser-warning': 'true'
+            },
+            body: formData
+          })
+        : await fetch('/api/homepage/upload-image', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'ngrok-skip-browser-warning': 'true'
+            },
+            body: JSON.stringify({ base64: fileOrBase64 })
+          });
+
       if (res.ok) {
         const json = await res.json();
         if (json.success && json.url) return json.url;

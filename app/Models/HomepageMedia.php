@@ -3,10 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class HomepageMedia extends Model
 {
-    protected $table = 'Homepage_Media';
+    protected $table = 'homepage_media';
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';
@@ -23,15 +24,15 @@ class HomepageMedia extends Model
         }
 
         try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('Homepage_Media')) {
-                return $resolved = 'Homepage_Media';
-            }
-            if (\Illuminate\Support\Facades\Schema::hasTable('homepage_media')) {
+            if (Schema::hasTable('homepage_media')) {
                 return $resolved = 'homepage_media';
+            }
+            if (Schema::hasTable('Homepage_Media')) {
+                return $resolved = 'Homepage_Media';
             }
         } catch (\Throwable $e) {}
 
-        return $resolved = 'Homepage_Media';
+        return $resolved = 'homepage_media';
     }
 
     protected $fillable = [

@@ -7,17 +7,148 @@ use Illuminate\Http\Request;
 use App\Models\HomepageArticle;
 use App\Models\HomepageMedia;
 use App\Models\SystemSetting;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class HomepageController extends Controller
 {
     /**
+     * Tự động khởi tạo và chuẩn hóa cấu trúc bảng CSDL nếu server chưa có
+     */
+    public function ensureHomepageTablesExist(): void
+    {
+        static $checked = false;
+        if ($checked) return;
+        $checked = true;
+
+        try {
+            // 1. Tự động tạo bảng homepage_articles nếu chưa tồn tại
+            if (!Schema::hasTable('homepage_articles') && !Schema::hasTable('Homepage_Articles')) {
+                Schema::create('homepage_articles', function (Blueprint $table) {
+                    $table->string('id', 100)->primary();
+                    $table->string('title', 255);
+                    $table->string('category', 100)->default('Hoạt động nổi bật');
+                    $table->string('author', 100)->default('Ban Biên Tập VMC');
+                    $table->text('summary')->nullable();
+                    $table->longText('content')->nullable();
+                    $table->longText('cover_image')->nullable();
+                    $table->string('video_url', 1000)->nullable();
+                    $table->longText('images')->nullable();
+                    $table->string('date', 50)->nullable();
+                    $table->boolean('is_pinned')->default(false);
+                    $table->integer('view_count')->default(0);
+                    $table->timestamps();
+
+                    $table->index('category');
+                    $table->index('date');
+                    $table->index('is_pinned');
+                });
+            }
+
+            // 2. Tự động tạo bảng homepage_media nếu chưa tồn tại
+            if (!Schema::hasTable('homepage_media') && !Schema::hasTable('Homepage_Media')) {
+                Schema::create('homepage_media', function (Blueprint $table) {
+                    $table->string('id', 100)->primary();
+                    $table->string('title', 255);
+                    $table->enum('type', ['image', 'video'])->default('image');
+                    $table->string('category', 100)->default('Toàn CLB');
+                    $table->longText('media_url')->nullable();
+                    $table->longText('thumbnail')->nullable();
+                    $table->longText('images')->nullable();
+                    $table->text('description')->nullable();
+                    $table->string('date', 50)->nullable();
+                    $table->timestamps();
+
+                    $table->index('type');
+                    $table->index('category');
+                });
+            }
+
+            // 3. Tự động phục hồi dữ liệu từ System_Settings sang bảng chuyên biệt nếu bảng còn trống
+            $this->migrateFromSettingsIfEmpty();
+        } catch (\Throwable $e) {
+            Log::warning('ensureHomepageTablesExist warning: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Di chuyển dữ liệu đã lưu từ System_Settings sang bảng quan hệ nếu bảng quan hệ đang trống
+     */
+    private function migrateFromSettingsIfEmpty(): void
+    {
+        try {
+            // Kiểm tra Articles
+            if (HomepageArticle::count() === 0) {
+                $setting = SystemSetting::where('setting_key', 'VMC_HOMEPAGE_ARTICLES')->first();
+                if ($setting && !empty($setting->setting_value)) {
+                    $list = json_decode($setting->setting_value, true);
+                    if (Array_isArray($list)) {
+                        foreach ($list as $art) {
+                            if (!empty($art['id']) && !in_array($art['id'], ['art-1', 'art-2', 'art-3']) && !str_contains($art['title'] ?? '', 'Hành Trình 6 Năm')) {
+                                HomepageArticle::updateOrCreate(
+                                    ['id' => (string)$art['id']],
+                                    [
+                                        'title' => (string)($art['title'] ?? 'Bài viết mới'),
+                                        'category' => (string)($art['category'] ?? 'Hoạt động nổi bật'),
+                                        'author' => (string)($art['author'] ?? 'Ban Biên Tập VMC'),
+                                        'summary' => (string)($art['summary'] ?? ''),
+                                        'content' => (string)($art['content'] ?? ''),
+                                        'cover_image' => (string)($art['coverImage'] ?? ($art['cover_image'] ?? '')),
+                                        'video_url' => !empty($art['videoUrl']) ? (string)$art['videoUrl'] : (!empty($art['video_url']) ? (string)$art['video_url'] : null),
+                                        'images' => is_array($art['images'] ?? null) ? $art['images'] : (json_decode($art['images'] ?? '[]', true) ?: []),
+                                        'date' => (string)($art['date'] ?? date('d/m/Y')),
+                                        'is_pinned' => !empty($art['isPinned']) || !empty($art['is_pinned']),
+                                        'view_count' => (int)($art['viewCount'] ?? ($art['view_count'] ?? 0)),
+                                    ]
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Kiểm tra Media
+            if (HomepageMedia::count() === 0) {
+                $setting = SystemSetting::where('setting_key', 'VMC_HOMEPAGE_MEDIA')->first();
+                if ($setting && !empty($setting->setting_value)) {
+                    $list = json_decode($setting->setting_value, true);
+                    if (Array_isArray($list)) {
+                        foreach ($list as $item) {
+                            if (!empty($item['id']) && !in_array($item['id'], ['med-1', 'med-2', 'med-3', 'med-4', 'med-5', 'med-6'])) {
+                                HomepageMedia::updateOrCreate(
+                                    ['id' => (string)$item['id']],
+                                    [
+                                        'title' => (string)($item['title'] ?? 'Tư liệu mới'),
+                                        'type' => (string)($item['type'] ?? 'image'),
+                                        'category' => (string)($item['category'] ?? 'Toàn CLB'),
+                                        'media_url' => (string)($item['mediaUrl'] ?? ($item['media_url'] ?? '')),
+                                        'thumbnail' => (string)($item['thumbnail'] ?? ''),
+                                        'images' => is_array($item['images'] ?? null) ? $item['images'] : (json_decode($item['images'] ?? '[]', true) ?: []),
+                                        'description' => (string)($item['description'] ?? ''),
+                                        'date' => (string)($item['date'] ?? date('d/m/Y')),
+                                    ]
+                                );
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('migrateFromSettingsIfEmpty: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * GET /api/homepage/articles
-     * Lấy danh sách bài viết từ bảng chuyên biệt Homepage_Articles
+     * Lấy danh sách bài viết từ bảng chuyên biệt homepage_articles
      */
     public function indexArticles()
     {
         try {
+            $this->ensureHomepageTablesExist();
+
             $articles = HomepageArticle::orderBy('is_pinned', 'desc')
                 ->orderBy('created_at', 'desc')
                 ->get()
@@ -25,7 +156,7 @@ class HomepageController extends Controller
                     return in_array($art->id, ['art-1', 'art-2', 'art-3']) || str_contains($art->title, 'Hành Trình 6 Năm');
                 });
 
-            // Map thuộc tính chuẩn camelCase cho giao diện React (không tự ý gen dữ liệu mẫu)
+            // Map thuộc tính chuẩn camelCase cho giao diện React
             $formatted = $articles->values()->map(function ($art) {
                 return [
                     'id' => (string)$art->id,
@@ -47,18 +178,20 @@ class HomepageController extends Controller
 
             return response()->json(['success' => true, 'data' => $formatted]);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('indexArticles error: ' . $e->getMessage());
+            Log::error('indexArticles error: ' . $e->getMessage());
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
 
     /**
      * POST /api/homepage/articles
-     * Thêm mới hoặc cập nhật 1 bài viết trong bảng chuyên biệt Homepage_Articles
+     * Thêm mới hoặc cập nhật 1 bài viết trong bảng chuyên biệt homepage_articles
      */
     public function storeArticle(Request $request)
     {
         try {
+            $this->ensureHomepageTablesExist();
+
             $data = $request->json()->all();
             if (empty($data)) {
                 $data = $request->all();
@@ -129,7 +262,7 @@ class HomepageController extends Controller
                 ]
             ]);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('storeArticle error: ' . $e->getMessage());
+            Log::error('storeArticle error: ' . $e->getMessage());
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
@@ -140,22 +273,25 @@ class HomepageController extends Controller
     public function destroyArticle($id)
     {
         try {
+            $this->ensureHomepageTablesExist();
             HomepageArticle::where('id', $id)->delete();
             $this->syncArticlesToSettings();
             return response()->json(['success' => true]);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('destroyArticle error: ' . $e->getMessage());
+            Log::error('destroyArticle error: ' . $e->getMessage());
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
 
     /**
      * GET /api/homepage/media
-     * Lấy kho tư liệu đa phương tiện từ bảng chuyên biệt Homepage_Media (không tự ý gen dữ liệu mẫu)
+     * Lấy kho tư liệu đa phương tiện từ bảng chuyên biệt homepage_media
      */
     public function indexMedia()
     {
         try {
+            $this->ensureHomepageTablesExist();
+
             $mediaList = HomepageMedia::orderBy('created_at', 'desc')
                 ->get()
                 ->reject(function ($item) {
@@ -180,18 +316,20 @@ class HomepageController extends Controller
 
             return response()->json(['success' => true, 'data' => $formatted]);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('indexMedia error: ' . $e->getMessage());
+            Log::error('indexMedia error: ' . $e->getMessage());
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
 
     /**
      * POST /api/homepage/media
-     * Thêm mới hoặc cập nhật 1 mục media trong bảng chuyên biệt Homepage_Media
+     * Thêm mới hoặc cập nhật 1 mục media trong bảng chuyên biệt homepage_media
      */
     public function storeMedia(Request $request)
     {
         try {
+            $this->ensureHomepageTablesExist();
+
             $data = $request->json()->all();
             if (empty($data)) {
                 $data = $request->all();
@@ -255,7 +393,7 @@ class HomepageController extends Controller
                 ]
             ]);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('storeMedia error: ' . $e->getMessage());
+            Log::error('storeMedia error: ' . $e->getMessage());
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
@@ -266,17 +404,18 @@ class HomepageController extends Controller
     public function destroyMedia($id)
     {
         try {
+            $this->ensureHomepageTablesExist();
             HomepageMedia::where('id', $id)->delete();
             $this->syncMediaToSettings();
             return response()->json(['success' => true]);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('destroyMedia error: ' . $e->getMessage());
+            Log::error('destroyMedia error: ' . $e->getMessage());
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
 
     /**
-     * Đồng bộ bảng Homepage_Articles sang System_Settings (VMC_HOMEPAGE_ARTICLES)
+     * Đồng bộ bảng homepage_articles sang System_Settings (VMC_HOMEPAGE_ARTICLES)
      */
     private function syncArticlesToSettings()
     {
@@ -309,7 +448,7 @@ class HomepageController extends Controller
     }
 
     /**
-     * Đồng bộ bảng Homepage_Media sang System_Settings (VMC_HOMEPAGE_MEDIA)
+     * Đồng bộ bảng homepage_media sang System_Settings (VMC_HOMEPAGE_MEDIA)
      */
     private function syncMediaToSettings()
     {

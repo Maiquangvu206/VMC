@@ -3,10 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 
 class HomepageArticle extends Model
 {
-    protected $table = 'Homepage_Articles';
+    protected $table = 'homepage_articles';
     protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';
@@ -23,15 +24,15 @@ class HomepageArticle extends Model
         }
 
         try {
-            if (\Illuminate\Support\Facades\Schema::hasTable('Homepage_Articles')) {
-                return $resolved = 'Homepage_Articles';
-            }
-            if (\Illuminate\Support\Facades\Schema::hasTable('homepage_articles')) {
+            if (Schema::hasTable('homepage_articles')) {
                 return $resolved = 'homepage_articles';
+            }
+            if (Schema::hasTable('Homepage_Articles')) {
+                return $resolved = 'Homepage_Articles';
             }
         } catch (\Throwable $e) {}
 
-        return $resolved = 'Homepage_Articles';
+        return $resolved = 'homepage_articles';
     }
 
     protected $fillable = [

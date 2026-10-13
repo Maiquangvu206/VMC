@@ -63,8 +63,9 @@ return new class extends Migration
         }
 
         // 3. Quét sạch và thanh trừng triệt để dữ liệu mẫu (mock data art-1, med-1) trong bảng system_settings
-        if (Schema::hasTable('system_settings')) {
-            DB::table('system_settings')
+        $settingsTable = Schema::hasTable('system_settings') ? 'system_settings' : (Schema::hasTable('System_Settings') ? 'System_Settings' : null);
+        if ($settingsTable) {
+            DB::table($settingsTable)
                 ->where('setting_key', 'VMC_HOMEPAGE_ARTICLES')
                 ->where(function ($q) {
                     $q->where('setting_value', 'like', '%art-1%')
@@ -72,7 +73,7 @@ return new class extends Migration
                 })
                 ->update(['setting_value' => '[]']);
 
-            DB::table('system_settings')
+            DB::table($settingsTable)
                 ->where('setting_key', 'VMC_HOMEPAGE_MEDIA')
                 ->where(function ($q) {
                     $q->where('setting_value', 'like', '%med-1%')

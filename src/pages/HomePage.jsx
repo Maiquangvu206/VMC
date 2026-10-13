@@ -130,7 +130,7 @@ const fromDateInputValue = (isoStr) => {
 };
 
 // Helper đọc và tối ưu hóa file ảnh khi người dùng thả file (Drag & Drop) hoặc tải từ máy
-const readAndCompressImage = (file, maxWidth = 1600, quality = 0.85) => {
+const readAndCompressImage = (file, maxWidth = 1400, quality = 0.8) => {
   return new Promise((resolve) => {
     if (!file || !file.type.startsWith('image/')) {
       resolve(null);
@@ -889,7 +889,7 @@ export const HomePage = ({ onOpenLogin }) => {
   );
 
   // Quyền quản lý/soạn bài: Chỉ Ban Chủ Nhiệm và các Trưởng, Phó ban (Ban Cố Vấn và thành viên thường KHÔNG có quyền)
-  const canManage = !isAdvisor && Boolean(isSuperAdmin || isAdmin);
+  const canManage = !isAdvisor && Boolean(isSuperAdmin || isAdmin || isBCN || isDeptLeader || canManageArticlesFromContext);
 
   // States dữ liệu - Nạp ngay từ Cache tức thì (0ms latency khi reload trang)
   const [info, setInfo] = useState(() => getCachedData('homepage_info') || DEFAULT_HOMEPAGE_INFO);

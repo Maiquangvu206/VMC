@@ -108,6 +108,15 @@ class SystemSettingController extends Controller
                         mkdir($saveDir, 0755, true);
                     }
                     file_put_contents($saveDir . '/' . $filename, $data);
+
+                    try {
+                        $pubDir = public_path('storage/homepage_media');
+                        if (!file_exists($pubDir)) {
+                            mkdir($pubDir, 0755, true);
+                        }
+                        file_put_contents($pubDir . '/' . $filename, $data);
+                    } catch (\Throwable $e) {}
+
                     $url = '/storage/homepage_media/' . $filename;
                     return response()->json(['success' => true, 'url' => $url]);
                 }
@@ -155,14 +164,9 @@ class SystemSettingController extends Controller
                 $staleMedia->save();
             }
 
-            // Tự động chuẩn hóa tên bảng dạng viết hoa chữ đầu cho máy chủ Ubuntu Linux
+            // Tự động khởi tạo bảng chuyên biệt nếu server chưa có
             try {
-                if (Schema::hasTable('homepage_articles') && !Schema::hasTable('Homepage_Articles')) {
-                    Schema::rename('homepage_articles', 'Homepage_Articles');
-                }
-                if (Schema::hasTable('homepage_media') && !Schema::hasTable('Homepage_Media')) {
-                    Schema::rename('homepage_media', 'Homepage_Media');
-                }
+                (new HomepageController())->ensureHomepageTablesExist();
             } catch (\Throwable $e) {}
         } catch (\Throwable $e) {
             // Log without failing
