@@ -602,7 +602,7 @@ export const HomePage = ({ onOpenLogin }) => {
   );
 
   // Quyền quản lý/soạn bài: Chỉ Ban Chủ Nhiệm và các Trưởng, Phó ban (Ban Cố Vấn và thành viên thường KHÔNG có quyền)
-  const canManage = !isAdvisor && Boolean(canManageArticlesFromContext || isBCN || isDeptLeader || isSuperAdmin || isAdmin);
+  const canManage = !isAdvisor && Boolean(isSuperAdmin || isAdmin);
 
   // States dữ liệu - Nạp ngay từ Cache tức thì (0ms latency khi reload trang)
   const [info, setInfo] = useState(() => getCachedData('homepage_info') || DEFAULT_HOMEPAGE_INFO);

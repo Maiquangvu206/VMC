@@ -127,7 +127,7 @@ class MemberController extends Controller
                 'class_name' => $request->input('class') ?: $request->input('class_name'),
                 'department' => $dept,
                 'term' => $request->input('term', 'Gen 8'),
-                'avatar_url' => $request->input('avatar_url') ?: $request->input('avatar'),
+                'avatar_url' => ('NULL'),
                 'phone' => $request->input('phone'),
                 'email' => $email ?: null,
                 'dob' => $request->input('dob'),
