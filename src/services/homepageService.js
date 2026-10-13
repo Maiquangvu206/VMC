@@ -244,6 +244,12 @@ export const saveArticleAPI = async (article) => {
       console.error('⚠️ saveArticleAPI failed:', res.status, errText);
       return false;
     }
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const errHtml = await res.text();
+      console.error('⚠️ saveArticleAPI error: Webserver trả về HTML thay vì JSON (Kiểm tra lại cấu hình Nginx reverse proxy /api sang port 8000):', errHtml.slice(0, 200));
+      return false;
+    }
     const json = await res.json();
     return Boolean(json.success);
   } catch (err) {
@@ -284,6 +290,12 @@ export const saveMediaAPI = async (mediaItem) => {
     if (!res.ok) {
       const errText = await res.text();
       console.error('⚠️ saveMediaAPI failed:', res.status, errText);
+      return false;
+    }
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const errHtml = await res.text();
+      console.error('⚠️ saveMediaAPI error: Webserver trả về HTML thay vì JSON (Kiểm tra lại cấu hình Nginx reverse proxy /api sang port 8000):', errHtml.slice(0, 200));
       return false;
     }
     const json = await res.json();
@@ -335,6 +347,13 @@ export const saveHomepageDataAPI = async (key, data) => {
     if (!res.ok) {
       const errText = await res.text();
       console.error(`⚠️ Save ${key} failed (Status ${res.status}):`, errText);
+      return false;
+    }
+
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const errHtml = await res.text();
+      console.error(`⚠️ Save ${key} error: Webserver trả về HTML thay vì JSON (Kiểm tra lại cấu hình Nginx reverse proxy /api sang port 8000):`, errHtml.slice(0, 200));
       return false;
     }
 
