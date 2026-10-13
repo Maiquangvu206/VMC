@@ -550,6 +550,10 @@ export const HomePage = ({ onOpenLogin }) => {
     isAuthenticated,
     isSuperAdmin,
     isAdmin,
+    isAdvisor: isAdvisorFromContext,
+    isBCN: isBCNFromContext,
+    isDeptLeader: isDeptLeaderFromContext,
+    canManageArticles: canManageArticlesFromContext,
     members = [],
     setActiveTab,
     isRecruitmentSeasonActive,
@@ -558,8 +562,47 @@ export const HomePage = ({ onOpenLogin }) => {
     toggleTheme
   } = useClub();
 
-  // Quyền quản lý nội dung: Chỉ Admin (Super Admin hoặc Admin)
-  const canManage = Boolean(isSuperAdmin || isAdmin);
+  // Role & Department Checks
+  const currentUserRoleTitle = String(currentUser?.roleTitle || currentUser?.role_title || '').toLowerCase();
+  const currentUserDeptName = String(currentUser?.deptName || currentUser?.department || '').toLowerCase();
+
+  const isAdvisor = isAdvisorFromContext || Boolean(
+    currentUser?.department === 'advisory' ||
+    currentUserDeptName.includes('cố vấn') ||
+    currentUserDeptName.includes('advisor') ||
+    currentUserDeptName.includes('cv') ||
+    currentUserRoleTitle.includes('cố vấn') ||
+    currentUserRoleTitle.includes('cựu') ||
+    currentUserRoleTitle.includes('advisor')
+  );
+
+  const isBCN = !isAdvisor && Boolean(
+    isBCNFromContext ||
+    isAdmin ||
+    isSuperAdmin ||
+    currentUser?.role === 'super_admin' ||
+    currentUser?.role === 'admin' ||
+    currentUser?.memberCode === 'ADMIN' ||
+    currentUserRoleTitle.includes('super admin') ||
+    currentUserDeptName === 'bcn' ||
+    currentUserDeptName.includes('chủ nhiệm') ||
+    currentUser?.department === 'bcn' ||
+    currentUserRoleTitle.includes('chủ nhiệm')
+  );
+
+  const isDeptLeader = !isAdvisor && Boolean(
+    isDeptLeaderFromContext ||
+    currentUserRoleTitle.includes('trưởng ban') ||
+    currentUserRoleTitle.includes('phó ban') ||
+    currentUserRoleTitle.includes('trưởng') ||
+    currentUserRoleTitle.includes('phó') ||
+    currentUserRoleTitle.includes('head-') ||
+    currentUserRoleTitle.includes('vice-') ||
+    currentUserRoleTitle.includes('leader')
+  );
+
+  // Quyền quản lý/soạn bài: Chỉ Ban Chủ Nhiệm và các Trưởng, Phó ban (Ban Cố Vấn và thành viên thường KHÔNG có quyền)
+  const canManage = !isAdvisor && Boolean(canManageArticlesFromContext || isBCN || isDeptLeader || isSuperAdmin || isAdmin);
 
   // States dữ liệu - Nạp ngay từ Cache tức thì (0ms latency khi reload trang)
   const [info, setInfo] = useState(() => getCachedData('homepage_info') || DEFAULT_HOMEPAGE_INFO);
@@ -628,6 +671,10 @@ export const HomePage = ({ onOpenLogin }) => {
 
   // Handler cập nhật Article
   const handleSaveArticle = async (articleData) => {
+    if (!canManage) {
+      if (addToast) addToast('⚠️ Ban Cố Vấn và thành viên thường không có quyền soạn bài. Chức năng này chỉ dành cho Ban Chủ Nhiệm và các Trưởng/Phó ban!', 'error');
+      return;
+    }
     if (isSaving) return;
     setIsSaving(true);
     try {
@@ -693,6 +740,10 @@ export const HomePage = ({ onOpenLogin }) => {
   };
 
   const handleDeleteArticle = async (id) => {
+    if (!canManage) {
+      if (addToast) addToast('⚠️ Bạn không có quyền xóa bài viết!', 'error');
+      return;
+    }
     if (!window.confirm('Bạn có chắc chắn muốn xóa bài viết này?')) return;
     const updated = articles.filter(a => a.id !== id);
     setArticles(updated);
@@ -712,6 +763,10 @@ export const HomePage = ({ onOpenLogin }) => {
 
   // Handler cập nhật Media (Hỗ trợ đẩy nhiều file ảnh vào 1 mục)
   const handleSaveMedia = async (mediaData) => {
+    if (!canManage) {
+      if (addToast) addToast('⚠️ Ban Cố Vấn và thành viên thường không có quyền quản lý tư liệu. Chức năng này chỉ dành cho Ban Chủ Nhiệm và các Trưởng/Phó ban!', 'error');
+      return;
+    }
     if (isSaving) return;
     setIsSaving(true);
     try {
@@ -785,6 +840,10 @@ export const HomePage = ({ onOpenLogin }) => {
   };
 
   const handleDeleteMedia = async (id) => {
+    if (!canManage) {
+      if (addToast) addToast('⚠️ Bạn không có quyền xóa tư liệu!', 'error');
+      return;
+    }
     if (!window.confirm('Bạn có chắc chắn muốn xóa ảnh/video này khỏi thư viện?')) return;
     const updated = mediaList.filter(m => m.id !== id);
     setMediaList(updated);
@@ -914,6 +973,10 @@ export const HomePage = ({ onOpenLogin }) => {
 
   // Handler cập nhật Info / Stats
   const handleSaveInfo = async (newInfo) => {
+    if (!canManage) {
+      if (addToast) addToast('⚠️ Ban Cố Vấn và thành viên thường không có quyền cập nhật thông tin!', 'error');
+      return;
+    }
     setInfo(newInfo);
     setIsManageModalOpen(false);
     await saveHomepageDataAPI('VMC_HOMEPAGE_INFO', newInfo);
@@ -1910,15 +1973,6 @@ export const HomePage = ({ onOpenLogin }) => {
                 </span>
                 <span>•</span>
                 <span>Tác giả: <strong className="text-[var(--text-primary)]">{selectedArticle.author}</strong></span>
-                {selectedArticle.videoUrl && (
-                  <>
-                    <span>•</span>
-                    <span className="flex items-center gap-1 text-red-500 font-semibold">
-                      <Play className="w-3 h-3 fill-current" />
-                      <span>Bài viết dạng Video (Tự phát)</span>
-                    </span>
-                  </>
-                )}
               </div>
             </div>
 
@@ -2029,14 +2083,11 @@ export const HomePage = ({ onOpenLogin }) => {
                     </div>
                     <div>
                       <h4 className="text-sm font-bold text-[var(--text-primary)] flex items-center gap-2">
-                        <span>Bộ Sưu Tập Hình Ảnh Đi Kèm</span>
+                        <span>Bộ Sưu Tập Hình Ảnh</span>
                         <span className="px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/25 text-2xs font-semibold">
                           {selectedArticle.images.length} ảnh
                         </span>
                       </h4>
-                      <p className="text-2xs text-[var(--text-secondary)]">
-                        Lướt sang để xem các ảnh tiếp theo hoặc bấm vào để xem phóng to
-                      </p>
                     </div>
                   </div>
                 </div>

@@ -471,7 +471,10 @@ export const ClubProvider = ({ children }) => {
 
   // Ban Cố Vấn / Cựu thành viên
   const isAdvisor = Boolean(
+    currentUser?.department === 'advisory' ||
     currentUserDeptName.includes('cố vấn') ||
+    currentUserDeptName.includes('advisor') ||
+    currentUserDeptName.includes('cv') ||
     currentUserRoleTitle.includes('cố vấn') ||
     currentUserRoleTitle.includes('cựu') ||
     currentUserRoleTitle.includes('advisor')
@@ -492,6 +495,37 @@ export const ClubProvider = ({ children }) => {
     currentUserRoleTitle.includes('super admin') ||
     (currentUserRoleTitle.includes('chủ nhiệm') && !currentUserRoleTitle.includes('phó') && !currentUserRoleTitle.includes('cựu') && !currentUserRoleTitle.includes('cố vấn'))
   );
+
+  // Ban Chủ Nhiệm (BCN)
+  const isBCN = !isAdvisor && Boolean(
+    isAdmin ||
+    isSuperAdmin ||
+    currentUser?.role === 'super_admin' ||
+    currentUser?.role === 'admin' ||
+    currentUser?.memberCode === 'ADMIN' ||
+    currentUserRoleTitle.includes('super admin') ||
+    currentUserDeptName === 'bcn' ||
+    currentUserDeptName.includes('chủ nhiệm') ||
+    currentUser?.department === 'bcn' ||
+    currentUserRoleTitle.includes('chủ nhiệm')
+  );
+
+  // Trưởng ban, Phó ban các ban chuyên môn
+  const isDeptLeader = !isAdvisor && Boolean(
+    currentUserRoleTitle.includes('trưởng ban') ||
+    currentUserRoleTitle.includes('phó ban') ||
+    currentUserRoleTitle.includes('trưởng') ||
+    currentUserRoleTitle.includes('phó') ||
+    currentUserRoleTitle.includes('head-') ||
+    currentUserRoleTitle.includes('vice-') ||
+    currentUserRoleTitle.includes('leader')
+  );
+
+  // Quyền Giao Nhiệm Vụ: Chỉ Ban Chủ Nhiệm và các Trưởng, Phó ban (Ban Cố Vấn không có quyền)
+  const canAssignTask = !isAdvisor && Boolean(isBCN || isDeptLeader || isAdmin || isSuperAdmin);
+
+  // Quyền Soạn Bài / Quản Lý Trang Chủ: Chỉ Ban Chủ Nhiệm và các Trưởng, Phó ban (Ban Cố Vấn không có quyền)
+  const canManageArticles = !isAdvisor && Boolean(isBCN || isDeptLeader || isAdmin || isSuperAdmin);
 
   // Ban Đối Ngoại - Nhân Sự (ĐN-NS)
   const isHRMember = !isAdvisor && Boolean(
@@ -1208,6 +1242,10 @@ setCurrentUser(acc);
 
   // Add New Task
   const addTask = (newTask) => {
+    if (!canAssignTask) {
+      showToast('⚠️ Ban Cố Vấn không có quyền giao nhiệm vụ. Chức năng này chỉ dành cho Ban Chủ Nhiệm và các Trưởng/Phó ban!', 'error');
+      return;
+    }
     createTaskRecord({
       ...newTask,
       status: 'todo'
@@ -2020,6 +2058,10 @@ setCurrentUser(acc);
     clubInfo: db.clubInfo || getCachedData('club_info'),
     attendanceRecords: db.attendanceRecords || [],
     isAdvisor,
+    isBCN,
+    isDeptLeader,
+    canAssignTask,
+    canManageArticles,
     isHRMember,
     isHRHead,
     isAdmin,
@@ -2141,6 +2183,15 @@ db,
     loadSqlSessions,
     revokeSession,
     revokeAllSessions,
+    isAdvisor,
+    isBCN,
+    isDeptLeader,
+    canAssignTask,
+    canManageArticles,
+    isAdmin,
+    isSuperAdmin,
+    isHRMember,
+    isHRHead,
   ]);
 
   return (

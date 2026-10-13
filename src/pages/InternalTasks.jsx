@@ -29,6 +29,9 @@ export const InternalTasks = () => {
     setIsNewTaskModalOpen,
     currentUser,
     isAdvisor: isAdvisorFromContext,
+    isBCN: isBCNFromContext,
+    isDeptLeader: isDeptLeaderFromContext,
+    canAssignTask: canAssignTaskFromContext,
     isHRMember,
     isHRHead,
     isAdmin,
@@ -45,13 +48,46 @@ export const InternalTasks = () => {
     priority: 'Medium'
   });
 
-  const isAdvisor = isAdvisorFromContext || Boolean(
-    currentUser?.deptName?.toLowerCase().includes('cố vấn') ||
-    currentUser?.department?.toLowerCase().includes('cố vấn') ||
-    currentUser?.roleTitle?.toLowerCase().includes('cố vấn') ||
-    currentUser?.roleTitle?.toLowerCase().includes('cựu')
-  );
+  const currentUserRoleTitle = String(currentUser?.roleTitle || currentUser?.role_title || '').toLowerCase();
   const currentUserDeptName = String(currentUser?.deptName || currentUser?.department || '').toLowerCase();
+
+  const isAdvisor = isAdvisorFromContext || Boolean(
+    currentUser?.department === 'advisory' ||
+    currentUserDeptName.includes('cố vấn') ||
+    currentUserDeptName.includes('advisor') ||
+    currentUserDeptName.includes('cv') ||
+    currentUserRoleTitle.includes('cố vấn') ||
+    currentUserRoleTitle.includes('cựu') ||
+    currentUserRoleTitle.includes('advisor')
+  );
+
+  const isBCN = !isAdvisor && Boolean(
+    isBCNFromContext ||
+    isAdmin ||
+    currentUser?.role === 'super_admin' ||
+    currentUser?.role === 'admin' ||
+    currentUser?.memberCode === 'ADMIN' ||
+    currentUserRoleTitle.includes('super admin') ||
+    currentUserDeptName === 'bcn' ||
+    currentUserDeptName.includes('chủ nhiệm') ||
+    currentUser?.department === 'bcn' ||
+    currentUserRoleTitle.includes('chủ nhiệm')
+  );
+
+  const isDeptLeader = !isAdvisor && Boolean(
+    isDeptLeaderFromContext ||
+    currentUserRoleTitle.includes('trưởng ban') ||
+    currentUserRoleTitle.includes('phó ban') ||
+    currentUserRoleTitle.includes('trưởng') ||
+    currentUserRoleTitle.includes('phó') ||
+    currentUserRoleTitle.includes('head-') ||
+    currentUserRoleTitle.includes('vice-') ||
+    currentUserRoleTitle.includes('leader')
+  );
+
+  // Quyền giao nhiệm vụ: Chỉ Ban Chủ Nhiệm và các Trưởng, Phó ban (Ban Cố Vấn không có quyền)
+  const canAssignTask = !isAdvisor && Boolean(canAssignTaskFromContext || isBCN || isDeptLeader || isAdmin);
+
   const canExportHR = !isAdvisor && Boolean(
     isHRMember ||
     isHRHead ||
@@ -304,6 +340,10 @@ export const InternalTasks = () => {
 
   const handleSubmitNewTask = (e) => {
     e.preventDefault();
+    if (!canAssignTask) {
+      showToast('⚠️ Ban Cố Vấn và thành viên thường không có quyền giao nhiệm vụ. Chức năng này chỉ dành cho Ban Chủ Nhiệm và các Trưởng/Phó ban!', 'error');
+      return;
+    }
     if (!formData.title || !formData.assignee || !formData.deadline) {
       showToast('Vui lòng điền đầy đủ thông tin nhiệm vụ!', 'warning');
       return;
@@ -356,13 +396,15 @@ export const InternalTasks = () => {
           </h1>
         </div>
 
-        <button
-          onClick={() => setIsNewTaskModalOpen(true)}
-          className="ds-btn ds-btn-primary"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Giao Công Việc Mới</span>
-        </button>
+        {canAssignTask && (
+          <button
+            onClick={() => setIsNewTaskModalOpen(true)}
+            className="ds-btn ds-btn-primary"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Giao Công Việc Mới</span>
+          </button>
+        )}
       </div>
 
       {/* Filter Tabs matching 4 exact departments */}
@@ -540,7 +582,7 @@ export const InternalTasks = () => {
 
       {/* New Task Modal */}
       {
-        isNewTaskModalOpen && (
+        isNewTaskModalOpen && canAssignTask && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-slide-up">
             <div className="relative w-full max-w-lg ds-card ds-card-elevated border border-blue-500/30 p-6 shadow-2xl text-white space-y-6">
 

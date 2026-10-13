@@ -40,6 +40,7 @@ export const InternalDashboard = () => {
     deleteAnnouncement,
     isAdmin,
     isAdvisor: isAdvisorFromContext,
+    canAssignTask: canAssignTaskFromContext,
     setActiveTab,
     setMembersFilterDept,
     setIsNewTaskModalOpen,
@@ -53,11 +54,35 @@ export const InternalDashboard = () => {
     return <Loading />;
   }
 
+  const currentUserRoleTitle = String(currentUser?.roleTitle || currentUser?.role_title || '').toLowerCase();
+  const currentUserDeptName = String(currentUser?.deptName || currentUser?.department || '').toLowerCase();
+
   const isAdvisor = isAdvisorFromContext || Boolean(
-    currentUser?.deptName?.toLowerCase().includes('cố vấn') ||
-    currentUser?.department?.toLowerCase().includes('cố vấn') ||
-    currentUser?.roleTitle?.toLowerCase().includes('cố vấn') ||
-    currentUser?.roleTitle?.toLowerCase().includes('cựu')
+    currentUser?.department === 'advisory' ||
+    currentUserDeptName.includes('cố vấn') ||
+    currentUserDeptName.includes('advisor') ||
+    currentUserDeptName.includes('cv') ||
+    currentUserRoleTitle.includes('cố vấn') ||
+    currentUserRoleTitle.includes('cựu') ||
+    currentUserRoleTitle.includes('advisor')
+  );
+
+  const canAssignTask = !isAdvisor && Boolean(
+    canAssignTaskFromContext ||
+    isAdmin ||
+    currentUser?.role === 'super_admin' ||
+    currentUser?.role === 'admin' ||
+    currentUser?.memberCode === 'ADMIN' ||
+    currentUserRoleTitle.includes('super admin') ||
+    currentUserDeptName === 'bcn' ||
+    currentUserDeptName.includes('chủ nhiệm') ||
+    currentUserRoleTitle.includes('chủ nhiệm') ||
+    currentUserRoleTitle.includes('trưởng ban') ||
+    currentUserRoleTitle.includes('phó ban') ||
+    currentUserRoleTitle.includes('trưởng') ||
+    currentUserRoleTitle.includes('phó') ||
+    currentUserRoleTitle.includes('head-') ||
+    currentUserRoleTitle.includes('vice-')
   );
 
   const [isAnnModalOpen, setIsAnnModalOpen] = React.useState(false);
@@ -65,13 +90,15 @@ export const InternalDashboard = () => {
   const [annContent, setAnnContent] = React.useState('');
   const [annPinned, setAnnPinned] = React.useState(false);
 
-  const canManageAnnouncements = Boolean(
+  const canManageAnnouncements = !isAdvisor && Boolean(
     isAdmin ||
     currentUser?.memberCode === 'ADMIN' ||
-    currentUser?.roleTitle?.includes('Chủ Nhiệm') ||
-    currentUser?.roleTitle?.includes('Super Admin') ||
-    currentUser?.roleTitle?.includes('Trưởng Ban') ||
-    currentUser?.roleTitle?.includes('Phó Ban')
+    currentUserRoleTitle.includes('chủ nhiệm') ||
+    currentUserRoleTitle.includes('super admin') ||
+    currentUserRoleTitle.includes('trưởng ban') ||
+    currentUserRoleTitle.includes('phó ban') ||
+    currentUserRoleTitle.includes('trưởng') ||
+    currentUserRoleTitle.includes('phó')
   );
 
   const getDepartmentMemberCount = (deptId) => {
@@ -254,16 +281,18 @@ export const InternalDashboard = () => {
           {/* Quick Actions */}
           {!isAdvisor && (
             <div className="flex flex-wrap gap-3 shrink-0">
-              <button
-                onClick={() => {
-                  setActiveTab('tasks');
-                  setIsNewTaskModalOpen(true);
-                }}
-                className="ds-btn ds-btn-primary"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Giao Việc Mới</span>
-              </button>
+              {canAssignTask && (
+                <button
+                  onClick={() => {
+                    setActiveTab('tasks');
+                    setIsNewTaskModalOpen(true);
+                  }}
+                  className="ds-btn ds-btn-primary"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Giao Việc Mới</span>
+                </button>
+              )}
 
               <button
                 onClick={() => {

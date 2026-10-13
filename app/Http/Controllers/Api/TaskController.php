@@ -54,6 +54,22 @@ class TaskController extends Controller
             $createdTasks = [];
             $rootCreatorId = $request->input('created_by') ?: $request->input('createdBy');
 
+            if ($rootCreatorId) {
+                $creator = Member::whereRaw('CAST(id AS CHAR) = ?', [(string) $rootCreatorId])
+                    ->orWhere('member_code', (string) $rootCreatorId)
+                    ->orWhere('username', (string) $rootCreatorId)
+                    ->first();
+                if ($creator) {
+                    $dept = mb_strtolower($creator->department ?? $creator->dept_name ?? '');
+                    $roleTitle = mb_strtolower($creator->role_title ?? '');
+                    $isAdv = str_contains($dept, 'cố vấn') || str_contains($dept, 'advisor') || str_contains($dept, 'cv') ||
+                             str_contains($roleTitle, 'cố vấn') || str_contains($roleTitle, 'cựu') || str_contains($roleTitle, 'advisor');
+                    if ($isAdv) {
+                        return response()->json(['success' => false, 'error' => 'Ban Cố Vấn không có quyền giao nhiệm vụ.'], 403);
+                    }
+                }
+            }
+
             foreach ($taskItems as $taskInput) {
                 $taskId = $taskInput['id'] ?? ('task-' . time() . '-' . rand(100, 999));
                 $title = $taskInput['title'] ?? 'Nhiệm vụ mới';
