@@ -503,6 +503,13 @@ h1, h2, h3, h4, h5, h6 {
   border-color: var(--accent-blue);
 }
 
+textarea.ds-input {
+  height: auto;
+  min-height: 4rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
 /* ========== UNIVERSAL FIX: INPUT PADDING FOR ICONS ========== */
 .ds-input.pl-8, input.pl-8 { padding-left: 2rem !important; }
 .ds-input.pl-9, input.pl-9 { padding-left: 2.25rem !important; }

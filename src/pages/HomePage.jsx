@@ -2537,29 +2537,62 @@ export const HomePage = ({ onOpenLogin }) => {
                     </div>
 
                     <div>
-                      <label className="text-2xs font-bold text-[var(--text-secondary)] uppercase block mb-1">
-                        Tóm Tắt Ngắn
-                      </label>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-2xs font-bold text-[var(--text-secondary)] uppercase">
+                          Tóm Tắt Ngắn
+                        </label>
+                        <span className="text-3xs text-[var(--text-muted)]">
+                          Hiển thị ở thẻ xem trước
+                        </span>
+                      </div>
                       <textarea
-                        rows={2}
+                        rows={3}
                         value={editingArticle.summary || ''}
-                        onChange={(e) => setEditingArticle({ ...editingArticle, summary: e.target.value })}
+                        onInput={(e) => {
+                          e.target.style.height = 'auto';
+                          e.target.style.height = `${Math.max(80, e.target.scrollHeight)}px`;
+                        }}
+                        onChange={(e) => {
+                          setEditingArticle({ ...editingArticle, summary: e.target.value });
+                          e.target.style.height = 'auto';
+                          e.target.style.height = `${Math.max(80, e.target.scrollHeight)}px`;
+                        }}
                         placeholder="Mô tả tóm tắt xuất hiện ở thẻ xem trước..."
-                        className="ds-input w-full"
+                        className="ds-input w-full min-h-[80px] p-3 text-xs leading-relaxed resize-y"
+                        style={{ height: 'auto', minHeight: '80px' }}
                       />
                     </div>
 
                     <div>
-                      <label className="text-2xs font-bold text-[var(--text-secondary)] uppercase block mb-1">
-                        Nội Dung Chi Tiết *
-                      </label>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-2xs font-bold text-[var(--text-secondary)] uppercase">
+                          Nội Dung Chi Tiết *
+                        </label>
+                        <span className="text-3xs text-cyan-400 font-medium">
+                          ✦ Tự động dãn dài theo văn bản • Có thể kéo góc để phóng to
+                        </span>
+                      </div>
                       <textarea
-                        rows={6}
                         required
                         value={editingArticle.content || ''}
-                        onChange={(e) => setEditingArticle({ ...editingArticle, content: e.target.value })}
-                        placeholder="Nội dung đầy đủ của bài viết..."
-                        className="ds-input w-full"
+                        onInput={(e) => {
+                          e.target.style.height = 'auto';
+                          e.target.style.height = `${Math.max(240, e.target.scrollHeight)}px`;
+                        }}
+                        onChange={(e) => {
+                          setEditingArticle({ ...editingArticle, content: e.target.value });
+                          e.target.style.height = 'auto';
+                          e.target.style.height = `${Math.max(240, e.target.scrollHeight)}px`;
+                        }}
+                        ref={(el) => {
+                          if (el) {
+                            el.style.height = 'auto';
+                            el.style.height = `${Math.max(240, el.scrollHeight)}px`;
+                          }
+                        }}
+                        placeholder="Nội dung đầy đủ của bài viết... (Khung soạn thảo tự động mở rộng dãn dài khi bạn nhập thêm văn bản)"
+                        className="ds-input w-full min-h-[240px] p-3.5 text-xs sm:text-sm leading-relaxed resize-y font-normal"
+                        style={{ height: 'auto', minHeight: '240px' }}
                       />
                     </div>
 
