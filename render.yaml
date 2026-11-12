@@ -22,9 +22,11 @@ services:
       - key: LOG_LEVEL
         value: info
 
-      # --- Database (MySQL hoặc PostgreSQL/Supabase) ---
+      # --- Database (PostgreSQL / Supabase) ---
       - key: DB_CONNECTION
         value: pgsql
+      - key: DATABASE_URL
+        sync: false
       - key: DB_HOST
         sync: false
       - key: DB_PORT
@@ -35,8 +37,8 @@ services:
         sync: false
       - key: DB_PASSWORD
         sync: false
-      - key: DATABASE_URL
-        sync: false
+      - key: DB_SSLMODE
+        value: require
 
       # --- Mail: 2 loại (system + notification), SMTP hoặc HTTPS provider ---
       - key: MAIL_MAILER
