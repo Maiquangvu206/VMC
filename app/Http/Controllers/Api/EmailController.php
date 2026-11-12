@@ -71,7 +71,9 @@ class EmailController extends Controller
             }
         }
 
-        $sent = MailService::send($to, $subject, $htmlBody, $parsedAttachments);
+        // 2 loại mail: 'system' (hệ thống/bảo mật) | 'notification' (thông báo nghiệp vụ)
+        $mailType = $request->input('mailType', $request->input('type'));
+        $sent = MailService::send($cleanTo, $subject, $htmlBody, $parsedAttachments, $mailType ? (string) $mailType : null);
 
         if ($sent) {
             return response()->json([

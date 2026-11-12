@@ -1,0 +1,86 @@
+# VMC Portal (Laravel) — Render Blueprint
+services:
+  - type: web
+    name: vmc-portal-laravel
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter
+    region: singapore
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_URL
+        sync: false
+      - key: APP_KEY
+        sync: false
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: info
+
+      # --- Database (MySQL hoặc PostgreSQL/Supabase) ---
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "6543"
+      - key: DB_DATABASE
+        value: postgres
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+
+      # --- Mail: 2 loại (system + notification), SMTP hoặc HTTPS provider ---
+      - key: MAIL_MAILER
+        value: smtp
+      - key: MAIL_SYSTEM_MAILER
+        value: auth_smtp
+      - key: MAIL_NOTIFICATION_MAILER
+        value: task_smtp
+      - key: MAIL_HOST
+        value: smtp.gmail.com
+      - key: MAIL_PORT
+        value: "465"
+      - key: MAIL_ENCRYPTION
+        value: ssl
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_AUTH_USERNAME
+        sync: false
+      - key: MAIL_AUTH_PASSWORD
+        sync: false
+      - key: MAIL_TASK_USERNAME
+        sync: false
+      - key: MAIL_TASK_PASSWORD
+        sync: false
+      - key: MAIL_SYSTEM_FROM_ADDRESS
+        sync: false
+      - key: MAIL_SYSTEM_FROM_NAME
+        sync: false
+      - key: MAIL_NOTIFICATION_FROM_ADDRESS
+        sync: false
+      - key: MAIL_NOTIFICATION_FROM_NAME
+        sync: false
+      # HTTPS mail providers (nếu dùng resend/postmark/ses/brevo)
+      - key: RESEND_KEY
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: POSTMARK_TOKEN
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_DEFAULT_REGION
+        sync: false

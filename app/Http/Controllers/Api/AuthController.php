@@ -200,7 +200,7 @@ class AuthController extends Controller
                 </div>
             ';
 
-            $emailSent = MailService::send(
+            $emailSent = MailService::sendSystem(
                 $user->email,
                 '🔐 [VMC Portal] Cấp Lại Mật Khẩu Khởi Tạo - CLB Truyền Thông VMC',
                 $html

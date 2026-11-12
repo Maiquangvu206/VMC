@@ -143,6 +143,26 @@ Route::post('/admin/system-settings', [SystemSettingController::class, 'updateSe
 Route::put('/admin/recruitment-season/toggle', [SystemSettingController::class, 'toggleSeason']);
 Route::post('/homepage/upload-image', [SystemSettingController::class, 'uploadImage']);
 
+// Health check (deploy)
+Route::get('/health', function () {
+    try {
+        \Illuminate\Support\Facades\DB::connection()->getPdo();
+        $db = 'up';
+    } catch (\Throwable $e) {
+        $db = 'down';
+    }
+    return response()->json([
+        'success' => true,
+        'status' => 'ok',
+        'database' => $db,
+        'mail' => [
+            'provider' => config('mail.default'),
+            'system_mailer' => config('mail.types.system.mailer'),
+            'notification_mailer' => config('mail.types.notification.mailer'),
+        ],
+    ]);
+});
+
 // Homepage Articles & Media (Dedicated Relational Tables)
 Route::get('/homepage/articles', [HomepageController::class, 'indexArticles']);
 Route::post('/homepage/articles', [HomepageController::class, 'storeArticle']);
