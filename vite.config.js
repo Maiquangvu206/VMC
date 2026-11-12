@@ -36,6 +36,12 @@ function copyToPublicPlugin() {
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Vite mặc định xuất build ra dist/. Plugin bên dưới đồng bộ assets/index sang public/
+  // để Laravel phục vụ giao diện từ public/index.html và public/assets trong production.
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+  },
   plugins: [
     tailwindcss(),
     react(),

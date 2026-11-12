@@ -31,8 +31,10 @@ WORKDIR /var/www/html
 COPY . .
 # Vendor deps
 COPY --from=vendor /app/vendor ./vendor
-# Built frontend assets
-COPY --from=frontend /app/public/build ./public/build
+# Built frontend assets (Vite outputs to dist; custom plugin copies to public/assets + public/index.html)
+COPY --from=frontend /app/dist ./dist
+COPY --from=frontend /app/public/assets ./public/assets
+COPY --from=frontend /app/public/index.html ./public/index.html
 
 # Storage & cache permissions
 RUN mkdir -p storage/framework/{sessions,views,cache/data} storage/logs bootstrap/cache \
