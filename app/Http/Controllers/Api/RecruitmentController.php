@@ -463,7 +463,7 @@ class RecruitmentController extends Controller
                     'scores_json' => json_encode($scores, JSON_UNESCAPED_UNICODE),
                     'comments' => $comments ?: null,
                     'updated_at' => now(),
-                ], ['id'], ['total_score', 'avg_score', 'scores_json', 'comments', 'updated_at']);
+                ], ['candidate_id', 'interviewer_id', 'round_type'], ['season_id', 'interview_code', 'total_score', 'avg_score', 'scores_json', 'comments', 'updated_at']);
             } catch (\Throwable $e) {}
 
             RecruitmentCandidate::where('id', $targetId)->orWhere('interview_code', $targetCode)->update(['status' => 'scored']);
@@ -506,33 +506,35 @@ class RecruitmentController extends Controller
                 return array_unique($keys);
             };
 
-            // Auto-backfill scores into Recruitment_Evaluations with MySQL 8.4 ONLY_FULL_GROUP_BY compliance
+            // Auto-backfill scores into Recruitment_Evaluations (PostgreSQL-compatible)
             try {
-                DB::statement("
-                    INSERT INTO `Recruitment_Evaluations` (`id`, `candidate_id`, `interview_code`, `season_id`, `interviewer_id`, `round_type`, `total_score`, `avg_score`, `comments`)
-                    SELECT 
-                      CONCAT('eval-', `s`.`candidate_id`, '-', COALESCE(`s`.`interviewer_id`, '0'), '-', COALESCE(ANY_VALUE(`cr`.`round_type`), 'don')) AS `id`,
-                      `s`.`candidate_id`,
-                      ANY_VALUE(COALESCE(`c`.`interview_code`, `s`.`candidate_id`)),
-                      ANY_VALUE(COALESCE(`s`.`season_id`, `c`.`season_id`, ?)),
-                      `s`.`interviewer_id`,
-                      COALESCE(NULLIF(ANY_VALUE(`cr`.`round_type`), ''), 'don') AS `round_type`,
-                      ROUND(COALESCE(SUM(`s`.`score`), 0), 2) AS `total_score`,
-                      ROUND(COALESCE(SUM(`s`.`score`) / NULLIF(COUNT(`s`.`score`), 0), AVG(`s`.`score`), 0), 2) AS `avg_score`,
-                      MAX(`s`.`comments`) AS `comments`
-                    FROM `Recruitment_Scores` `s`
-                    LEFT JOIN `Recruitment_Criteria` `cr` ON `s`.`criteria_id` = `cr`.`id`
-                    LEFT JOIN `Recruitment_Candidates` `c` ON (`s`.`candidate_id` = `c`.`id` OR `s`.`candidate_id` = `c`.`interview_code`)
-                    WHERE (`s`.`season_id` = ? OR `s`.`season_id` IS NULL OR `s`.`season_id` = ''
-                       OR `s`.`candidate_id` IN (SELECT `id` FROM `Recruitment_Candidates` WHERE `season_id` = ?)
-                       OR `s`.`candidate_id` IN (SELECT `interview_code` FROM `Recruitment_Candidates` WHERE `season_id` = ?))
-                    GROUP BY `s`.`candidate_id`, `s`.`interviewer_id`, COALESCE(NULLIF(`cr`.`round_type`, ''), 'don')
-                    ON DUPLICATE KEY UPDATE 
-                      `total_score` = VALUES(`total_score`),
-                      `avg_score` = VALUES(`avg_score`),
-                      `comments` = VALUES(`comments`),
-                      `season_id` = VALUES(`season_id`)
-                ", [$seasonId, $seasonId, $seasonId, $seasonId]);
+                DB::statement('
+                    INSERT INTO "Recruitment_Evaluations" ("id", "candidate_id", "interview_code", "season_id", "interviewer_id", "round_type", "total_score", "avg_score", "comments", "updated_at")
+                    SELECT
+                      (\'eval-\' || "s"."candidate_id" || \'-\' || COALESCE("s"."interviewer_id"::text, \'0\') || \'-\' || COALESCE(NULLIF(MAX("cr"."round_type"), \'\'), \'don\')) AS "id",
+                      "s"."candidate_id",
+                      MAX(COALESCE("c"."interview_code", "s"."candidate_id")) AS "interview_code",
+                      MAX(COALESCE("s"."season_id", "c"."season_id", ?)) AS "season_id",
+                      "s"."interviewer_id",
+                      COALESCE(NULLIF(MAX("cr"."round_type"), \'\'), \'don\') AS "round_type",
+                      ROUND(COALESCE(SUM("s"."score"), 0)::numeric, 2) AS "total_score",
+                      ROUND(COALESCE(AVG("s"."score"), 0)::numeric, 2) AS "avg_score",
+                      MAX("s"."comments") AS "comments",
+                      CURRENT_TIMESTAMP
+                    FROM "Recruitment_Scores" "s"
+                    LEFT JOIN "Recruitment_Criteria" "cr" ON "s"."criteria_id" = "cr"."id"
+                    LEFT JOIN "Recruitment_Candidates" "c" ON ("s"."candidate_id" = "c"."id" OR "s"."candidate_id" = "c"."interview_code")
+                    WHERE ("s"."season_id" = ? OR "s"."season_id" IS NULL OR "s"."season_id" = \'\'
+                       OR "s"."candidate_id" IN (SELECT "id" FROM "Recruitment_Candidates" WHERE "season_id" = ?)
+                       OR "s"."candidate_id" IN (SELECT "interview_code" FROM "Recruitment_Candidates" WHERE "season_id" = ?))
+                    GROUP BY "s"."candidate_id", "s"."interviewer_id", COALESCE(NULLIF("cr"."round_type", \'\'), \'don\')
+                    ON CONFLICT ("candidate_id", "interviewer_id", "round_type") DO UPDATE SET
+                      "total_score" = EXCLUDED."total_score",
+                      "avg_score" = EXCLUDED."avg_score",
+                      "comments" = EXCLUDED."comments",
+                      "season_id" = EXCLUDED."season_id",
+                      "updated_at" = CURRENT_TIMESTAMP
+                ', [$seasonId, $seasonId, $seasonId, $seasonId]);
             } catch (\Throwable $e) {}
 
             // Fetch detailed scores joined with criteria and members

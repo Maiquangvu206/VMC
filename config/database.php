@@ -102,7 +102,14 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => env('DB_SCHEMA', 'public'),
-            'sslmode' => env('DB_SSLMODE', 'prefer'),
+            'sslmode' => (function () {
+                $mode = env('DB_SSLMODE');
+                $ssl = env('DB_SSL');
+                if ($mode) return $mode;
+                if (filter_var($ssl, FILTER_VALIDATE_BOOLEAN)) return 'require';
+                if (env('DATABASE_URL')) return 'require';
+                return 'prefer';
+            })(),
         ],
 
         'sqlsrv' => [
