@@ -159,6 +159,24 @@ Route::get('/health', function () {
     $connection = strtolower((string) config('database.default'));
     $config = config("database.connections.{$connection}", []);
 
+    // Khi dùng DATABASE_URL/DB_URL thì host/port/database thật nằm trong URL,
+    // các key DB_HOST... chỉ là giá trị mặc định không dùng tới.
+    $effective = [
+        'host' => $config['host'] ?? null,
+        'port' => $config['port'] ?? null,
+        'database' => $config['database'] ?? null,
+    ];
+    if (!empty($config['url'])) {
+        $parts = parse_url((string) $config['url']);
+        if (is_array($parts)) {
+            $effective = [
+                'host' => $parts['host'] ?? $effective['host'],
+                'port' => $parts['port'] ?? $effective['port'],
+                'database' => isset($parts['path']) ? ltrim($parts['path'], '/') : $effective['database'],
+            ];
+        }
+    }
+
     // Table diagnostics: shows which tables exist and how many rows each one has.
     // This makes it obvious when a page is empty because a table is missing/not migrated.
     $expectedTables = [
@@ -172,7 +190,10 @@ Route::get('/health', function () {
         'homepage_articles', 'homepage_media',
     ];
     $tables = [];
-    if ($db === 'up') {
+    // Render gọi endpoint này liên tục làm health check, nên mặc định chỉ ping DB.
+    // Thêm ?tables=1 (hoặc ?full=1) để lấy bảng chẩn đoán đầy đủ.
+    $detailed = request()->boolean('tables') || request()->boolean('full');
+    if ($db === 'up' && $detailed) {
         foreach ($expectedTables as $table) {
             try {
                 if (!\Illuminate\Support\Facades\Schema::hasTable($table)) {
@@ -196,9 +217,9 @@ Route::get('/health', function () {
         'db_error' => $dbError,
         'db' => [
             'connection' => $connection,
-            'host' => $config['host'] ?? null,
-            'port' => $config['port'] ?? null,
-            'database' => $config['database'] ?? null,
+            'host' => $effective['host'] ?? null,
+            'port' => $effective['port'] ?? null,
+            'database' => $effective['database'] ?? null,
             'sslmode' => $config['sslmode'] ?? null,
         ],
         'app_key_configured' => !empty(config('app.key')),

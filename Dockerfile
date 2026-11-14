@@ -25,6 +25,9 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring exif pcntl bcmath zip gd \
     && rm -rf /var/lib/apt/lists/*
 
+# OPcache cho CLI SAPI (artisan serve dùng PHP CLI, mặc định opcache bị tắt).
+COPY docker/php-production.ini /usr/local/etc/php/conf.d/zz-vmc-production.ini
+
 WORKDIR /var/www/html
 
 # App source
@@ -44,10 +47,15 @@ RUN mkdir -p storage/framework/{sessions,views,cache/data} storage/logs bootstra
 ENV APP_ENV=production
 ENV APP_DEBUG=false
 ENV LOG_CHANNEL=stderr
+# php artisan serve (PHP built-in server) mặc định chỉ có 1 worker => 15 request API
+# song song của SPA bị xếp hàng, mỗi request chờ hàng chục giây. 8 worker chạy song song.
+ENV PHP_CLI_SERVER_WORKERS=4
 
 # Render provides PORT
 EXPOSE 8000
 
-CMD php artisan config:cache && php artisan route:cache || true; \
+CMD php artisan config:cache || true; \
+    php artisan route:cache || true; \
+    php artisan view:cache || true; \
     if [ "$RUN_MIGRATIONS" = "true" ]; then php artisan migrate --force || true; fi; \
     php artisan serve --host=0.0.0.0 --port=${PORT:-8000}

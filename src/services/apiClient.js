@@ -6,38 +6,68 @@ const HEADERS = {
 
 const getUrl = (endpoint) => `/api/${endpoint}`;
 
-// Safe fetch with 15-second timeout for homeserver / WAN connection resilience
-const fetchWithTimeout = async (url, options = {}, timeoutMs = 15000) => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+// Gọi fetch có timeout để chống treo khi máy chủ phản hồi chậm (Render free/starter
+// thường 5-15s cho request đầu tiên, cộng thêm cold start).
+const fetchWithTimeout = async (url, options = {}, timeoutMs = 45000) => {
+  const run = async (ms) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), ms);
+    try {
+      return await fetch(url, { ...options, signal: controller.signal });
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  };
+
   try {
-    const res = await fetch(url, { ...options, signal: controller.signal });
-    clearTimeout(timeoutId);
-    return res;
+    return await run(timeoutMs);
   } catch (err) {
-    clearTimeout(timeoutId);
+    // GET bị timeout/mất mạng: thử lại 1 lần vì request đầu sau cold start rất chậm.
+    const method = String(options.method || 'GET').toUpperCase();
+    if (err?.name === 'AbortError' || err instanceof TypeError) {
+      if (method === 'GET') {
+        return await run(timeoutMs);
+      }
+    }
     throw err;
   }
 };
 
+// Gộp các request GET trùng endpoint đang bay (ví dụ members được gọi ở 2 effect
+// cùng lúc) để khỏi chạy 2 query nặng song song trên server yếu.
+const inFlightGets = new Map();
+
 export const fetchEntityAPI = async (endpoint) => {
-  try {
-    const response = await fetchWithTimeout(getUrl(endpoint), {
-      headers: { 'Accept': 'application/json', 'ngrok-skip-browser-warning': 'true' }
-    });
-    if (!response.ok) {
-      let body = '';
-      try { body = await response.text(); } catch (e) {}
-      console.warn(`⚠️ HTTP ${response.status} from /api/${endpoint}`, body.slice(0, 500));
+  if (inFlightGets.has(endpoint)) {
+    return inFlightGets.get(endpoint);
+  }
+
+  const promise = (async () => {
+    try {
+      const response = await fetchWithTimeout(getUrl(endpoint), {
+        headers: { 'Accept': 'application/json', 'ngrok-skip-browser-warning': 'true' }
+      });
+      if (!response.ok) {
+        let body = '';
+        try { body = await response.text(); } catch (e) {}
+        console.warn(`⚠️ HTTP ${response.status} from /api/${endpoint}`, body.slice(0, 500));
+        return [];
+      }
+      const result = await response.json();
+      if (result.success && Array.isArray(result.data)) return result.data;
+      if (result.success && result.data !== undefined) return result.data;
+      return [];
+    } catch (error) {
+      console.warn(`⚠️ Failed to fetch /api/${endpoint}:`, error.message);
       return [];
     }
-    const result = await response.json();
-    if (result.success && Array.isArray(result.data)) return result.data;
-    if (result.success && result.data !== undefined) return result.data;
-    return [];
-  } catch (error) {
-    console.warn(`⚠️ Failed to fetch /api/${endpoint}:`, error.message);
-    return [];
+  })();
+
+  inFlightGets.set(endpoint, promise);
+  try {
+    return await promise;
+  } finally {
+    inFlightGets.delete(endpoint);
   }
 };
 

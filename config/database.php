@@ -102,6 +102,12 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => env('DB_SCHEMA', 'public'),
+            // Dùng kết nối persistent để không phải bắt tay SSL với Supabase mỗi request.
+            // php artisan serve có nhiều worker (PHP_CLI_SERVER_WORKERS) nên mỗi worker
+            // giữ 1 kết nối, tổng số kết nối = số worker.
+            'options' => filter_var(env('DB_PERSISTENT', true), FILTER_VALIDATE_BOOLEAN)
+                ? [PDO::ATTR_PERSISTENT => true]
+                : [],
             'sslmode' => (function () {
                 $mode = env('DB_SSLMODE');
                 if ($mode) return $mode;

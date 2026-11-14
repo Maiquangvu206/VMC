@@ -49,6 +49,10 @@ services:
         value: require
       - key: DB_SSL
         value: "true"
+      # Giữ kết nối PDO giữa các request (mỗi PHP worker 1 kết nối) để khỏi
+      # bắt tay SSL với Supabase pooler mỗi lần gọi API.
+      - key: DB_PERSISTENT
+        value: "true"
       # Tự động chạy migrate khi container khởi động (idempotent).
       # Đặt "false" nếu muốn migrate thủ công qua Render Shell.
       - key: RUN_MIGRATIONS

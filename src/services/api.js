@@ -1,13 +1,23 @@
-// Helper gọi fetch có timeout 15s để chống treo kết nối khi máy chủ phản hồi chậm
-const fetchWithTimeout = async (url, options = {}, timeoutMs = 15000) => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+// Helper gọi fetch có timeout để chống treo kết nối khi máy chủ phản hồi chậm.
+// Render starter cần vài giây cho request đầu, nên để 45s và thử lại 1 lần với GET.
+const fetchWithTimeout = async (url, options = {}, timeoutMs = 45000) => {
+  const run = async (ms) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), ms);
+    try {
+      return await fetch(url, { ...options, signal: controller.signal });
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  };
+
   try {
-    const res = await fetch(url, { ...options, signal: controller.signal });
-    clearTimeout(timeoutId);
-    return res;
+    return await run(timeoutMs);
   } catch (err) {
-    clearTimeout(timeoutId);
+    const method = String(options.method || 'GET').toUpperCase();
+    if (method === 'GET' && (err?.name === 'AbortError' || err instanceof TypeError)) {
+      return await run(timeoutMs);
+    }
     throw err;
   }
 };

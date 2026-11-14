@@ -12,7 +12,6 @@ import {
   getCachedData,
   setCachedData,
   invalidateCache,
-  fetchWithSWR,
   CACHE_TTL
 } from '../services/cacheService';
 
@@ -226,7 +225,18 @@ export const ClubProvider = ({ children }) => {
   useEffect(() => {
     let isMounted = true;
 
+    let syncInFlight = false;
+    let firstSyncDone = false;
+    // Dữ liệu gần như tĩnh: chỉ tải ở lần đầu, các chu kỳ sau giữ nguyên bản cũ
+    // để giảm một nửa số request mỗi 60s.
+    const staticOrNull = (endpoint) => (firstSyncDone ? Promise.resolve(null) : fetchEntityAPI(endpoint));
+
     const silentAutoSync = async () => {
+      // Tránh chồng chéo: server yếu (1-4 worker) không chịu nổi 14 request
+      // mỗi 30s nếu lần trước chưa xong, và không cần đồng bộ khi tab bị ẩn.
+      if (syncInFlight) return;
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      syncInFlight = true;
       try {
         const [
           serverMembers,
@@ -251,12 +261,16 @@ export const ClubProvider = ({ children }) => {
           fetchEntityAPI('finances'),
           fetchEntityAPI('meetings'),
           fetchEntityAPI('birthday-assignments'),
-          fetchWithSWR('milestones', () => fetchEntityAPI('milestones'), CACHE_TTL.RESOURCES),
-          fetchEntityAPI('generations'),
-          fetchWithSWR('resources', () => fetchEntityAPI('resources'), CACHE_TTL.RESOURCES),
-          fetchWithSWR('department-drives', () => fetchEntityAPI('department-drives'), CACHE_TTL.DEPARTMENT_DRIVES),
+          staticOrNull('milestones'),
+          staticOrNull('generations'),
+          staticOrNull('resources'),
+          staticOrNull('department-drives'),
           fetchEntityAPI('attendance-records')
         ]);
+
+        // Chỉ đánh dấu "đã tải dữ liệu tĩnh" khi lần đồng bộ đầu thành công,
+        // để lần sau vẫn thử lại nếu server lỗi.
+        firstSyncDone = true;
 
         if (isMounted) {
           const buildDefaultMilestones = (m) => [
@@ -346,15 +360,24 @@ export const ClubProvider = ({ children }) => {
         }
       } catch (err) {
         console.warn('ℹ️ Real-time MySQL sync status:', err.message);
+      } finally {
+        syncInFlight = false;
       }
     };
 
     silentAutoSync();
-    const intervalId = setInterval(silentAutoSync, 30000);
+    const intervalId = setInterval(silentAutoSync, 60000);
+
+    // Tab được mở lại: đồng bộ ngay thay vì chờ hết chu kỳ.
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') silentAutoSync();
+    };
+    document.addEventListener('visibilitychange', onVisible);
 
     return () => {
       isMounted = false;
       clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, []);
 
@@ -2066,6 +2089,8 @@ setCurrentUser(acc);
     registerSession();
 
     const hbInterval = setInterval(async () => {
+      // Heartbeat 5s quá dày: mỗi tab mở gửi 12 request/phút làm nghẽn server.
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
       try {
         const activeSid = sessionStorage.getItem('VMC_SESSION_ID') || currentSessionId;
         const resp = await fetch('/api/sessions/heartbeat', {
@@ -2079,7 +2104,7 @@ setCurrentUser(acc);
           logout();
         }
       } catch (e) {}
-    }, 5000);
+    }, 30000);
 
     return () => clearInterval(hbInterval);
   }, [isAuthenticated, currentUser?.id, currentSessionId]);
