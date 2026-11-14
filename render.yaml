@@ -23,6 +23,9 @@ services:
         value: info
 
       # --- Database (PostgreSQL / Supabase) ---
+      # Ưu tiên DATABASE_URL (session pooler port 5432) để Laravel dùng prepared statements ổn định.
+      # Nếu dùng Supabase pooler: host dạng aws-0-<region>.pooler.supabase.com,
+      # username dạng postgres.<project-ref>, DB_DATABASE=postgres, DB_SSLMODE=require.
       - key: DB_CONNECTION
         value: pgsql
       - key: DATABASE_URL
@@ -30,7 +33,7 @@ services:
       - key: DB_HOST
         sync: false
       - key: DB_PORT
-        value: "6543"
+        value: "5432"
       - key: DB_DATABASE
         value: postgres
       - key: DB_USERNAME
@@ -39,6 +42,12 @@ services:
         sync: false
       - key: DB_SSLMODE
         value: require
+      - key: DB_SSL
+        value: "true"
+      # Tự động chạy migrate khi container khởi động (idempotent).
+      # Đặt "false" nếu muốn migrate thủ công qua Render Shell.
+      - key: RUN_MIGRATIONS
+        value: "true"
 
       # --- Mail: 2 loại (system + notification), SMTP hoặc HTTPS provider ---
       - key: MAIL_MAILER

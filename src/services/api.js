@@ -24,10 +24,29 @@ export const loginMemberAPI = async (memberCode, password) => {
       },
       body: JSON.stringify({ memberCode, password })
     });
-    const result = await response.json();
-    return result;
+
+    const raw = await response.text();
+    let result = null;
+    try {
+      result = raw ? JSON.parse(raw) : null;
+    } catch (e) {
+      result = null;
+    }
+
+    if (result && typeof result === 'object') {
+      if (!response.ok && result.success === undefined) {
+        return { success: false, message: `Máy chủ phản hồi lỗi HTTP ${response.status}.` };
+      }
+      return result;
+    }
+
+    // Server trả về HTML (thường là trang lỗi 500/502) => báo rõ mã lỗi để dễ chẩn đoán
+    return {
+      success: false,
+      message: `Máy chủ phản hồi lỗi HTTP ${response.status}! Vui lòng kiểm tra log máy chủ/Cơ sở dữ liệu.`
+    };
   } catch (error) {
-    console.warn('⚠️ Server Login API offline (Fallback to Local DB):', error.message);
+    console.warn('⚠️ Server Login API offline:', error.message);
     return { success: false, message: 'Server API offline' };
   }
 };

@@ -92,7 +92,7 @@ return [
 
         'pgsql' => [
             'driver' => 'pgsql',
-            'url' => env('DB_URL', env('DATABASE_URL')),
+            'url' => env('DB_URL') ?: env('DATABASE_URL'),
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
             'database' => env('DB_DATABASE', 'vmc_portal'),
@@ -104,10 +104,9 @@ return [
             'search_path' => env('DB_SCHEMA', 'public'),
             'sslmode' => (function () {
                 $mode = env('DB_SSLMODE');
-                $ssl = env('DB_SSL');
                 if ($mode) return $mode;
-                if (filter_var($ssl, FILTER_VALIDATE_BOOLEAN)) return 'require';
-                if (env('DATABASE_URL')) return 'require';
+                if (filter_var(env('DB_SSL'), FILTER_VALIDATE_BOOLEAN)) return 'require';
+                if (env('DB_URL') || env('DATABASE_URL')) return 'require';
                 return 'prefer';
             })(),
         ],

@@ -48,4 +48,6 @@ ENV LOG_CHANNEL=stderr
 # Render provides PORT
 EXPOSE 8000
 
-CMD php artisan config:cache && php artisan route:cache || true; php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
+CMD php artisan config:cache && php artisan route:cache || true; \
+    if [ "$RUN_MIGRATIONS" = "true" ]; then php artisan migrate --force || true; fi; \
+    php artisan serve --host=0.0.0.0 --port=${PORT:-8000}

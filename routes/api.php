@@ -145,16 +145,32 @@ Route::post('/homepage/upload-image', [SystemSettingController::class, 'uploadIm
 
 // Health check (deploy)
 Route::get('/health', function () {
+    $db = 'up';
+    $dbError = null;
+
     try {
         \Illuminate\Support\Facades\DB::connection()->getPdo();
-        $db = 'up';
+        \Illuminate\Support\Facades\DB::connection()->select('select 1');
     } catch (\Throwable $e) {
         $db = 'down';
+        $dbError = get_class($e) . ': ' . $e->getMessage();
     }
+
+    $connection = strtolower((string) config('database.default'));
+    $config = config("database.connections.{$connection}", []);
+
     return response()->json([
         'success' => true,
-        'status' => 'ok',
+        'status' => $db === 'up' ? 'ok' : 'degraded',
         'database' => $db,
+        'db_error' => $dbError,
+        'db' => [
+            'connection' => $connection,
+            'host' => $config['host'] ?? null,
+            'port' => $config['port'] ?? null,
+            'database' => $config['database'] ?? null,
+            'sslmode' => $config['sslmode'] ?? null,
+        ],
         'mail' => [
             'provider' => config('mail.default'),
             'system_mailer' => config('mail.types.system.mailer'),
