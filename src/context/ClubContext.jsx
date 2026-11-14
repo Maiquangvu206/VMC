@@ -152,8 +152,14 @@ export const ClubProvider = ({ children }) => {
         if (sqlMembers && sqlMembers.length > 0 && isMounted) {
           setDb(prev => {
             let mergedMembers = sqlMembers.map(serverMem => {
-              const localMem = (prev.members || []).find(m => m.id === serverMem.id) || {};
-              return { ...localMem, ...serverMem };
+              const localMem = (prev.members || []).find(m => String(m.id) === String(serverMem.id)) || {};
+              // Keep local values when the server column is empty/null to avoid blanking
+              // fields that only exist in the cached copy.
+              const merged = { ...localMem };
+              Object.entries(serverMem).forEach(([k, v]) => {
+                if (v !== null && v !== undefined && v !== '') merged[k] = v;
+              });
+              return merged;
             });
 
             const currentMonth = new Date().toISOString().slice(0, 7);
@@ -294,7 +300,13 @@ export const ClubProvider = ({ children }) => {
               finances: Array.isArray(serverFinances) ? serverFinances : prev.finances,
               meetings: Array.isArray(serverMeetings) ? serverMeetings : prev.meetings,
               birthdayAssignments: Array.isArray(serverBirthday) ? serverBirthday : prev.birthdayAssignments,
-              generations: (Array.isArray(serverGenerations) && serverGenerations.length > 0) ? serverGenerations : (prev.generations || getCachedData('generations') || DEFAULT_GENERATIONS),
+              generations: (Array.isArray(serverGenerations) && serverGenerations.length > 0)
+                ? serverGenerations
+                : ((Array.isArray(prev.generations) && prev.generations.length > 0)
+                  ? prev.generations
+                  : ((Array.isArray(getCachedData('generations')) && getCachedData('generations').length > 0)
+                    ? getCachedData('generations')
+                    : DEFAULT_GENERATIONS)),
               resources: (Array.isArray(serverResources) && serverResources.length > 0) ? serverResources : (prev.resources || getCachedData('resources') || []),
               departmentDrives: (Array.isArray(serverDrives) && serverDrives.length > 0) ? serverDrives : (prev.departmentDrives || getCachedData('department-drives') || []),
               attendanceRecords: Array.isArray(serverAttendance) ? serverAttendance : prev.attendanceRecords
@@ -2221,7 +2233,11 @@ setCurrentUser(acc);
     announcements: db.announcements || [],
     addAnnouncement,
     deleteAnnouncement,
-    generations: db.generations || getCachedData('generations') || DEFAULT_GENERATIONS,
+    generations: (Array.isArray(db.generations) && db.generations.length > 0)
+      ? db.generations
+      : ((Array.isArray(getCachedData('generations')) && getCachedData('generations').length > 0)
+        ? getCachedData('generations')
+        : DEFAULT_GENERATIONS),
     createMemberAccount,
     deleteMemberAccount,
     resetAccountPassword,
