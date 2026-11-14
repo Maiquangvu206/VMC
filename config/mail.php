@@ -18,6 +18,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | HTTPS API provider (tuỳ chọn, khuyến nghị khi chạy trên Render)
+    |--------------------------------------------------------------------------
+    | Render chặn outbound SMTP (25/465/587) nên SMTP không gửi được.
+    | Đặt MAIL_API_PROVIDER=brevo|resend và MAIL_API_KEY để gửi qua HTTPS.
+    | Khi có 2 biến này, MailService dùng API thay cho SMTP.
+    */
+
+    'api_provider' => env('MAIL_API_PROVIDER'),
+    'api_key' => env('MAIL_API_KEY'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Mailer Configurations
     |--------------------------------------------------------------------------
     |
@@ -46,7 +58,7 @@ return [
             'encryption' => env('MAIL_ENCRYPTION', 'ssl'),
             'username' => env('MAIL_USERNAME', 'bandoingoainhansuvmc@gmail.com'),
             'password' => env('MAIL_PASSWORD'),
-            'timeout' => null,
+            'timeout' => (int) env('MAIL_TIMEOUT', 15),
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
 
@@ -60,7 +72,7 @@ return [
             'encryption' => env('MAIL_ENCRYPTION', 'ssl'),
             'username' => env('MAIL_TASK_USERNAME', env('MAIL_USERNAME', 'bandoingoainhansuvmc@gmail.com')),
             'password' => env('MAIL_TASK_PASSWORD', env('MAIL_PASSWORD')),
-            'timeout' => null,
+            'timeout' => (int) env('MAIL_TIMEOUT', 15),
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
 
@@ -74,7 +86,7 @@ return [
             'encryption' => env('MAIL_ENCRYPTION', 'ssl'),
             'username' => env('MAIL_AUTH_USERNAME', 'itvmcportal2020@gmail.com'),
             'password' => env('MAIL_AUTH_PASSWORD', env('MAIL_PASSWORD')),
-            'timeout' => null,
+            'timeout' => (int) env('MAIL_TIMEOUT', 15),
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
 
@@ -89,7 +101,7 @@ return [
             'encryption' => env('MAIL_ENCRYPTION', 'ssl'),
             'username' => env('MAIL_AUTH_USERNAME', env('MAIL_USERNAME')),
             'password' => env('MAIL_AUTH_PASSWORD', env('MAIL_PASSWORD')),
-            'timeout' => null,
+            'timeout' => (int) env('MAIL_TIMEOUT', 15),
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
 
@@ -102,7 +114,7 @@ return [
             'encryption' => env('MAIL_ENCRYPTION', 'ssl'),
             'username' => env('MAIL_TASK_USERNAME', env('MAIL_USERNAME')),
             'password' => env('MAIL_TASK_PASSWORD', env('MAIL_PASSWORD')),
-            'timeout' => null,
+            'timeout' => (int) env('MAIL_TIMEOUT', 15),
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
 

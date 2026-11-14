@@ -1051,6 +1051,8 @@ setCurrentUser(acc);
     triggerConfetti();
     if (res && res.emailSent) {
       showToast(`🎉 Cấp tài khoản ${accountObj.name || accountObj.full_name} (${generatedCode}) thành công! Mật khẩu khởi tạo đã được gửi đến email ${accountObj.email}`, 'success');
+    } else if (res && res.emailError && res.emailError !== 'Thành viên chưa có địa chỉ email.') {
+      showToast(`⚠️ Đã tạo tài khoản ${generatedCode} nhưng CHƯA gửi được email: ${res.emailError}. Mật khẩu: ${accountObj.password}`, 'error');
     } else {
       showToast(`🎉 Cấp tài khoản ${accountObj.name || accountObj.full_name} (${generatedCode}) thành công! Mật khẩu: ${accountObj.password}`, 'success');
     }
@@ -1173,7 +1175,7 @@ setCurrentUser(acc);
     const res = await deleteMemberAPI(targetCode);
 
     if (!res || !res.success) {
-      showToast(`❌ Xóa tài khoản thất bại: ${res?.message || 'Không thể kết nối CSDL'}`, 'error');
+      showToast(`❌ Xóa tài khoản thất bại: ${res?.message || 'Không thể kết nối CSDL'}${res?.error ? ' — ' + res.error : ''}`, 'error');
       return false;
     }
 

@@ -92,6 +92,14 @@ services:
       - key: MAIL_NOTIFICATION_FROM_NAME
         sync: false
       # HTTPS mail providers (nếu dùng resend/postmark/ses/brevo)
+      - key: MAIL_TIMEOUT
+        value: "15"
+      # Render chặn SMTP 25/465/587: đặt MAIL_API_PROVIDER=brevo (hoặc resend)
+      # + MAIL_API_KEY để gửi mail qua HTTPS API.
+      - key: MAIL_API_PROVIDER
+        sync: false
+      - key: MAIL_API_KEY
+        sync: false
       - key: RESEND_KEY
         sync: false
       - key: BREVO_API_KEY

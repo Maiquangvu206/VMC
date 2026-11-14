@@ -216,7 +216,7 @@ export const updateMemberAPI = async (memberId, updatedFields) => {
 // Secure Delete Member API
 export const deleteMemberAPI = async (memberId) => {
   try {
-    const response = await fetchWithTimeout(`/api/members/${memberId}`, {
+    const response = await fetchWithTimeout(`/api/members/${encodeURIComponent(memberId)}`, {
       method: 'DELETE',
       headers: {
         'Accept': 'application/json',

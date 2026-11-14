@@ -224,11 +224,29 @@ Route::get('/health', function () {
         ],
         'app_key_configured' => !empty(config('app.key')),
         'tables' => $tables,
-        'mail' => [
-            'provider' => config('mail.default'),
-            'system_mailer' => config('mail.types.system.mailer'),
-            'notification_mailer' => config('mail.types.notification.mailer'),
-        ],
+        'mail' => (function () {
+            $default = (string) config('mail.default');
+            $systemMailer = (string) config('mail.types.system.mailer');
+            $notifyMailer = (string) config('mail.types.notification.mailer');
+            $dummy = ['log', 'array', 'null'];
+            $smtpConfig = config('mail.mailers.' . $systemMailer, []);
+            $isDummy = fn ($m) => in_array(strtolower($m), $dummy, true);
+
+            return [
+                'provider' => $default,
+                'system_mailer' => $systemMailer,
+                'notification_mailer' => $notifyMailer,
+                // true = hệ thống chỉ ghi mail vào log, KHÔNG gửi thật.
+                'log_only' => $isDummy($default) && $isDummy($systemMailer) && $isDummy($notifyMailer),
+                'smtp_host' => $smtpConfig['host'] ?? null,
+                'smtp_port' => $smtpConfig['port'] ?? null,
+                'smtp_username_configured' => !empty($smtpConfig['username']),
+                'api_provider' => config('mail.api_provider') ?: null,
+                'api_key_configured' => !empty(config('mail.api_key')),
+                'system_from' => config('mail.types.system.from.address'),
+                'notification_from' => config('mail.types.notification.from.address'),
+            ];
+        })(),
     ]);
 });
 

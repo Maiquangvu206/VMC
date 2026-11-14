@@ -9,6 +9,7 @@ use App\Models\MemberMilestone;
 use App\Services\MailService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class MemberController extends Controller
 {
@@ -211,7 +212,9 @@ class MemberController extends Controller
                     ? 'Đã tạo tài khoản thành công và gửi thông tin mật khẩu tới email ' . $email . '!'
                     : 'Đã tạo thành công thành viên mới vào CSDL SQL! (Mật khẩu: ' . $rawPassword . ')',
                 'password' => $rawPassword,
-                'emailSent' => (bool) $emailSent
+                'emailSent' => (bool) $emailSent,
+                'email' => $email ?: null,
+                'emailError' => $emailSent ? null : ($email ? MailService::$lastError : 'Thành viên chưa có địa chỉ email.'),
             ]);
         } catch (\Throwable $e) {
             return response()->json([
@@ -311,36 +314,69 @@ class MemberController extends Controller
     public function destroy($id)
     {
         try {
+            $id = urldecode((string) $id);
+
             $member = Member::whereRaw('CAST(id AS TEXT) = ?', [$id])
                 ->orWhereRaw('UPPER(member_code) = UPPER(?)', [$id])
                 ->orWhereRaw('LOWER(username) = LOWER(?)', [$id])
                 ->first();
 
             if (!$member) {
-                return response()->json(['success' => false, 'message' => 'Không tìm thấy thành viên trong CSDL!'], 404);
+                return response()->json(['success' => false, 'message' => 'Không tìm thấy thành viên trong CSDL!', 'error' => "Không tìm thấy id/mã/username: {$id}"], 404);
             }
 
             $mId = (string) $member->id;
             $mCode = (string) $member->member_code;
             $mUser = (string) $member->username;
 
-            DB::table('Member_Milestones')->where('member_id', $mId)->orWhere('member_id', $mCode)->delete();
-            DB::table('Birthday_Assignments')->where('member_id', $mId)->orWhere('member_id', $mCode)->delete();
-            DB::table('Birthday_Mail_Logs')->where('member_id', $mId)->orWhere('member_id', $mCode)->delete();
-            DB::table('Meeting_Attendance')->where('member_id', $mId)->orWhere('member_id', $mCode)->delete();
-            DB::table('User_Sessions')->where('member_id', $mId)->orWhere('member_id', $mCode)->orWhere('username', $mUser)->delete();
-            if (DB::getSchemaBuilder()->hasTable('User_Logins')) {
-                DB::table('User_Logins')->where('member_id', $mId)->orWhere('member_id', $mCode)->orWhere('username', $mUser)->delete();
-            }
-            DB::table('Tasks')->where('assignee_id', $mId)->orWhere('created_by', $mId)->delete();
+            // Xoá trong 1 transaction để không để lại dữ liệu rác nếu một bước lỗi.
+            DB::transaction(function () use ($mId, $mCode, $mUser, $member) {
+                $related = [
+                    'Member_Milestones' => ['member_id'],
+                    'Birthday_Assignments' => ['member_id'],
+                    'Birthday_Mail_Logs' => ['member_id'],
+                    'Meeting_Attendance' => ['member_id'],
+                    'User_Sessions' => ['member_id', 'username'],
+                    'User_Logins' => ['member_id', 'username'],
+                    'Recruitment_Scores' => ['interviewer_id'],
+                    'Recruitment_Evaluations' => ['interviewer_id'],
+                ];
 
-            $member->delete();
+                foreach ($related as $table => $columns) {
+                    if (!Schema::hasTable($table)) {
+                        continue;
+                    }
+                    DB::table($table)->where(function ($q) use ($columns, $mId, $mCode, $mUser) {
+                        foreach ($columns as $column) {
+                            $value = $column === 'username' ? $mUser : null;
+                            $q->orWhere($column, $mId);
+                            if ($mCode !== '') {
+                                $q->orWhere($column, $mCode);
+                            }
+                            if ($value !== null && $value !== '') {
+                                $q->orWhere($column, $value);
+                            }
+                        }
+                    })->delete();
+                }
+
+                // Task: chỉ xoá task do thành viên này tạo, còn task được giao thì giữ lại
+                // nhưng bỏ liên kết để không mất dữ liệu công việc của CLB.
+                if (Schema::hasTable('Tasks')) {
+                    DB::table('Tasks')->where('created_by', $mId)->orWhere('created_by', $mCode)->delete();
+                    DB::table('Tasks')->where('assignee_id', $mId)->orWhere('assignee_id', $mCode)
+                        ->update(['assignee_id' => null]);
+                }
+
+                $member->delete();
+            });
 
             return response()->json([
                 'success' => true,
-                'message' => 'Đã xóa vĩnh viễn toàn bộ dữ liệu thành viên khỏi CSDL MySQL!'
+                'message' => 'Đã xóa vĩnh viễn toàn bộ dữ liệu thành viên khỏi CSDL!'
             ]);
         } catch (\Throwable $e) {
+            \Log::error('❌ Xoá thành viên thất bại: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Lỗi xóa thành viên khỏi CSDL!',
@@ -447,6 +483,7 @@ class MemberController extends Controller
                 'password' => $pwd,
                 'emailSent' => (bool) $emailSent,
                 'email' => $email,
+                'emailError' => $emailSent ? null : ($email ? MailService::$lastError : 'Thành viên chưa có địa chỉ email.'),
                 'message' => $emailSent
                     ? "Đã đặt lại mật khẩu ({$pwd}) & gửi email thông báo thành công cho " . ($name ?: $email) . "!"
                     : "Đã đặt lại mật khẩu ({$pwd}) cho thành viên " . ($name ?: $userCode) . "!"
