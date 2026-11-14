@@ -26,7 +26,9 @@ export const fetchEntityAPI = async (endpoint) => {
       headers: { 'Accept': 'application/json', 'ngrok-skip-browser-warning': 'true' }
     });
     if (!response.ok) {
-      console.warn(`⚠️ HTTP ${response.status} from /api/${endpoint}`);
+      let body = '';
+      try { body = await response.text(); } catch (e) {}
+      console.warn(`⚠️ HTTP ${response.status} from /api/${endpoint}`, body.slice(0, 500));
       return [];
     }
     const result = await response.json();

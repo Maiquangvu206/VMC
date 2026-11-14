@@ -228,7 +228,7 @@ class MemberController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            $member = Member::whereRaw('CAST(id AS CHAR) = ?', [$id])
+            $member = Member::whereRaw('CAST(id AS TEXT) = ?', [$id])
                 ->orWhereRaw('UPPER(member_code) = UPPER(?)', [$id])
                 ->orWhereRaw('LOWER(username) = LOWER(?)', [$id])
                 ->first();
@@ -311,7 +311,7 @@ class MemberController extends Controller
     public function destroy($id)
     {
         try {
-            $member = Member::whereRaw('CAST(id AS CHAR) = ?', [$id])
+            $member = Member::whereRaw('CAST(id AS TEXT) = ?', [$id])
                 ->orWhereRaw('UPPER(member_code) = UPPER(?)', [$id])
                 ->orWhereRaw('LOWER(username) = LOWER(?)', [$id])
                 ->first();
@@ -359,7 +359,7 @@ class MemberController extends Controller
             $email = trim((string) $request->input('email'));
             $name = trim((string) $request->input('name'));
 
-            $member = Member::whereRaw('CAST(id AS CHAR) = ?', [(string) $memberId])
+            $member = Member::whereRaw('CAST(id AS TEXT) = ?', [(string) $memberId])
                 ->orWhereRaw('UPPER(member_code) = UPPER(?)', [(string) $memberId])
                 ->orWhereRaw('LOWER(username) = LOWER(?)', [(string) $memberId])
                 ->first();

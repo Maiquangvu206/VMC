@@ -43,7 +43,7 @@ class SendTaskDeadlineReminders extends Command
 
             if ($alreadySent) continue;
 
-            $assignee = Member::whereRaw('CAST(id AS CHAR) = ?', [(string) $t->assignee_id])
+            $assignee = Member::whereRaw('CAST(id AS TEXT) = ?', [(string) $t->assignee_id])
                 ->orWhere('member_code', (string) $t->assignee_id)
                 ->first();
 

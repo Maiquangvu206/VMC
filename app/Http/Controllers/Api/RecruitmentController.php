@@ -540,7 +540,7 @@ class RecruitmentController extends Controller
             // Fetch detailed scores joined with criteria and members
             $detailedScoresRows = DB::table('Recruitment_Scores as s')
                 ->leftJoin('Members as u', function ($j) {
-                    $j->on('s.interviewer_id', '=', 'u.id')
+                    $j->on('s.interviewer_id', '=', DB::raw('CAST(u.id AS TEXT)'))
                       ->orOn('s.interviewer_id', '=', 'u.member_code')
                       ->orOn('s.interviewer_id', '=', 'u.username');
                 })
@@ -562,7 +562,7 @@ class RecruitmentController extends Controller
 
             $commentsRows = DB::table('Recruitment_Scores as s')
                 ->leftJoin('Members as u', function ($j) {
-                    $j->on('s.interviewer_id', '=', 'u.id')
+                    $j->on('s.interviewer_id', '=', DB::raw('CAST(u.id AS TEXT)'))
                       ->orOn('s.interviewer_id', '=', 'u.member_code')
                       ->orOn('s.interviewer_id', '=', 'u.username');
                 })
@@ -848,7 +848,7 @@ class RecruitmentController extends Controller
         try {
             $addedInterviewers = array_diff($newInterviewerIds, $oldInterviewerIds);
             foreach ($addedInterviewers as $memId) {
-                $m = Member::whereRaw('CAST(id AS CHAR) = ?', [(string) $memId])->orWhere('member_code', (string) $memId)->first();
+                $m = Member::whereRaw('CAST(id AS TEXT) = ?', [(string) $memId])->orWhere('member_code', (string) $memId)->first();
                 if ($m && $m->email) {
                     $html = '
                         <div style="font-family: Arial, sans-serif; padding: 25px; color: #1e293b; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0; max-width: 600px; margin: 0 auto;">
@@ -868,7 +868,7 @@ class RecruitmentController extends Controller
 
             $addedScorers = array_diff($newScorerIds, $oldScorerIds);
             foreach ($addedScorers as $memId) {
-                $m = Member::whereRaw('CAST(id AS CHAR) = ?', [(string) $memId])->orWhere('member_code', (string) $memId)->first();
+                $m = Member::whereRaw('CAST(id AS TEXT) = ?', [(string) $memId])->orWhere('member_code', (string) $memId)->first();
                 if ($m && $m->email) {
                     $html = '
                         <div style="font-family: Arial, sans-serif; padding: 25px; color: #1e293b; background-color: #f8fafc; border-radius: 16px; border: 1px solid #e2e8f0; max-width: 600px; margin: 0 auto;">

@@ -107,7 +107,7 @@ class DraftController extends Controller
 
             // Send notification email to assigned grader
             if ($grId) {
-                $grader = Member::whereRaw('CAST(id AS CHAR) = ?', [(string) $grId])
+                $grader = Member::whereRaw('CAST(id AS TEXT) = ?', [(string) $grId])
                     ->orWhere('member_code', (string) $grId)
                     ->first();
 

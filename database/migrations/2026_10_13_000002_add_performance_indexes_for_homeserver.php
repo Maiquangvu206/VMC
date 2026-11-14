@@ -121,9 +121,18 @@ return new class extends Migration
         $realTable = $this->resolveTableName($table);
         if (!$realTable) return;
 
+        // Never attempt to index a table missing any of the requested columns: on PostgreSQL
+        // a failed statement aborts the whole migration transaction, which would block all
+        // migrations that run afterwards.
+        foreach ($columns as $column) {
+            if (!Schema::hasColumn($realTable, $column)) {
+                return;
+            }
+        }
+
         try {
-            $existing = collect(DB::select("SHOW INDEX FROM `{$realTable}`"))
-                ->pluck('Key_name')
+            $existing = collect(Schema::getIndexes($realTable))
+                ->pluck('name')
                 ->unique();
 
             if ($existing->contains($indexName)) {
@@ -134,7 +143,7 @@ return new class extends Migration
                 $t->index($columns, $indexName);
             });
         } catch (\Throwable $e) {
-            // Silently ignore if already created or column missing
+            // Silently ignore if already created or unsupported by the driver
         }
     }
 
@@ -147,8 +156,8 @@ return new class extends Migration
         if (!$realTable) return;
 
         try {
-            $existing = collect(DB::select("SHOW INDEX FROM `{$realTable}`"))
-                ->pluck('Key_name')
+            $existing = collect(Schema::getIndexes($realTable))
+                ->pluck('name')
                 ->unique();
 
             if ($existing->contains($indexName)) {

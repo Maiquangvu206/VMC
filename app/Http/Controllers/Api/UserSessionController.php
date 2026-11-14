@@ -13,11 +13,16 @@ class UserSessionController extends Controller
     public function index()
     {
         try {
-            // Auto timeout inactive sessions without heartbeat in the last 10 minutes
-            DB::table('User_Sessions')
-                ->where('is_active', 1)
-                ->where('last_active', '<', DB::raw('NOW() - INTERVAL 10 MINUTE'))
-                ->update(['is_active' => 0, 'logout_reason' => 'timeout']);
+            // Auto timeout inactive sessions without heartbeat in the last 10 minutes.
+            // Wrapped separately so a type/syntax issue here never blocks listing sessions.
+            try {
+                DB::table('User_Sessions')
+                    ->where('is_active', 1)
+                    ->where('last_active', '<', DB::raw("NOW() - INTERVAL '10 minutes'"))
+                    ->update(['is_active' => 0, 'logout_reason' => 'timeout']);
+            } catch (\Throwable $timeoutEx) {
+                // Ignore timeout maintenance failures; listing must still work.
+            }
 
             $sessions = DB::table('User_Sessions')
                 ->orderBy('login_time', 'desc')
@@ -55,12 +60,12 @@ class UserSessionController extends Controller
                 $realName = ($mem && !empty($mem['full_name'])) ? $mem['full_name'] : $s->name;
                 $realRole = ($mem && !empty($mem['role_title'])) ? $mem['role_title'] : ($s->role_title ?: 'Thành Viên VMC');
 
-                return (array) $s + [
+                return array_merge((array) $s, [
                     'real_name' => $realName,
                     'real_role_title' => $realRole,
                     'name' => $realName,
                     'role_title' => $realRole,
-                ];
+                ]);
             });
 
             return response()->json(['success' => true, 'data' => $data]);
@@ -84,7 +89,7 @@ class UserSessionController extends Controller
             $realRole = $roleTitle ?: '';
 
             if ($memberId || $username) {
-                $mem = Member::whereRaw('CAST(id AS CHAR) = ?', [(string) $memberId])
+                $mem = Member::whereRaw('CAST(id AS TEXT) = ?', [(string) $memberId])
                     ->orWhere('username', (string) $username)
                     ->orWhere('member_code', (string) $username)
                     ->first();
@@ -132,7 +137,7 @@ class UserSessionController extends Controller
 
             $session = DB::table('User_Sessions as s')
                 ->leftJoin('Members as m', function ($join) {
-                    $join->on('s.member_id', '=', 'm.id')
+                    $join->on('s.member_id', '=', DB::raw('CAST(m.id AS TEXT)'))
                         ->orOn('s.username', '=', 'm.username')
                         ->orOn('s.member_id', '=', 'm.member_code');
                 })

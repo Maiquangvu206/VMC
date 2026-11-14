@@ -71,7 +71,7 @@ class BirthdayController extends Controller
             ]);
 
             if ($memId) {
-                $assignee = Member::whereRaw('CAST(id AS CHAR) = ?', [(string) $memId])
+                $assignee = Member::whereRaw('CAST(id AS TEXT) = ?', [(string) $memId])
                     ->orWhere('member_code', (string) $memId)
                     ->orWhere('username', (string) $memId)
                     ->first();
@@ -168,7 +168,7 @@ class BirthdayController extends Controller
                 $assignment->excuse_status = $request->input('excuseStatus') ?: $request->input('excuse_status');
             }
             if ($request->has('isPenalized') || $request->has('is_penalized')) {
-                $assignment->is_penalized = (bool) ($request->input('isPenalized') ?? $request->input('is_penalized'));
+                $assignment->is_penalized = ((bool) ($request->input('isPenalized') ?? $request->input('is_penalized'))) ? 1 : 0;
             }
 
             if ($request->has('submissions')) {
@@ -196,7 +196,7 @@ class BirthdayController extends Controller
 
                 if ($newNoPhotoMemberId) {
                     $bdayMember = Member::find($newNoPhotoMemberId);
-                    $assignee = Member::whereRaw('CAST(id AS CHAR) = ?', [(string) $assignment->member_id])
+                    $assignee = Member::whereRaw('CAST(id AS TEXT) = ?', [(string) $assignment->member_id])
                         ->orWhere('member_code', (string) $assignment->member_id)
                         ->first();
 

@@ -21,6 +21,11 @@ services:
         value: stderr
       - key: LOG_LEVEL
         value: info
+      # Tránh phụ thuộc bảng sessions/cache trên Supabase pooler: dùng file cho ổn định.
+      - key: SESSION_DRIVER
+        value: file
+      - key: CACHE_STORE
+        value: file
 
       # --- Database (PostgreSQL / Supabase) ---
       # Ưu tiên DATABASE_URL (session pooler port 5432) để Laravel dùng prepared statements ổn định.

@@ -75,7 +75,7 @@ class MeetingController extends Controller
             // Helper to send email to assigned member
             $sendRoleEmail = function ($memberId, $roleTitle) use ($title, $date, $time) {
                 if (!$memberId) return;
-                $m = Member::whereRaw('CAST(id AS CHAR) = ?', [(string) $memberId])
+                $m = Member::whereRaw('CAST(id AS TEXT) = ?', [(string) $memberId])
                     ->orWhere('member_code', (string) $memberId)
                     ->orWhere('username', (string) $memberId)
                     ->first();

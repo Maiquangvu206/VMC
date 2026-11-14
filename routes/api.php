@@ -159,6 +159,36 @@ Route::get('/health', function () {
     $connection = strtolower((string) config('database.default'));
     $config = config("database.connections.{$connection}", []);
 
+    // Table diagnostics: shows which tables exist and how many rows each one has.
+    // This makes it obvious when a page is empty because a table is missing/not migrated.
+    $expectedTables = [
+        'Members', 'User_Sessions', 'Member_Milestones', 'Generations',
+        'Tasks', 'Fanpage_Drafts', 'Equipment', 'Internal_Announcements',
+        'Finances', 'Meetings', 'Meeting_Attendance', 'Birthday_Assignments',
+        'Monthly_Birthday_Config', 'Birthday_Mail_Logs', 'Task_Deadline_Mail_Logs',
+        'Resources', 'Department_Drives', 'Attendance_Records',
+        'Recruitment_Seasons', 'Recruitment_Criteria', 'Recruitment_Candidates',
+        'Recruitment_Scores', 'Recruitment_Evaluations', 'System_Settings',
+        'homepage_articles', 'homepage_media',
+    ];
+    $tables = [];
+    if ($db === 'up') {
+        foreach ($expectedTables as $table) {
+            try {
+                if (!\Illuminate\Support\Facades\Schema::hasTable($table)) {
+                    $tables[$table] = ['exists' => false, 'rows' => null];
+                    continue;
+                }
+                $tables[$table] = [
+                    'exists' => true,
+                    'rows' => \Illuminate\Support\Facades\DB::table($table)->count(),
+                ];
+            } catch (\Throwable $e) {
+                $tables[$table] = ['exists' => null, 'rows' => null, 'error' => $e->getMessage()];
+            }
+        }
+    }
+
     return response()->json([
         'success' => true,
         'status' => $db === 'up' ? 'ok' : 'degraded',
@@ -171,6 +201,8 @@ Route::get('/health', function () {
             'database' => $config['database'] ?? null,
             'sslmode' => $config['sslmode'] ?? null,
         ],
+        'app_key_configured' => !empty(config('app.key')),
+        'tables' => $tables,
         'mail' => [
             'provider' => config('mail.default'),
             'system_mailer' => config('mail.types.system.mailer'),

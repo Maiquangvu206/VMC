@@ -68,7 +68,7 @@ class TaskController extends Controller
             $rootCreatorId = $request->input('created_by') ?: $request->input('createdBy');
 
             if ($rootCreatorId) {
-                $creator = Member::whereRaw('CAST(id AS CHAR) = ?', [(string) $rootCreatorId])
+                $creator = Member::whereRaw('CAST(id AS TEXT) = ?', [(string) $rootCreatorId])
                     ->orWhere('member_code', (string) $rootCreatorId)
                     ->orWhere('username', (string) $rootCreatorId)
                     ->first();
@@ -114,7 +114,7 @@ class TaskController extends Controller
 
                 // Send email notification to assignee
                 if ($assId) {
-                    $assignee = Member::whereRaw('CAST(id AS CHAR) = ?', [(string) $assId])
+                    $assignee = Member::whereRaw('CAST(id AS TEXT) = ?', [(string) $assId])
                         ->orWhere('member_code', (string) $assId)
                         ->orWhere('username', (string) $assId)
                         ->first();
@@ -179,10 +179,10 @@ class TaskController extends Controller
 
             // Send completion email to task creator when status changes to 'done'
             if ($newStatus === 'done' && $oldStatus !== 'done' && $task->created_by) {
-                $creator = Member::whereRaw('CAST(id AS CHAR) = ?', [(string) $task->created_by])
+                $creator = Member::whereRaw('CAST(id AS TEXT) = ?', [(string) $task->created_by])
                     ->orWhere('member_code', (string) $task->created_by)
                     ->first();
-                $assignee = Member::whereRaw('CAST(id AS CHAR) = ?', [(string) $task->assignee_id])
+                $assignee = Member::whereRaw('CAST(id AS TEXT) = ?', [(string) $task->assignee_id])
                     ->orWhere('member_code', (string) $task->assignee_id)
                     ->first();
 
