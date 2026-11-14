@@ -19,11 +19,13 @@ import {
 const ClubContext = createContext();
 
 const DEFAULT_GENERATIONS = [
-  { id: 'gen-6', name: 'Gen 6', years: '2025-2026', description: '✨ Gen 6 (2025 - 2026)' },
-  { id: 'gen-5', name: 'Gen 5', years: '2024-2025', description: '🎓 Gen 5 (2024 - 2025)' },
-  { id: 'gen-4', name: 'Gen 4', years: '2023-2024', description: '🏆 Gen 4 (2023 - 2024)' },
-  { id: 'gen-3', name: 'Gen 3', years: '2022-2023', description: '👑 Gen 3 (2022 - 2023)' },
-  { id: 'gen-2', name: 'Gen 2', years: '2021-2022', description: '🚀 Gen 2 (2021 - 2022)' },
+  { id: 'gen-8', name: 'Gen 8', years: '2026-2027', description: '🌱 Gen 8 (2026 - 2027)' },
+  { id: 'gen-7', name: 'Gen 7', years: '2025-2026', description: '🌿 Gen 7 (2025 - 2026)' },
+  { id: 'gen-6', name: 'Gen 6', years: '2024-2025', description: '✨ Gen 6 (2024 - 2025)' },
+  { id: 'gen-5', name: 'Gen 5', years: '2023-2024', description: '🎓 Gen 5 (2023 - 2024)' },
+  { id: 'gen-4', name: 'Gen 4', years: '2022-2023', description: '🏆 Gen 4 (2022 - 2023)' },
+  { id: 'gen-3', name: 'Gen 3', years: '2021-2022', description: '👑 Gen 3 (2021 - 2022)' },
+  { id: 'gen-2', name: 'Gen 2', years: '2020-2021', description: '🚀 Gen 2 (2020 - 2021)' },
   { id: 'gen-1', name: 'Gen 1', years: '2020-2021', description: '🌟 Gen 1 (2020 - 2021)' }
 ];
 
@@ -250,7 +252,7 @@ export const ClubProvider = ({ children }) => {
           fetchEntityAPI('meetings'),
           fetchEntityAPI('birthday-assignments'),
           fetchWithSWR('milestones', () => fetchEntityAPI('milestones'), CACHE_TTL.RESOURCES),
-          fetchWithSWR('generations', () => fetchEntityAPI('generations'), CACHE_TTL.GENERATIONS),
+          fetchEntityAPI('generations'),
           fetchWithSWR('resources', () => fetchEntityAPI('resources'), CACHE_TTL.RESOURCES),
           fetchWithSWR('department-drives', () => fetchEntityAPI('department-drives'), CACHE_TTL.DEPARTMENT_DRIVES),
           fetchEntityAPI('attendance-records')

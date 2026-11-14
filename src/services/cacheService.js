@@ -7,7 +7,8 @@
  */
 
 const CACHE_PREFIX = 'VMC_CACHE_';
-const CACHE_VERSION = 'v1.3';
+// Bump khi cần xoá cache cũ trên máy người dùng (ví dụ cache rỗng bị nhiễm độc).
+const CACHE_VERSION = 'v1.4';
 
 // Thời gian sống mặc định (TTL) cho từng loại dữ liệu ít biến động
 export const CACHE_TTL = {
@@ -143,10 +144,13 @@ export const clearAllCache = () => {
  */
 export const fetchWithSWR = async (key, fetcherFn, ttlMs = 3600000, onFreshDataCallback = null) => {
   const cached = getCachedData(key);
+  // Mảng rỗng thường là kết quả của một lần fetch lỗi trước đó, không phải dữ liệu
+  // thật. Coi như chưa có cache để lần này lấy lại từ API thay vì giữ trống cả TTL.
+  const cachedUsable = cached !== null && !(Array.isArray(cached) && cached.length === 0);
 
   // Nếu cache còn mới, trả về ngay và không cần fetch ngầm
   const fresh = isCacheFresh(key, ttlMs);
-  if (cached !== null && fresh) {
+  if (cachedUsable && fresh) {
     return cached;
   }
 
@@ -154,7 +158,9 @@ export const fetchWithSWR = async (key, fetcherFn, ttlMs = 3600000, onFreshDataC
   const fetchPromise = (async () => {
     try {
       const freshData = await fetcherFn();
-      if (freshData !== undefined && freshData !== null) {
+      const hasData = freshData !== undefined && freshData !== null
+        && !(Array.isArray(freshData) && freshData.length === 0);
+      if (hasData) {
         setCachedData(key, freshData, ttlMs);
         if (typeof onFreshDataCallback === 'function') {
           onFreshDataCallback(freshData);
@@ -168,7 +174,7 @@ export const fetchWithSWR = async (key, fetcherFn, ttlMs = 3600000, onFreshDataC
   })();
 
   // Nếu đã có cache (kể cả stale), trả về cache trước để render 0ms
-  if (cached !== null) {
+  if (cachedUsable) {
     return cached;
   }
 
@@ -230,7 +236,7 @@ export const warmupStaticDataCache = async () => {
         fetch('/api/generations', { headers: { 'ngrok-skip-browser-warning': 'true' } })
           .then(r => r.json())
           .then(res => {
-            if (res.success && Array.isArray(res.data)) {
+            if (res.success && Array.isArray(res.data) && res.data.length > 0) {
               setCachedData('generations', res.data, CACHE_TTL.GENERATIONS);
             }
           })
@@ -244,7 +250,7 @@ export const warmupStaticDataCache = async () => {
         fetch('/api/department-drives', { headers: { 'ngrok-skip-browser-warning': 'true' } })
           .then(r => r.json())
           .then(res => {
-            if (res.success && Array.isArray(res.data)) {
+            if (res.success && Array.isArray(res.data) && res.data.length > 0) {
               setCachedData('department-drives', res.data, CACHE_TTL.DEPARTMENT_DRIVES);
             }
           })
@@ -258,7 +264,7 @@ export const warmupStaticDataCache = async () => {
         fetch('/api/resources', { headers: { 'ngrok-skip-browser-warning': 'true' } })
           .then(r => r.json())
           .then(res => {
-            if (res.success && Array.isArray(res.data)) {
+            if (res.success && Array.isArray(res.data) && res.data.length > 0) {
               setCachedData('resources', res.data, CACHE_TTL.RESOURCES);
             }
           })
